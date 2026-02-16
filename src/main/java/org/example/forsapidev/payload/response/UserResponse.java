@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.example.forsapidev.entities.UserManagement.Role;
 
+import java.util.Date;
+
 
 @Getter
 @Setter
@@ -16,9 +18,8 @@ public class UserResponse {
 
 	private Long id;
 	private String username;
-	private String firstname;
-	private String lastname;
 	private String email;
-	private String password;
-	private Role role;
+	private String role;
+	private boolean isActive;
+	private Date createdAt;
 }
