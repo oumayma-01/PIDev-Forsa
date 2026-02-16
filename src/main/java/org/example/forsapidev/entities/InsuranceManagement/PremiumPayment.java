@@ -1,5 +1,6 @@
 package org.example.forsapidev.entities.InsuranceManagement;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -29,6 +30,7 @@ public class PremiumPayment {
     // Relationship: Many Payments belong to One Policy
     @ManyToOne
     @JoinColumn(name = "policy_id", nullable = false)   // join w policy
+    @JsonIgnoreProperties({"premiumPayments", "claims"})        //to prevent loops oin json results !!!!!!!!!!!
     private InsurancePolicy insurancePolicy;
 
     // Getters and Setters

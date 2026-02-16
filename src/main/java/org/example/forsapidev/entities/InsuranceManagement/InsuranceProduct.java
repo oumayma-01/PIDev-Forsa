@@ -1,7 +1,9 @@
 package org.example.forsapidev.entities.InsuranceManagement;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.util.List;
 
 @Entity
 @Table(name = "insurance_product")
@@ -29,6 +31,11 @@ public class InsuranceProduct {
     private Integer durationMonths;
 
     private Boolean isActive = true;
+
+//    // Relationship: One Product has Many Policies
+//    @OneToMany(mappedBy = "insuranceProduct", cascade = CascadeType.ALL)
+//    @JsonIgnoreProperties({"insuranceProduct", "premiumPayments", "claims"})  // //to prevent loops oin json results !!!!!!!!!!!
+//    private List<InsurancePolicy> policies;
 
     // Getters and Setters
     public Long getId() { return id; }
