@@ -1,0 +1,44 @@
+package org.example.forsapidev.Controllers;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import org.example.forsapidev.entities.ComplaintFeedbackManagement.Complaint;
+import org.example.forsapidev.Services.Interfaces.IComplaintService;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/complaints")
+@RequiredArgsConstructor
+@Getter
+@Setter
+public class ComplaintController {
+
+    private final IComplaintService complaintService;
+
+    @GetMapping("/retrieve-all-complaints")
+    public List<Complaint> getComplaints() {
+        return complaintService.retrieveAllComplaints();
+    }
+
+    @GetMapping("/retrieve-complaint/{complaint-id}")
+    public Complaint retrieveComplaint(@PathVariable("complaint-id") Long cId) {
+        return complaintService.retrieveComplaint(cId);
+    }
+
+    @PostMapping("/add-complaint")
+    public Complaint addComplaint(@RequestBody Complaint c) {
+        return complaintService.addComplaint(c);
+    }
+
+    @DeleteMapping("/remove-complaint/{complaint-id}")
+    public void removeComplaint(@PathVariable("complaint-id") Long cId) {
+        complaintService.removeComplaint(cId);
+    }
+
+    @PutMapping("/modify-complaint")
+    public Complaint modifyComplaint(@RequestBody Complaint c) {
+        return complaintService.modifyComplaint(c);
+    }
+}

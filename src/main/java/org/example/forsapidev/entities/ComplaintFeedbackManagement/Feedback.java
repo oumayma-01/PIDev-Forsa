@@ -1,10 +1,15 @@
 package org.example.forsapidev.entities.ComplaintFeedbackManagement;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Date;
 
 @Entity
 @Table(name = "feedback")
+@Getter
+@Setter
 public class Feedback {
 
     @Id
@@ -22,4 +27,7 @@ public class Feedback {
     private Date createdAt;
 
     private Boolean isAnonymous;
+
+    @OneToOne
+    private Complaint complaint;
 }

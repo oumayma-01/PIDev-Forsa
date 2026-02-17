@@ -1,5 +1,6 @@
 package org.example.forsapidev.entities.InsuranceManagement;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import org.example.forsapidev.entities.UserManagement.User; // Import User entity
 import java.math.BigDecimal;
@@ -37,20 +38,23 @@ public class InsurancePolicy {
 
     // Relationship: Many Policies belong to One User
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = true)   // null for test purposes
     private User user;
 
     // Relationship: Many Policies belong to One Product
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)
+    @JsonIgnoreProperties("policies")   //to prevent loops oin json results !!!!!!!!!!!
     private InsuranceProduct insuranceProduct;
 
     // Relationship: One Policy has Many Premium Payments
     @OneToMany(mappedBy = "insurancePolicy", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("insurancePolicy")    //to prevent loops oin json results !!!!!!!!!!!
     private List<PremiumPayment> premiumPayments;
 
     // Relationship: One Policy has Many Claims
     @OneToMany(mappedBy = "insurancePolicy", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("insurancePolicy")  //to prevent loops oin json results !!!!!!!!!!!
     private List<InsuranceClaim> claims;
 
     // Getters and Setters
