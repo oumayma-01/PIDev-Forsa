@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import java.util.List;
 
 public interface IUserService {
-//    List<User> findallByDbname(String dbname);
 
     List<User> findall();
 

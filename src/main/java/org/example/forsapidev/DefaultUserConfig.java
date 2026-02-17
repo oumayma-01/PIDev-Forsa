@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -28,8 +29,9 @@ public class DefaultUserConfig {
                 User user = new User();
                 user.setUsername("admin");
                 user.setEmail("admin@forsa.com");
+                user.setCreatedAt(new Date());
                 user.setIsActive(true);
-                user.setPasswordHash(passwordEncoder.encode("admin@2025"));
+                user.setPasswordHash(passwordEncoder.encode("admin@2026"));
                 if(roleRepository.count() == 0){
                     Role role = new Role();
                     role.setName(ERole.ADMIN);

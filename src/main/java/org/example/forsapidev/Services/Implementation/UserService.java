@@ -55,7 +55,7 @@ class UserService implements IUserService {
         User val = userRepository.findById(id).get();
         val.setPasswordHash(encoder.encode(password));
         userRepository.save(val);
-        return ResponseEntity.ok(new MessageResponse("Le mot de passe est modifié avec succés")) ;
+        return ResponseEntity.ok(new MessageResponse("The password has been successfully updated")) ;
     }
     @Override
     public ResponseEntity<?> UpdateUser(SignupRequest signUpRequest, long id) {
@@ -69,7 +69,7 @@ user.setEmail(signUpRequest.getEmail());
         user.setRole(roleRepository.findById(signUpRequest.getIdrole()).get());
         userRepository.save(user);
 
-        return ResponseEntity.ok(new MessageResponse(user.getId().toString()));
+        return ResponseEntity.ok(new MessageResponse("User Updated Succesfully"));
     }
 
 

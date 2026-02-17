@@ -53,7 +53,7 @@ class AuthService implements IAuthService {
                 if (user.getIsActive().equals(false)){
                 return ResponseEntity
                         .badRequest()
-                        .body(new MessageResponse("Votre compte est desactivé veullez contactez l'adimistrateur pour plus d'information"));
+                        .body(new MessageResponse("Your account has been deactivated. Please contact the administrator for more information."));
             }
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 String jwt = jwtUtils.generateJwtToken(authentication);
@@ -71,11 +71,11 @@ class AuthService implements IAuthService {
             } catch (Exception e) {
                 return ResponseEntity
                         .badRequest()
-                        .body(new MessageResponse("Le nom de l'utilisateur ou le mot de passe sont incorrectes veuillez verifier les champs saisis"));
+                        .body(new MessageResponse("The username or password is incorrect. Please verify the entered fields"));
             }
         }else return ResponseEntity
                 .badRequest()
-                .body(new MessageResponse("Le nom de l'utilisateur est introuvable"));
+                .body(new MessageResponse("The username could not be found"));
     }
     @Override
     public ResponseEntity<?> register(SignupRequest signUpRequest) {
@@ -102,7 +102,7 @@ class AuthService implements IAuthService {
         user.setRole(role);
         userRepository.save(user);
 
-        return ResponseEntity.ok(new MessageResponse(user.getId().toString()));
+        return ResponseEntity.ok(new MessageResponse("User created Successfully"));
     }
 
     @Override
@@ -110,12 +110,12 @@ class AuthService implements IAuthService {
         User user = userRepository.findById(iduser).orElseThrow(() -> new RuntimeException("Error: User is not found."));
         if(user.getIsActive().equals(true)){
             return ResponseEntity
-                    .ok(new MessageResponse("Votre adresse e-mail est déja verifié"));
+                    .ok(new MessageResponse("Your email address is already verified."));
         }
         user.setIsActive(true);
         userRepository.save(user);
         return ResponseEntity
-                .ok(new MessageResponse("Votre adresse e-mail est verifié avec succes vous pouvez accéder à votre compte"));
+                .ok(new MessageResponse("Your email address has been successfully verified. You can now access your account"));
     }
 
 

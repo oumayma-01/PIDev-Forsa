@@ -3,13 +3,11 @@ package org.example.forsapidev.Services.Implementation;
 
 
 import org.example.forsapidev.Repositories.RoleRepository;
-import org.example.forsapidev.Repositories.UserRepository;
 import org.example.forsapidev.Services.Interfaces.IRoleService;
 import org.example.forsapidev.entities.UserManagement.ERole;
 import org.example.forsapidev.entities.UserManagement.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,14 +15,10 @@ import java.util.Optional;
 
 @Service
 class RoleService implements IRoleService {
-    @Autowired
 
-    UserRepository userRepository;
     @Autowired
 
     RoleRepository roleRepository;
-    @Autowired
-    PasswordEncoder encoder;
 
 
     @Override
@@ -47,6 +41,6 @@ class RoleService implements IRoleService {
         Optional<Role> role = roleRepository.findById(id);
         Role r = role.get();
         roleRepository.delete(r);
-        return ResponseEntity.ok("Le role est supprimé avec succés") ;
+        return ResponseEntity.ok("The role has been successfully deleted") ;
     }
 }

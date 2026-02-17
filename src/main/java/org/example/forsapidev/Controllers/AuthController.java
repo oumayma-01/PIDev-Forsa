@@ -3,8 +3,6 @@ package org.example.forsapidev.Controllers;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
-import org.example.forsapidev.Repositories.RoleRepository;
-import org.example.forsapidev.Repositories.UserRepository;
 import org.example.forsapidev.Services.Interfaces.IAuthService;
 import org.example.forsapidev.payload.request.LoginRequest;
 import org.example.forsapidev.payload.request.SignupRequest;
@@ -19,12 +17,6 @@ public class AuthController {
 
 
   @Autowired
-  UserRepository userRepository;
-
-  @Autowired
-  RoleRepository roleRepository;
-
-  @Autowired
   private IAuthService iAuthService;
 
   @PostMapping("/signin")
@@ -34,7 +26,7 @@ public class AuthController {
 
 
   @PostMapping("/signup")
-  public ResponseEntity<?> registerCollaborator(@Valid @RequestBody SignupRequest signUpRequest) {
+  public ResponseEntity<?> register(@Valid @RequestBody SignupRequest signUpRequest) {
     return iAuthService.register(signUpRequest);
   }
   @SecurityRequirement(name = "Bearer Authentication")

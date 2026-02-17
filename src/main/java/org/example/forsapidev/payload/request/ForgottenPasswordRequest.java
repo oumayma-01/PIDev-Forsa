@@ -6,13 +6,9 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class ActivateUserDTO {
-	@NotBlank
-  private String username;
-
-	@NotBlank
-	private String dbname;
-
+public class ForgottenPasswordRequest {
+    @NotBlank
+    private String email;
 
 
 }
