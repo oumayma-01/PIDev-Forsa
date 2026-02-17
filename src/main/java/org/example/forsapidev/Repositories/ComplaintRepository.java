@@ -1,4 +1,4 @@
-package org.example.forsapidev.Repository;
+package org.example.forsapidev.Repositories;
 
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Complaint;
 import org.springframework.data.jpa.repository.JpaRepository;
