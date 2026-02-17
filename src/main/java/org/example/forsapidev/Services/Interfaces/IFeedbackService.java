@@ -1,4 +1,4 @@
-package org.example.forsapidev.service;
+package org.example.forsapidev.Services.Interfaces;
 
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Feedback;
 import java.util.List;

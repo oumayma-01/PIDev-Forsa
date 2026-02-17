@@ -1,8 +1,9 @@
-package org.example.forsapidev.service;
+package org.example.forsapidev.Services.Implementation;
 
 import lombok.RequiredArgsConstructor;
+import org.example.forsapidev.Services.Interfaces.IResponseService;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Response;
-import org.example.forsapidev.repositories.ResponseRepository;
+import org.example.forsapidev.Repositories.ResponseRepository;
 import org.springframework.stereotype.Service;
 import java.util.List;
 

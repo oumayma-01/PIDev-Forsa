@@ -1,10 +1,10 @@
-package org.example.forsapidev.control;
+package org.example.forsapidev.Controllers;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Feedback;
-import org.example.forsapidev.service.IFeedbackService;
+import org.example.forsapidev.Services.Interfaces.IFeedbackService;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
