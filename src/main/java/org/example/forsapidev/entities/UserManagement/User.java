@@ -1,17 +1,14 @@
 package org.example.forsapidev.entities.UserManagement;
-
+import lombok.Getter;
+import lombok.Setter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import org.example.forsapidev.entities.InsuranceManagement.InsuranceClaim;
-import org.example.forsapidev.entities.InsuranceManagement.InsurancePolicy;
-import org.example.forsapidev.entities.InsuranceManagement.InsuranceProduct;
-import org.example.forsapidev.entities.InsuranceManagement.PremiumPayment;
-
 import java.util.Date;
-import java.util.List;
 
 @Entity
 @Table(name = "user")
+@Getter
+@Setter
 public class User {
 
     @Id
@@ -28,7 +25,9 @@ public class User {
 
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;
-
+    @ManyToOne()
+    @JoinColumn(name = "Id_Role")
+    private Role role;
 
     // Relationship: Many Policies belong to One User
     @ManyToOne
