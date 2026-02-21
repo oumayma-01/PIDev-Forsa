@@ -9,4 +9,5 @@ public interface IInsuranceProduct {
     public InsuranceProduct addInsuranceProduct(InsuranceProduct product);
     public void removeInsuranceProduct(Long productId);
     public InsuranceProduct modifyInsuranceProduct(InsuranceProduct product);
+    public InsuranceProduct affectPoliciesToProduct(List<Long> policyIds, Long productId);
 }
