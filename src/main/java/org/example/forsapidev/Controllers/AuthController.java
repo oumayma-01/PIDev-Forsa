@@ -4,7 +4,9 @@ package org.example.forsapidev.Controllers;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.example.forsapidev.Services.Interfaces.IAuthService;
+import org.example.forsapidev.payload.request.ForgottenPasswordRequest;
 import org.example.forsapidev.payload.request.LoginRequest;
+import org.example.forsapidev.payload.request.ResetRequest;
 import org.example.forsapidev.payload.request.SignupRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -29,10 +31,17 @@ public class AuthController {
   public ResponseEntity<?> register(@Valid @RequestBody SignupRequest signUpRequest) {
     return iAuthService.register(signUpRequest);
   }
-  @SecurityRequirement(name = "Bearer Authentication")
   @PutMapping("/activate/{id}")
   public ResponseEntity<?> ValidateUser(@PathVariable("id") long id) {
     return iAuthService.ValidateUser(id);
   }
+  @PostMapping("/ForgottenPassword")
+  public ResponseEntity<?> ForgottenPassword(@Valid @RequestBody ForgottenPasswordRequest forgottenPasswordRequest) throws Exception {
+    return iAuthService.ForgottenPassword(forgottenPasswordRequest);
+  }
 
+  @PostMapping("/resetpass")
+  public ResponseEntity<?> resetpass(@RequestBody ResetRequest resetRequest) throws Exception {
+    return iAuthService.resetpass(resetRequest);
+  }
 }

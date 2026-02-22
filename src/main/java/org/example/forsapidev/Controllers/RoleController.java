@@ -22,6 +22,7 @@ public class RoleController {
   public List<Role> all() {
     return iRoleService.findAll();
   }
+  @SecurityRequirement(name = "Bearer Authentication")
   @GetMapping("/find/{id}")
   public Role find(@PathVariable("id") int id)
   {
@@ -31,6 +32,7 @@ public class RoleController {
 
     return u;
   }
+  @SecurityRequirement(name = "Bearer Authentication")
   @GetMapping("/findn/{name}")
   public Role findN(@PathVariable("name") ERole name)
   {
@@ -40,6 +42,7 @@ public class RoleController {
 
     return u;
   }
+  @SecurityRequirement(name = "Bearer Authentication")
   @DeleteMapping("/delete/{id}")
   public String delete(@PathVariable("id") int id ) {
     iRoleService.delete(id);
