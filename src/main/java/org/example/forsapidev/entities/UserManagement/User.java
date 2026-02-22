@@ -1,9 +1,13 @@
 package org.example.forsapidev.entities.UserManagement;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import org.example.forsapidev.entities.ComplaintFeedbackManagement.Complaint;
+
 import java.util.Date;
+import java.util.Set;
 
 @Entity
 @Table(name = "user")
@@ -34,6 +38,10 @@ public class User {
     @JoinColumn(name = "user_id", nullable = true)  // null for test purposes
     @JsonIgnoreProperties({"insurancePolicies", "password", "passwordHash"})
     private User user;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "user")
+    private Set<Complaint> complaints;
 
 
 }

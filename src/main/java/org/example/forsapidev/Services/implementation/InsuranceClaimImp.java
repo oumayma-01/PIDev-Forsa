@@ -1,4 +1,4 @@
-package org.example.forsapidev.Services.Implementation;
+package org.example.forsapidev.Services.implementation;
 
 import org.example.forsapidev.entities.InsuranceManagement.InsuranceClaim;
 import org.example.forsapidev.Repositories.InsuranceClaimRepository;

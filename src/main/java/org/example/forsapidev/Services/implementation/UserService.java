@@ -1,4 +1,4 @@
-package org.example.forsapidev.Services.Implementation;
+package org.example.forsapidev.Services.implementation;
 
 import org.example.forsapidev.Repositories.RoleRepository;
 import org.example.forsapidev.Repositories.UserRepository;
@@ -12,10 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 @Service
 class UserService implements IUserService {

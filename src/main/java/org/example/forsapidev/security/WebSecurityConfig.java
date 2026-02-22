@@ -57,17 +57,13 @@ public class WebSecurityConfig implements WebMvcConfigurer {
             .and()
             .build();
   }
-
+//je dois changer la classe filterChain comme nasma a l'implémenté
   @Bean
-  protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    http.cors().
-            and()
-            .csrf().disable();
-    http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-    http.exceptionHandling().authenticationEntryPoint(unauthorizedHandler);
-    http.authorizeHttpRequests ().requestMatchers (securityUtils.AUTH_WHITELIST).permitAll();
-    http.authorizeHttpRequests ().anyRequest().authenticated();
-    http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    http.cors().and().csrf().disable()
+            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+            .authorizeHttpRequests()
+            .requestMatchers("/**").permitAll(); // 🔓 ICI : On autorise TOUT sans exception
 
     return http.build();
   }

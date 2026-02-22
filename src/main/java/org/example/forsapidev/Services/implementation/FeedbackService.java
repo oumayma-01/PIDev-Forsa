@@ -1,4 +1,4 @@
-package org.example.forsapidev.Services.Implementation;
+package org.example.forsapidev.Services.implementation;
 
 import lombok.RequiredArgsConstructor;
 import org.example.forsapidev.Services.Interfaces.IFeedbackService;
