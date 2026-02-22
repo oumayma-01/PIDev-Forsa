@@ -1,5 +1,6 @@
 package org.example.forsapidev.Controllers;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -16,27 +17,27 @@ import java.util.List;
 public class ResponseController {
 
     private final IResponseService responseService;
-
+    @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping("/retrieve-all-responses")
     public List<Response> getResponses() {
         return responseService.retrieveAllResponses();
     }
-
+    @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping("/retrieve-response/{response-id}")
     public Response retrieveResponse(@PathVariable("response-id") Long rId) {
         return responseService.retrieveResponse(rId);
     }
-
+    @SecurityRequirement(name = "Bearer Authentication")
     @PostMapping("/add-response")
     public Response addResponse(@RequestBody Response r) {
         return responseService.addResponse(r);
     }
-
+    @SecurityRequirement(name = "Bearer Authentication")
     @DeleteMapping("/remove-response/{response-id}")
     public void removeResponse(@PathVariable("response-id") Long rId) {
         responseService.removeResponse(rId);
     }
-
+    @SecurityRequirement(name = "Bearer Authentication")
     @PutMapping("/modify-response")
     public Response modifyResponse(@RequestBody Response r) {
         return responseService.modifyResponse(r);

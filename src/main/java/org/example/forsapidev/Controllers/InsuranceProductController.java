@@ -1,5 +1,6 @@
 package org.example.forsapidev.Controllers;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.example.forsapidev.entities.InsuranceManagement.InsuranceProduct;
 import org.example.forsapidev.Services.Interfaces.IInsuranceProduct;
 import lombok.AllArgsConstructor;
@@ -8,6 +9,7 @@ import java.util.List;
 
 @RestController
 @AllArgsConstructor
+@SecurityRequirement(name = "Bearer Authentication")
 @RequestMapping("/insurance-product")
 public class InsuranceProductController {
 
