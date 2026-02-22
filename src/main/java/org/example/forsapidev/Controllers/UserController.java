@@ -28,18 +28,20 @@ public class UserController {
   public List<User> all() {
     return iUserService.findall();
   }
-
+  @SecurityRequirement(name = "Bearer Authentication")
   @GetMapping("/find/{id}")
   public UserResponse find(@PathVariable("id") long id)
   {
     UserResponse u =iUserService.findbyId(id);
     return u;
   }
+  @SecurityRequirement(name = "Bearer Authentication")
   @DeleteMapping("/delete/{id}")
   public String delete(@PathVariable("id") long id ) {
     iUserService.delete(id);
     return "Deleted Successfully";
   }
+  @SecurityRequirement(name = "Bearer Authentication")
   @PutMapping("/update/{id}")
   public ResponseEntity<?> UpdateUser(@Valid @RequestBody SignupRequest signUpRequest, @PathVariable("id") long id) {
 return iUserService.UpdateUser(signUpRequest,id);
