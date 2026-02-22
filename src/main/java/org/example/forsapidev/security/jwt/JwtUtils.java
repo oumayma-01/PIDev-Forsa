@@ -47,7 +47,12 @@ public class JwtUtils {
           "/v3/api-docs/**",
           "**/swagger-ui/**",
           "/swagger-ui/**",
-          "/v2/api-docs/**"
+          "/v2/api-docs/**",
+          // Insurance endpoints - for testing purposes
+          "/insurance-claim/**",
+          "/insurance-policy/**",
+          "/insurance-product/**",
+          "/premium-payment/**"
   };
 
   public String generatePinPassword() {

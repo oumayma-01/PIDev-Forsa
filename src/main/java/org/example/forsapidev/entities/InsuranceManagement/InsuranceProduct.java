@@ -1,6 +1,7 @@
 package org.example.forsapidev.entities.InsuranceManagement;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -34,7 +35,7 @@ public class InsuranceProduct {
 
 //    // Relationship: One Product has Many Policies
     @OneToMany(mappedBy = "insuranceProduct", cascade = CascadeType.ALL)
-    @JsonIgnoreProperties({"insuranceProduct", "premiumPayments", "claims"})  // //to prevent loops oin json results !!!!!!!!!!!
+    @JsonManagedReference // This side WILL be serialized into JSON
     private Set<InsurancePolicy> policies;
 
     // Getters and Setters
