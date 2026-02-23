@@ -1,13 +1,16 @@
 package org.example.forsapidev.Controllers;
 
-
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Complaint;
 import org.example.forsapidev.Services.Interfaces.IComplaintService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @AllArgsConstructor
@@ -22,60 +25,110 @@ public class ComplaintController {
     // ================================================
 
     @GetMapping("/retrieve-all-complaints")
-    public List<Complaint> getComplaints() {
-        return complaintService.retrieveAllComplaints();
+    public ResponseEntity<List<Complaint>> getComplaints() {
+        List<Complaint> complaints = complaintService.retrieveAllComplaints();
+        return ResponseEntity.ok(complaints);
     }
 
     @GetMapping("/retrieve-complaint/{complaint-id}")
-    public Complaint retrieveComplaint(@PathVariable("complaint-id") Long cId) {
-        return complaintService.retrieveComplaint(cId);
+    public ResponseEntity<Complaint> retrieveComplaint(
+            @PathVariable("complaint-id") Long cId) {
+        Complaint complaint = complaintService.retrieveComplaint(cId);
+        if (complaint == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        return ResponseEntity.ok(complaint);
     }
 
+    // ✅ AJOUT : @Valid pour activer la validation
     @PostMapping("/add-complaint")
-    public Complaint addComplaint(@RequestBody Complaint c) {
-        return complaintService.addComplaint(c);
+    public ResponseEntity<Complaint> addComplaint(
+            @Valid @RequestBody Complaint c) {
+        Complaint saved = complaintService.addComplaint(c);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
+    // ✅ AJOUT : @Valid pour activer la validation
     @PutMapping("/modify-complaint")
-    public Complaint modifyComplaint(@RequestBody Complaint c) {
-        return complaintService.modifyComplaint(c);
+    public ResponseEntity<Complaint> modifyComplaint(
+            @Valid @RequestBody Complaint c) {
+        Complaint updated = complaintService.modifyComplaint(c);
+        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/remove-complaint/{complaint-id}")
-    public void removeComplaint(@PathVariable("complaint-id") Long cId) {
+    public ResponseEntity<Void> removeComplaint(
+            @PathVariable("complaint-id") Long cId) {
         complaintService.removeComplaint(cId);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     // ================================================
     // ✅ IA 1 : CRÉER AVEC CLASSIFICATION AUTOMATIQUE
     // ================================================
     @PostMapping("/add-complaint-ai")
-    public Complaint addComplaintWithAI(@RequestBody Complaint c) {
-        return complaintService.addComplaintWithAI(c);
+    public ResponseEntity<Complaint> addComplaintWithAI(
+            @Valid @RequestBody Complaint c) {
+        Complaint saved = complaintService.addComplaintWithAI(c);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     // ================================================
     // ✅ IA 2 : GÉNÉRER UNE RÉPONSE AUTOMATIQUE
     // ================================================
     @GetMapping("/generate-response/{complaint-id}")
-    public Map<String, String> generateResponse(
+    public ResponseEntity<Map<String, String>> generateResponse(
             @PathVariable("complaint-id") Long cId) {
-        return complaintService.generateResponseForComplaint(cId);
+        Map<String, String> response =
+                complaintService.generateResponseForComplaint(cId);
+
+        if (response.containsKey("error")) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+        return ResponseEntity.ok(response);
     }
 
     // ================================================
     // ✅ IA 3 : GÉNÉRER UN RAPPORT COMPLET
     // ================================================
     @GetMapping("/generate-report")
-    public Map<String, Object> generateReport() {
-        return complaintService.generateFullReport();
+    public ResponseEntity<Map<String, Object>> generateReport() {
+        Map<String, Object> report = complaintService.generateFullReport();
+        return ResponseEntity.ok(report);
     }
 
     // ================================================
     // ✅ BONUS : STATISTIQUES PAR CATÉGORIE
     // ================================================
     @GetMapping("/stats-by-category")
-    public Map<String, Long> getStatsByCategory() {
-        return complaintService.getStatsByCategory();
+    public ResponseEntity<Map<String, Long>> getStatsByCategory() {
+        Map<String, Long> stats = complaintService.getStatsByCategory();
+        return ResponseEntity.ok(stats);
+    }
+
+    // ================================================
+    // ✅ GESTION DES ERREURS DE VALIDATION
+    // ================================================
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleValidationExceptions(
+            MethodArgumentNotValidException ex) {
+
+        Map<String, Object> errors = new LinkedHashMap<>();
+        errors.put("timestamp", new Date());
+        errors.put("status", HttpStatus.BAD_REQUEST.value());
+        errors.put("error", "Erreur de validation");
+
+        Map<String, String> fieldErrors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach((error) -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            fieldErrors.put(fieldName, errorMessage);
+        });
+
+        errors.put("messages", fieldErrors);
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(errors);
     }
 }
