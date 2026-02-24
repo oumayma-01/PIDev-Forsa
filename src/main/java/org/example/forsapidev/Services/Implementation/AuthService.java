@@ -107,7 +107,7 @@ class AuthService implements IAuthService {
         user.setRole(role);
         userRepository.save(user);
         String request = "http://localhost:4200/pages/validateUser/";
-        String subject ="Vérification de votre e-mail";
+        String subject ="Verification of your email";
         String imagePath = "classpath:static/uploads/logoforsa.png";
         String appUrl = request + user.getId();
         String body = " <html> <head> <meta charset='UTF-8'> <title>Email Verification</title> <style>"
