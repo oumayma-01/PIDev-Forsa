@@ -1,13 +1,15 @@
 package org.example.forsapidev.Services.implementation;
 
 import lombok.RequiredArgsConstructor;
+import org.example.forsapidev.Repositories.ComplaintRepository;
 import org.example.forsapidev.Services.Interfaces.IComplaintService;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Complaint;
-import org.example.forsapidev.Repositories.ComplaintRepository;
+import org.example.forsapidev.openai.ComplaintAiAssistant;
 import org.springframework.stereotype.Service;
+
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Date;
 import java.util.stream.Collectors;
 
 @Service
@@ -15,66 +17,64 @@ import java.util.stream.Collectors;
 public class ComplaintService implements IComplaintService {
 
     private final ComplaintRepository complaintRepository;
+    private final ComplaintAiAssistant complaintAiAssistant;
 
+    @Override
     public List<Complaint> retrieveAllComplaints() {
         return complaintRepository.findAll();
     }
 
+    @Override
     public Complaint retrieveComplaint(Long complaintId) {
         return complaintRepository.findById(complaintId).orElse(null);
     }
 
+    @Override
     public Complaint addComplaint(Complaint c) {
-        c.setCreatedAt(new Date()); // On initialise la date
+        c.setCreatedAt(new Date());
         return complaintRepository.save(c);
     }
 
+    @Override
     public void removeComplaint(Long complaintId) {
         complaintRepository.deleteById(complaintId);
     }
 
+    @Override
     public Complaint modifyComplaint(Complaint complaint) {
         return complaintRepository.save(complaint);
     }
 
+    // ✅ IA 1 : classification via LLM
     @Override
     public Complaint addComplaintWithAI(Complaint c) {
-        // --- MÉTIER : AUDITEUR DE BIAIS ---
-        String desc = (c.getDescription() != null) ? c.getDescription().toLowerCase() : "";
+        String category = complaintAiAssistant.classifyCategory(c.getDescription());
 
-        // Tri automatique par IA (Simulation)
-        if (desc.contains("argent") || desc.contains("paiement") || desc.contains("remboursement")) {
-            c.setCategory("FINANCE");
-        } else if (desc.contains("connexion") || desc.contains("bug") || desc.contains("application")) {
-            c.setCategory("TECHNIQUE");
-        } else {
-            c.setCategory("SUPPORT_GENERAL");
-        }
-
+        c.setCategory(category);
         c.setSubject("Analyse IA : " + (c.getSubject() != null ? c.getSubject() : "Nouveau ticket"));
-
-        // CORRECTION ICI : Ton entité utilise String, donc on met une chaîne de caractères
         c.setStatus("OPEN");
         c.setCreatedAt(new Date());
 
         return complaintRepository.save(c);
     }
 
+    // ✅ IA 2 : réponse via LLM
     @Override
     public Map<String, String> generateResponseForComplaint(Long complaintId) {
-        // --- MÉTIER : CONVERSATION DESIGNER ---
         Complaint c = complaintRepository.findById(complaintId).orElse(null);
         if (c == null) return Map.of("error", "Plainte non trouvée");
 
-        String responseText = "Bonjour, l'analyse de votre requête concernant '" + c.getCategory() +
-                "' est terminée. Notre équipe traitera votre message : " + c.getDescription();
+        String responseText = complaintAiAssistant.draftResponse(
+                c.getCategory(),
+                c.getSubject(),
+                c.getDescription()
+        );
 
         return Map.of("response", responseText);
     }
 
     @Override
     public Map<String, Object> generateFullReport() {
-        // --- MÉTIER : ARCHITECTE ÉMOTIONNEL ---
         long total = complaintRepository.count();
         return Map.of(
                 "title", "Rapport de Fidélité Client",

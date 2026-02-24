@@ -7,25 +7,16 @@ import java.util.Map;
 
 public interface IComplaintService {
 
-    // ============ CRUD DE BASE ============
-
+    // CRUD
     List<Complaint> retrieveAllComplaints();
-
     Complaint retrieveComplaint(Long complaintId);
-
     Complaint addComplaint(Complaint c);
-
     void removeComplaint(Long complaintId);
-
     Complaint modifyComplaint(Complaint complaint);
 
-    // ============ MÉTHODES IA ============
-
+    // IA
     Complaint addComplaintWithAI(Complaint c);
-
     Map<String, String> generateResponseForComplaint(Long complaintId);
-
     Map<String, Object> generateFullReport();
-
     Map<String, Long> getStatsByCategory();
 }
