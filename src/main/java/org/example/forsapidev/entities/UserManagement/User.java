@@ -50,6 +50,9 @@ public class User {
     }
 
     public boolean isExpired() {
+        if (this.expiryDate == null) {
+            return false;
+        }
         return new Date().after(this.expiryDate);
     }
 
