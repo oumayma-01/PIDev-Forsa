@@ -53,7 +53,9 @@ public class JwtUtils {
           "/insurance-policy/**",
           "/insurance-product/**",
           "/premium-payment/**",
-          "/premium-reminder/**"
+          "/premium-reminder/**",
+          //insurance policy pdf endpoints
+          "/policy-pdf/**"
   };
 
   public String generatePinPassword() {
