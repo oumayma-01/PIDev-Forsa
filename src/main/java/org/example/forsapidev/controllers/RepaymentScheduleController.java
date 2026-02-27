@@ -1,7 +1,7 @@
-package org.example.forsapidev.controllers;
+package org.example.forsapidev.Controllers;
 
 import org.example.forsapidev.entities.CreditManagement.RepaymentSchedule;
-import org.example.forsapidev.services.RepaymentScheduleService;
+import org.example.forsapidev.Services.RepaymentScheduleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

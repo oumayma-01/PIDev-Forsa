@@ -1,8 +1,8 @@
-package org.example.forsapidev.services;
+package org.example.forsapidev.Services;
 
 import org.example.forsapidev.entities.CreditManagement.RepaymentSchedule;
 import org.example.forsapidev.entities.CreditManagement.RepaymentStatus;
-import org.example.forsapidev.repositories.RepaymentScheduleRepository;
+import org.example.forsapidev.Repositories.RepaymentScheduleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

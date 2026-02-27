@@ -26,6 +26,13 @@ public class CreditRequest {
 
     private Long agentId;
 
+    /**
+     * Type de calcul du crédit (ANNUITE_CONSTANTE ou AMORTISSEMENT_CONSTANT)
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "amortization_type")
+    private AmortizationType typeCalcul = AmortizationType.AMORTISSEMENT_CONSTANT;
+
     // Fusion tracking fields (no RepaymentSchedule entity)
     @Column(precision = 18, scale = 2)
     private BigDecimal remainingBalance;
@@ -117,6 +124,14 @@ public class CreditRequest {
 
     public void setPaidInstallments(Integer paidInstallments) {
         this.paidInstallments = paidInstallments;
+    }
+
+    public AmortizationType getTypeCalcul() {
+        return typeCalcul;
+    }
+
+    public void setTypeCalcul(AmortizationType typeCalcul) {
+        this.typeCalcul = typeCalcul;
     }
 
     @Override
