@@ -1,9 +1,10 @@
 package org.example.forsapidev.entities.InsuranceManagement;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
-import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "insurance_product")
@@ -33,9 +34,9 @@ public class InsuranceProduct {
     private Boolean isActive = true;
 
 //    // Relationship: One Product has Many Policies
-//    @OneToMany(mappedBy = "insuranceProduct", cascade = CascadeType.ALL)
-//    @JsonIgnoreProperties({"insuranceProduct", "premiumPayments", "claims"})  // //to prevent loops oin json results !!!!!!!!!!!
-//    private List<InsurancePolicy> policies;
+    @OneToMany(mappedBy = "insuranceProduct", cascade = CascadeType.ALL)
+    @JsonManagedReference // This side WILL be serialized into JSON
+    private Set<InsurancePolicy> policies;
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -60,5 +61,5 @@ public class InsuranceProduct {
     public void setDurationMonths(Integer durationMonths) { this.durationMonths = durationMonths; }
 
     public Boolean getIsActive() { return isActive; }
-    public void setIsActive(Boolean isActive) { this.isActive = isActive; }
+    public void setPolicies(Set<InsurancePolicy> policies) { this.policies = policies; }
 }
