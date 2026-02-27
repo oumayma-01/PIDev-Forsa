@@ -43,4 +43,14 @@ public class InsurancePolicyController {
         InsurancePolicy insurancePolicy = insurancePolicyService.modifyInsurancePolicy(policy);
         return insurancePolicy;
     }
+
+    @PutMapping("/affect-claims/{policy-id}")
+    public InsurancePolicy affectClaimsToPolicy(@RequestBody List<Long> claimIds, @PathVariable("policy-id") Long policyId) {
+        return insurancePolicyService.affectClaimsToPolicy(claimIds, policyId);
+    }
+
+    @PutMapping("/affect-premium-payments/{policy-id}")
+    public InsurancePolicy affectPremiumPaymentsToPolicy(@RequestBody List<Long> paymentIds, @PathVariable("policy-id") Long policyId) {
+        return insurancePolicyService.affectPremiumPaymentsToPolicy(paymentIds, policyId);
+    }
 }

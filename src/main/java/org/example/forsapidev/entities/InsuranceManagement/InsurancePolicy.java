@@ -1,11 +1,13 @@
 package org.example.forsapidev.entities.InsuranceManagement;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import org.example.forsapidev.entities.UserManagement.User; // Import User entity
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "insurance_policy")
@@ -43,19 +45,19 @@ public class InsurancePolicy {
 
     // Relationship: Many Policies belong to One Product
     @ManyToOne
-    @JoinColumn(name = "product_id", nullable = false)
-    @JsonIgnoreProperties("policies")   //to prevent loops oin json results !!!!!!!!!!!
+    @JoinColumn(name = "product_id", nullable = true)
+    @JsonBackReference // This prevents the loop back to InsuranceProduct
     private InsuranceProduct insuranceProduct;
 
     // Relationship: One Policy has Many Premium Payments
     @OneToMany(mappedBy = "insurancePolicy", cascade = CascadeType.ALL)
-    @JsonIgnoreProperties("insurancePolicy")    //to prevent loops oin json results !!!!!!!!!!!
-    private List<PremiumPayment> premiumPayments;
+    @JsonManagedReference // Jackson will follow this link and serialize the claims
+    private Set<PremiumPayment> premiumPayments;
 
     // Relationship: One Policy has Many Claims
     @OneToMany(mappedBy = "insurancePolicy", cascade = CascadeType.ALL)
-    @JsonIgnoreProperties("insurancePolicy")  //to prevent loops oin json results !!!!!!!!!!!
-    private List<InsuranceClaim> claims;
+    @JsonManagedReference // Jackson will follow this link and serialize the claims
+    private Set<InsuranceClaim> claims;
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -91,9 +93,9 @@ public class InsurancePolicy {
     public InsuranceProduct getInsuranceProduct() { return insuranceProduct; }
     public void setInsuranceProduct(InsuranceProduct insuranceProduct) { this.insuranceProduct = insuranceProduct; }
 
-    public List<PremiumPayment> getPremiumPayments() { return premiumPayments; }
-    public void setPremiumPayments(List<PremiumPayment> premiumPayments) { this.premiumPayments = premiumPayments; }
+    public Set<PremiumPayment> getPremiumPayments() { return premiumPayments; }
+    public void setPremiumPayments(Set<PremiumPayment> premiumPayments) { this.premiumPayments = premiumPayments; }
 
-    public List<InsuranceClaim> getClaims() { return claims; }
-    public void setClaims(List<InsuranceClaim> claims) { this.claims = claims; }
+    public Set<InsuranceClaim> getClaims() { return claims; }
+    public void setClaims(Set<InsuranceClaim> claims) { this.claims = claims; }
 }

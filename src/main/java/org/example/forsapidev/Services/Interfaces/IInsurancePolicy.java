@@ -9,4 +9,6 @@ public interface IInsurancePolicy {
     public InsurancePolicy addInsurancePolicy(InsurancePolicy policy);
     public void removeInsurancePolicy(Long policyId);
     public InsurancePolicy modifyInsurancePolicy(InsurancePolicy policy);
+    public InsurancePolicy affectClaimsToPolicy(List<Long> claimIds, Long policyId);
+    public InsurancePolicy affectPremiumPaymentsToPolicy(List<Long> paymentIds, Long policyId);
 }

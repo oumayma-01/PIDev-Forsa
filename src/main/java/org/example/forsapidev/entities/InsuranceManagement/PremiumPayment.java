@@ -1,5 +1,6 @@
 package org.example.forsapidev.entities.InsuranceManagement;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -28,7 +29,8 @@ public class PremiumPayment {
 
     // Relationship: Many Payments belong to One Policy
     @ManyToOne
-    @JoinColumn(name = "policy_id", nullable = false)   // join w policy
+    @JoinColumn(name = "policy_id", nullable = true)   // join w policy
+    @JsonBackReference // Jackson will stop here and NOT go back to the policy
     private InsurancePolicy insurancePolicy;
 
     // Getters and Setters

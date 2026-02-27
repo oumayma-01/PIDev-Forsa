@@ -1,0 +1,18 @@
+package org.example.forsapidev.DTO;
+
+public class ClaimsByStatusDTO {
+    private String status;
+    private Long count;
+
+    public ClaimsByStatusDTO(String status, Long count) {
+        this.status = status;
+        this.count = count;
+    }
+
+    // Getters and Setters
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public Long getCount() { return count; }
+    public void setCount(Long count) { this.count = count; }
+}

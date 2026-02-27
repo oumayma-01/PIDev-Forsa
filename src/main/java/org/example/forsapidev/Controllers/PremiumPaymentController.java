@@ -2,6 +2,7 @@ package org.example.forsapidev.Controllers;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.example.forsapidev.entities.InsuranceManagement.PremiumPayment;
+import org.example.forsapidev.entities.InsuranceManagement.InsurancePolicy;
 import org.example.forsapidev.Services.Interfaces.IPremiumPayment;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -42,5 +43,10 @@ public class PremiumPaymentController {
     public PremiumPayment modifyPremiumPayment(@RequestBody PremiumPayment payment) {
         PremiumPayment premiumPayment = premiumPaymentService.modifyPremiumPayment(payment);
         return premiumPayment;
+    }
+
+    @PutMapping("/affect-premium-payments/{policy-id}")
+    public InsurancePolicy affectPremiumPaymentsToPolicy(@RequestBody List<Long> paymentIds, @PathVariable("policy-id") Long policyId) {
+        return premiumPaymentService.affectPremiumPaymentsToPolicy(paymentIds, policyId);
     }
 }

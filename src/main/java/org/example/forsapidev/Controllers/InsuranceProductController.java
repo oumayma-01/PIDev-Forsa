@@ -43,4 +43,9 @@ public class InsuranceProductController {
         InsuranceProduct insuranceProduct = insuranceProductService.modifyInsuranceProduct(product);
         return insuranceProduct;
     }
+
+    @PutMapping("/affect-policies/{product-id}")
+    public InsuranceProduct affectPoliciesToProduct(@RequestBody List<Long> policyIds, @PathVariable("product-id") Long productId) {
+        return insuranceProductService.affectPoliciesToProduct(policyIds, productId);
+    }
 }

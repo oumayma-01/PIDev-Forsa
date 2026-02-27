@@ -1,5 +1,6 @@
 package org.example.forsapidev.entities.InsuranceManagement;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -36,8 +37,8 @@ public class InsuranceClaim {
 
     // Relationship: Many Claims belong to One Policy
     @ManyToOne
-    @JoinColumn(name = "policy_id", nullable = false)    // join w policy claim !!!!!!!!!!!
-    @JsonIgnoreProperties({"claims", "premiumPayments"})  //to prevent loops oin json results !!!!!!!!!!!
+    @JoinColumn(name = "policy_id", nullable = true)    // join w policy claim !!!!!!!!!!!
+    @JsonBackReference // Jackson will stop here and NOT go back to the policy
     private InsurancePolicy insurancePolicy;
 
     // Getters and Setters
