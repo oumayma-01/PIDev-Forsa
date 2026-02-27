@@ -1,11 +1,14 @@
-package org.example.forsapidev.services;
+package org.example.forsapidev.Services;
 
+import org.example.forsapidev.entities.CreditManagement.AmortizationType;
 import org.example.forsapidev.entities.CreditManagement.CreditRequest;
 import org.example.forsapidev.entities.CreditManagement.CreditStatus;
 import org.example.forsapidev.entities.CreditManagement.RepaymentSchedule;
 import org.example.forsapidev.entities.CreditManagement.RepaymentStatus;
-import org.example.forsapidev.repositories.CreditRequestRepository;
-import org.example.forsapidev.repositories.RepaymentScheduleRepository;
+import org.example.forsapidev.Repositories.CreditRequestRepository;
+import org.example.forsapidev.Repositories.RepaymentScheduleRepository;
+import org.example.forsapidev.Services.amortization.AmortizationCalculatorService;
+import org.example.forsapidev.Services.amortization.AmortizationResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,13 +26,16 @@ public class CreditRequestService {
     private final CreditRequestRepository creditRequestRepository;
     private final RepaymentScheduleRepository repaymentScheduleRepository;
     private final InterestRateEngineService interestRateEngineService;
+    private final AmortizationCalculatorService amortizationCalculatorService;
 
     public CreditRequestService(CreditRequestRepository creditRequestRepository,
                                 RepaymentScheduleRepository repaymentScheduleRepository,
-                                InterestRateEngineService interestRateEngineService) {
+                                InterestRateEngineService interestRateEngineService,
+                                AmortizationCalculatorService amortizationCalculatorService) {
         this.creditRequestRepository = creditRequestRepository;
         this.repaymentScheduleRepository = repaymentScheduleRepository;
         this.interestRateEngineService = interestRateEngineService;
+        this.amortizationCalculatorService = amortizationCalculatorService;
     }
 
     // Create a credit request and generate repayment schedules automatically
@@ -37,6 +43,7 @@ public class CreditRequestService {
     public CreditRequest createCreditRequest(CreditRequest request) {
         if (request.getStatus() == null) request.setStatus(CreditStatus.SUBMITTED);
         if (request.getRequestDate() == null) request.setRequestDate(ZonedDateTime.now(ZoneId.systemDefault()).toLocalDateTime());
+        if (request.getTypeCalcul() == null) request.setTypeCalcul(AmortizationType.AMORTISSEMENT_CONSTANT);
         if (request.getInterestRate() == null || request.getInterestRate() <= 0) {
             BigDecimal finalRatePercent = interestRateEngineService.computeAnnualRatePercent(
                     request.getRequestDate(), request.getDurationMonths(), null, null);
@@ -68,51 +75,80 @@ public class CreditRequestService {
     // New: validate (approve) a credit and generate schedules
     @Transactional
     public CreditRequest validateCredit(Long id) {
-        CreditRequest credit = creditRequestRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Credit not found"));
+        CreditRequest credit = creditRequestRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Credit not found"));
+
+        // Validation du statut
+        if (credit.getStatus() == CreditStatus.APPROVED || credit.getStatus() == CreditStatus.ACTIVE) {
+            throw new IllegalStateException("Le crédit est déjà validé");
+        }
+
         // set status to APPROVED
         credit.setStatus(CreditStatus.APPROVED);
-        if (credit.getRequestDate() == null) credit.setRequestDate(ZonedDateTime.now(ZoneId.systemDefault()).toLocalDateTime());
+
+        // Initialisation des champs si nécessaires
+        if (credit.getRequestDate() == null) {
+            credit.setRequestDate(ZonedDateTime.now(ZoneId.systemDefault()).toLocalDateTime());
+        }
         if (credit.getInterestRate() == null || credit.getInterestRate() <= 0) {
             BigDecimal finalRatePercent = interestRateEngineService.computeAnnualRatePercent(
                     credit.getRequestDate(), credit.getDurationMonths(), null, null);
             credit.setInterestRate(finalRatePercent.doubleValue());
         }
+        if (credit.getTypeCalcul() == null) {
+            credit.setTypeCalcul(AmortizationType.AMORTISSEMENT_CONSTANT);
+        }
+
         CreditRequest saved = creditRequestRepository.save(credit);
-        generateRepaymentScheduleFixedPrincipal(saved);
+
+        // Génération du tableau d'amortissement selon le type choisi
+        generateRepaymentSchedule(saved);
+
         return saved;
     }
 
+    /**
+     * Génère le tableau d'amortissement selon le type de calcul choisi
+     * Utilise le pattern Strategy via AmortizationCalculatorService
+     */
     @Transactional
-    public List<RepaymentSchedule> generateRepaymentScheduleFixedPrincipal(CreditRequest credit) {
-        if (credit.getDurationMonths() == null || credit.getDurationMonths() <= 0) return new ArrayList<>();
-        BigDecimal principalTotal = credit.getAmountRequested();
-        int months = credit.getDurationMonths();
-        BigDecimal annualRatePercent = BigDecimal.valueOf(credit.getInterestRate());
-        BigDecimal monthlyInterest = interestRateEngineService.computeMonthlyInterest(principalTotal, annualRatePercent);
-        BigDecimal principalMonthly = interestRateEngineService.computeMonthlyPrincipal(principalTotal, months);
-
-        List<RepaymentSchedule> schedules = new ArrayList<>();
-        BigDecimal remaining = principalTotal;
-        java.time.LocalDate start = ZonedDateTime.now(ZoneId.systemDefault()).toLocalDate();
-
-        for (int i = 1; i <= months; i++) {
-            BigDecimal principalPart = (i == months) ? remaining : principalMonthly;
-            BigDecimal totalAmount = principalPart.add(monthlyInterest).setScale(2, RoundingMode.HALF_UP);
-            BigDecimal newRemaining = remaining.subtract(principalPart).setScale(2, RoundingMode.HALF_UP);
-
-            RepaymentSchedule sched = new RepaymentSchedule();
-            sched.setDueDate(start.plusMonths(i));
-            sched.setPrincipalPart(principalPart);
-            sched.setInterestPart(monthlyInterest);
-            sched.setTotalAmount(totalAmount);
-            sched.setRemainingBalance(newRemaining.max(BigDecimal.ZERO));
-            sched.setStatus(RepaymentStatus.PENDING);
-            sched.setCreditRequest(credit);
-            schedules.add(sched);
-            remaining = newRemaining;
+    public List<RepaymentSchedule> generateRepaymentSchedule(CreditRequest credit) {
+        if (credit.getDurationMonths() == null || credit.getDurationMonths() <= 0) {
+            return new ArrayList<>();
         }
+
+        BigDecimal principal = credit.getAmountRequested();
+        BigDecimal annualRatePercent = BigDecimal.valueOf(credit.getInterestRate());
+        int durationMonths = credit.getDurationMonths();
+        AmortizationType type = credit.getTypeCalcul();
+
+        if (type == null) {
+            type = AmortizationType.AMORTISSEMENT_CONSTANT;
+        }
+
+        // Utilisation du service de calcul avec Strategy Pattern
+        AmortizationResult result = amortizationCalculatorService.calculateSchedule(
+                type, principal, annualRatePercent, durationMonths);
+
+        // Conversion des périodes en entités RepaymentSchedule
+        List<RepaymentSchedule> schedules = new ArrayList<>();
+        java.time.LocalDate startDate = ZonedDateTime.now(ZoneId.systemDefault()).toLocalDate();
+
+        for (AmortizationResult.MonthlyPeriod period : result.getPeriods()) {
+            RepaymentSchedule schedule = new RepaymentSchedule();
+            schedule.setDueDate(startDate.plusMonths(period.getMonthNumber()));
+            schedule.setPrincipalPart(period.getPrincipalPayment());
+            schedule.setInterestPart(period.getInterestPayment());
+            schedule.setTotalAmount(period.getTotalPayment());
+            schedule.setRemainingBalance(period.getRemainingBalance());
+            schedule.setStatus(RepaymentStatus.PENDING);
+            schedule.setCreditRequest(credit);
+            schedules.add(schedule);
+        }
+
         return repaymentScheduleRepository.saveAll(schedules);
     }
+
 
     @Transactional
     public void onRepaymentPaid(RepaymentSchedule schedule) {

@@ -1,4 +1,4 @@
-package org.example.forsapidev.repositories;
+package org.example.forsapidev.Repositories;
 
 import org.example.forsapidev.entities.CreditManagement.RepaymentSchedule;
 import org.springframework.data.jpa.repository.JpaRepository;

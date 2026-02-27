@@ -1,7 +1,7 @@
-package org.example.forsapidev.controllers;
+package org.example.forsapidev.Controllers;
 
 import org.example.forsapidev.entities.CreditManagement.TmmRate;
-import org.example.forsapidev.repositories.TmmRateRepository;
+import org.example.forsapidev.Repositories.TmmRateRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
