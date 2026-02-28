@@ -27,9 +27,6 @@ public class ComplaintService implements IComplaintService {
     private final ResponseRepository responseRepository;
     private final FeedbackRepository feedbackRepository;
 
-    // =====================
-    // CRUD
-    // =====================
     @Override
     public List<Complaint> retrieveAllComplaints() {
         return complaintRepository.findAll();
@@ -56,21 +53,21 @@ public class ComplaintService implements IComplaintService {
         return complaintRepository.save(complaint);
     }
 
-    // =====================
-    // IA
-    // =====================
     @Override
     public Complaint addComplaintWithAI(Complaint c) {
-        String category = complaintAiAssistant.classifyCategory(c.getDescription());
+        String category;
+        try {
+            category = complaintAiAssistant.classifyCategory(c.getDescription());
+        } catch (Exception e) {
+            category = "SUPPORT";
+        }
 
-        // ✅ Fix: respecter @Pattern de Complaint.category
         if ("SUPPORT_GENERAL".equalsIgnoreCase(category)) category = "SUPPORT";
 
         c.setCategory(category);
         c.setSubject("Analyse IA : " + (c.getSubject() != null ? c.getSubject() : "Nouveau ticket"));
         c.setStatus("OPEN");
         c.setCreatedAt(new Date());
-
         return complaintRepository.save(c);
     }
 
@@ -79,18 +76,18 @@ public class ComplaintService implements IComplaintService {
         Complaint c = complaintRepository.findById(complaintId).orElse(null);
         if (c == null) return Map.of("error", "Plainte non trouvée");
 
-        String responseText = complaintAiAssistant.draftResponse(
-                c.getCategory(),
-                c.getSubject(),
-                c.getDescription()
-        );
-
-        return Map.of("response", responseText);
+        try {
+            String responseText = complaintAiAssistant.draftResponse(
+                    c.getCategory(),
+                    c.getSubject(),
+                    c.getDescription()
+            );
+            return Map.of("response", responseText);
+        } catch (Exception e) {
+            return Map.of("response", "Réponse IA indisponible pour le moment.");
+        }
     }
 
-    // =====================
-    // Report
-    // =====================
     @Override
     public Map<String, Object> generateFullReport() {
         long total = complaintRepository.count();
@@ -110,16 +107,18 @@ public class ComplaintService implements IComplaintService {
                         "byStatus=" + base.get("byStatus") + "\n" +
                         "byCategory=" + base.get("byCategory");
 
-        String insights = complaintAiAssistant.generateInsightsFromReport(textForAi);
+        String insights;
+        try {
+            insights = complaintAiAssistant.generateInsightsFromReport(textForAi);
+        } catch (Exception e) {
+            insights = "Insights indisponibles (IA non configurée).";
+        }
 
         Map<String, Object> res = new LinkedHashMap<>(base);
         res.put("insights", insights);
         return res;
     }
 
-    // =====================
-    // Stats / Reporting
-    // =====================
     @Override
     public Map<String, Long> getStatsByCategory() {
         return complaintRepository.findAll().stream()
@@ -127,28 +126,6 @@ public class ComplaintService implements IComplaintService {
                 .collect(Collectors.groupingBy(Complaint::getCategory, Collectors.counting()));
     }
 
-    @Override
-    public Map<String, Object> getComplaintSummaryReport() {
-        long total = complaintRepository.count();
-        Map<String, Long> byStatus = toStringLongMap(complaintRepository.countByStatus());
-        Map<String, Long> byCategory = toStringLongMap(complaintRepository.countByCategory());
-
-        Map<String, Object> res = new LinkedHashMap<>();
-        res.put("total", total);
-        res.put("byStatus", byStatus);
-        res.put("byCategory", byCategory);
-        return res;
-    }
-
-    @Override
-    public List<Map<String, Object>> getComplaintTrendsLastMonths(int months) {
-        List<Complaint> complaints = complaintRepository.findAll();
-        return trendsByMonth(complaints.stream().map(Complaint::getCreatedAt).toList(), months);
-    }
-
-    // =====================
-    // Affect
-    // =====================
     @Override
     public Complaint affectComplaintToUser(Long complaintId, Long userId) {
         Complaint complaint = complaintRepository.findById(complaintId).orElse(null);
@@ -161,9 +138,6 @@ public class ComplaintService implements IComplaintService {
         return complaintRepository.save(complaint);
     }
 
-    // =====================
-    // Workflow
-    // =====================
     @Override
     public Response addResponseAndUpdateStatus(Long complaintId, Response r) {
         Complaint complaint = complaintRepository.findById(complaintId).orElse(null);
@@ -197,9 +171,25 @@ public class ComplaintService implements IComplaintService {
         complaintRepository.save(complaint);
     }
 
-    // =====================
-    // Helpers
-    // =====================
+    @Override
+    public Map<String, Object> getComplaintSummaryReport() {
+        long total = complaintRepository.count();
+        Map<String, Long> byStatus = toStringLongMap(complaintRepository.countByStatus());
+        Map<String, Long> byCategory = toStringLongMap(complaintRepository.countByCategory());
+
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("total", total);
+        res.put("byStatus", byStatus);
+        res.put("byCategory", byCategory);
+        return res;
+    }
+
+    @Override
+    public List<Map<String, Object>> getComplaintTrendsLastMonths(int months) {
+        List<Complaint> complaints = complaintRepository.findAll();
+        return trendsByMonth(complaints.stream().map(Complaint::getCreatedAt).toList(), months);
+    }
+
     private Map<String, Long> toStringLongMap(List<Object[]> rows) {
         Map<String, Long> map = new LinkedHashMap<>();
         for (Object[] r : rows) map.put(String.valueOf(r[0]), (Long) r[1]);
@@ -229,4 +219,6 @@ public class ComplaintService implements IComplaintService {
         return res;
     }
 }
+
+
 

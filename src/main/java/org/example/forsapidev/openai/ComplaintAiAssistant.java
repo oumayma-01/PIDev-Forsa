@@ -5,9 +5,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class ComplaintAiAssistant {
 
-    private final org.example.forsapidev.openai.OpenAiChatClient client;
+    private final OpenAiChatClient client;
 
-    public ComplaintAiAssistant(org.example.forsapidev.openai.OpenAiChatClient client) {
+    public ComplaintAiAssistant(OpenAiChatClient client) {
         this.client = client;
     }
 
@@ -21,7 +21,6 @@ public class ComplaintAiAssistant {
         if (out.contains("TECHNIQUE")) return "TECHNIQUE";
         if (out.contains("SUPPORT_GENERAL")) return "SUPPORT_GENERAL";
 
-        // fallback simple (si le modèle répond mal)
         String desc = description == null ? "" : description.toLowerCase();
         if (desc.contains("paiement") || desc.contains("remboursement") || desc.contains("argent")) return "FINANCE";
         if (desc.contains("bug") || desc.contains("connexion") || desc.contains("application")) return "TECHNIQUE";
@@ -38,6 +37,7 @@ public class ComplaintAiAssistant {
 
         return client.chat(system, user);
     }
+
     public String analyzeFeedbackSatisfaction(Integer rating, String comment) {
         String system = "Tu es un classificateur. Réponds uniquement par une seule valeur parmi: "
                 + "VERY_SATISFIED, SATISFIED, NEUTRAL, DISSATISFIED, VERY_DISSATISFIED.";
@@ -55,7 +55,6 @@ public class ComplaintAiAssistant {
         if (out.contains("VERY_DISSATISFIED")) return "VERY_DISSATISFIED";
         if (out.contains("DISSATISFIED")) return "DISSATISFIED";
 
-        // fallback simple basé sur rating
         if (rating == null) return "NEUTRAL";
         if (rating <= 2) return "DISSATISFIED";
         if (rating == 3) return "NEUTRAL";
@@ -74,6 +73,7 @@ public class ComplaintAiAssistant {
 
         return client.chat(system, user);
     }
+
     public String improveResponse(String category, String subject, String description, String draftMessage) {
         String system = "Tu es un agent support assurance. Reformule et améliore le message. "
                 + "Réponds en français, 3 à 5 phrases, ton professionnel. "
@@ -87,6 +87,4 @@ public class ComplaintAiAssistant {
 
         return client.chat(system, user);
     }
-
-
 }

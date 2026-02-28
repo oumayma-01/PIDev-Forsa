@@ -15,13 +15,8 @@ import java.util.*;
 public class FeedbackService implements IFeedbackService {
 
     private final FeedbackRepository feedbackRepository;
-
-    // ✅ IA (réutilise ton assistant existant)
     private final ComplaintAiAssistant complaintAiAssistant;
 
-    // =========================
-    // CRUD
-    // =========================
     @Override
     public List<Feedback> retrieveAllFeedbacks() {
         return feedbackRepository.findAll();
@@ -47,24 +42,22 @@ public class FeedbackService implements IFeedbackService {
         return feedbackRepository.save(feedback);
     }
 
-    // =========================
-    // IA (Advanced métier)
-    // =========================
     @Override
     public Feedback addFeedbackWithAI(Feedback f) {
         if (f.getSatisfactionLevel() == null || f.getSatisfactionLevel().isBlank()) {
-            String level = complaintAiAssistant.analyzeFeedbackSatisfaction(
-                    f.getRating(),
-                    f.getComment()
-            );
-            f.setSatisfactionLevel(level);
+            try {
+                String level = complaintAiAssistant.analyzeFeedbackSatisfaction(f.getRating(), f.getComment());
+                f.setSatisfactionLevel(level);
+            } catch (Exception e) {
+                Integer r = f.getRating();
+                if (r == null) f.setSatisfactionLevel("NEUTRAL");
+                else if (r <= 2) f.setSatisfactionLevel("DISSATISFIED");
+                else if (r == 3) f.setSatisfactionLevel("NEUTRAL");
+                else f.setSatisfactionLevel("SATISFIED");
+            }
         }
         return feedbackRepository.save(f);
     }
-
-    // =========================
-    // REPORTING (Advanced métiers)
-    // =========================
 
     @Override
     public Map<String, Object> getFeedbackSummaryReport() {

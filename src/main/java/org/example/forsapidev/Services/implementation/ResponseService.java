@@ -16,6 +16,7 @@ import java.util.Map;
 public class ResponseService implements IResponseService {
 
     private final ResponseRepository responseRepository;
+    private final ComplaintAiAssistant complaintAiAssistant;
 
     @Override
     public List<Response> retrieveAllResponses() {
@@ -42,7 +43,6 @@ public class ResponseService implements IResponseService {
         return responseRepository.save(response);
     }
 
-    // ✅ Reporting
     @Override
     public Map<String, Object> getResponseSummaryReport() {
         long total = responseRepository.count();
@@ -58,20 +58,16 @@ public class ResponseService implements IResponseService {
         ));
     }
 
+    @Override
+    public Response improveResponseWithAI(Long responseId) {
+        Response r = responseRepository.findById(responseId).orElse(null);
+        if (r == null) return null;
 
+        if (r.getComplaint() == null) {
+            throw new IllegalStateException("Response must be linked to a complaint");
+        }
 
-
-        private final ComplaintAiAssistant complaintAiAssistant;
-
-        @Override
-        public Response improveResponseWithAI(Long responseId) {
-            Response r = responseRepository.findById(responseId).orElse(null);
-            if (r == null) return null;
-
-            if (r.getComplaint() == null) {
-                throw new IllegalStateException("Response must be linked to a complaint");
-            }
-
+        try {
             String improved = complaintAiAssistant.improveResponse(
                     r.getComplaint().getCategory(),
                     r.getComplaint().getSubject(),
@@ -82,7 +78,10 @@ public class ResponseService implements IResponseService {
             r.setMessage(improved);
             r.setResponseStatus("PROCESSED");
             return responseRepository.save(r);
+
+        } catch (Exception e) {
+            r.setResponseStatus("PENDING");
+            return responseRepository.save(r);
         }
     }
-
-
+}
