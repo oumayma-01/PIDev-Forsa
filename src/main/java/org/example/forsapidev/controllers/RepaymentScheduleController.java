@@ -1,5 +1,6 @@
 package org.example.forsapidev.Controllers;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.example.forsapidev.entities.CreditManagement.RepaymentSchedule;
 import org.example.forsapidev.Services.RepaymentScheduleService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
-
+@SecurityRequirement(name = "Bearer Authentication")
 @RestController
 @RequestMapping("/api/repayments")
 public class RepaymentScheduleController {

@@ -1,5 +1,6 @@
 package org.example.forsapidev.Controllers;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.example.forsapidev.entities.CreditManagement.CreditRequest;
 import org.example.forsapidev.Services.CreditRequestService;
 import org.example.forsapidev.Services.amortization.AmortizationCalculatorService;
@@ -16,7 +17,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
+@SecurityRequirement(name = "Bearer Authentication")
 @RestController
 @RequestMapping("/api/credits")
 public class CreditRequestController {
@@ -93,6 +94,74 @@ public class CreditRequestController {
             logger.error("Error validating credit", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
         }
+    }
+
+    /**
+     * Endpoint pour l'agent : approuver une demande de crédit
+     * POST /api/credits/{id}/approve
+     */
+    @PostMapping("/{id}/approve")
+    public ResponseEntity<?> approveCredit(@PathVariable Long id) {
+        try {
+            CreditRequest approved = service.approveCredit(id);
+            logger.info("Crédit ID={} approuvé avec succès", id);
+            return ResponseEntity.ok(approved);
+        } catch (IllegalArgumentException e) {
+            logger.warn("Crédit ID={} introuvable", id);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "Crédit introuvable", "message", e.getMessage()));
+        } catch (IllegalStateException e) {
+            logger.warn("Tentative d'approbation d'un crédit dans un état invalide : {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "État invalide", "message", e.getMessage()));
+        } catch (Exception e) {
+            logger.error("Erreur lors de l'approbation du crédit ID={}", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Erreur serveur", "message", e.getMessage()));
+        }
+    }
+
+    /**
+     * Endpoint pour l'agent : rejeter une demande de crédit
+     * POST /api/credits/{id}/reject
+     */
+    @PostMapping("/{id}/reject")
+    public ResponseEntity<?> rejectCredit(@PathVariable Long id, @RequestBody(required = false) Map<String, String> body) {
+        String reason = body != null ? body.getOrDefault("reason", "Non spécifié") : "Non spécifié";
+
+        try {
+            CreditRequest rejected = service.rejectCredit(id, reason);
+            logger.info("Crédit ID={} rejeté avec succès - Raison: {}", id, reason);
+            return ResponseEntity.ok(rejected);
+        } catch (IllegalArgumentException e) {
+            logger.warn("Crédit ID={} introuvable", id);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "Crédit introuvable", "message", e.getMessage()));
+        } catch (IllegalStateException e) {
+            logger.warn("Tentative de rejet d'un crédit dans un état invalide : {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "État invalide", "message", e.getMessage()));
+        } catch (Exception e) {
+            logger.error("Erreur lors du rejet du crédit ID={}", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Erreur serveur", "message", e.getMessage()));
+        }
+    }
+
+    /**
+     * Endpoint pour l'agent : lister les crédits en attente de revue (UNDER_REVIEW)
+     * GET /api/credits/pending
+     */
+    @GetMapping("/pending")
+    public ResponseEntity<List<CreditRequest>> getPendingCredits() {
+        List<CreditRequest> allCredits = service.getAll();
+        List<CreditRequest> pending = allCredits.stream()
+                .filter(c -> c.getStatus() == org.example.forsapidev.entities.CreditManagement.CreditStatus.UNDER_REVIEW
+                          || c.getStatus() == org.example.forsapidev.entities.CreditManagement.CreditStatus.SUBMITTED)
+                .collect(Collectors.toList());
+
+        logger.info("Récupération de {} crédits en attente de revue", pending.size());
+        return ResponseEntity.ok(pending);
     }
 
     /**

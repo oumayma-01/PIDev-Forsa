@@ -9,11 +9,14 @@ import org.example.forsapidev.Repositories.CreditRequestRepository;
 import org.example.forsapidev.Repositories.RepaymentScheduleRepository;
 import org.example.forsapidev.Services.amortization.AmortizationCalculatorService;
 import org.example.forsapidev.Services.amortization.AmortizationResult;
+import org.example.forsapidev.Services.scoring.CreditScoringService;
+import org.example.forsapidev.Services.scoring.ScoringServiceException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -23,24 +26,31 @@ import java.util.Optional;
 @Service
 public class CreditRequestService {
 
+    private static final Logger logger = LoggerFactory.getLogger(CreditRequestService.class);
+
     private final CreditRequestRepository creditRequestRepository;
     private final RepaymentScheduleRepository repaymentScheduleRepository;
     private final InterestRateEngineService interestRateEngineService;
     private final AmortizationCalculatorService amortizationCalculatorService;
+    private final CreditScoringService creditScoringService;
 
     public CreditRequestService(CreditRequestRepository creditRequestRepository,
                                 RepaymentScheduleRepository repaymentScheduleRepository,
                                 InterestRateEngineService interestRateEngineService,
-                                AmortizationCalculatorService amortizationCalculatorService) {
+                                AmortizationCalculatorService amortizationCalculatorService,
+                                CreditScoringService creditScoringService) {
         this.creditRequestRepository = creditRequestRepository;
         this.repaymentScheduleRepository = repaymentScheduleRepository;
         this.interestRateEngineService = interestRateEngineService;
         this.amortizationCalculatorService = amortizationCalculatorService;
+        this.creditScoringService = creditScoringService;
     }
 
     // Create a credit request and generate repayment schedules automatically
     @Transactional
     public CreditRequest createCreditRequest(CreditRequest request) {
+        logger.info("Création d'une nouvelle demande de crédit pour un montant de {}", request.getAmountRequested());
+
         if (request.getStatus() == null) request.setStatus(CreditStatus.SUBMITTED);
         if (request.getRequestDate() == null) request.setRequestDate(ZonedDateTime.now(ZoneId.systemDefault()).toLocalDateTime());
         if (request.getTypeCalcul() == null) request.setTypeCalcul(AmortizationType.AMORTISSEMENT_CONSTANT);
@@ -49,7 +59,31 @@ public class CreditRequestService {
                     request.getRequestDate(), request.getDurationMonths(), null, null);
             request.setInterestRate(finalRatePercent.doubleValue());
         }
-        return creditRequestRepository.save(request);
+
+        // Sauvegarde initiale pour obtenir un ID
+        CreditRequest savedRequest = creditRequestRepository.save(request);
+
+        // Scoring IA automatique lors de la création
+        try {
+            logger.info("Lancement du scoring IA pour la demande de crédit ID={}", savedRequest.getId());
+            creditScoringService.scoreCredit(savedRequest);
+
+            // Mise à jour du statut en fonction du scoring
+            savedRequest.setStatus(CreditStatus.UNDER_REVIEW);
+            savedRequest = creditRequestRepository.save(savedRequest);
+
+            logger.info("Demande de crédit créée avec succès - ID={}, Score={}, Risque={}",
+                       savedRequest.getId(),
+                       savedRequest.getRiskScore(),
+                       savedRequest.getRiskLevel());
+        } catch (ScoringServiceException e) {
+            // Si le scoring échoue, on laisse la demande en SUBMITTED
+            logger.warn("Le scoring IA a échoué pour la demande ID={} - Demande laissée en statut SUBMITTED pour revue manuelle : {}",
+                       savedRequest.getId(), e.getMessage());
+            // On ne bloque pas la création, l'agent pourra décider manuellement
+        }
+
+        return savedRequest;
     }
 
     public Optional<CreditRequest> getById(Long id) { return creditRequestRepository.findById(id); }
@@ -72,9 +106,21 @@ public class CreditRequestService {
         creditRequestRepository.deleteById(id);
     }
 
-    // New: validate (approve) a credit and generate schedules
+    /**
+     * Valide et approuve une demande de crédit
+     * WORKFLOW COMPLET :
+     * 1. Vérifie le statut
+     * 2. Si pas encore scoré, lance le scoring IA
+     * 3. Passe en APPROVED
+     * 4. Génère le tableau d'amortissement
+     *
+     * @param id ID du crédit à valider
+     * @return le crédit validé
+     */
     @Transactional
     public CreditRequest validateCredit(Long id) {
+        logger.info("Validation de la demande de crédit ID={}", id);
+
         CreditRequest credit = creditRequestRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Credit not found"));
 
@@ -83,7 +129,21 @@ public class CreditRequestService {
             throw new IllegalStateException("Le crédit est déjà validé");
         }
 
-        // set status to APPROVED
+        // Si le crédit n'a pas encore été scoré, on le score maintenant
+        if (credit.getRiskScore() == null) {
+            try {
+                logger.info("Scoring IA non effectué, lancement pour crédit ID={}", id);
+                creditScoringService.scoreCredit(credit);
+                creditRequestRepository.save(credit);
+                logger.info("Scoring terminé : Score={}, Risque={}",
+                           credit.getRiskScore(), credit.getRiskLevel());
+            } catch (ScoringServiceException e) {
+                logger.warn("Le scoring IA a échoué pour le crédit ID={} : {}", id, e.getMessage());
+                // On continue quand même la validation (décision manuelle)
+            }
+        }
+
+        // Passer en APPROVED
         credit.setStatus(CreditStatus.APPROVED);
 
         // Initialisation des champs si nécessaires
@@ -104,7 +164,65 @@ public class CreditRequestService {
         // Génération du tableau d'amortissement selon le type choisi
         generateRepaymentSchedule(saved);
 
+        logger.info("Crédit ID={} validé avec succès", id);
         return saved;
+    }
+
+    /**
+     * Approuve une demande de crédit (décision de l'agent)
+     * Le score IA a déjà été calculé lors de la création, l'agent prend la décision finale
+     *
+     * Cette méthode appelle validateCredit() pour tout faire en une seule fois
+     *
+     * @param id ID du crédit à approuver
+     * @return le crédit approuvé
+     */
+    @Transactional
+    public CreditRequest approveCredit(Long id) {
+        logger.info("Approbation de la demande de crédit ID={} par l'agent", id);
+
+        CreditRequest credit = creditRequestRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Crédit introuvable avec l'ID : " + id));
+
+        // Vérification du statut actuel
+        if (credit.getStatus() != CreditStatus.SUBMITTED && credit.getStatus() != CreditStatus.UNDER_REVIEW) {
+            throw new IllegalStateException("Seuls les crédits en statut SUBMITTED ou UNDER_REVIEW peuvent être approuvés");
+        }
+
+        logger.info("Crédit ID={} - Score IA : {}, Risque : {}",
+                   id, credit.getRiskScore(), credit.getRiskLevel());
+
+        // Appel à validateCredit qui fait tout :
+        // - Scoring si nécessaire
+        // - Passage en APPROVED
+        // - Génération des échéances
+        return validateCredit(id);
+    }
+
+    /**
+     * Rejette une demande de crédit (décision de l'agent)
+     */
+    @Transactional
+    public CreditRequest rejectCredit(Long id, String reason) {
+        logger.info("Rejet de la demande de crédit ID={}", id);
+
+        CreditRequest credit = creditRequestRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Crédit introuvable avec l'ID : " + id));
+
+        // Vérification du statut actuel
+        if (credit.getStatus() != CreditStatus.SUBMITTED && credit.getStatus() != CreditStatus.UNDER_REVIEW) {
+            throw new IllegalStateException("Seuls les crédits en statut SUBMITTED ou UNDER_REVIEW peuvent être rejetés");
+        }
+
+        // L'agent rejette : statut final
+        // TODO: Ajouter un champ "rejectionReason" dans CreditRequest si besoin de tracer la raison
+        credit.setStatus(CreditStatus.DEFAULTED); // Ou créer un nouveau statut REJECTED
+        CreditRequest rejected = creditRequestRepository.save(credit);
+
+        logger.info("Crédit ID={} rejeté par l'agent - Score IA était : {}, Raison : {}",
+                   id, credit.getRiskScore(), reason);
+
+        return rejected;
     }
 
     /**
