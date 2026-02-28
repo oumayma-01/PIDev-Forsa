@@ -5,6 +5,7 @@ import org.example.forsapidev.entities.InsuranceManagement.PremiumPayment;
 import org.example.forsapidev.entities.InsuranceManagement.InsurancePolicy;
 import org.example.forsapidev.Services.Interfaces.IPremiumPayment;
 import lombok.AllArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -15,30 +16,31 @@ import java.util.List;
 public class PremiumPaymentController {
 
     IPremiumPayment premiumPaymentService;
-
+    @PreAuthorize("hasAnyRole('AGENT','ADMIN')")
     @GetMapping("/retrieve-all-premium-payments")
     public List<PremiumPayment> retrieveAllPremiumPayments() {
         List<PremiumPayment> payments = premiumPaymentService.retrieveAllPremiumPayments();
         return payments;
     }
 
+    @PreAuthorize("hasAnyRole('CLIENT','ADMIN')")
     @PostMapping("/add-premium-payment")
     public PremiumPayment addPremiumPayment(@RequestBody PremiumPayment payment) {
         PremiumPayment premiumPayment = premiumPaymentService.addPremiumPayment(payment);
         return premiumPayment;
     }
-
+    @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
     @GetMapping("/retrieve-premium-payment/{payment-id}")
     public PremiumPayment retrievePremiumPayment(@PathVariable("payment-id") Long paymentId) {
         PremiumPayment payment = premiumPaymentService.retrievePremiumPayment(paymentId);
         return payment;
     }
-
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/remove-premium-payment/{payment-id}")
     public void removePremiumPayment(@PathVariable("payment-id") Long paymentId) {
         premiumPaymentService.removePremiumPayment(paymentId);
     }
-
+    @PreAuthorize("hasAnyRole('AGENT','ADMIN')")
     @PutMapping("/modify-premium-payment")
     public PremiumPayment modifyPremiumPayment(@RequestBody PremiumPayment payment) {
         PremiumPayment premiumPayment = premiumPaymentService.modifyPremiumPayment(payment);

@@ -3,11 +3,13 @@ package org.example.forsapidev.security;
 
 
 import lombok.NoArgsConstructor;
+import org.example.forsapidev.security.jwt.AuthAccessDeniedHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -26,6 +28,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @NoArgsConstructor
 public class WebSecurityConfig implements WebMvcConfigurer {
 
@@ -36,7 +39,8 @@ public class WebSecurityConfig implements WebMvcConfigurer {
 
   @Autowired
   private JwtUtils securityUtils;
-
+  @Autowired
+  private AuthAccessDeniedHandler accessDeniedHandler;
   @Bean
   public AuthTokenFilter authenticationJwtTokenFilter() {
     return new AuthTokenFilter();
@@ -60,14 +64,27 @@ public class WebSecurityConfig implements WebMvcConfigurer {
 
   @Bean
   protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    http.cors().
-            and()
-            .csrf().disable();
-    http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-    http.exceptionHandling().authenticationEntryPoint(unauthorizedHandler);
-    http.authorizeHttpRequests ().requestMatchers (securityUtils.AUTH_WHITELIST).permitAll();
-    http.authorizeHttpRequests ().anyRequest().authenticated();
-    http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+
+    http
+            .cors().and()
+            .csrf().disable()
+
+            .sessionManagement()
+            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .and()
+
+            .exceptionHandling()
+            .authenticationEntryPoint(unauthorizedHandler)   // 401
+            .accessDeniedHandler(accessDeniedHandler)        // 403
+            .and()
+
+            .authorizeHttpRequests()
+            .requestMatchers(securityUtils.AUTH_WHITELIST).permitAll()
+            .anyRequest().authenticated()
+            .and()
+
+            .addFilterBefore(authenticationJwtTokenFilter(),
+                    UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
   }

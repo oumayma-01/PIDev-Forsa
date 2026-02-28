@@ -66,17 +66,21 @@ public class JwtUtils {
     int m = (int) Math.pow(10, 4 - 1);
     return ""+(m + new Random().nextInt(9 * m));
   }
-
   public String generateJwtToken(Authentication authentication) {
+
     UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
 
     return Jwts.builder()
-            .setSubject((userPrincipal.getUsername()))
+            .setSubject(userPrincipal.getUsername())
+            .claim("role", userPrincipal.getAuthorities()
+                    .stream()
+                    .findFirst()
+                    .get()
+                    .getAuthority())
             .setIssuedAt(new Date())
             .setExpiration(new Date((new Date()).getTime() + SESSION_EXPIRATION))
             .signWith(SignatureAlgorithm.HS512, SECRET)
             .compact();
-
   }
 
   public String parseJwt(HttpServletRequest request) {
