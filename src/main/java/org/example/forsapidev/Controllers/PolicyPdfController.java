@@ -5,6 +5,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import lombok.AllArgsConstructor;
 
@@ -20,6 +21,7 @@ public class PolicyPdfController {
     /**
      * Generate and download PDF for a policy
      */
+    @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
     @GetMapping("/download/{policy-id}")
     public ResponseEntity<byte[]> downloadPolicyPdf(@PathVariable("policy-id") Long policyId) {
         try {
@@ -41,6 +43,7 @@ public class PolicyPdfController {
     /**
      * Generate and view PDF in browser
      */
+    @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
     @GetMapping("/view/{policy-id}")
     public ResponseEntity<byte[]> viewPolicyPdf(@PathVariable("policy-id") Long policyId) {
         try {

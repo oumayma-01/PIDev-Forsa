@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -38,7 +39,7 @@ public class CreditRequestController {
         this.amortizationService = amortizationService;
         this.userRepository = userRepository;
     }
-
+    @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
     @PostMapping
     public ResponseEntity<?> create(@RequestBody CreditRequestCreateDTO dto) {
         try {
@@ -72,17 +73,19 @@ public class CreditRequestController {
             );
         }
     }
-
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<CreditRequest>> list() {
         return ResponseEntity.ok(service.getAll());
     }
 
+    @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<CreditRequest> getById(@PathVariable Long id) {
         return ResponseEntity.of(service.getById(id));
     }
 
+    @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<CreditRequest> update(@PathVariable Long id, @RequestBody CreditRequest update) {
         try {
@@ -93,12 +96,14 @@ public class CreditRequestController {
         }
     }
 
+    @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.deleteCredit(id);
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
     @RequestMapping(value = "/{id}/validate", method = {RequestMethod.POST, RequestMethod.GET})
     public ResponseEntity<?> validateCredit(@PathVariable Long id) {
         try {
@@ -118,6 +123,8 @@ public class CreditRequestController {
      * Endpoint pour l'agent : approuver une demande de crédit
      * POST /api/credits/{id}/approve
      */
+
+    @PreAuthorize("hasRole('AGENT')")
     @PostMapping("/{id}/approve")
     public ResponseEntity<?> approveCredit(@PathVariable Long id) {
         try {
@@ -143,6 +150,7 @@ public class CreditRequestController {
      * Endpoint pour l'agent : rejeter une demande de crédit
      * POST /api/credits/{id}/reject
      */
+    @PreAuthorize("hasRole('AGENT')")
     @PostMapping("/{id}/reject")
     public ResponseEntity<?> rejectCredit(@PathVariable Long id, @RequestBody(required = false) Map<String, String> body) {
         String reason = body != null ? body.getOrDefault("reason", "Non spécifié") : "Non spécifié";
@@ -170,6 +178,7 @@ public class CreditRequestController {
      * Endpoint pour l'agent : lister les crédits en attente de revue (UNDER_REVIEW)
      * GET /api/credits/pending
      */
+    @PreAuthorize("hasRole('AGENT')")
     @GetMapping("/pending")
     public ResponseEntity<List<CreditRequest>> getPendingCredits() {
         List<CreditRequest> allCredits = service.getAll();
@@ -186,6 +195,7 @@ public class CreditRequestController {
      * Endpoint pour simuler le tableau d'amortissement sans créer le crédit
      * GET /api/credits/simulate?principal=10000&rate=5.0&duration=12&type=ANNUITE_CONSTANTE
      */
+    @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
     @GetMapping("/simulate")
     public ResponseEntity<?> simulateAmortization(
             @RequestParam BigDecimal principal,
@@ -226,6 +236,7 @@ public class CreditRequestController {
      * Endpoint pour obtenir le tableau d'amortissement d'un crédit existant
      * GET /api/credits/{id}/schedule
      */
+    @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
     @GetMapping("/{id}/schedule")
     public ResponseEntity<?> getAmortizationSchedule(@PathVariable Long id) {
         try {
