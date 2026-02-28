@@ -1,5 +1,6 @@
 package org.example.forsapidev.Controllers;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.example.forsapidev.DTO.ComparisonResultDTO;
 import org.example.forsapidev.Services.Interfaces.IComparisonPdfService;
 import org.example.forsapidev.Services.Interfaces.IInsuranceProductComparisonService;
@@ -7,6 +8,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import lombok.AllArgsConstructor;
 
@@ -15,6 +17,7 @@ import java.util.List;
 
 @RestController
 @AllArgsConstructor
+@SecurityRequirement(name = "Bearer Authentication")
 @RequestMapping("/product-comparison")
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 public class ProductComparisonController {
@@ -26,6 +29,7 @@ public class ProductComparisonController {
      * Compare 2-3 insurance products
      * Example: /compare?productIds=1,2,3
      */
+    @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
     @GetMapping("/compare")
     public ResponseEntity<ComparisonResultDTO> compareProducts(@RequestParam List<Long> productIds) {
         try {
@@ -42,6 +46,7 @@ public class ProductComparisonController {
      * Download comparison as PDF
      * Example: /download-pdf?productIds=1,2,3
      */
+    @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
     @GetMapping("/download-pdf")
     public ResponseEntity<byte[]> downloadComparisonPdf(@RequestParam List<Long> productIds) {
         try {

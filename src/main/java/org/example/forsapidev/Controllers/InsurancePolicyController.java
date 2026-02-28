@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.example.forsapidev.entities.InsuranceManagement.InsurancePolicy;
 import org.example.forsapidev.Services.Interfaces.IInsurancePolicy;
 import lombok.AllArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -14,30 +15,30 @@ import java.util.List;
 public class InsurancePolicyController {
 
     IInsurancePolicy insurancePolicyService;
-
+    @PreAuthorize("hasAnyRole('AGENT','ADMIN')")
     @GetMapping("/retrieve-all-insurance-policies")
     public List<InsurancePolicy> retrieveAllInsurancePolicies() {
         List<InsurancePolicy> policies = insurancePolicyService.retrieveAllInsurancePolicies();
         return policies;
     }
-
+    @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
     @PostMapping("/add-insurance-policy")
     public InsurancePolicy addInsurancePolicy(@RequestBody InsurancePolicy policy) {
         InsurancePolicy insurancePolicy = insurancePolicyService.addInsurancePolicy(policy);
         return insurancePolicy;
     }
-
+    @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
     @GetMapping("/retrieve-insurance-policy/{policy-id}")
     public InsurancePolicy retrieveInsurancePolicy(@PathVariable("policy-id") Long policyId) {
         InsurancePolicy policy = insurancePolicyService.retrieveInsurancePolicy(policyId);
         return policy;
     }
-
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/remove-insurance-policy/{policy-id}")
     public void removeInsurancePolicy(@PathVariable("policy-id") Long policyId) {
         insurancePolicyService.removeInsurancePolicy(policyId);
     }
-
+    @PreAuthorize("hasAnyRole('AGENT','ADMIN')")
     @PutMapping("/modify-insurance-policy")
     public InsurancePolicy modifyInsurancePolicy(@RequestBody InsurancePolicy policy) {
         InsurancePolicy insurancePolicy = insurancePolicyService.modifyInsurancePolicy(policy);
