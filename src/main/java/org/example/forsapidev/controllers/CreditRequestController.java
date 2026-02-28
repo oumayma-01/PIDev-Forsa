@@ -1,7 +1,10 @@
 package org.example.forsapidev.Controllers;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.example.forsapidev.DTO.CreditRequestCreateDTO;
+import org.example.forsapidev.Repositories.UserRepository;
 import org.example.forsapidev.entities.CreditManagement.CreditRequest;
+import org.example.forsapidev.entities.UserManagement.User;
 import org.example.forsapidev.Services.CreditRequestService;
 import org.example.forsapidev.Services.amortization.AmortizationCalculatorService;
 import org.example.forsapidev.Services.amortization.AmortizationResult;
@@ -10,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -26,16 +31,29 @@ public class CreditRequestController {
 
     private final CreditRequestService service;
     private final AmortizationCalculatorService amortizationService;
+    private final UserRepository userRepository;
 
-    public CreditRequestController(CreditRequestService service, AmortizationCalculatorService amortizationService) {
+    public CreditRequestController(CreditRequestService service, AmortizationCalculatorService amortizationService, UserRepository userRepository) {
         this.service = service;
         this.amortizationService = amortizationService;
+        this.userRepository = userRepository;
     }
 
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody CreditRequest request) {
+    public ResponseEntity<?> create(@RequestBody CreditRequestCreateDTO dto) {
         try {
-            CreditRequest created = service.createCreditRequest(request);
+            // Récupérer l'utilisateur authentifié depuis le contexte de sécurité
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+
+            logger.info("Création d'une demande de crédit pour l'utilisateur authentifié: {}", username);
+
+            // Récupérer l'entité User complète depuis la base de données
+            User authenticatedUser = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new IllegalStateException("Utilisateur authentifié non trouvé: " + username));
+
+            // Créer la demande de crédit avec l'utilisateur authentifié
+            CreditRequest created = service.createCreditRequest(dto, authenticatedUser);
             return ResponseEntity.ok(created);
         } catch (IllegalStateException e) {
             // configuration missing (TMM / Inflation) -> return 400 with helpful message

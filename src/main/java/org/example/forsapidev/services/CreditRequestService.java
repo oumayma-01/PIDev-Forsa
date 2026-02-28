@@ -1,10 +1,12 @@
 package org.example.forsapidev.Services;
 
+import org.example.forsapidev.DTO.CreditRequestCreateDTO;
 import org.example.forsapidev.entities.CreditManagement.AmortizationType;
 import org.example.forsapidev.entities.CreditManagement.CreditRequest;
 import org.example.forsapidev.entities.CreditManagement.CreditStatus;
 import org.example.forsapidev.entities.CreditManagement.RepaymentSchedule;
 import org.example.forsapidev.entities.CreditManagement.RepaymentStatus;
+import org.example.forsapidev.entities.UserManagement.User;
 import org.example.forsapidev.Repositories.CreditRequestRepository;
 import org.example.forsapidev.Repositories.RepaymentScheduleRepository;
 import org.example.forsapidev.Services.amortization.AmortizationCalculatorService;
@@ -84,6 +86,25 @@ public class CreditRequestService {
         }
 
         return savedRequest;
+    }
+
+    /**
+     * Crée une demande de crédit avec l'utilisateur authentifié
+     * Cette méthode prend un DTO et l'utilisateur extrait du JWT
+     */
+    @Transactional
+    public CreditRequest createCreditRequest(CreditRequestCreateDTO dto, User authenticatedUser) {
+        logger.info("Création d'une nouvelle demande de crédit pour l'utilisateur {} avec montant {}",
+                   authenticatedUser.getUsername(), dto.getAmountRequested());
+
+        CreditRequest request = new CreditRequest();
+        request.setAmountRequested(dto.getAmountRequested());
+        request.setInterestRate(dto.getInterestRate());
+        request.setDurationMonths(dto.getDurationMonths());
+        request.setTypeCalcul(dto.getTypeCalcul());
+        request.setUser(authenticatedUser);
+
+        return createCreditRequest(request);
     }
 
     public Optional<CreditRequest> getById(Long id) { return creditRequestRepository.findById(id); }
