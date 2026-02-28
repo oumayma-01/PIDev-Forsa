@@ -1,13 +1,12 @@
 package org.example.forsapidev.Controllers;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.example.forsapidev.entities.CreditManagement.TmmRate;
 import org.example.forsapidev.Repositories.TmmRateRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.math.BigDecimal;
 import java.util.List;
-
+@SecurityRequirement(name = "Bearer Authentication")
 @RestController
 @RequestMapping("/api/admin/tmm")
 public class TmmRateController {

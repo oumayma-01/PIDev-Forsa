@@ -15,6 +15,8 @@ public class RepaymentSchedule {
 
     private LocalDate dueDate;
 
+    private LocalDate paidDate;
+
     @Column(precision = 18, scale = 2)
     private BigDecimal totalAmount;
 
@@ -40,6 +42,8 @@ public class RepaymentSchedule {
     public void setId(Long id) { this.id = id; }
     public LocalDate getDueDate() { return dueDate; }
     public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
+    public LocalDate getPaidDate() { return paidDate; }
+    public void setPaidDate(LocalDate paidDate) { this.paidDate = paidDate; }
     public BigDecimal getTotalAmount() { return totalAmount; }
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
     public BigDecimal getPrincipalPart() { return principalPart; }
