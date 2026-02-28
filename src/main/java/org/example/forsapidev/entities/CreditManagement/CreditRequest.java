@@ -1,6 +1,8 @@
 package org.example.forsapidev.entities.CreditManagement;
 
 import jakarta.persistence.*;
+import org.example.forsapidev.entities.UserManagement.User;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -27,6 +29,13 @@ public class CreditRequest {
     private Long agentId;
 
     /**
+     * Client qui a fait la demande de crédit
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    /**
      * Type de calcul du crédit (ANNUITE_CONSTANTE ou AMORTISSEMENT_CONSTANT)
      */
     @Enumerated(EnumType.STRING)
@@ -38,6 +47,20 @@ public class CreditRequest {
     private BigDecimal remainingBalance;
 
     private Integer paidInstallments;
+
+    // AI Scoring fields
+    @Column(name = "risk_score")
+    private Double riskScore;
+
+    @Column(name = "is_risky")
+    private Boolean isRisky;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "risk_level")
+    private RiskLevel riskLevel;
+
+    @Column(name = "scored_at")
+    private LocalDateTime scoredAt;
 
     // Constructors
     public CreditRequest() {
@@ -110,6 +133,14 @@ public class CreditRequest {
         this.agentId = agentId;
     }
 
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
     public BigDecimal getRemainingBalance() {
         return remainingBalance;
     }
@@ -132,6 +163,38 @@ public class CreditRequest {
 
     public void setTypeCalcul(AmortizationType typeCalcul) {
         this.typeCalcul = typeCalcul;
+    }
+
+    public Double getRiskScore() {
+        return riskScore;
+    }
+
+    public void setRiskScore(Double riskScore) {
+        this.riskScore = riskScore;
+    }
+
+    public Boolean getIsRisky() {
+        return isRisky;
+    }
+
+    public void setIsRisky(Boolean risky) {
+        isRisky = risky;
+    }
+
+    public RiskLevel getRiskLevel() {
+        return riskLevel;
+    }
+
+    public void setRiskLevel(RiskLevel riskLevel) {
+        this.riskLevel = riskLevel;
+    }
+
+    public LocalDateTime getScoredAt() {
+        return scoredAt;
+    }
+
+    public void setScoredAt(LocalDateTime scoredAt) {
+        this.scoredAt = scoredAt;
     }
 
     @Override
