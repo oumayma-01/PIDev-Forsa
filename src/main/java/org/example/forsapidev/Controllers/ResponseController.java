@@ -57,6 +57,11 @@ public class ResponseController {
         Response updated = responseService.modifyResponse(r);
         return ResponseEntity.ok(updated);
     }
+    @GetMapping("/report/summary")
+    public ResponseEntity<Map<String, Object>> responseSummaryReport() {
+        return ResponseEntity.ok(responseService.getResponseSummaryReport());
+    }
+
 
     // ================================================
     // ✅ GESTION DES ERREURS DE VALIDATION
@@ -83,4 +88,11 @@ public class ResponseController {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(errors);
     }
+    @PutMapping("/improve-response-ai/{response-id}")
+    public ResponseEntity<Response> improveResponseAI(@PathVariable("response-id") Long rId) {
+        Response updated = responseService.improveResponseWithAI(rId);
+        if (updated == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        return ResponseEntity.ok(updated);
+    }
+
 }

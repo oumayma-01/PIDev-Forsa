@@ -57,6 +57,21 @@ public class FeedbackController {
         Feedback updated = feedbackService.modifyFeedback(f);
         return ResponseEntity.ok(updated);
     }
+    @GetMapping("/report/summary")
+    public ResponseEntity<Map<String, Object>> feedbackSummaryReport() {
+        return ResponseEntity.ok(feedbackService.getFeedbackSummaryReport());
+    }
+
+    @GetMapping("/report/trends")
+    public ResponseEntity<List<Map<String, Object>>> feedbackTrends(@RequestParam(defaultValue = "6") int months) {
+        return ResponseEntity.ok(feedbackService.getFeedbackTrendsLastMonths(months));
+    }
+
+    @GetMapping("/report/avg-rating-by-category")
+    public ResponseEntity<List<Map<String, Object>>> avgRatingByCategory() {
+        return ResponseEntity.ok(feedbackService.getAvgRatingByCategory());
+    }
+
 
     // ================================================
     // ✅ GESTION DES ERREURS DE VALIDATION
@@ -83,4 +98,11 @@ public class FeedbackController {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(errors);
     }
+    @PostMapping("/add-feedback-ai")
+    public ResponseEntity<Feedback> addFeedbackWithAI(@Valid @RequestBody Feedback f) {
+        Feedback saved = feedbackService.addFeedbackWithAI(f);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
+
+
 }
