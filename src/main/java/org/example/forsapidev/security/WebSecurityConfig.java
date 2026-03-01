@@ -4,6 +4,7 @@ import lombok.NoArgsConstructor;
 import org.example.forsapidev.security.jwt.AuthAccessDeniedHandler;
 import org.example.forsapidev.security.jwt.AuthEntryPointJwt;
 import org.example.forsapidev.security.jwt.AuthTokenFilter;
+import org.example.forsapidev.security.jwt.JwtUtils;
 import org.example.forsapidev.security.services.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -38,8 +39,6 @@ public class WebSecurityConfig implements WebMvcConfigurer {
   private UserDetailsServiceImpl userDetailsService;
 
   private JwtUtils securityUtils;
-  @Autowired
-  private AuthAccessDeniedHandler accessDeniedHandler;
   @Bean
   public AuthTokenFilter authenticationJwtTokenFilter() {
     return new AuthTokenFilter();
