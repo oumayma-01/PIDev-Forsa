@@ -12,4 +12,5 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     List<Complaint> findByUserId(Long userId);
     List<Complaint> findByStatus(String status);
     List<Complaint> findByCategory(Category category);
+    List<Complaint> findAllByOrderByPriorityDescCreatedAtDesc();
 }

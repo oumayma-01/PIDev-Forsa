@@ -1,4 +1,6 @@
 package org.example.forsapidev.DTO;
+import org.example.forsapidev.entities.ComplaintFeedbackManagement.PriorityLevel;
+
 
 import java.sql.Date;
 
@@ -10,4 +12,6 @@ public class ComplaintDTO {
     private String status;
     private Date createdAt;
     private Long userId;
+    private PriorityLevel priority;
+
 }
