@@ -1,5 +1,6 @@
 package org.example.forsapidev.Services.scoring;
 
+import org.example.forsapidev.Repositories.CreditRequestRepository;
 import org.example.forsapidev.Repositories.RepaymentScheduleRepository;
 import org.example.forsapidev.entities.CreditManagement.CreditRequest;
 import org.example.forsapidev.entities.CreditManagement.RepaymentSchedule;
@@ -9,9 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,9 +26,12 @@ public class FeatureCalculationService {
     private static final Logger logger = LoggerFactory.getLogger(FeatureCalculationService.class);
 
     private final RepaymentScheduleRepository repaymentScheduleRepository;
+    private final CreditRequestRepository creditRequestRepository;
 
-    public FeatureCalculationService(RepaymentScheduleRepository repaymentScheduleRepository) {
+    public FeatureCalculationService(RepaymentScheduleRepository repaymentScheduleRepository,
+                                    CreditRequestRepository creditRequestRepository) {
         this.repaymentScheduleRepository = repaymentScheduleRepository;
+        this.creditRequestRepository = creditRequestRepository;
     }
 
     /**
@@ -43,10 +46,7 @@ public class FeatureCalculationService {
         features.setAvgDelayDays(calculateAverageDelayDays(userId));
         features.setPaymentInstability(calculatePaymentInstability(userId));
 
-        // 2. Features basées sur l'utilisation du crédit
-        features.setCreditUtilization(calculateCreditUtilization(userId, creditRequest));
-
-        // 3. Features basées sur les transactions (TODO: nécessite entité Transaction complète)
+        // 2. Features basées sur les transactions (TODO: nécessite entité Transaction complète)
         features.setMonthlyTransactionCount(calculateMonthlyTransactionCount(userId));
         features.setTransactionAmountStd(calculateTransactionAmountStd(userId));
         features.setHighRiskCountryTransaction(detectHighRiskCountryTransactions(userId));
@@ -59,13 +59,13 @@ public class FeatureCalculationService {
         features.setCountryChanged(detectCountryChange(userId));
 
         // 5. Features basées sur le revenu
-        features.setIncomeChangePercentage(calculateIncomeChangePercentage(userId));
-        features.setEmploymentChanged(detectEmploymentChange(userId));
+        // 6. Features basées sur le comportement de demandes de crédit
+        features.setRecentCreditRequests(calculateRecentCreditRequests(userId));
 
-        logger.info("Features calculées : avgDelay={}, instability={}, utilization={}",
+        logger.info("Features calculées : avgDelay={}, instability={}, recentCreditRequests={}",
                    features.getAvgDelayDays(),
                    features.getPaymentInstability(),
-                   features.getCreditUtilization());
+                   features.getRecentCreditRequests());
 
         return features;
     }
@@ -168,25 +168,6 @@ public class FeatureCalculationService {
         return instability;
     }
 
-    /**
-     * Calcule le taux d'utilisation du crédit (montant utilisé / limite autorisée)
-     */
-    private double calculateCreditUtilization(Long userId, CreditRequest currentCredit) {
-        // TODO: Calculer basé sur une limite de crédit autorisée pour ce client
-        // Pour l'instant, on utilise une limite simulée de 50 000
-
-        BigDecimal creditLimit = BigDecimal.valueOf(50000);
-        BigDecimal amountRequested = currentCredit.getAmountRequested();
-
-        if (creditLimit.compareTo(BigDecimal.ZERO) == 0) {
-            return 0.0;
-        }
-
-        double utilization = amountRequested.divide(creditLimit, 4, RoundingMode.HALF_UP).doubleValue();
-
-        // Cap à 1.0 (100%)
-        return Math.min(utilization, 1.0);
-    }
 
     /**
      * Calcule le nombre de transactions mensuelles
@@ -272,5 +253,20 @@ public class FeatureCalculationService {
     private int detectEmploymentChange(Long userId) {
         // TODO: Vérifier historique emploi dans Profile
         return 0;
+    }
+
+    /**
+     * Calcule le nombre de demandes de crédit faites par le client
+     * dans les 6 derniers mois (comportement de multiplication des demandes = risque)
+     */
+    private int calculateRecentCreditRequests(Long userId) {
+        // Calculer la date limite : 6 mois avant maintenant
+        LocalDateTime sixMonthsAgo = LocalDateTime.now().minusMonths(6);
+
+        // Compter les demandes de crédit depuis cette date
+        long count = creditRequestRepository.countRecentCreditRequestsByUserId(userId, sixMonthsAgo);
+
+        logger.debug("recent_credit_requests calculé pour userId={} : {} demandes en 6 mois", userId, count);
+        return (int) count;
     }
 }
