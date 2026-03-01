@@ -37,6 +37,9 @@ public class WebSecurityConfig implements WebMvcConfigurer {
   @Autowired
   private UserDetailsServiceImpl userDetailsService;
 
+  private JwtUtils securityUtils;
+  @Autowired
+  private AuthAccessDeniedHandler accessDeniedHandler;
   @Bean
   public AuthTokenFilter authenticationJwtTokenFilter() {
     return new AuthTokenFilter();
@@ -81,6 +84,23 @@ public class WebSecurityConfig implements WebMvcConfigurer {
                     .anyRequest().authenticated()
             )
             // Filtre JWT avant UsernamePasswordAuthenticationFilter
+            .cors().and()
+            .csrf().disable()
+
+            .sessionManagement()
+            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .and()
+
+            .exceptionHandling()
+            .authenticationEntryPoint(unauthorizedHandler)   // 401
+            .accessDeniedHandler(accessDeniedHandler)        // 403
+            .and()
+
+            .authorizeHttpRequests()
+            .requestMatchers(securityUtils.AUTH_WHITELIST).permitAll()
+            .anyRequest().authenticated()
+            .and()
+
             .addFilterBefore(authenticationJwtTokenFilter(),
                     UsernamePasswordAuthenticationFilter.class);
 
