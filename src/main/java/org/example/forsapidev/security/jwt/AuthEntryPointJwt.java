@@ -25,6 +25,26 @@ public class AuthEntryPointJwt implements AuthenticationEntryPoint {
 
     logger.error("Unauthorized error: {}", authException.getMessage());
 
+    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401
+    response.setContentType("application/json");
+    response.setCharacterEncoding("UTF-8");
+
+    String message = authException.getMessage();
+    if (message == null || message.isBlank()) {
+      message = "Full authentication is required to access this resource";
+    }
+
+    String jsonResponse = """
+                {
+                  "timestamp": "%s",
+                  "status": 401,
+                  "error": "Unauthorized",
+                  "message": "%s",
+                  "path": "%s"
+                }
+                """.formatted(
+            LocalDateTime.now(),
+            message,
     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     response.setContentType("application/json");
     response.setCharacterEncoding("UTF-8");
@@ -45,4 +65,5 @@ public class AuthEntryPointJwt implements AuthenticationEntryPoint {
 
     response.getWriter().write(jsonResponse);
   }
+}
 }
