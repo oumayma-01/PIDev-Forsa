@@ -1,7 +1,6 @@
 package org.example.forsapidev.entities.WalletManagement;
 
-public enum WalletType {
-    SAVINGS,
+public enum AccountType {
     INVESTMENT,
-    TRANSACTIONAL
+    SAVINGS
 }
