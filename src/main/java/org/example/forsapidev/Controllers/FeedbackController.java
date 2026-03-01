@@ -6,6 +6,7 @@ import org.example.forsapidev.entities.ComplaintFeedbackManagement.Feedback;
 import org.example.forsapidev.Services.Interfaces.IFeedbackService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
@@ -19,12 +20,14 @@ public class FeedbackController {
 
     private final IFeedbackService feedbackService;
 
+    @PreAuthorize("hasAnyRole('AGENT','ADMIN')")
     @GetMapping("/retrieve-all-feedbacks")
     public ResponseEntity<List<Feedback>> getFeedbacks() {
         List<Feedback> feedbacks = feedbackService.retrieveAllFeedbacks();
         return ResponseEntity.ok(feedbacks);
     }
 
+    @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
     @GetMapping("/retrieve-feedback/{feedback-id}")
     public ResponseEntity<Feedback> retrieveFeedback(
             @PathVariable("feedback-id") Long fId) {
@@ -35,14 +38,14 @@ public class FeedbackController {
         return ResponseEntity.ok(feedback);
     }
 
-    // ✅ AJOUT : @Valid pour activer la validation
+    @PreAuthorize("hasRole('CLIENT')")
     @PostMapping("/add-feedback")
-    public ResponseEntity<Feedback> addFeedback(
-            @Valid @RequestBody Feedback f) {
+    public ResponseEntity<Feedback> addFeedback(@Valid @RequestBody Feedback f) {
         Feedback saved = feedbackService.addFeedback(f);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
+    @PreAuthorize("hasRole('CLIENT')")
     @DeleteMapping("/remove-feedback/{feedback-id}")
     public ResponseEntity<Void> removeFeedback(
             @PathVariable("feedback-id") Long fId) {
@@ -50,32 +53,32 @@ public class FeedbackController {
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
-    // ✅ AJOUT : @Valid pour activer la validation
+    @PreAuthorize("hasRole('CLIENT')")
     @PutMapping("/modify-feedback")
-    public ResponseEntity<Feedback> modifyFeedback(
-            @Valid @RequestBody Feedback f) {
+    public ResponseEntity<Feedback> modifyFeedback(@Valid @RequestBody Feedback f) {
         Feedback updated = feedbackService.modifyFeedback(f);
         return ResponseEntity.ok(updated);
     }
+
+    @PreAuthorize("hasAnyRole('AGENT','ADMIN')")
     @GetMapping("/report/summary")
     public ResponseEntity<Map<String, Object>> feedbackSummaryReport() {
         return ResponseEntity.ok(feedbackService.getFeedbackSummaryReport());
     }
 
+    @PreAuthorize("hasAnyRole('AGENT','ADMIN')")
     @GetMapping("/report/trends")
-    public ResponseEntity<List<Map<String, Object>>> feedbackTrends(@RequestParam(defaultValue = "6") int months) {
+    public ResponseEntity<List<Map<String, Object>>> feedbackTrends(
+            @RequestParam(defaultValue = "6") int months) {
         return ResponseEntity.ok(feedbackService.getFeedbackTrendsLastMonths(months));
     }
 
+    @PreAuthorize("hasAnyRole('AGENT','ADMIN')")
     @GetMapping("/report/avg-rating-by-category")
     public ResponseEntity<List<Map<String, Object>>> avgRatingByCategory() {
         return ResponseEntity.ok(feedbackService.getAvgRatingByCategory());
     }
 
-
-    // ================================================
-    // ✅ GESTION DES ERREURS DE VALIDATION
-    // ================================================
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationExceptions(
             MethodArgumentNotValidException ex) {
@@ -98,11 +101,11 @@ public class FeedbackController {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(errors);
     }
+
+    @PreAuthorize("hasRole('CLIENT')")
     @PostMapping("/add-feedback-ai")
     public ResponseEntity<Feedback> addFeedbackWithAI(@Valid @RequestBody Feedback f) {
         Feedback saved = feedbackService.addFeedbackWithAI(f);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
-
-
 }

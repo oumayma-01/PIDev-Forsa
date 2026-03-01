@@ -6,6 +6,7 @@ import org.example.forsapidev.entities.ComplaintFeedbackManagement.Response;
 import org.example.forsapidev.Services.Interfaces.IResponseService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
@@ -19,12 +20,14 @@ public class ResponseController {
 
     private final IResponseService responseService;
 
+    @PreAuthorize("hasAnyRole('AGENT','ADMIN')")
     @GetMapping("/retrieve-all-responses")
     public ResponseEntity<List<Response>> getResponses() {
         List<Response> responses = responseService.retrieveAllResponses();
         return ResponseEntity.ok(responses);
     }
 
+    @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
     @GetMapping("/retrieve-response/{response-id}")
     public ResponseEntity<Response> retrieveResponse(
             @PathVariable("response-id") Long rId) {
@@ -35,14 +38,14 @@ public class ResponseController {
         return ResponseEntity.ok(response);
     }
 
-    // ✅ AJOUT : @Valid pour activer la validation
+    @PreAuthorize("hasAnyRole('AGENT','ADMIN')")
     @PostMapping("/add-response")
-    public ResponseEntity<Response> addResponse(
-            @Valid @RequestBody Response r) {
+    public ResponseEntity<Response> addResponse(@Valid @RequestBody Response r) {
         Response saved = responseService.addResponse(r);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
+    @PreAuthorize("hasAnyRole('AGENT','ADMIN')")
     @DeleteMapping("/remove-response/{response-id}")
     public ResponseEntity<Void> removeResponse(
             @PathVariable("response-id") Long rId) {
@@ -50,22 +53,19 @@ public class ResponseController {
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
-    // ✅ AJOUT : @Valid pour activer la validation
+    @PreAuthorize("hasAnyRole('AGENT','ADMIN')")
     @PutMapping("/modify-response")
-    public ResponseEntity<Response> modifyResponse(
-            @Valid @RequestBody Response r) {
+    public ResponseEntity<Response> modifyResponse(@Valid @RequestBody Response r) {
         Response updated = responseService.modifyResponse(r);
         return ResponseEntity.ok(updated);
     }
+
+    @PreAuthorize("hasAnyRole('AGENT','ADMIN')")
     @GetMapping("/report/summary")
     public ResponseEntity<Map<String, Object>> responseSummaryReport() {
         return ResponseEntity.ok(responseService.getResponseSummaryReport());
     }
 
-
-    // ================================================
-    // ✅ GESTION DES ERREURS DE VALIDATION
-    // ================================================
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationExceptions(
             MethodArgumentNotValidException ex) {
@@ -88,11 +88,14 @@ public class ResponseController {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(errors);
     }
+
+    @PreAuthorize("hasAnyRole('AGENT','ADMIN')")
     @PutMapping("/improve-response-ai/{response-id}")
     public ResponseEntity<Response> improveResponseAI(@PathVariable("response-id") Long rId) {
         Response updated = responseService.improveResponseWithAI(rId);
-        if (updated == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        if (updated == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
         return ResponseEntity.ok(updated);
     }
-
 }

@@ -4,9 +4,11 @@ import lombok.Getter;
 import lombok.Setter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import org.example.forsapidev.entities.ComplaintFeedbackManagement.Complaint;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Set;
 
 @Entity
 @Table(name = "user")
@@ -37,6 +39,9 @@ public class User {
     @ManyToOne()
     @JoinColumn(name = "Id_Role")
     private Role role;
+    @JsonIgnore
+    @OneToMany(mappedBy = "user")
+    private Set<Complaint> complaints;
 
     // Relationship: Many Policies belong to One User
     @ManyToOne

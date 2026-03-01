@@ -1,4 +1,4 @@
-package org.example.forsapidev.Services.implementation;
+package org.example.forsapidev.Services.Implementation;
 
 import lombok.RequiredArgsConstructor;
 import org.example.forsapidev.Repositories.FeedbackRepository;
@@ -23,27 +23,49 @@ public class FeedbackService implements IFeedbackService {
 
     @Override
     public Feedback retrieveFeedback(Long feedbackId) {
+        if (feedbackId == null) {
+            return null;
+        }
         return feedbackRepository.findById(feedbackId).orElse(null);
     }
 
     @Override
     public Feedback addFeedback(Feedback f) {
+        if (f == null) {
+            return null;
+        }
+        // Ici, addFeedback est “brut” (pas d’IA)
         return feedbackRepository.save(f);
     }
 
     @Override
     public void removeFeedback(Long feedbackId) {
-        feedbackRepository.deleteById(feedbackId);
+        if (feedbackId == null) {
+            return;
+        }
+        if (feedbackRepository.existsById(feedbackId)) {
+            feedbackRepository.deleteById(feedbackId);
+        }
+        // Sinon tu peux éventuellement lever une exception custom
     }
 
     @Override
     public Feedback modifyFeedback(Feedback feedback) {
+        if (feedback == null || feedback.getId() == null) {
+            return null;
+        }
+        // Optionnel : vérifier que l’entité existe avant de sauver
+        if (!feedbackRepository.existsById(feedback.getId())) {
+            return null;
+            // ou lancer une exception custom NotFound
+        }
         return feedbackRepository.save(feedback);
     }
 
     @Override
     public Map<String, Object> getFeedbackSummaryReport() {
         long total = feedbackRepository.count();
+
         double avg = feedbackRepository.findAll().stream()
                 .filter(f -> f.getRating() != null)
                 .mapToInt(Feedback::getRating)
@@ -58,6 +80,10 @@ public class FeedbackService implements IFeedbackService {
 
     @Override
     public List<Map<String, Object>> getFeedbackTrendsLastMonths(int months) {
+        if (months <= 0) {
+            return Collections.emptyList();
+        }
+
         List<Date> dates = feedbackRepository.findAll().stream()
                 .map(Feedback::getCreatedAt)
                 .filter(Objects::nonNull)
@@ -71,27 +97,56 @@ public class FeedbackService implements IFeedbackService {
         Map<String, Double> avgBySat = feedbackRepository.findAll().stream()
                 .filter(f -> f.getRating() != null)
                 .collect(Collectors.groupingBy(
-                        f -> f.getSatisfactionLevel() == null ? "UNKNOWN" : f.getSatisfactionLevel(),
+                        f -> (f.getSatisfactionLevel() == null || f.getSatisfactionLevel().isBlank())
+                                ? "UNKNOWN"
+                                : f.getSatisfactionLevel(),
                         Collectors.averagingInt(Feedback::getRating)
                 ));
 
         List<Map<String, Object>> res = new ArrayList<>();
-        avgBySat.forEach((k, v) -> res.add(new LinkedHashMap<>(Map.of("group", k, "avgRating", v))));
+        avgBySat.forEach((k, v) -> {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("group", k);
+            row.put("avgRating", v);
+            res.add(row);
+        });
         return res;
     }
 
+    /**
+     * Version “avec IA simulée” :
+     * - si satisfactionLevel est vide, on le déduit automatiquement à partir du rating
+     */
     @Override
     public Feedback addFeedbackWithAI(Feedback f) {
+        if (f == null) {
+            return null;
+        }
+
         if (f.getSatisfactionLevel() == null || f.getSatisfactionLevel().isBlank()) {
-            int r = f.getRating() == null ? 3 : f.getRating();
-            String level = (r >= 5) ? "VERY_SATISFIED"
-                    : (r == 4) ? "SATISFIED"
-                    : (r == 3) ? "NEUTRAL"
-                    : (r == 2) ? "DISSATISFIED"
-                    : "VERY_DISSATISFIED";
+            int r = (f.getRating() == null) ? 3 : f.getRating();
+            String level = computeSatisfactionFromRating(r);
             f.setSatisfactionLevel(level);
         }
+
         return feedbackRepository.save(f);
+    }
+
+    /**
+     * Logique centralisée pour transformer un rating en satisfactionLevel.
+     */
+    private String computeSatisfactionFromRating(int rating) {
+        if (rating >= 5) {
+            return "VERY_SATISFIED";
+        } else if (rating == 4) {
+            return "SATISFIED";
+        } else if (rating == 3) {
+            return "NEUTRAL";
+        } else if (rating == 2) {
+            return "DISSATISFIED";
+        } else {
+            return "VERY_DISSATISFIED";
+        }
     }
 
     private List<Map<String, Object>> trendsByMonth(List<Date> dates, int months) {
@@ -100,19 +155,29 @@ public class FeedbackService implements IFeedbackService {
         cal.set(Calendar.DAY_OF_MONTH, 1);
 
         Map<String, Long> counts = new LinkedHashMap<>();
+
+        // Prépare les périodes vides sur les N derniers mois
         for (int i = months - 1; i >= 0; i--) {
             Calendar c2 = (Calendar) cal.clone();
             c2.add(Calendar.MONTH, -i);
             counts.put(fmt.format(c2.getTime()), 0L);
         }
 
+        // Compte les feedbacks par mois
         for (Date d : dates) {
             String key = fmt.format(d);
-            if (counts.containsKey(key)) counts.put(key, counts.get(key) + 1);
+            if (counts.containsKey(key)) {
+                counts.put(key, counts.get(key) + 1);
+            }
         }
 
         List<Map<String, Object>> res = new ArrayList<>();
-        counts.forEach((k, v) -> res.add(new LinkedHashMap<>(Map.of("period", k, "count", v))));
+        counts.forEach((k, v) -> {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("period", k);
+            row.put("count", v);
+            res.add(row);
+        });
         return res;
     }
 }
