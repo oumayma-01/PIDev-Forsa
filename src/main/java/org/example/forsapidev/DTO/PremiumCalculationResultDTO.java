@@ -39,6 +39,7 @@ public class PremiumCalculationResultDTO {
     public BigDecimal getPeriodicPayment() { return periodicPayment; }
     public void setPeriodicPayment(BigDecimal periodicPayment) { this.periodicPayment = periodicPayment; }
 
+
     public String getPaymentFrequency() { return paymentFrequency; }
     public void setPaymentFrequency(String paymentFrequency) { this.paymentFrequency = paymentFrequency; }
 
@@ -62,4 +63,5 @@ public class PremiumCalculationResultDTO {
 
     public String getAdditionalNotes() { return additionalNotes; }
     public void setAdditionalNotes(String additionalNotes) { this.additionalNotes = additionalNotes; }
+
 }

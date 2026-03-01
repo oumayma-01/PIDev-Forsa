@@ -61,7 +61,7 @@ public class JwtUtils {
           // Product comparison endpoints
           "/product-comparison/**",
 
-          "/actuarial/**"
+          //"/actuarial/**"
   };
 
   public String generatePinPassword() {

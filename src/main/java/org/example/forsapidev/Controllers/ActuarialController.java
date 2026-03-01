@@ -1,5 +1,6 @@
 package org.example.forsapidev.Controllers;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.example.forsapidev.DTO.*;
 import org.example.forsapidev.Services.Interfaces.IInsuranceAmortizationService;
 import org.example.forsapidev.Services.Interfaces.IPremiumCalculationService;
@@ -12,6 +13,7 @@ import lombok.AllArgsConstructor;
 import java.math.BigDecimal;
 import java.util.Date;
 
+@SecurityRequirement(name = "Bearer Authentication")
 @RestController
 @AllArgsConstructor
 @RequestMapping("/actuarial")
@@ -26,8 +28,8 @@ public class ActuarialController {
      * Calculate risk score for a client
      * Available to: AGENT, ADMIN
      */
+    @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
     @PostMapping("/risk-assessment")
-    //@PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
     public ResponseEntity<InsuranceRiskAssessmentDTO> assessRisk(@RequestBody InsuranceRiskAssessmentDTO riskProfile) {
         try {
             InsuranceRiskAssessmentDTO result = riskAssessmentService.calculateRiskScore(riskProfile);
@@ -41,8 +43,8 @@ public class ActuarialController {
      * Calculate premium for insurance product
      * Available to: CLIENT, AGENT, ADMIN
      */
+    @PreAuthorize("hasAnyRole('CLIENT', 'AGENT', 'ADMIN')")
     @PostMapping("/calculate-premium")
-    //@PreAuthorize("hasAnyRole('CLIENT', 'AGENT', 'ADMIN')")
     public ResponseEntity<PremiumCalculationResultDTO> calculatePremium(
             @RequestBody PremiumCalculationRequestDTO request) {
         try {
@@ -57,8 +59,8 @@ public class ActuarialController {
      * Generate amortization schedule (tableau d'amortissement)
      * Available to: CLIENT, AGENT, ADMIN
      */
+    @PreAuthorize("hasAnyRole('CLIENT', 'AGENT', 'ADMIN')")
     @GetMapping("/amortization-schedule")
-    //@PreAuthorize("hasAnyRole('CLIENT', 'AGENT', 'ADMIN')")
     public ResponseEntity<InsuranceAmortizationScheduleDTO> generateAmortizationSchedule(
             @RequestParam BigDecimal principal,
             @RequestParam Double annualRate,
@@ -79,8 +81,8 @@ public class ActuarialController {
      * Complete insurance quote: risk + premium + amortization
      * Available to: CLIENT, AGENT, ADMIN
      */
+    @PreAuthorize("hasAnyRole('CLIENT', 'AGENT', 'ADMIN')")
     @PostMapping("/complete-quote")
-    //@PreAuthorize("hasAnyRole('CLIENT', 'AGENT', 'ADMIN')")
     public ResponseEntity<InsuranceCompleteQuoteDTO> getCompleteQuote(
             @RequestBody PremiumCalculationRequestDTO request) {
         try {
