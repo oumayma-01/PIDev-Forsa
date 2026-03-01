@@ -66,4 +66,4 @@ public class AuthEntryPointJwt implements AuthenticationEntryPoint {
     response.getWriter().write(jsonResponse);
   }
 }
-}
+
