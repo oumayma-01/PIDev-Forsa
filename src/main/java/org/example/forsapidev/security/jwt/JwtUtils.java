@@ -59,7 +59,9 @@ public class JwtUtils {
           // Claims dashboard endpoint
           "/claims-dashboard/**",
           // Product comparison endpoints
-          "/product-comparison/**"
+          "/product-comparison/**",
+
+          "/actuarial/**"
   };
 
   public String generatePinPassword() {
