@@ -59,9 +59,20 @@ public class JwtUtils {
           // Claims dashboard endpoint
           "/claims-dashboard/**",
           // Product comparison endpoints
-          "/product-comparison/**"
+          "/product-comparison/**",
+          // Scoring Management endpoints
+          "/api/scoring/**",
+          "/api/recommendations/**",
+          "/api/rerating/**",
+          // Partnership Management endpoints
+          "/api/partners/**",
+          "/api/partner-transactions/**",
+          "/api/qr-code/**",
+          "/api/partner-reviews/**",
+          "/api/partner-analytics/**",
+          "/api/fraud-alerts/**",
+          "/api/cashback/**"
   };
-
   public String generatePinPassword() {
     int m = (int) Math.pow(10, 4 - 1);
     return ""+(m + new Random().nextInt(9 * m));

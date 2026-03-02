@@ -1,7 +1,5 @@
 package org.example.forsapidev.security;
 
-
-
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -23,13 +21,10 @@ import org.example.forsapidev.security.jwt.JwtUtils;
 import org.example.forsapidev.security.services.UserDetailsServiceImpl;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 
-
 @Configuration
 @EnableWebSecurity
 @NoArgsConstructor
 public class WebSecurityConfig implements WebMvcConfigurer {
-
-
 
   @Autowired
   private AuthEntryPointJwt unauthorizedHandler;
@@ -41,7 +36,6 @@ public class WebSecurityConfig implements WebMvcConfigurer {
   public AuthTokenFilter authenticationJwtTokenFilter() {
     return new AuthTokenFilter();
   }
-
 
   @Bean
   public PasswordEncoder passwordEncoder() {
@@ -60,13 +54,28 @@ public class WebSecurityConfig implements WebMvcConfigurer {
 
   @Bean
   protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    http.cors().
-            and()
-            .csrf().disable();
+    http.cors().and().csrf().disable();
     http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
     http.exceptionHandling().authenticationEntryPoint(unauthorizedHandler);
-    http.authorizeHttpRequests ().requestMatchers (securityUtils.AUTH_WHITELIST).permitAll();
-    http.authorizeHttpRequests ().anyRequest().authenticated();
+
+    http.authorizeHttpRequests()
+            .requestMatchers(securityUtils.AUTH_WHITELIST).permitAll()
+            .requestMatchers("/api/scoring/**").permitAll()
+            .requestMatchers("/api/recommendations/**").permitAll()
+            .requestMatchers("/api/rerating/**").permitAll()
+            .requestMatchers("/api/partners/**").permitAll()
+            .requestMatchers("/api/partner-transactions/**").permitAll()
+            .requestMatchers("/api/qr-code/**").permitAll()
+            .requestMatchers("/api/partner-reviews/**").permitAll()
+            .requestMatchers("/api/partner-analytics/**").permitAll()
+            .requestMatchers("/api/fraud-alerts/**").permitAll()
+            .requestMatchers("/api/cashback/**").permitAll()
+            .requestMatchers("/swagger-ui/**").permitAll()
+            .requestMatchers("/swagger-ui.html").permitAll()
+            .requestMatchers("/v3/api-docs/**").permitAll()
+            .requestMatchers("/api-docs/**").permitAll()
+            .anyRequest().authenticated();
+
     http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
@@ -74,12 +83,20 @@ public class WebSecurityConfig implements WebMvcConfigurer {
 
   @Bean
   public WebSecurityCustomizer webSecurityCustomizer() throws Exception {
-    return (web) -> web.ignoring().requestMatchers (securityUtils.AUTH_WHITELIST);
+    return (web) -> web.ignoring()
+            .requestMatchers(securityUtils.AUTH_WHITELIST)
+            .requestMatchers("/swagger-ui/**")
+            .requestMatchers("/swagger-ui.html")
+            .requestMatchers("/v3/api-docs/**")
+            .requestMatchers("/api-docs/**");
   }
+
 
   @Override
   public void addResourceHandlers(ResourceHandlerRegistry registry) {
-    registry.addResourceHandler("swagger-ui.html").addResourceLocations("classpath:/META-INF/resources/");
-    registry.addResourceHandler("/webjars/**").addResourceLocations("classpath:/META-INF/resources/webjars/");
+    registry.addResourceHandler("swagger-ui.html")
+            .addResourceLocations("classpath:/META-INF/resources/");
+    registry.addResourceHandler("/webjars/**")
+            .addResourceLocations("classpath:/META-INF/resources/webjars/");
   }
 }
