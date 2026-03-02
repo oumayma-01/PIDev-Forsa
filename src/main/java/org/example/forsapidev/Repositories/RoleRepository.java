@@ -13,7 +13,5 @@ public interface RoleRepository extends JpaRepository<Role, Integer> {
 
   Optional<Role> findByName(ERole name);
   Boolean existsByName(ERole name);
-
-
 }
 
