@@ -89,6 +89,14 @@ public class JwtUtils {
             .compact();
 
   }
+  public String generateJwtFromUsername(String username) {
+    return Jwts.builder()
+            .setSubject(username)
+            .setIssuedAt(new Date())
+            .setExpiration(new Date((new Date()).getTime() + SESSION_EXPIRATION))
+            .signWith(SignatureAlgorithm.HS512, SECRET)
+            .compact();
+  }
 
   public String parseJwt(HttpServletRequest request) {
     String headerAuth = request.getHeader(JWT_HEADER_NAME);
