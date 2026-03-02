@@ -26,4 +26,5 @@ public interface IComplaintService {
     Complaint affectComplaintToUser(Long complaintId, Long userId);
     Response addResponseAndUpdateStatus(Long complaintId, Response r);
     void closeComplaintIfEligible(Long complaintId);
+    Map<String, Long> getStatsByPriority();
 }
