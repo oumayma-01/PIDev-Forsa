@@ -40,7 +40,7 @@ public class CreditScoringService {
      * Score un crédit en utilisant l'IA et met à jour les champs de risque
      *
      * @param creditRequest la demande de crédit à scorer
-     * @return l'objet ScoringResult contenant le score et la décision
+     * @return l'objet ScoringResult contenant isRisky et riskLevel
      */
     public ScoringResult scoreCredit(CreditRequest creditRequest) {
         logger.info("Démarrage du scoring pour le crédit ID={}", creditRequest.getId());
@@ -66,23 +66,21 @@ public class CreditScoringService {
             throw e;
         }
 
-        // L'IA retourne déjà tout : score, risky, et risk_level
-        double score = iaResponse.getScore();
+        // L'IA retourne déjà tout : risky et risk_level
         boolean isRisky = iaResponse.isRisky();
 
         // Conversion du risk_level string en enum (si fourni par l'IA)
-        RiskLevel riskLevel = determineRiskLevelFromIa(iaResponse.getRiskLevel(), score);
+        RiskLevel riskLevel = determineRiskLevelFromIa(iaResponse.getRiskLevel(), iaResponse.getScore());
 
         // Mise à jour du crédit avec les résultats du scoring
-        creditRequest.setRiskScore(score);
         creditRequest.setIsRisky(isRisky);
         creditRequest.setRiskLevel(riskLevel);
         creditRequest.setScoredAt(LocalDateTime.now());
 
-        logger.info("Scoring terminé pour crédit ID={} : score={}, risky={}, level={}",
-                   creditRequest.getId(), score, isRisky, riskLevel);
+        logger.info("Scoring terminé pour crédit ID={} : risky={}, level={}",
+                   creditRequest.getId(), isRisky, riskLevel);
 
-        return new ScoringResult(score, isRisky, riskLevel);
+        return new ScoringResult(isRisky, riskLevel);
     }
 
     /**
@@ -117,19 +115,14 @@ public class CreditScoringService {
      * Classe interne pour encapsuler le résultat du scoring
      */
     public static class ScoringResult {
-        private final double score;
         private final boolean risky;
         private final RiskLevel riskLevel;
 
-        public ScoringResult(double score, boolean risky, RiskLevel riskLevel) {
-            this.score = score;
+        public ScoringResult(boolean risky, RiskLevel riskLevel) {
             this.risky = risky;
             this.riskLevel = riskLevel;
         }
 
-        public double getScore() {
-            return score;
-        }
 
         public boolean isRisky() {
             return risky;

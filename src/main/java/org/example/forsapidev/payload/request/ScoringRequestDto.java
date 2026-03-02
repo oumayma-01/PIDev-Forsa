@@ -13,8 +13,6 @@ public class ScoringRequestDto {
     @JsonProperty("payment_instability")
     private double paymentInstability;
 
-    @JsonProperty("credit_utilization")
-    private double creditUtilization;
 
     @JsonProperty("monthly_transaction_count")
     private int monthlyTransactionCount;
@@ -46,6 +44,9 @@ public class ScoringRequestDto {
     @JsonProperty("employment_changed")
     private int employmentChanged;
 
+    @JsonProperty("recent_credit_requests")
+    private int recentCreditRequests;
+
     // Constructors
     public ScoringRequestDto() {
     }
@@ -67,13 +68,6 @@ public class ScoringRequestDto {
         this.paymentInstability = paymentInstability;
     }
 
-    public double getCreditUtilization() {
-        return creditUtilization;
-    }
-
-    public void setCreditUtilization(double creditUtilization) {
-        this.creditUtilization = creditUtilization;
-    }
 
     public int getMonthlyTransactionCount() {
         return monthlyTransactionCount;
@@ -153,6 +147,14 @@ public class ScoringRequestDto {
 
     public void setEmploymentChanged(int employmentChanged) {
         this.employmentChanged = employmentChanged;
+    }
+
+    public int getRecentCreditRequests() {
+        return recentCreditRequests;
+    }
+
+    public void setRecentCreditRequests(int recentCreditRequests) {
+        this.recentCreditRequests = recentCreditRequests;
     }
 }
 

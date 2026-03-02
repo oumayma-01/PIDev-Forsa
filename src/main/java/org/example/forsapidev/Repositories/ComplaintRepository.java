@@ -1,13 +1,16 @@
 package org.example.forsapidev.Repositories;
 
+import org.example.forsapidev.entities.ComplaintFeedbackManagement.Category;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Complaint;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
 import java.util.List;
 
 @Repository
 public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     List<Complaint> findByUserId(Long userId);
     List<Complaint> findByStatus(String status);
-    List<Complaint> findByCategory(String category);
+    List<Complaint> findByCategory(Category category);
+    List<Complaint> findAllByOrderByPriorityDescCreatedAtDesc();
 }

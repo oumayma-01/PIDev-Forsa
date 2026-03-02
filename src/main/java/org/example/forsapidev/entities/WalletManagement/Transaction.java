@@ -1,11 +1,13 @@
 package org.example.forsapidev.entities.WalletManagement;
 
+import org.example.forsapidev.entities.WalletManagement.TransactionType;
+import org.example.forsapidev.entities.WalletManagement.Wallet;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Entity
-@Table(name = "transaction")
 public class Transaction {
 
     @Id
@@ -14,13 +16,60 @@ public class Transaction {
 
     private BigDecimal amount;
 
+    private LocalDateTime date;
+
     @Enumerated(EnumType.STRING)
-    private TransactionStatus status;
+    private TransactionType type;
 
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date timestamp;
+    @ManyToOne
+    @JoinColumn(name = "wallet_id")
+    private Wallet wallet;
 
-    private String referenceCode;
+    public Long getId() {
+        return id;
+    }
 
-    private String description;
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
+
+    public LocalDateTime getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDateTime date) {
+        this.date = date;
+    }
+
+    public TransactionType getType() {
+        return type;
+    }
+
+    public void setType(TransactionType type) {
+        this.type = type;
+    }
+
+    public Wallet getWallet() {
+        return wallet;
+    }
+
+    public void setWallet(Wallet wallet) {
+        this.wallet = wallet;
+    }
 }
+
+
+
+
+
+
+
+
