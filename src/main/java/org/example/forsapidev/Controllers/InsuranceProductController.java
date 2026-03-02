@@ -16,7 +16,7 @@ public class InsuranceProductController {
 
     IInsuranceProduct insuranceProductService;
 
-    @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
+    //@PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
     @GetMapping("/retrieve-all-insurance-products")
     public List<InsuranceProduct> retrieveAllInsuranceProducts() {
         List<InsuranceProduct> products = insuranceProductService.retrieveAllInsuranceProducts();
