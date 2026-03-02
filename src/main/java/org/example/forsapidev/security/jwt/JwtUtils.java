@@ -56,6 +56,7 @@ public class JwtUtils {
           "/insurance-claim/**",
           "/insurance-policy/**",
           "/insurance-product/**",
+          "/insurance-product/retrieve-all-insurance-products",
           "/premium-payment/**",
           "/premium-reminder/**",
           //insurance policy pdf endpoints
