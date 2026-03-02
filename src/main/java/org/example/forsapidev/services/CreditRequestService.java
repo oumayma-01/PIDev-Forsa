@@ -38,25 +38,19 @@ public class CreditRequestService {
     private final AmortizationCalculatorService amortizationCalculatorService;
     private final CreditScoringService creditScoringService;
     private final UnifiedCreditAnalysisService unifiedCreditAnalysisService;
-    private final GiftService giftService;
-    private final AgentAssignmentService agentAssignmentService;
 
     public CreditRequestService(CreditRequestRepository creditRequestRepository,
                                 RepaymentScheduleRepository repaymentScheduleRepository,
                                 InterestRateEngineService interestRateEngineService,
                                 AmortizationCalculatorService amortizationCalculatorService,
                                 CreditScoringService creditScoringService,
-                                UnifiedCreditAnalysisService unifiedCreditAnalysisService,
-                                GiftService giftService,
-                                AgentAssignmentService agentAssignmentService) {
+                                UnifiedCreditAnalysisService unifiedCreditAnalysisService) {
         this.creditRequestRepository = creditRequestRepository;
         this.repaymentScheduleRepository = repaymentScheduleRepository;
         this.interestRateEngineService = interestRateEngineService;
         this.amortizationCalculatorService = amortizationCalculatorService;
         this.creditScoringService = creditScoringService;
         this.unifiedCreditAnalysisService = unifiedCreditAnalysisService;
-        this.giftService = giftService;
-        this.agentAssignmentService = agentAssignmentService;
     }
 
     // Create a credit request and generate repayment schedules automatically
@@ -174,7 +168,6 @@ public class CreditRequestService {
             savedRequest.setStatus(CreditStatus.UNDER_REVIEW);
             savedRequest = creditRequestRepository.save(savedRequest);
 
-
             logger.info("✅ Demande de crédit créée avec succès - ID={}", savedRequest.getId());
             logger.info("   📊 Risque fraude : {} ({})",
                        savedRequest.getRiskLevel(), savedRequest.getIsRisky() ? "RISKY" : "SAFE");
@@ -271,15 +264,6 @@ public class CreditRequestService {
         // Génération du tableau d'amortissement selon le type choisi
         generateRepaymentSchedule(saved);
 
-        // Accumulation du gift (1.5% du capital)
-        try {
-            logger.info("🎁 Accumulation du gift pour le crédit ID={}", id);
-            giftService.accumulateForCredit(saved);
-        } catch (Exception e) {
-            logger.warn("⚠️ Erreur lors de l'accumulation du gift : {}", e.getMessage());
-            // On ne bloque pas la validation même si le gift échoue
-        }
-
         logger.info("Crédit ID={} validé avec succès", id);
         return saved;
     }
@@ -312,20 +296,7 @@ public class CreditRequestService {
         // - Scoring si nécessaire
         // - Passage en APPROVED
         // - Génération des échéances
-        CreditRequest approved = validateCredit(id);
-
-        // Libérer l'agent après approbation
-        try {
-            if (approved.getAgentId() != null) {
-                agentAssignmentService.releaseAgent(approved.getAgentId());
-                logger.info("Agent {} libéré après approbation du crédit ID={}", approved.getAgentId(), id);
-            }
-        } catch (Exception e) {
-            logger.warn("⚠️ Erreur lors de la libération de l'agent après approbation : {}", e.getMessage());
-            // Ne pas bloquer l'approbation si la libération de l'agent échoue
-        }
-
-        return approved;
+        return validateCredit(id);
     }
 
     /**
@@ -344,19 +315,9 @@ public class CreditRequestService {
         }
 
         // L'agent rejette : statut final
-        credit.setStatus(CreditStatus.REJECTED);
+        // TODO: Ajouter un champ "rejectionReason" dans CreditRequest si besoin de tracer la raison
+        credit.setStatus(CreditStatus.DEFAULTED); // Ou créer un nouveau statut REJECTED
         CreditRequest rejected = creditRequestRepository.save(credit);
-
-        // Libérer l'agent après rejet
-        try {
-            if (rejected.getAgentId() != null) {
-                agentAssignmentService.releaseAgent(rejected.getAgentId());
-                logger.info("Agent {} libéré après rejet du crédit ID={}", rejected.getAgentId(), id);
-            }
-        } catch (Exception e) {
-            logger.warn("⚠️ Erreur lors de la libération de l'agent après rejet : {}", e.getMessage());
-            // Ne pas bloquer le rejet si la libération de l'agent échoue
-        }
 
         logger.info("Crédit ID={} rejeté par l'agent - Risque : {}, Raison : {}",
                    id, credit.getRiskLevel(), reason);

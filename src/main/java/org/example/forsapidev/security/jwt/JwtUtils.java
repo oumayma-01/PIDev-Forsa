@@ -39,6 +39,7 @@ public class JwtUtils {
           "/api/test/**",
           "/v2/api-docs",
           "/oauth2/**",
+          "/oauth2/**",
           "/login/**",
           "/error",
           "/swagger-resources",
@@ -55,6 +56,7 @@ public class JwtUtils {
           "/insurance-claim/**",
           "/insurance-policy/**",
           "/insurance-product/**",
+          "/insurance-product/retrieve-all-insurance-products",
           "/premium-payment/**",
           "/premium-reminder/**",
           //insurance policy pdf endpoints

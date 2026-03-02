@@ -6,6 +6,5 @@ public enum CreditStatus {
     APPROVED,
     ACTIVE,
     REPAID,
-    REJECTED,
     DEFAULTED
 }

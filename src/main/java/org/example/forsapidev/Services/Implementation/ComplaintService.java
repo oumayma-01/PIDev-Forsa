@@ -8,6 +8,7 @@ import org.example.forsapidev.Repositories.UserRepository;
 import org.example.forsapidev.Services.Interfaces.IComplaintService;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Category;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Complaint;
+import org.example.forsapidev.entities.ComplaintFeedbackManagement.Priority;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Response;
 import org.example.forsapidev.entities.UserManagement.User;
 import org.example.forsapidev.openai.ComplaintAiAssistant;
@@ -57,54 +58,59 @@ public class ComplaintService implements IComplaintService {
 
     @Override
     public Complaint addComplaintWithAI(Complaint c) {
-        String cat;
+        // 1️⃣ Catégorie
+        String cat = "AUTRE";
         try {
             cat = complaintAiAssistant.classifyCategory(c.getDescription());
-        } catch (Exception e) {
-            cat = "AUTRE";
-        }
-
-        if (cat == null) cat = "AUTRE";
-        if ("SUPPORT_GENERAL".equalsIgnoreCase(cat)) cat = "SUPPORT";
-
-        try {
             c.setCategory(Category.valueOf(cat.toUpperCase()));
         } catch (Exception e) {
             c.setCategory(Category.AUTRE);
         }
 
+        // 2️⃣ Priorité
+        Priority aiPriority;
+        try {
+            aiPriority = complaintAiAssistant.simulatePriority(c.getDescription());
+        } catch (Exception e) {
+            aiPriority = Priority.MEDIUM;
+        }
+        c.setPriority(aiPriority);
+
+        // 3️⃣ Autres champs
         c.setSubject("Analyse IA : " + (c.getSubject() != null ? c.getSubject() : "Nouveau ticket"));
         c.setStatus("OPEN");
         c.setCreatedAt(new Date());
+
         return complaintRepository.save(c);
+    }
+    // ========== NOUVEAU ==========
+    @Override
+    public Map<String, Long> getStatsByPriority() {
+        return complaintRepository.findAll().stream()
+                .filter(c -> c.getPriority() != null)
+                .collect(Collectors.groupingBy(
+                        c -> c.getPriority().name(),
+                        Collectors.counting()
+                ));
     }
 
     @Override
     public Map<String, String> generateResponseForComplaint(Long complaintId) {
         Complaint c = complaintRepository.findById(complaintId).orElse(null);
-        if (c == null) {
-            return Map.of("error", "Plainte non trouvée");
-        }
+        if (c == null) return Map.of("error", "Plainte non trouvée");
 
         String category = c.getCategory() != null ? c.getCategory().name() : "AUTRE";
         String subject = c.getSubject() != null ? c.getSubject() : "Votre réclamation";
         String description = c.getDescription() != null ? c.getDescription() : "";
 
         try {
-            String responseText = complaintAiAssistant.draftResponse(
-                    category,
-                    subject,
-                    description
-            );
-
+            String responseText = complaintAiAssistant.draftResponse(category, subject, description);
             if (responseText == null || responseText.isBlank()) {
                 responseText = buildFallbackAiResponse(category, subject, description);
             }
-
             return Map.of("response", responseText);
         } catch (Exception e) {
-            String responseText = buildFallbackAiResponse(category, subject, description);
-            return Map.of("response", responseText);
+            return Map.of("response", buildFallbackAiResponse(category, subject, description));
         }
     }
 
@@ -176,10 +182,8 @@ public class ComplaintService implements IComplaintService {
     public Complaint affectComplaintToUser(Long complaintId, Long userId) {
         Complaint complaint = complaintRepository.findById(complaintId).orElse(null);
         if (complaint == null) return null;
-
         User user = userRepository.findById(userId).orElse(null);
         if (user == null) return null;
-
         complaint.setUser(user);
         return complaintRepository.save(complaint);
     }
@@ -193,12 +197,8 @@ public class ComplaintService implements IComplaintService {
         Response saved = responseRepository.save(r);
 
         String st = complaint.getStatus() == null ? "OPEN" : complaint.getStatus();
-        if ("OPEN".equals(st)) {
-            complaint.setStatus("IN_PROGRESS");
-        }
-        if ("SENT".equals(saved.getResponseStatus())) {
-            complaint.setStatus("RESOLVED");
-        }
+        if ("OPEN".equals(st)) complaint.setStatus("IN_PROGRESS");
+        if ("SENT".equals(saved.getResponseStatus())) complaint.setStatus("RESOLVED");
 
         complaintRepository.save(complaint);
         return saved;
@@ -208,8 +208,6 @@ public class ComplaintService implements IComplaintService {
     public void closeComplaintIfEligible(Long complaintId) {
         Complaint complaint = complaintRepository.findById(complaintId)
                 .orElseThrow(() -> new IllegalArgumentException("Complaint not found"));
-
-        // version simplifiée pour la soutenance
         complaint.setStatus("CLOSED");
         complaintRepository.save(complaint);
     }
@@ -228,15 +226,11 @@ public class ComplaintService implements IComplaintService {
 
         for (Date d : dates) {
             String key = fmt.format(d);
-            if (counts.containsKey(key)) {
-                counts.put(key, counts.get(key) + 1);
-            }
+            if (counts.containsKey(key)) counts.put(key, counts.get(key) + 1);
         }
 
         List<Map<String, Object>> res = new ArrayList<>();
-        counts.forEach((k, v) ->
-                res.add(new LinkedHashMap<>(Map.of("period", k, "count", v)))
-        );
+        counts.forEach((k, v) -> res.add(new LinkedHashMap<>(Map.of("period", k, "count", v))));
         return res;
     }
 }

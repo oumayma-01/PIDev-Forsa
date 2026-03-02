@@ -1,8 +1,8 @@
 package org.example.forsapidev.Repositories;
 
-import org.example.forsapidev.entities.CreditManagement.LineType;
 import org.example.forsapidev.entities.CreditManagement.RepaymentSchedule;
 import org.example.forsapidev.entities.CreditManagement.RepaymentStatus;
+import org.example.forsapidev.entities.CreditManagement.LineType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,7 +14,6 @@ import java.util.List;
 @Repository
 public interface RepaymentScheduleRepository extends JpaRepository<RepaymentSchedule, Long> {
     List<RepaymentSchedule> findByCreditRequestIdOrderByDueDateAsc(Long creditRequestId);
-    List<RepaymentSchedule> findByCreditRequestIdOrderByDueDateDesc(Long creditRequestId);
     List<RepaymentSchedule> findByCreditRequestId(Long creditRequestId);
 
     // Récupère toutes les échéances payées pour un utilisateur donné (via CreditRequest -> User)
@@ -24,12 +23,9 @@ public interface RepaymentScheduleRepository extends JpaRepository<RepaymentSche
     List<RepaymentSchedule> findPaidByUserId(@Param("userId") Long userId,
                                              @Param("status") RepaymentStatus status);
 
-    // Trouve les échéances en retard (dueDate < today et status != PAID)
-    List<RepaymentSchedule> findByDueDateBeforeAndStatusNot(LocalDate date, RepaymentStatus status);
-
-    // Trouve les pénalités pour un crédit
+    // Méthodes pour la gestion des pénalités
+    List<RepaymentSchedule> findByDueDateBeforeAndStatusNot(LocalDate dueDate, RepaymentStatus status);
     List<RepaymentSchedule> findByCreditRequestIdAndLineType(Long creditRequestId, LineType lineType);
-
-    // Compte les pénalités
+    List<RepaymentSchedule> findByCreditRequestIdOrderByDueDateDesc(Long creditRequestId);
     long countByLineType(LineType lineType);
 }

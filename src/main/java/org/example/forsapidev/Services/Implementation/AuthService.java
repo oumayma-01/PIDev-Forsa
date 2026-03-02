@@ -1,13 +1,10 @@
 package org.example.forsapidev.Services.Implementation;
 
 
-import org.example.forsapidev.Repositories.AgentRepository;
 import org.example.forsapidev.Repositories.RoleRepository;
 import org.example.forsapidev.Repositories.UserRepository;
 import org.example.forsapidev.Services.Interfaces.IAuthService;
 import org.example.forsapidev.Utils.EmailEncryptionUtil;
-import org.example.forsapidev.entities.UserManagement.Agent;
-import org.example.forsapidev.entities.UserManagement.ERole;
 import org.example.forsapidev.entities.UserManagement.Role;
 import org.example.forsapidev.entities.UserManagement.User;
 import org.example.forsapidev.payload.request.ForgottenPasswordRequest;
@@ -18,8 +15,6 @@ import org.example.forsapidev.payload.response.JwtResponse;
 import org.example.forsapidev.payload.response.MessageResponse;
 import org.example.forsapidev.security.jwt.JwtUtils;
 import org.example.forsapidev.security.services.UserDetailsImpl;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -38,9 +33,6 @@ import java.util.stream.Collectors;
 
 @Service
 class AuthService implements IAuthService {
-
-    private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
-
     @Autowired
 
     UserRepository userRepository;
@@ -48,10 +40,6 @@ class AuthService implements IAuthService {
     @Autowired
 
     RoleRepository roleRepository;
-
-    @Autowired
-    AgentRepository agentRepository;
-
     @Autowired
     AuthenticationManager authenticationManager;
     @Autowired
@@ -118,23 +106,6 @@ class AuthService implements IAuthService {
                 .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
         user.setRole(role);
         userRepository.save(user);
-
-        // Créer automatiquement un agent si le rôle est AGENT
-        if (role.getName() == ERole.AGENT) {
-            try {
-                Agent agent = new Agent();
-                agent.setUser(user);
-                agent.setFullName(user.getUsername()); // Utiliser le username comme nom complet par défaut
-                agent.setIsBusy(false); // Agent disponible au départ
-                agent.setIsActive(true); // Agent actif
-                agentRepository.save(agent);
-                logger.info("Agent créé automatiquement pour l'utilisateur {} (ID: {})", user.getUsername(), user.getId());
-            } catch (Exception e) {
-                logger.error("Erreur lors de la création automatique de l'agent pour l'utilisateur {} : {}", user.getUsername(), e.getMessage());
-                // Ne pas bloquer la création de l'utilisateur si la création de l'agent échoue
-            }
-        }
-
         String request = "http://localhost:4200/pages/validateUser/";
         String subject ="Verification of your email";
         String imagePath = "classpath:static/uploads/logoforsa.png";
