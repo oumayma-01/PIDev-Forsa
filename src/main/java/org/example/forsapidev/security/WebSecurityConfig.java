@@ -1,10 +1,9 @@
 package org.example.forsapidev.security;
 
 import lombok.NoArgsConstructor;
-import org.example.forsapidev.security.jwt.AuthAccessDeniedHandler;
-import org.example.forsapidev.security.jwt.AuthEntryPointJwt;
-import org.example.forsapidev.security.jwt.AuthTokenFilter;
-import org.example.forsapidev.security.services.UserDetailsServiceImpl;
+import org.example.forsapidev.Repositories.RoleRepository;
+import org.example.forsapidev.Repositories.UserRepository;
+import org.example.forsapidev.security.jwt.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,6 +20,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.example.forsapidev.security.services.UserDetailsServiceImpl;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+
 
 @Configuration
 @EnableWebSecurity
@@ -40,6 +42,16 @@ public class WebSecurityConfig implements WebMvcConfigurer {
   private JwtUtils securityUtils;
   @Autowired
   private AuthAccessDeniedHandler accessDeniedHandler;
+  @Autowired
+  private UserRepository userRepository;
+
+  @Autowired
+  private RoleRepository roleRepository;
+
+  @Bean
+  public OAuth2SuccessHandler oAuth2SuccessHandler() {
+    return new OAuth2SuccessHandler(userRepository, roleRepository, securityUtils);
+  }
   @Bean
   public AuthTokenFilter authenticationJwtTokenFilter() {
     return new AuthTokenFilter();
@@ -88,12 +100,12 @@ public class WebSecurityConfig implements WebMvcConfigurer {
             .csrf().disable()
 
             .sessionManagement()
-            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             .and()
 
             .exceptionHandling()
-            .authenticationEntryPoint(unauthorizedHandler)   // 401
-            .accessDeniedHandler(accessDeniedHandler)        // 403
+            .authenticationEntryPoint(unauthorizedHandler)
+            .accessDeniedHandler(accessDeniedHandler)
             .and()
 
             .authorizeHttpRequests()
@@ -101,22 +113,14 @@ public class WebSecurityConfig implements WebMvcConfigurer {
             .anyRequest().authenticated()
             .and()
 
+            .oauth2Login()
+            .successHandler(oAuth2SuccessHandler())
+            .and()
+
             .addFilterBefore(authenticationJwtTokenFilter(),
                     UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
-  }
-
-  @Bean
-  public WebSecurityCustomizer webSecurityCustomizer() {
-    // Ici on ignore seulement les ressources statiques de Swagger,
-    // PAS les endpoints /api/** (ils doivent passer par la sécurité JWT)
-    return (web) -> web.ignoring()
-            .requestMatchers(
-                    "/swagger-ui.html",
-                    "/webjars/**",
-                    "/v3/api-docs/**"
-            );
   }
 
   @Override

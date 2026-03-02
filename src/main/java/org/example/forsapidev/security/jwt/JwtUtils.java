@@ -38,14 +38,18 @@ public class JwtUtils {
           "/api/auth/**",
           "/api/test/**",
           "/v2/api-docs",
+          "/oauth2/**",
+          "/oauth2/**",
+          "/login/**",
+          "/error",
           "/swagger-resources",
-          "**/swagger-resources/**",
+          "*/swagger-resources/*",
           "/configuration/ui",
           "/configuration/**",
-          "**/swagger-ui.html/**",
+          "*/swagger-ui.html/*",
           "/swagger-ui.html",
           "/v3/api-docs/**",
-          "**/swagger-ui/**",
+          "*/swagger-ui/*",
           "/swagger-ui/**",
           "/v2/api-docs/**",
           // Insurance endpoints - for testing purposes
@@ -59,7 +63,9 @@ public class JwtUtils {
           // Claims dashboard endpoint
           "/claims-dashboard/**",
           // Product comparison endpoints
-          "/product-comparison/**"
+          "/product-comparison/**",
+
+          //"/actuarial/**"
   };
 
   public String generatePinPassword() {
@@ -82,7 +88,14 @@ public class JwtUtils {
             .signWith(SignatureAlgorithm.HS512, SECRET)
             .compact();
   }
-
+  public String generateJwtFromUsername(String username) {
+    return Jwts.builder()
+            .setSubject(username)
+            .setIssuedAt(new Date())
+            .setExpiration(new Date((new Date()).getTime() + SESSION_EXPIRATION))
+            .signWith(SignatureAlgorithm.HS512, SECRET)
+            .compact();
+  }
   public String parseJwt(HttpServletRequest request) {
     String headerAuth = request.getHeader(JWT_HEADER_NAME);
     if (StringUtils.hasText(headerAuth) && headerAuth.startsWith(HEADER_PREFIX)) {
