@@ -59,7 +59,7 @@
 
         .product-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 15px;
             margin-bottom: 20px;
         }
@@ -127,7 +127,7 @@
             color: white;
         }
 
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
             background: #5568d3;
             transform: translateY(-2px);
         }
@@ -137,7 +137,7 @@
             color: white;
         }
 
-        .btn-secondary:hover {
+        .btn-secondary:hover:not(:disabled) {
             background: #38a169;
             transform: translateY(-2px);
         }
@@ -146,6 +146,7 @@
             background: #ccc;
             cursor: not-allowed;
             transform: none;
+            opacity: 0.6;
         }
 
         .comparison-result {
@@ -177,19 +178,19 @@
         .summary-text {
             color: #666;
             line-height: 1.6;
+            margin-top: 10px;
         }
 
         .comparison-table {
             width: 100%;
-            border-collapse: collapse;
             margin-bottom: 20px;
             overflow-x: auto;
-            display: block;
         }
 
         .comparison-table table {
             width: 100%;
             min-width: 700px;
+            border-collapse: collapse;
         }
 
         .comparison-table th {
@@ -198,8 +199,6 @@
             padding: 15px;
             text-align: left;
             font-weight: 600;
-            position: sticky;
-            top: 0;
         }
 
         .comparison-table td {
@@ -251,6 +250,7 @@
             padding: 15px;
             border-radius: 10px;
             border: 2px solid #e0e0e0;
+            text-align: center;
         }
 
         .best-option-card.best-value {
@@ -272,6 +272,7 @@
             font-size: 14px;
             font-weight: 600;
             margin-bottom: 5px;
+            color: #666;
         }
 
         .option-value {
@@ -293,6 +294,7 @@
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 20px;
+            display: none;
         }
 
         @media (max-width: 768px) {
@@ -332,7 +334,7 @@
             </button>
         </div>
 
-        <div id="errorMessage" class="error" style="display: none;"></div>
+        <div id="errorMessage" class="error"></div>
     </div>
 
     <div class="comparison-result" id="comparisonResult">
@@ -353,50 +355,87 @@
 </div>
 
 <script>
-    const API_BASE_URL = window.location.origin + '/forsaPidev';
+    // API configuration
+    const API_BASE_URL = 'http://localhost:8089/forsaPidev';
+
+    // State variables
     let selectedProducts = [];
     let allProducts = [];
     let currentComparison = null;
 
-    // Load all products on page load
+    // Load products when page loads
+    document.addEventListener('DOMContentLoaded', loadProducts);
+
+    // Load all products from API
     async function loadProducts() {
         try {
-            const response = await fetch(`${API_BASE_URL}/insurance-product/retrieve-all-insurance-products`);
-            allProducts = await response.json();
+            const url = `${API_BASE_URL}/product-comparison/products`;
+            console.log('Fetching products from:', url);
 
-            const grid = document.getElementById('productGrid');
-            grid.innerHTML = '';
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            });
 
-            if (allProducts.length === 0) {
-                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666;">No products available</p>';
-                return;
+            console.log('Response status:', response.status);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            allProducts.forEach(product => {
-                const checkbox = document.createElement('div');
-                checkbox.className = 'product-checkbox';
-                checkbox.innerHTML = `
-                        <input type="checkbox"
-                               id="product-${product.id}"
-                               value="${product.id}"
-                               onchange="handleProductSelection(${product.id})">
-                        <div class="product-info">
-                            <div class="product-name">${product.productName}</div>
-                            <div class="product-details">
-                                ${product.policyType} • $${product.premiumAmount} • $${product.coverageLimit} coverage
-                            </div>
-                        </div>
-                    `;
-                grid.appendChild(checkbox);
-            });
+            allProducts = await response.json();
+            console.log('Products loaded:', allProducts);
+
+            displayProducts(allProducts);
 
         } catch (error) {
             console.error('Error loading products:', error);
-            document.getElementById('productGrid').innerHTML =
-                '<p style="grid-column: 1/-1; text-align: center; color: red;">Error loading products. Please refresh.</p>';
+            document.getElementById('productGrid').innerHTML = `
+                <div style="grid-column: 1/-1; text-align: center; color: #c53030; padding: 30px;">
+                    <h3>❌ Error Loading Products</h3>
+                    <p>${error.message}</p>
+                    <p>Please make sure the backend server is running on port 8089</p>
+                    <button onclick="loadProducts()" style="margin-top: 15px; padding: 8px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        Retry
+                    </button>
+                </div>
+            `;
         }
     }
 
+    // Display products in grid
+    function displayProducts(products) {
+        const grid = document.getElementById('productGrid');
+
+        if (!products || products.length === 0) {
+            grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 30px;">No products available</p>';
+            return;
+        }
+
+        grid.innerHTML = '';
+        products.forEach(product => {
+            const productDiv = document.createElement('div');
+            productDiv.className = 'product-checkbox';
+            productDiv.innerHTML = `
+                <input type="checkbox"
+                       id="product-${product.id}"
+                       value="${product.id}"
+                       onchange="handleProductSelection(${product.id})">
+                <div class="product-info">
+                    <div class="product-name">${product.productName || 'Unnamed Product'}</div>
+                    <div class="product-details">
+                        ${product.policyType || 'N/A'} • $${product.premiumAmount?.toFixed(2) || '0'} premium • $${product.coverageLimit?.toFixed(2) || '0'} coverage
+                    </div>
+                </div>
+            `;
+            grid.appendChild(productDiv);
+        });
+    }
+
+    // Handle product selection
     function handleProductSelection(productId) {
         const checkbox = document.getElementById(`product-${productId}`);
         const container = checkbox.parentElement;
@@ -414,15 +453,17 @@
             container.classList.remove('selected');
         }
 
-        updateButtons();
+        updateCompareButton();
         hideError();
     }
 
-    function updateButtons() {
+    // Update compare button state
+    function updateCompareButton() {
         const compareBtn = document.getElementById('compareBtn');
         compareBtn.disabled = selectedProducts.length < 2 || selectedProducts.length > 3;
     }
 
+    // Compare selected products
     async function compareProducts() {
         if (selectedProducts.length < 2 || selectedProducts.length > 3) {
             showError('Please select 2 or 3 products to compare');
@@ -431,15 +472,26 @@
 
         try {
             const productIdsParam = selectedProducts.join(',');
+            console.log('Comparing products:', productIdsParam);
+
             const response = await fetch(`${API_BASE_URL}/product-comparison/compare?productIds=${productIdsParam}`);
 
             if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Comparison failed:', errorText);
                 throw new Error('Comparison failed');
             }
 
             currentComparison = await response.json();
+            console.log('Comparison result:', currentComparison);
+
+            // Hide any existing error messages
+            hideError();
+
+            // Display the comparison
             displayComparison(currentComparison);
 
+            // Show download button
             document.getElementById('downloadBtn').style.display = 'inline-block';
             document.getElementById('downloadBtn').disabled = false;
 
@@ -449,60 +501,81 @@
         }
     }
 
+    // Display comparison results
     function displayComparison(comparison) {
         const resultDiv = document.getElementById('comparisonResult');
         resultDiv.style.display = 'block';
         resultDiv.scrollIntoView({ behavior: 'smooth' });
 
         // Display summary
-        document.getElementById('summaryText').textContent = comparison.comparisonSummary;
+        if (comparison.comparisonSummary) {
+            document.getElementById('summaryText').textContent = comparison.comparisonSummary;
+        } else {
+            // Create a summary if not provided
+            const bestProduct = comparison.products?.find(p => p.id === comparison.bestValueProductId);
+            if (bestProduct) {
+                document.getElementById('summaryText').textContent =
+                    `${bestProduct.productName} offers the best value with $${bestProduct.coveragePerDollar?.toFixed(2) || '0'} coverage per dollar spent. ` +
+                    `It provides $${bestProduct.coverageLimit?.toFixed(2)} coverage for $${bestProduct.premiumAmount?.toFixed(2)} premium.`;
+            }
+        }
 
-        // Display best options
         displayBestOptions(comparison);
-
-        // Display comparison table
         displayComparisonTable(comparison);
     }
 
+    // Display best options cards
     function displayBestOptions(comparison) {
         const container = document.getElementById('bestOptions');
         container.innerHTML = '';
 
-        const bestValue = comparison.products.find(p => p.id === comparison.bestValueProductId);
-        const lowestPremium = comparison.products.find(p => p.id === comparison.lowestPremiumProductId);
-        const highestCoverage = comparison.products.find(p => p.id === comparison.highestCoverageProductId);
+        if (!comparison.products || comparison.products.length === 0) return;
 
+        // Find best value product
+        const bestValue = comparison.products.find(p => p.id === comparison.bestValueProductId);
         if (bestValue) {
             container.innerHTML += `
-                    <div class="best-option-card best-value">
-                        <div class="option-label">⭐ Best Value</div>
-                        <div class="option-value">${bestValue.productName}</div>
-                    </div>
-                `;
+                <div class="best-option-card best-value">
+                    <div class="option-label">⭐ Best Value</div>
+                    <div class="option-value">${bestValue.productName}</div>
+                </div>
+            `;
         }
 
+        // Find lowest premium product
+        const lowestPremium = comparison.products.reduce((min, p) =>
+            (!min || p.premiumAmount < min.premiumAmount) ? p : min, null);
         if (lowestPremium) {
             container.innerHTML += `
-                    <div class="best-option-card lowest-premium">
-                        <div class="option-label">💰 Lowest Premium</div>
-                        <div class="option-value">${lowestPremium.productName}</div>
-                    </div>
-                `;
+                <div class="best-option-card lowest-premium">
+                    <div class="option-label">💰 Lowest Premium</div>
+                    <div class="option-value">${lowestPremium.productName}</div>
+                </div>
+            `;
         }
 
+        // Find highest coverage product
+        const highestCoverage = comparison.products.reduce((max, p) =>
+            (!max || p.coverageLimit > max.coverageLimit) ? p : max, null);
         if (highestCoverage) {
             container.innerHTML += `
-                    <div class="best-option-card highest-coverage">
-                        <div class="option-label">🛡️ Highest Coverage</div>
-                        <div class="option-value">${highestCoverage.productName}</div>
-                    </div>
-                `;
+                <div class="best-option-card highest-coverage">
+                    <div class="option-label">🛡️ Highest Coverage</div>
+                    <div class="option-value">${highestCoverage.productName}</div>
+                </div>
+            `;
         }
     }
 
+    // Display comparison table
     function displayComparisonTable(comparison) {
         const table = document.getElementById('comparisonTable');
-        const products = comparison.products;
+        const products = comparison.products || [];
+
+        if (products.length === 0) {
+            table.innerHTML = '<tr><td colspan="2">No products to compare</td></tr>';
+            return;
+        }
 
         let html = '<thead><tr><th>Feature</th>';
         products.forEach(product => {
@@ -511,80 +584,62 @@
         });
         html += '</tr></thead><tbody>';
 
-        // Policy Type
-        html += '<tr><td><strong>Policy Type</strong></td>';
-        products.forEach(p => {
-            const isBestValue = p.id === comparison.bestValueProductId;
-            html += `<td ${isBestValue ? 'class="highlight-column"' : ''}>${p.policyType}</td>`;
-        });
-        html += '</tr>';
+        // Define features to display
+        const features = [
+            { label: 'Policy Type', field: 'policyType' },
+            { label: 'Premium Amount', field: 'premiumAmount', format: (v) => `$${v?.toFixed(2) || '0'}` },
+            { label: 'Coverage Limit', field: 'coverageLimit', format: (v) => `$${v?.toFixed(2) || '0'}` },
+            { label: 'Duration', field: 'durationMonths', format: (v) => `${v || 0} months` },
+            { label: 'Cost per Month', field: 'costPerMonth', format: (v) => `$${v?.toFixed(2) || '0'}` },
+            { label: 'Coverage per $1', field: 'coveragePerDollar', format: (v) => `$${v?.toFixed(2) || '0'}` }
+        ];
 
-        // Premium
-        html += '<tr><td><strong>Premium Amount</strong></td>';
-        products.forEach(p => {
-            const isBestValue = p.id === comparison.bestValueProductId;
-            html += `<td ${isBestValue ? 'class="highlight-column"' : ''}>$${p.premiumAmount}</td>`;
-        });
-        html += '</tr>';
+        features.forEach(feature => {
+            html += '<tr><td><strong>' + feature.label + '</strong></td>';
+            products.forEach(product => {
+                const isBestValue = product.id === comparison.bestValueProductId;
+                let value = product[feature.field];
 
-        // Coverage
-        html += '<tr><td><strong>Coverage Limit</strong></td>';
-        products.forEach(p => {
-            const isBestValue = p.id === comparison.bestValueProductId;
-            html += `<td ${isBestValue ? 'class="highlight-column"' : ''}>$${p.coverageLimit}</td>`;
-        });
-        html += '</tr>';
+                if (feature.format) {
+                    value = feature.format(value);
+                }
 
-        // Duration
-        html += '<tr><td><strong>Duration</strong></td>';
-        products.forEach(p => {
-            const isBestValue = p.id === comparison.bestValueProductId;
-            html += `<td ${isBestValue ? 'class="highlight-column"' : ''}>${p.durationMonths} months</td>`;
+                html += `<td ${isBestValue ? 'class="highlight-column"' : ''}>${value || 'N/A'}</td>`;
+            });
+            html += '</tr>';
         });
-        html += '</tr>';
 
-        // Monthly Cost
-        html += '<tr><td><strong>Cost per Month</strong></td>';
-        products.forEach(p => {
-            const isBestValue = p.id === comparison.bestValueProductId;
-            html += `<td ${isBestValue ? 'class="highlight-column"' : ''}>$${p.costPerMonth}</td>`;
-        });
-        html += '</tr>';
-
-        // Coverage per Dollar
-        html += '<tr><td><strong>Coverage per $1</strong></td>';
-        products.forEach(p => {
-            const isBestValue = p.id === comparison.bestValueProductId;
-            html += `<td ${isBestValue ? 'class="highlight-column"' : ''}>$${p.coveragePerDollar.toFixed(2)}</td>`;
-        });
-        html += '</tr>';
-
-        // Value Rating
+        // Add value rating row
         html += '<tr><td><strong>Value Rating</strong></td>';
-        products.forEach(p => {
-            const isBestValue = p.id === comparison.bestValueProductId;
+        products.forEach(product => {
+            const isBestValue = product.id === comparison.bestValueProductId;
+            let rating = product.valueRating || 'Standard';
             let badgeClass = 'badge-standard';
-            if (p.valueRating === 'Best Value') badgeClass = 'badge-best';
-            else if (p.valueRating === 'Good Value') badgeClass = 'badge-good';
+
+            if (rating === 'Best Value') badgeClass = 'badge-best';
+            else if (rating === 'Good Value') badgeClass = 'badge-good';
 
             html += `<td ${isBestValue ? 'class="highlight-column"' : ''}>
-                    <span class="badge ${badgeClass}">${p.valueRating}</span>
-                </td>`;
+                <span class="badge ${badgeClass}">${rating}</span>
+            </td>`;
         });
         html += '</tr>';
 
-        // Description
-        html += '<tr><td><strong>Description</strong></td>';
-        products.forEach(p => {
-            const isBestValue = p.id === comparison.bestValueProductId;
-            html += `<td ${isBestValue ? 'class="highlight-column"' : ''}>${p.description || 'N/A'}</td>`;
-        });
-        html += '</tr>';
+        // Add description row if available
+        if (products.some(p => p.description)) {
+            html += '<tr><td><strong>Description</strong></td>';
+            products.forEach(product => {
+                const isBestValue = product.id === comparison.bestValueProductId;
+                html += `<td ${isBestValue ? 'class="highlight-column"' : ''}>${product.description || 'N/A'}</td>`;
+            });
+            html += '</tr>';
+        }
 
         html += '</tbody>';
         table.innerHTML = html;
     }
 
+    // Download PDF
     function downloadPdf() {
         if (!currentComparison || selectedProducts.length < 2) {
             showError('Please compare products first');
@@ -592,50 +647,21 @@
         }
 
         const productIdsParam = selectedProducts.join(',');
-        const url = `${API_BASE_URL}/product-comparison/download-pdf?productIds=${productIdsParam}`;
-
-        // Open in new tab to trigger download
-        window.open(url, '_blank');
+        window.open(`${API_BASE_URL}/product-comparison/download-pdf?productIds=${productIdsParam}`, '_blank');
     }
 
+    // Show error message
     function showError(message) {
         const errorDiv = document.getElementById('errorMessage');
         errorDiv.textContent = message;
         errorDiv.style.display = 'block';
-        setTimeout(hideError, 5000);
     }
 
+    // Hide error message
     function hideError() {
-        document.getElementById('errorMessage').style.display = 'none';
-    }
-
-    // Load products on page load
-    loadProducts();
-    async function loadProducts() {
-        try {
-            console.log('Fetching from:', `${API_BASE_URL}/insurance-product/retrieve-all-insurance-products`);
-
-            const response = await fetch(`${API_BASE_URL}/insurance-product/retrieve-all-insurance-products`);
-
-            console.log('Response status:', response.status);
-            console.log('Response ok:', response.ok);
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            allProducts = await response.json();
-            console.log('Products loaded:', allProducts);
-
-            // ... rest of code
-        } catch (error) {
-            console.error('Detailed error:', error);
-            document.getElementById('productGrid').innerHTML =
-                `<p style="grid-column: 1/-1; text-align: center; color: red;">
-                Error: ${error.message}<br>
-                Check browser console for details
-            </p>`;
-        }
+        const errorDiv = document.getElementById('errorMessage');
+        errorDiv.style.display = 'none';
+        errorDiv.textContent = '';
     }
 </script>
 </body>

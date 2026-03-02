@@ -49,9 +49,6 @@ public class CreditRequest {
     private Integer paidInstallments;
 
     // AI Scoring fields
-    @Column(name = "risk_score")
-    private Double riskScore;
-
     @Column(name = "is_risky")
     private Boolean isRisky;
 
@@ -61,6 +58,41 @@ public class CreditRequest {
 
     @Column(name = "scored_at")
     private LocalDateTime scoredAt;
+
+    // Insurance & Health Report fields
+    @Column(name = "health_report_path")
+    private String healthReportPath;
+
+    @Column(name = "original_health_report_filename")
+    private String originalHealthReportFilename;
+
+    @Column(name = "insurance_rate", precision = 5, scale = 2)
+    private BigDecimal insuranceRate;
+
+    @Column(name = "insurance_amount", precision = 18, scale = 2)
+    private BigDecimal insuranceAmount;
+
+    @Column(name = "insurance_is_reject")
+    private Boolean insuranceIsReject;
+
+    @Column(name = "insurance_rating")
+    private String insuranceRating;
+
+    @Column(name = "insurance_scoring_report", columnDefinition = "TEXT")
+    private String insuranceScoringReport;
+
+
+    @Column(name = "insurance_paid_at")
+    private LocalDateTime insurancePaidAt;
+
+    @Column(name = "global_decision")
+    private String globalDecision;
+
+    @Column(name = "global_pdf_path")
+    private String globalPdfPath;
+
+    @Column(name = "fraud_report_path")
+    private String fraudReportPath;
 
     // Constructors
     public CreditRequest() {
@@ -165,13 +197,6 @@ public class CreditRequest {
         this.typeCalcul = typeCalcul;
     }
 
-    public Double getRiskScore() {
-        return riskScore;
-    }
-
-    public void setRiskScore(Double riskScore) {
-        this.riskScore = riskScore;
-    }
 
     public Boolean getIsRisky() {
         return isRisky;
@@ -195,6 +220,97 @@ public class CreditRequest {
 
     public void setScoredAt(LocalDateTime scoredAt) {
         this.scoredAt = scoredAt;
+    }
+
+    // Insurance & Health Report getters/setters
+    public String getHealthReportPath() {
+        return healthReportPath;
+    }
+
+    public void setHealthReportPath(String healthReportPath) {
+        this.healthReportPath = healthReportPath;
+    }
+
+    public String getOriginalHealthReportFilename() {
+        return originalHealthReportFilename;
+    }
+
+    public void setOriginalHealthReportFilename(String originalHealthReportFilename) {
+        this.originalHealthReportFilename = originalHealthReportFilename;
+    }
+
+    public BigDecimal getInsuranceRate() {
+        return insuranceRate;
+    }
+
+    public void setInsuranceRate(BigDecimal insuranceRate) {
+        this.insuranceRate = insuranceRate;
+    }
+
+    public BigDecimal getInsuranceAmount() {
+        return insuranceAmount;
+    }
+
+    public void setInsuranceAmount(BigDecimal insuranceAmount) {
+        this.insuranceAmount = insuranceAmount;
+    }
+
+    public Boolean getInsuranceIsReject() {
+        return insuranceIsReject;
+    }
+
+    public void setInsuranceIsReject(Boolean insuranceIsReject) {
+        this.insuranceIsReject = insuranceIsReject;
+    }
+
+    public String getInsuranceRating() {
+        return insuranceRating;
+    }
+
+    public void setInsuranceRating(String insuranceRating) {
+        this.insuranceRating = insuranceRating;
+    }
+
+    public String getInsuranceScoringReport() {
+        return insuranceScoringReport;
+    }
+
+    public void setInsuranceScoringReport(String insuranceScoringReport) {
+        this.insuranceScoringReport = insuranceScoringReport;
+    }
+
+
+
+    public LocalDateTime getInsurancePaidAt() {
+        return insurancePaidAt;
+    }
+
+    public void setInsurancePaidAt(LocalDateTime insurancePaidAt) {
+        this.insurancePaidAt = insurancePaidAt;
+    }
+
+    public String getGlobalDecision() {
+        return globalDecision;
+    }
+
+    public void setGlobalDecision(String globalDecision) {
+        this.globalDecision = globalDecision;
+    }
+
+    public String getGlobalPdfPath() {
+        return globalPdfPath;
+    }
+
+    public void setGlobalPdfPath(String globalPdfPath) {
+        this.globalPdfPath = globalPdfPath;
+    }
+
+    public String getFraudReportPath() {
+        return fraudReportPath;
+    }
+
+    public void setFraudReportPath(String fraudReportPath) {
+        this.fraudReportPath = fraudReportPath;
     }
 
     @Override

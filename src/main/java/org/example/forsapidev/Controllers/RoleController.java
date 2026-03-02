@@ -6,6 +6,7 @@ import org.example.forsapidev.entities.UserManagement.ERole;
 import org.example.forsapidev.entities.UserManagement.Role;
 import org.example.forsapidev.entities.UserManagement.User;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,11 +19,13 @@ public class RoleController {
   IRoleService iRoleService;
 
   @SecurityRequirement(name = "Bearer Authentication")
+  @PreAuthorize("hasRole('ADMIN')")
   @GetMapping("/all")
   public List<Role> all() {
     return iRoleService.findAll();
   }
   @SecurityRequirement(name = "Bearer Authentication")
+  @PreAuthorize("hasRole('ADMIN')")
   @GetMapping("/find/{id}")
   public Role find(@PathVariable("id") int id)
   {
@@ -33,6 +36,7 @@ public class RoleController {
     return u;
   }
   @SecurityRequirement(name = "Bearer Authentication")
+  @PreAuthorize("hasRole('ADMIN')")
   @GetMapping("/findn/{name}")
   public Role findN(@PathVariable("name") ERole name)
   {
@@ -43,6 +47,7 @@ public class RoleController {
     return u;
   }
   @SecurityRequirement(name = "Bearer Authentication")
+  @PreAuthorize("hasRole('ADMIN')")
   @DeleteMapping("/delete/{id}")
   public String delete(@PathVariable("id") int id ) {
     iRoleService.delete(id);

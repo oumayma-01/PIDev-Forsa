@@ -13,10 +13,12 @@ import org.example.forsapidev.Services.amortization.AmortizationCalculatorServic
 import org.example.forsapidev.Services.amortization.AmortizationResult;
 import org.example.forsapidev.Services.scoring.CreditScoringService;
 import org.example.forsapidev.Services.scoring.ScoringServiceException;
+import org.example.forsapidev.Services.scoring.UnifiedCreditAnalysisService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.ZoneId;
@@ -35,17 +37,20 @@ public class CreditRequestService {
     private final InterestRateEngineService interestRateEngineService;
     private final AmortizationCalculatorService amortizationCalculatorService;
     private final CreditScoringService creditScoringService;
+    private final UnifiedCreditAnalysisService unifiedCreditAnalysisService;
 
     public CreditRequestService(CreditRequestRepository creditRequestRepository,
                                 RepaymentScheduleRepository repaymentScheduleRepository,
                                 InterestRateEngineService interestRateEngineService,
                                 AmortizationCalculatorService amortizationCalculatorService,
-                                CreditScoringService creditScoringService) {
+                                CreditScoringService creditScoringService,
+                                UnifiedCreditAnalysisService unifiedCreditAnalysisService) {
         this.creditRequestRepository = creditRequestRepository;
         this.repaymentScheduleRepository = repaymentScheduleRepository;
         this.interestRateEngineService = interestRateEngineService;
         this.amortizationCalculatorService = amortizationCalculatorService;
         this.creditScoringService = creditScoringService;
+        this.unifiedCreditAnalysisService = unifiedCreditAnalysisService;
     }
 
     // Create a credit request and generate repayment schedules automatically
@@ -74,9 +79,8 @@ public class CreditRequestService {
             savedRequest.setStatus(CreditStatus.UNDER_REVIEW);
             savedRequest = creditRequestRepository.save(savedRequest);
 
-            logger.info("Demande de crédit créée avec succès - ID={}, Score={}, Risque={}",
+            logger.info("Demande de crédit créée avec succès - ID={}, Risque={}",
                        savedRequest.getId(),
-                       savedRequest.getRiskScore(),
                        savedRequest.getRiskLevel());
         } catch (ScoringServiceException e) {
             // Si le scoring échoue, on laisse la demande en SUBMITTED
@@ -105,6 +109,81 @@ public class CreditRequestService {
         request.setUser(authenticatedUser);
 
         return createCreditRequest(request);
+    }
+
+    /**
+     * Crée une demande de crédit avec rapport médical
+     * Appelle l'API Python unifiée pour l'analyse complète (fraude + assurance)
+     */
+    @Transactional
+    public CreditRequest createCreditRequestWithHealthReport(
+            BigDecimal amountRequested,
+            Integer durationMonths,
+            String typeCalculStr,
+            MultipartFile healthReport,
+            User authenticatedUser) {
+
+        logger.info("🚀 Création d'une demande de crédit avec rapport médical pour l'utilisateur {} avec montant {}",
+                   authenticatedUser.getUsername(), amountRequested);
+
+        // Création de la demande de crédit
+        CreditRequest request = new CreditRequest();
+        request.setAmountRequested(amountRequested);
+        request.setDurationMonths(durationMonths);
+        request.setUser(authenticatedUser);
+        request.setStatus(CreditStatus.SUBMITTED);
+        request.setRequestDate(ZonedDateTime.now(ZoneId.systemDefault()).toLocalDateTime());
+
+        // Type de calcul
+        try {
+            request.setTypeCalcul(AmortizationType.valueOf(typeCalculStr));
+        } catch (IllegalArgumentException e) {
+            request.setTypeCalcul(AmortizationType.AMORTISSEMENT_CONSTANT);
+        }
+
+        // Calcul du taux d'intérêt de base (avant ajustement assurance)
+        BigDecimal baseRate = interestRateEngineService.computeAnnualRatePercent(
+                request.getRequestDate(), durationMonths, null, null);
+        request.setInterestRate(baseRate.doubleValue());
+
+        // Sauvegarde initiale
+        CreditRequest savedRequest = creditRequestRepository.save(request);
+
+        try {
+            // Analyse unifiée : fraude + assurance via API Python
+            logger.info("📡 Appel de l'API Python unifiée pour l'analyse crédit complète...");
+            savedRequest = unifiedCreditAnalysisService.analyzeCredit(savedRequest, healthReport);
+
+            // Ajustement du taux d'intérêt en fonction de l'assurance
+            if (!savedRequest.getInsuranceIsReject() && savedRequest.getInsuranceRate() != null) {
+                // Le taux d'intérêt final inclut le taux d'assurance
+                double finalRate = baseRate.doubleValue() + savedRequest.getInsuranceRate().doubleValue();
+                savedRequest.setInterestRate(finalRate);
+
+                logger.info("💹 Taux d'intérêt ajusté : Base={}%, Assurance={}%, Final={}%",
+                           baseRate, savedRequest.getInsuranceRate(), finalRate);
+            }
+
+            // Mise à jour du statut
+            savedRequest.setStatus(CreditStatus.UNDER_REVIEW);
+            savedRequest = creditRequestRepository.save(savedRequest);
+
+            logger.info("✅ Demande de crédit créée avec succès - ID={}", savedRequest.getId());
+            logger.info("   📊 Risque fraude : {} ({})",
+                       savedRequest.getRiskLevel(), savedRequest.getIsRisky() ? "RISKY" : "SAFE");
+            logger.info("   🏥 Assurance : {}",
+                       savedRequest.getInsuranceIsReject() ? "REJETÉE" : "Approuvée - Taux " + savedRequest.getInsuranceRate() + "%");
+            logger.info("   🎯 Décision globale : {}", savedRequest.getGlobalDecision());
+
+            return savedRequest;
+
+        } catch (Exception e) {
+            logger.error("❌ Échec de l'analyse crédit unifiée : {}", e.getMessage(), e);
+            // En cas d'échec, on laisse la demande en SUBMITTED pour revue manuelle
+            savedRequest.setStatus(CreditStatus.SUBMITTED);
+            creditRequestRepository.save(savedRequest);
+            throw new RuntimeException("Erreur lors de l'analyse crédit : " + e.getMessage(), e);
+        }
     }
 
     public Optional<CreditRequest> getById(Long id) { return creditRequestRepository.findById(id); }
@@ -151,13 +230,13 @@ public class CreditRequestService {
         }
 
         // Si le crédit n'a pas encore été scoré, on le score maintenant
-        if (credit.getRiskScore() == null) {
+        if (credit.getIsRisky() == null) {
             try {
                 logger.info("Scoring IA non effectué, lancement pour crédit ID={}", id);
                 creditScoringService.scoreCredit(credit);
                 creditRequestRepository.save(credit);
-                logger.info("Scoring terminé : Score={}, Risque={}",
-                           credit.getRiskScore(), credit.getRiskLevel());
+                logger.info("Scoring terminé : Risque={}",
+                           credit.getRiskLevel());
             } catch (ScoringServiceException e) {
                 logger.warn("Le scoring IA a échoué pour le crédit ID={} : {}", id, e.getMessage());
                 // On continue quand même la validation (décision manuelle)
@@ -210,8 +289,8 @@ public class CreditRequestService {
             throw new IllegalStateException("Seuls les crédits en statut SUBMITTED ou UNDER_REVIEW peuvent être approuvés");
         }
 
-        logger.info("Crédit ID={} - Score IA : {}, Risque : {}",
-                   id, credit.getRiskScore(), credit.getRiskLevel());
+        logger.info("Crédit ID={} - Risque : {}",
+                   id, credit.getRiskLevel());
 
         // Appel à validateCredit qui fait tout :
         // - Scoring si nécessaire
@@ -240,8 +319,8 @@ public class CreditRequestService {
         credit.setStatus(CreditStatus.DEFAULTED); // Ou créer un nouveau statut REJECTED
         CreditRequest rejected = creditRequestRepository.save(credit);
 
-        logger.info("Crédit ID={} rejeté par l'agent - Score IA était : {}, Raison : {}",
-                   id, credit.getRiskScore(), reason);
+        logger.info("Crédit ID={} rejeté par l'agent - Risque : {}, Raison : {}",
+                   id, credit.getRiskLevel(), reason);
 
         return rejected;
     }
