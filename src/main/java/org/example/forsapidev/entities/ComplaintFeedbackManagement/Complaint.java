@@ -33,18 +33,12 @@ public class Complaint {
     @Enumerated(EnumType.STRING)
     private Category category;
 
-    @Pattern(
-            regexp = "OPEN|IN_PROGRESS|RESOLVED|CLOSED|REJECTED",
-            message = "Statut invalide. Valeurs acceptées : OPEN, IN_PROGRESS, RESOLVED, CLOSED, REJECTED"
-    )
+    @Pattern(regexp = "OPEN|IN_PROGRESS|RESOLVED|CLOSED|REJECTED",
+            message = "Statut invalide. Valeurs acceptées : OPEN, IN_PROGRESS, RESOLVED, CLOSED, REJECTED")
     private String status;
 
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;
-
-    @NotNull(message = "La priorité est obligatoire")
-    @Enumerated(EnumType.STRING)
-    private PriorityLevel priority;
 
     @ManyToOne
     private User user;
@@ -59,18 +53,8 @@ public class Complaint {
     @PrePersist
     protected void onCreate() {
         createdAt = new Date();
-
-        if (status == null || status.isEmpty()) {
-            status = "OPEN";
-        }
-
-        if (category == null) {
-            category = Category.AUTRE;
-        }
-
-        if (priority == null) {
-            priority = PriorityLevel.MEDIUM;
-        }
+        if (status == null || status.isEmpty()) status = "OPEN";
+        if (category == null) category = Category.AUTRE;
     }
 
     public void setId(Long id) {

@@ -12,9 +12,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-import org.springframework.http.ResponseEntity;
-
-
 
 @RestController
 @SecurityRequirement(name = "Bearer Authentication")
@@ -121,11 +118,4 @@ public class ComplaintController {
     public void closeComplaintIfEligible(@PathVariable Long complaintId) {
         complaintService.closeComplaintIfEligible(complaintId);
     }
-    @GetMapping("/stats-by-priority")
-    @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
-    public ResponseEntity<Map<String, Long>> getStatsByPriority() {
-        return ResponseEntity.ok(complaintService.getStatsByPriority());
-    }
-
-
 }

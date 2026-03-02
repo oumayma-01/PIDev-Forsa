@@ -1,5 +1,7 @@
 package org.example.forsapidev.security;
 
+
+
 import lombok.NoArgsConstructor;
 import org.example.forsapidev.Repositories.RoleRepository;
 import org.example.forsapidev.Repositories.UserRepository;
@@ -13,7 +15,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -30,15 +31,12 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 @NoArgsConstructor
 public class WebSecurityConfig implements WebMvcConfigurer {
 
+
+
   @Autowired
   private AuthEntryPointJwt unauthorizedHandler;
 
   @Autowired
-  private AuthAccessDeniedHandler accessDeniedHandler;
-
-  @Autowired
-  private UserDetailsServiceImpl userDetailsService;
-
   private JwtUtils securityUtils;
   @Autowired
   private AuthAccessDeniedHandler accessDeniedHandler;
@@ -57,15 +55,15 @@ public class WebSecurityConfig implements WebMvcConfigurer {
     return new AuthTokenFilter();
   }
 
+
   @Bean
   public PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
   }
 
   @Bean
-  public AuthenticationManager authenticationManager(
-          HttpSecurity http
-  ) throws Exception {
+  public AuthenticationManager authenticationManager(HttpSecurity http, UserDetailsServiceImpl userDetailsService)
+          throws Exception {
     return http.getSharedObject(AuthenticationManagerBuilder.class)
             .userDetailsService(userDetailsService)
             .passwordEncoder(passwordEncoder())
@@ -77,25 +75,6 @@ public class WebSecurityConfig implements WebMvcConfigurer {
   protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
     http
-            .cors(cors -> cors.disable()) // ou config CORS custom si besoin
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .exceptionHandling(ex -> ex
-                    .authenticationEntryPoint(unauthorizedHandler)
-                    .accessDeniedHandler(accessDeniedHandler)
-            )
-            .authorizeHttpRequests(auth -> auth
-                    // ENDPOINTS PUBLICS (SANS TOKEN)
-                    .requestMatchers(
-                            "/api/auth/**",      // signup, signin, reset...
-                            "/v3/api-docs/**",
-                            "/swagger-ui/**",
-                            "/swagger-ui.html"
-                    ).permitAll()
-                    // TOUT LE RESTE NÉCESSITE UN TOKEN VALIDE
-                    .anyRequest().authenticated()
-            )
-            // Filtre JWT avant UsernamePasswordAuthenticationFilter
             .cors().and()
             .csrf().disable()
 
@@ -125,9 +104,7 @@ public class WebSecurityConfig implements WebMvcConfigurer {
 
   @Override
   public void addResourceHandlers(ResourceHandlerRegistry registry) {
-    registry.addResourceHandler("swagger-ui.html")
-            .addResourceLocations("classpath:/META-INF/resources/");
-    registry.addResourceHandler("/webjars/**")
-            .addResourceLocations("classpath:/META-INF/resources/webjars/");
+    registry.addResourceHandler("swagger-ui.html").addResourceLocations("classpath:/META-INF/resources/");
+    registry.addResourceHandler("/webjars/**").addResourceLocations("classpath:/META-INF/resources/webjars/");
   }
 }

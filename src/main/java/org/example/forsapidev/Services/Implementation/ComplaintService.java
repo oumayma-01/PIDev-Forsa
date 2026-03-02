@@ -8,7 +8,6 @@ import org.example.forsapidev.Repositories.UserRepository;
 import org.example.forsapidev.Services.Interfaces.IComplaintService;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Category;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Complaint;
-import org.example.forsapidev.entities.ComplaintFeedbackManagement.PriorityLevel;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Response;
 import org.example.forsapidev.entities.UserManagement.User;
 import org.example.forsapidev.openai.ComplaintAiAssistant;
@@ -28,52 +27,6 @@ public class ComplaintService implements IComplaintService {
     private final ResponseRepository responseRepository;
     private final FeedbackRepository feedbackRepository;
 
-    // ─────────────────────────────────────────────
-    // Mots-clés pour le calcul de priorité
-    // ─────────────────────────────────────────────
-    private static final List<String> HIGH_KEYWORDS = List.of(
-            "urgent", "urgente", "critique", "bloqué", "bloquée",
-            "panne", "impossible", "fraude", "disparu", "disparue",
-            "volé", "volée", "inaccessible", "plante", "immédiat",
-            "immédiatement", "plus du tout", "ne fonctionne plus",
-            "depuis hier", "depuis ce matin", "emergency", "ne peut plus",
-            "totalement", "complètement", "perdu", "grave"
-    );
-
-    private static final List<String> LOW_KEYWORDS = List.of(
-            "question", "information", "documentation", "suggestion",
-            "amélioration", "parfois", "occasionnellement", "mineur",
-            "renseignement", "curiosité", "demande", "conseil", "avis"
-    );
-
-    // ─────────────────────────────────────────────
-    // Calcul de priorité basé sur mots-clés + catégorie
-    // ─────────────────────────────────────────────
-    private PriorityLevel calculatePriority(String subject, String description, Category category) {
-        String text = ((subject != null ? subject : "") + " " + (description != null ? description : "")).toLowerCase();
-
-        // HIGH : mots-clés d'urgence détectés
-        for (String kw : HIGH_KEYWORDS) {
-            if (text.contains(kw)) return PriorityLevel.HIGH;
-        }
-
-        // FINANCE sans urgence explicite → toujours au moins MEDIUM
-        if (category == Category.FINANCE) {
-            return PriorityLevel.MEDIUM;
-        }
-
-        // LOW : mots-clés non urgents détectés
-        for (String kw : LOW_KEYWORDS) {
-            if (text.contains(kw)) return PriorityLevel.LOW;
-        }
-
-        // Défaut
-        return PriorityLevel.MEDIUM;
-    }
-
-    // ─────────────────────────────────────────────
-    // CRUD de base
-    // ─────────────────────────────────────────────
     @Override
     public List<Complaint> retrieveAllComplaints() {
         return complaintRepository.findAll();
@@ -87,19 +40,8 @@ public class ComplaintService implements IComplaintService {
     @Override
     public Complaint addComplaint(Complaint c) {
         c.setCreatedAt(new Date());
-
-        if (c.getStatus() == null || c.getStatus().isEmpty()) {
-            c.setStatus("OPEN");
-        }
-        if (c.getCategory() == null) {
-            c.setCategory(Category.AUTRE);
-        }
-
-        // ✅ CORRIGÉ : priorité calculée selon mots-clés + catégorie
-        if (c.getPriority() == null) {
-            c.setPriority(calculatePriority(c.getSubject(), c.getDescription(), c.getCategory()));
-        }
-
+        if (c.getStatus() == null || c.getStatus().isEmpty()) c.setStatus("OPEN");
+        if (c.getCategory() == null) c.setCategory(Category.AUTRE);
         return complaintRepository.save(c);
     }
 
@@ -113,12 +55,8 @@ public class ComplaintService implements IComplaintService {
         return complaintRepository.save(complaint);
     }
 
-    // ─────────────────────────────────────────────
-    // Ajout avec IA
-    // ─────────────────────────────────────────────
     @Override
     public Complaint addComplaintWithAI(Complaint c) {
-        // 1) IA pour la catégorie
         String cat;
         try {
             cat = complaintAiAssistant.classifyCategory(c.getDescription());
@@ -135,29 +73,12 @@ public class ComplaintService implements IComplaintService {
             c.setCategory(Category.AUTRE);
         }
 
-        // 2) Priorité : IA d'abord, fallback sur calculatePriority()
-        if (c.getPriority() == null) {
-            try {
-                PriorityLevel aiPriority = complaintAiAssistant.classifyPriority(c.getDescription());
-                c.setPriority(aiPriority != null ? aiPriority
-                        : calculatePriority(c.getSubject(), c.getDescription(), c.getCategory()));
-            } catch (Exception e) {
-                // ✅ CORRIGÉ : fallback intelligent au lieu de MEDIUM par défaut
-                c.setPriority(calculatePriority(c.getSubject(), c.getDescription(), c.getCategory()));
-            }
-        }
-
-        // 3) Métadonnées communes
         c.setSubject("Analyse IA : " + (c.getSubject() != null ? c.getSubject() : "Nouveau ticket"));
         c.setStatus("OPEN");
         c.setCreatedAt(new Date());
-
         return complaintRepository.save(c);
     }
 
-    // ─────────────────────────────────────────────
-    // Génération de réponse IA
-    // ─────────────────────────────────────────────
     @Override
     public Map<String, String> generateResponseForComplaint(Long complaintId) {
         Complaint c = complaintRepository.findById(complaintId).orElse(null);
@@ -165,18 +86,25 @@ public class ComplaintService implements IComplaintService {
             return Map.of("error", "Plainte non trouvée");
         }
 
-        String category    = c.getCategory() != null ? c.getCategory().name() : "AUTRE";
-        String subject     = c.getSubject() != null ? c.getSubject() : "Votre réclamation";
+        String category = c.getCategory() != null ? c.getCategory().name() : "AUTRE";
+        String subject = c.getSubject() != null ? c.getSubject() : "Votre réclamation";
         String description = c.getDescription() != null ? c.getDescription() : "";
 
         try {
-            String responseText = complaintAiAssistant.draftResponse(category, subject, description);
+            String responseText = complaintAiAssistant.draftResponse(
+                    category,
+                    subject,
+                    description
+            );
+
             if (responseText == null || responseText.isBlank()) {
                 responseText = buildFallbackAiResponse(category, subject, description);
             }
+
             return Map.of("response", responseText);
         } catch (Exception e) {
-            return Map.of("response", buildFallbackAiResponse(category, subject, description));
+            String responseText = buildFallbackAiResponse(category, subject, description);
+            return Map.of("response", responseText);
         }
     }
 
@@ -189,9 +117,6 @@ public class ComplaintService implements IComplaintService {
                 + "Cordialement,\nService Support.";
     }
 
-    // ─────────────────────────────────────────────
-    // Rapports & statistiques
-    // ─────────────────────────────────────────────
     @Override
     public Map<String, Object> generateFullReportWithAI() {
         Map<String, Object> base = getComplaintSummaryReport();
@@ -232,7 +157,8 @@ public class ComplaintService implements IComplaintService {
 
     @Override
     public List<Map<String, Object>> getComplaintTrendsLastMonths(int months) {
-        List<Date> dates = complaintRepository.findAll().stream()
+        List<Complaint> complaints = complaintRepository.findAll();
+        List<Date> dates = complaints.stream()
                 .map(Complaint::getCreatedAt)
                 .filter(Objects::nonNull)
                 .toList();
@@ -246,16 +172,6 @@ public class ComplaintService implements IComplaintService {
                 .collect(Collectors.groupingBy(c -> c.getCategory().name(), Collectors.counting()));
     }
 
-    @Override
-    public Map<String, Long> getStatsByPriority() {
-        return complaintRepository.findAll().stream()
-                .filter(c -> c.getPriority() != null)
-                .collect(Collectors.groupingBy(c -> c.getPriority().name(), Collectors.counting()));
-    }
-
-    // ─────────────────────────────────────────────
-    // Affectation & gestion des réponses
-    // ─────────────────────────────────────────────
     @Override
     public Complaint affectComplaintToUser(Long complaintId, Long userId) {
         Complaint complaint = complaintRepository.findById(complaintId).orElse(null);
@@ -293,13 +209,11 @@ public class ComplaintService implements IComplaintService {
         Complaint complaint = complaintRepository.findById(complaintId)
                 .orElseThrow(() -> new IllegalArgumentException("Complaint not found"));
 
+        // version simplifiée pour la soutenance
         complaint.setStatus("CLOSED");
         complaintRepository.save(complaint);
     }
 
-    // ─────────────────────────────────────────────
-    // Utilitaire : tendances par mois
-    // ─────────────────────────────────────────────
     private List<Map<String, Object>> trendsByMonth(List<Date> dates, int months) {
         SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM");
         Calendar cal = Calendar.getInstance();

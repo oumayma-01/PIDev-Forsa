@@ -2,9 +2,6 @@ package org.example.forsapidev.DTO;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import jakarta.validation.constraints.NotNull;
-import org.example.forsapidev.entities.ComplaintFeedbackManagement.PriorityLevel;
-
 
 public class ComplaintCreateDTO {
 
@@ -19,8 +16,5 @@ public class ComplaintCreateDTO {
     @NotBlank(message = "La catégorie est obligatoire")
     private String category;   // ex: "FINANCE", "AUTRE", ...
 
-    private Long userId;// optionnel si tu la déduis du token
-    @NotNull(message = "La priorité est obligatoire")
-    private PriorityLevel priority;
-
+    private Long userId;       // optionnel si tu la déduis du token
 }
