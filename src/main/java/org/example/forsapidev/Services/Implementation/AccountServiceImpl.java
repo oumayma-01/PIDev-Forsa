@@ -16,6 +16,7 @@ import org.example.forsapidev.entities.WalletManagement.WalletStatistics;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -217,7 +218,7 @@ public class AccountServiceImpl implements AccountService {
     private void logActivity(Wallet wallet, String action) {
         Activity activity = new Activity();
         activity.setAction(action);
-        activity.setTimestamp(java.sql.Timestamp.valueOf(LocalDateTime.now()));
+        activity.setTimestamp(Timestamp.valueOf(LocalDateTime.now()).toLocalDateTime());
         activity.setWallet(wallet);
         activityRepo.save(activity);
     }
