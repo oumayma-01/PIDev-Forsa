@@ -14,7 +14,7 @@ public interface IComplaintService {
     void removeComplaint(Long complaintId);
     Complaint modifyComplaint(Complaint complaint);
 
-    Complaint addComplaintWithAI(Complaint c);
+    Complaint addComplaintWithAI(Complaint c);  // inclut maintenant la priorité
     Map<String, String> generateResponseForComplaint(Long complaintId);
 
     Map<String, Object> generateFullReportWithAI();
@@ -22,6 +22,7 @@ public interface IComplaintService {
     List<Map<String, Object>> getComplaintTrendsLastMonths(int months);
 
     Map<String, Long> getStatsByCategory();
+    Map<String, Long> getStatsByPriority();  // NOUVEAU
 
     Complaint affectComplaintToUser(Long complaintId, Long userId);
     Response addResponseAndUpdateStatus(Long complaintId, Response r);

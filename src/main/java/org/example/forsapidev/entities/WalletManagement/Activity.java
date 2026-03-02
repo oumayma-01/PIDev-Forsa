@@ -4,6 +4,7 @@ package org.example.forsapidev.entities.WalletManagement;
 import org.example.forsapidev.entities.WalletManagement.Wallet;
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Entity
@@ -52,6 +53,9 @@ public class Activity {
 
     public void setWallet(Wallet wallet) {
         this.wallet = wallet;
+    }
+
+    public void setTimestamp(LocalDateTime now) {
     }
 }
 
