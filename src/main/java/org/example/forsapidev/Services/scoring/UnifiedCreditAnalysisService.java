@@ -1,8 +1,11 @@
 package org.example.forsapidev.Services.scoring;
 
+import org.example.forsapidev.Services.AgentAssignmentService;
 import org.example.forsapidev.Services.insurance.HealthReportStorageService;
 import org.example.forsapidev.entities.CreditManagement.CreditRequest;
+import org.example.forsapidev.entities.CreditManagement.CreditStatus;
 import org.example.forsapidev.entities.CreditManagement.RiskLevel;
+import org.example.forsapidev.entities.UserManagement.Agent;
 import org.example.forsapidev.payload.request.UnifiedCreditAnalysisRequestDto;
 import org.example.forsapidev.payload.response.UnifiedCreditAnalysisResponseDto;
 import org.slf4j.Logger;
@@ -30,14 +33,17 @@ public class UnifiedCreditAnalysisService {
     private final UnifiedCreditAnalysisClient analysisClient;
     private final FeatureCalculationService featureCalculationService;
     private final HealthReportStorageService healthReportStorageService;
+    private final AgentAssignmentService agentAssignmentService;
 
     public UnifiedCreditAnalysisService(
             UnifiedCreditAnalysisClient analysisClient,
             FeatureCalculationService featureCalculationService,
-            HealthReportStorageService healthReportStorageService) {
+            HealthReportStorageService healthReportStorageService,
+            AgentAssignmentService agentAssignmentService) {
         this.analysisClient = analysisClient;
         this.featureCalculationService = featureCalculationService;
         this.healthReportStorageService = healthReportStorageService;
+        this.agentAssignmentService = agentAssignmentService;
     }
 
     /**
@@ -130,6 +136,17 @@ public class UnifiedCreditAnalysisService {
                        creditRequest.getInsuranceIsReject() ? "REJETÉE" : "Taux " + creditRequest.getInsuranceRate() + "%");
             logger.info("   🎯 Décision globale : {}", creditRequest.getGlobalDecision());
 
+            // Mise à jour du statut
+            // Ne passe en UNDER_REVIEW que si un agent est assigné
+            Agent assignedAgent = agentAssignmentService.assignCreditRequestToAgent(creditRequest);
+            if (assignedAgent != null) {
+                creditRequest.setStatus(CreditStatus.UNDER_REVIEW);
+                logger.info("✅ Crédit assigné à l'agent {} - Statut : UNDER_REVIEW", assignedAgent.getId());
+            } else {
+                creditRequest.setStatus(CreditStatus.SUBMITTED);
+                logger.info("⚠️ Aucun agent disponible - Crédit reste en SUBMITTED");
+            }
+
             return creditRequest;
 
         } catch (UnifiedCreditAnalysisClient.UnifiedAnalysisException e) {
@@ -203,4 +220,3 @@ public class UnifiedCreditAnalysisService {
         }
     }
 }
-

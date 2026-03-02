@@ -32,6 +32,13 @@ public class RepaymentSchedule {
     @Enumerated(EnumType.STRING)
     private RepaymentStatus status = RepaymentStatus.PENDING;
 
+    /**
+     * Type de ligne: NORMAL ou PENALTY
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "line_type", nullable = false)
+    private LineType lineType = LineType.NORMAL;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "credit_request_id")
     private CreditRequest creditRequest;
@@ -54,6 +61,8 @@ public class RepaymentSchedule {
     public void setRemainingBalance(BigDecimal remainingBalance) { this.remainingBalance = remainingBalance; }
     public RepaymentStatus getStatus() { return status; }
     public void setStatus(RepaymentStatus status) { this.status = status; }
+    public LineType getLineType() { return lineType; }
+    public void setLineType(LineType lineType) { this.lineType = lineType; }
     public CreditRequest getCreditRequest() { return creditRequest; }
     public void setCreditRequest(CreditRequest creditRequest) { this.creditRequest = creditRequest; }
 
