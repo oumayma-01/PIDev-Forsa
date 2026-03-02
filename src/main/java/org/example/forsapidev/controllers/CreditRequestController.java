@@ -55,7 +55,7 @@ public class CreditRequestController {
      */
     @Operation(summary = "Créer une demande de crédit avec rapport médical (multipart)", description = "Le user authentifié fait une demande de crédit et upload un PDF/IMAGE de rapport médical.")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Multipart payload", required = true, content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE, schema = @Schema(implementation = CreditRequestMultipart.class)))
-    @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
+    @PreAuthorize("hasAnyRole('CLIENT')")
     @PostMapping(value = "/with-health-report", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createWithHealthReport(@ModelAttribute CreditRequestMultipart dto) {
 
