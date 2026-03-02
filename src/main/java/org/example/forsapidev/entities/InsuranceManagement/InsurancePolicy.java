@@ -162,4 +162,102 @@ public class InsurancePolicy {
 
     public Set<InsuranceClaim> getClaims() { return claims; }
     public void setClaims(Set<InsuranceClaim> claims) { this.claims = claims; }
+
+    // Getters and Setters for actuarial fields
+
+    public String getCalculationNotes() {
+        return calculationNotes;
+    }
+
+    public void setCalculationNotes(String calculationNotes) {
+        this.calculationNotes = calculationNotes;
+    }
+
+    public Double getEffectiveAnnualRate() {
+        return effectiveAnnualRate;
+    }
+
+    public void setEffectiveAnnualRate(Double effectiveAnnualRate) {
+        this.effectiveAnnualRate = effectiveAnnualRate;
+    }
+
+    public Integer getNumberOfPayments() {
+        return numberOfPayments;
+    }
+
+    public void setNumberOfPayments(Integer numberOfPayments) {
+        this.numberOfPayments = numberOfPayments;
+    }
+
+    public BigDecimal getPeriodicPaymentAmount() {
+        return periodicPaymentAmount;
+    }
+
+    public void setPeriodicPaymentAmount(BigDecimal periodicPaymentAmount) {
+        this.periodicPaymentAmount = periodicPaymentAmount;
+    }
+
+    public String getPaymentFrequency() {
+        return paymentFrequency;
+    }
+
+    public void setPaymentFrequency(String paymentFrequency) {
+        this.paymentFrequency = paymentFrequency;
+    }
+
+    public Double getRiskCoefficient() {
+        return riskCoefficient;
+    }
+
+    public void setRiskCoefficient(Double riskCoefficient) {
+        this.riskCoefficient = riskCoefficient;
+    }
+
+    public String getRiskCategory() {
+        return riskCategory;
+    }
+
+    public void setRiskCategory(String riskCategory) {
+        this.riskCategory = riskCategory;
+    }
+
+    public Double getRiskScore() {
+        return riskScore;
+    }
+
+    public void setRiskScore(Double riskScore) {
+        this.riskScore = riskScore;
+    }
+
+    public BigDecimal getFinalPremium() {
+        return finalPremium;
+    }
+
+    public void setFinalPremium(BigDecimal finalPremium) {
+        this.finalPremium = finalPremium;
+    }
+
+    public BigDecimal getCommercialPremium() {
+        return commercialPremium;
+    }
+
+    public void setCommercialPremium(BigDecimal commercialPremium) {
+        this.commercialPremium = commercialPremium;
+    }
+
+    public BigDecimal getInventoryPremium() {
+        return inventoryPremium;
+    }
+
+    public void setInventoryPremium(BigDecimal inventoryPremium) {
+        this.inventoryPremium = inventoryPremium;
+    }
+
+    public BigDecimal getPurePremium() {
+        return purePremium;
+    }
+
+    public void setPurePremium(BigDecimal purePremium) {
+        this.purePremium = purePremium;
+    }
 }

@@ -23,26 +23,29 @@ public class AuthEntryPointJwt implements AuthenticationEntryPoint {
                        AuthenticationException authException)
           throws IOException {
 
-    logger.error("Unauthorized error: {}", authException.getMessage());
+    logger.error("Unauthorized error: {}", authException == null ? "unknown" : authException.getMessage());
 
-    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401
     response.setContentType("application/json");
     response.setCharacterEncoding("UTF-8");
 
-    String jsonResponse = """
-            {
-              "timestamp": "%s",
-              "status": 401,
-              "error": "Unauthorized",
-              "message": "%s",
-              "path": "%s"
-            }
-            """.formatted(
+    String message = (authException == null || authException.getMessage() == null || authException.getMessage().isBlank())
+            ? "Full authentication is required to access this resource"
+            : authException.getMessage();
+
+    String jsonResponse = String.format(
+            "{\n  \"timestamp\": \"%s\",\n  \"status\": 401,\n  \"error\": \"Unauthorized\",\n  \"message\": \"%s\",\n  \"path\": \"%s\"\n}",
             LocalDateTime.now(),
-            authException.getMessage(),
+            escapeJson(message),
             request.getRequestURI()
     );
 
     response.getWriter().write(jsonResponse);
+  }
+
+  // Petit utilitaire pour échapper les guillemets simples dans le message
+  private String escapeJson(String s) {
+    if (s == null) return "";
+    return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
   }
 }
