@@ -1,5 +1,6 @@
 package org.example.forsapidev.entities.InsuranceManagement;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -14,34 +15,30 @@ public class InsuranceProduct {
     private Long id;
 
     @Column(nullable = false)
-    private String productName;  // e.g., "Basic Health Plan", "Crop Protection Plus"
+    private String productName;
 
     @Column(nullable = false)
-    private String policyType;  // HEALTH, LIFE, PROPERTY, ACCIDENT, CROP, LIVESTOCK, BUSINESS
+    private String policyType;
 
     @Column(columnDefinition = "TEXT")
-    private String description;  // Detailed product description
+    private String description;
 
     @Column(nullable = false)
-    private BigDecimal premiumAmount;  // Base premium amount (monthly rate)
+    private BigDecimal premiumAmount;
 
     @Column(nullable = false)
-    private BigDecimal coverageLimit;  // Maximum coverage amount
+    private BigDecimal coverageLimit;
 
-    @Column(nullable = false)
-    private Integer durationMonths;  // Standard duration (6, 12, 24, 36 months)
+    private Integer durationMonths;
 
-    private Boolean isActive = true;  // Is this product available for sale?
+    private Boolean isActive = true;
 
-    // RELATIONSHIP: One Product has Many Policies
+//    // Relationship: One Product has Many Policies
     @OneToMany(mappedBy = "insuranceProduct", cascade = CascadeType.ALL)
-    @JsonManagedReference("product-policies")
+    @JsonManagedReference // This side WILL be serialized into JSON
     private Set<InsurancePolicy> policies;
 
-    // CONSTRUCTORS
-    public InsuranceProduct() {}
-
-    // GETTERS AND SETTERS
+    // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -64,8 +61,5 @@ public class InsuranceProduct {
     public void setDurationMonths(Integer durationMonths) { this.durationMonths = durationMonths; }
 
     public Boolean getIsActive() { return isActive; }
-    public void setIsActive(Boolean isActive) { this.isActive = isActive; }
-
-    public Set<InsurancePolicy> getPolicies() { return policies; }
     public void setPolicies(Set<InsurancePolicy> policies) { this.policies = policies; }
 }
