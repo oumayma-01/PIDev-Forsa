@@ -10,6 +10,8 @@ import java.util.Date;
 import java.util.Set;
 
 @Entity
+@Getter
+@Setter
 @Table(name = "insurance_policy")
 public class InsurancePolicy {
 
