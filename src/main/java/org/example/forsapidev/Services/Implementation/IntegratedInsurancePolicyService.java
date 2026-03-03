@@ -74,7 +74,6 @@ public class IntegratedInsurancePolicyService implements IIntegratedInsurancePol
         // 5. Create Insurance Policy with actuarial data
         InsurancePolicy policy = new InsurancePolicy();
         policy.setPolicyNumber(generatePolicyNumber());
-        policy.setPolicyType(product.getPolicyType());
         policy.setUser(user);
         policy.setInsuranceProduct(product);
 

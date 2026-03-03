@@ -11,14 +11,16 @@ import java.util.List;
 public interface InsuranceClaimRepository extends JpaRepository<InsuranceClaim, Long> {
 
     // _____________________ Dashboard Queries (JPQL Query) ______________________
+
     // Count claims by status
     @Query("SELECT c.status, COUNT(c) FROM InsuranceClaim c GROUP BY c.status")
     List<Object[]> countClaimsByStatus();
 
     // Count claims by policy type with amounts
-    @Query("SELECT p.policyType, COUNT(c), SUM(c.claimAmount) " +
+    // FIXED: Access policyType through insuranceProduct
+    @Query("SELECT p.insuranceProduct.policyType, COUNT(c), SUM(c.claimAmount) " +
             "FROM InsuranceClaim c JOIN c.insurancePolicy p " +
-            "GROUP BY p.policyType")
+            "GROUP BY p.insuranceProduct.policyType")
     List<Object[]> countClaimsByPolicyType();
 
     // Monthly claim trends for last 12 months
@@ -46,5 +48,4 @@ public interface InsuranceClaimRepository extends JpaRepository<InsuranceClaim, 
     // Count approved claims
     @Query("SELECT COUNT(c) FROM InsuranceClaim c WHERE c.status = 'APPROVED' OR c.status = 'PAID'")
     Long getApprovedClaimsCount();
-
 }
