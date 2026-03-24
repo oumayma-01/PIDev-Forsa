@@ -25,13 +25,7 @@ public class IntegratedInsurancePolicyService implements IIntegratedInsurancePol
     private final UserRepository userRepository;
     private final PremiumPaymentRepository paymentRepository;
 
-    public IntegratedInsurancePolicyService(
-            IPremiumCalculationService premiumCalculationService,
-            IInsuranceAmortizationService amortizationService,
-            InsurancePolicyRepository policyRepository,
-            InsuranceProductRepository productRepository,
-            UserRepository userRepository,
-            PremiumPaymentRepository paymentRepository) {
+    public IntegratedInsurancePolicyService(IPremiumCalculationService premiumCalculationService, IInsuranceAmortizationService amortizationService, InsurancePolicyRepository policyRepository, InsuranceProductRepository productRepository, UserRepository userRepository, PremiumPaymentRepository paymentRepository) {
         this.premiumCalculationService = premiumCalculationService;
         this.amortizationService = amortizationService;
         this.policyRepository = policyRepository;

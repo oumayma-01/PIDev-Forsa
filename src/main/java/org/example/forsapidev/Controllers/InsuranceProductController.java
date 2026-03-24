@@ -11,7 +11,7 @@ import java.util.List;
 @RestController
 @AllArgsConstructor
 @SecurityRequirement(name = "Bearer Authentication")
-@RequestMapping("/insurance-product")
+@RequestMapping("/api/insurance-product")
 public class InsuranceProductController {
 
     IInsuranceProduct insuranceProductService;

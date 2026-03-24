@@ -16,7 +16,7 @@ import java.util.Date;
 @SecurityRequirement(name = "Bearer Authentication")
 @RestController
 @AllArgsConstructor
-@RequestMapping("/actuarial")
+@RequestMapping("/api/actuarial")
 @CrossOrigin(origins = "*")
 public class ActuarialController {
 

@@ -1,6 +1,7 @@
 package org.example.forsapidev.entities.InsuranceManagement;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import org.example.forsapidev.entities.UserManagement.User;
@@ -67,6 +68,7 @@ public class InsurancePolicy {
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)
     @JsonBackReference("product-policies")
+    @JsonIgnoreProperties("policies")
     private InsuranceProduct insuranceProduct;
 
     // RELATIONSHIP: One Policy has Many Premium Payments
