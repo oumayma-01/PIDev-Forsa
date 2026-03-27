@@ -35,6 +35,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
     String path = request.getServletPath();
 
+
     // Skip JWT check for public paths using AntPathMatcher
     if (isPublicPath(path)) {
       filterChain.doFilter(request, response);

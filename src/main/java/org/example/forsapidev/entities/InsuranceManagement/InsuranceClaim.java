@@ -38,7 +38,8 @@ public class InsuranceClaim {
     // Relationship: Many Claims belong to One Policy
     @ManyToOne
     @JoinColumn(name = "policy_id", nullable = true)    // join w policy claim !!!!!!!!!!!
-    @JsonBackReference // Jackson will stop here and NOT go back to the policy
+    @JsonBackReference ("policy-claims") // Jackson will stop here and NOT go back to the policy
+    @JsonIgnoreProperties("claims")
     private InsurancePolicy insurancePolicy;
 
     // Getters and Setters

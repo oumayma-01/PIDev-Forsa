@@ -12,6 +12,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
   Boolean existsByUsername(String username);
   Boolean existsByEmail(String email);
 
+
   // Methods for dashboard statistics
   long countByIsActive(boolean isActive);
   long countByCreatedAtAfter(Date date);

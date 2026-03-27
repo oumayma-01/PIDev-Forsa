@@ -10,7 +10,7 @@ import java.util.List;
 @RestController
 @AllArgsConstructor
 @SecurityRequirement(name = "Bearer Authentication")
-@RequestMapping("/insurance-claim")
+@RequestMapping("/api/insurance-claim")
 public class InsuranceClaimController {
 
     IInsuranceClaim insuranceClaimService;

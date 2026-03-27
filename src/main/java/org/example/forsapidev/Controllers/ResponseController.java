@@ -1,5 +1,6 @@
 package org.example.forsapidev.Controllers;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Response;
@@ -15,6 +16,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/responses")
+@SecurityRequirement(name = "Bearer Authentication")
 @RequiredArgsConstructor
 public class ResponseController {
 

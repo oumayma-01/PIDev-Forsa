@@ -58,7 +58,7 @@ public class Complaint {
     protected void onCreate() {
         createdAt = new Date();
         if (status == null || status.isEmpty()) status = "OPEN";
-        if (category == null) category = Category.AUTRE;
+        if (category == null) category = Category.OTHER;
         if (priority == null) priority = Priority.MEDIUM;
     }
 

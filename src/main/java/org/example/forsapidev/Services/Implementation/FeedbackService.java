@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.forsapidev.Repositories.FeedbackRepository;
 import org.example.forsapidev.Services.Interfaces.IFeedbackService;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Feedback;
+import org.example.forsapidev.openai.ComplaintAiAssistant;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
@@ -15,6 +16,7 @@ import java.util.stream.Collectors;
 public class FeedbackService implements IFeedbackService {
 
     private final FeedbackRepository feedbackRepository;
+    private final ComplaintAiAssistant complaintAiAssistant;
 
     @Override
     public List<Feedback> retrieveAllFeedbacks() {
@@ -23,49 +25,34 @@ public class FeedbackService implements IFeedbackService {
 
     @Override
     public Feedback retrieveFeedback(Long feedbackId) {
-        if (feedbackId == null) {
-            return null;
-        }
+        if (feedbackId == null) return null;
         return feedbackRepository.findById(feedbackId).orElse(null);
     }
 
     @Override
     public Feedback addFeedback(Feedback f) {
-        if (f == null) {
-            return null;
-        }
-        // Ici, addFeedback est “brut” (pas d’IA)
+        if (f == null) return null;
         return feedbackRepository.save(f);
     }
 
     @Override
     public void removeFeedback(Long feedbackId) {
-        if (feedbackId == null) {
-            return;
-        }
+        if (feedbackId == null) return;
         if (feedbackRepository.existsById(feedbackId)) {
             feedbackRepository.deleteById(feedbackId);
         }
-        // Sinon tu peux éventuellement lever une exception custom
     }
 
     @Override
     public Feedback modifyFeedback(Feedback feedback) {
-        if (feedback == null || feedback.getId() == null) {
-            return null;
-        }
-        // Optionnel : vérifier que l’entité existe avant de sauver
-        if (!feedbackRepository.existsById(feedback.getId())) {
-            return null;
-            // ou lancer une exception custom NotFound
-        }
+        if (feedback == null || feedback.getId() == null) return null;
+        if (!feedbackRepository.existsById(feedback.getId())) return null;
         return feedbackRepository.save(feedback);
     }
 
     @Override
     public Map<String, Object> getFeedbackSummaryReport() {
         long total = feedbackRepository.count();
-
         double avg = feedbackRepository.findAll().stream()
                 .filter(f -> f.getRating() != null)
                 .mapToInt(Feedback::getRating)
@@ -80,15 +67,11 @@ public class FeedbackService implements IFeedbackService {
 
     @Override
     public List<Map<String, Object>> getFeedbackTrendsLastMonths(int months) {
-        if (months <= 0) {
-            return Collections.emptyList();
-        }
-
+        if (months <= 0) return Collections.emptyList();
         List<Date> dates = feedbackRepository.findAll().stream()
                 .map(Feedback::getCreatedAt)
                 .filter(Objects::nonNull)
                 .toList();
-
         return trendsByMonth(dates, months);
     }
 
@@ -113,40 +96,29 @@ public class FeedbackService implements IFeedbackService {
         return res;
     }
 
-    /**
-     * Version “avec IA simulée” :
-     * - si satisfactionLevel est vide, on le déduit automatiquement à partir du rating
-     */
     @Override
     public Feedback addFeedbackWithAI(Feedback f) {
-        if (f == null) {
-            return null;
-        }
+        if (f == null) return null;
 
-        if (f.getSatisfactionLevel() == null || f.getSatisfactionLevel().isBlank()) {
-            int r = (f.getRating() == null) ? 3 : f.getRating();
-            String level = computeSatisfactionFromRating(r);
+        try {
+            String level = complaintAiAssistant.analyzeFeedbackSatisfaction(
+                    f.getRating(), f.getComment()
+            );
             f.setSatisfactionLevel(level);
+        } catch (Exception e) {
+            int r = (f.getRating() == null) ? 3 : f.getRating();
+            f.setSatisfactionLevel(computeSatisfactionFromRating(r));
         }
 
         return feedbackRepository.save(f);
     }
 
-    /**
-     * Logique centralisée pour transformer un rating en satisfactionLevel.
-     */
     private String computeSatisfactionFromRating(int rating) {
-        if (rating >= 5) {
-            return "VERY_SATISFIED";
-        } else if (rating == 4) {
-            return "SATISFIED";
-        } else if (rating == 3) {
-            return "NEUTRAL";
-        } else if (rating == 2) {
-            return "DISSATISFIED";
-        } else {
-            return "VERY_DISSATISFIED";
-        }
+        if (rating >= 5) return "VERY_SATISFIED";
+        if (rating == 4) return "SATISFIED";
+        if (rating == 3) return "NEUTRAL";
+        if (rating == 2) return "DISSATISFIED";
+        return "VERY_DISSATISFIED";
     }
 
     private List<Map<String, Object>> trendsByMonth(List<Date> dates, int months) {
@@ -155,20 +127,15 @@ public class FeedbackService implements IFeedbackService {
         cal.set(Calendar.DAY_OF_MONTH, 1);
 
         Map<String, Long> counts = new LinkedHashMap<>();
-
-        // Prépare les périodes vides sur les N derniers mois
         for (int i = months - 1; i >= 0; i--) {
             Calendar c2 = (Calendar) cal.clone();
             c2.add(Calendar.MONTH, -i);
             counts.put(fmt.format(c2.getTime()), 0L);
         }
 
-        // Compte les feedbacks par mois
         for (Date d : dates) {
             String key = fmt.format(d);
-            if (counts.containsKey(key)) {
-                counts.put(key, counts.get(key) + 1);
-            }
+            if (counts.containsKey(key)) counts.put(key, counts.get(key) + 1);
         }
 
         List<Map<String, Object>> res = new ArrayList<>();
