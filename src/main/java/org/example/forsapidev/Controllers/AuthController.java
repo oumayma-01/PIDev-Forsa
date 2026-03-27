@@ -1,7 +1,6 @@
 package org.example.forsapidev.Controllers;
 
 
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.example.forsapidev.Services.Interfaces.IAuthService;
@@ -29,7 +28,7 @@ public class AuthController {
   }
   @GetMapping("/google-login-url")
   public ResponseEntity<?> getGoogleLoginUrl(HttpServletRequest request) {
-    String baseUrl = "http://localhost:8088/forsaPidev";
+    String baseUrl = "http://localhost:8089/forsaPidev";
     String googleAuthUrl = baseUrl + "/oauth2/authorization/google";
     return ResponseEntity.ok(new MessageResponse(googleAuthUrl));
   }

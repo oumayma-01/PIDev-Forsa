@@ -32,6 +32,9 @@ public class RepaymentSchedule {
     @Enumerated(EnumType.STRING)
     private RepaymentStatus status = RepaymentStatus.PENDING;
 
+    @Enumerated(EnumType.STRING)
+    private LineType lineType = LineType.NORMAL;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "credit_request_id")
     private CreditRequest creditRequest;
@@ -56,6 +59,8 @@ public class RepaymentSchedule {
     public void setStatus(RepaymentStatus status) { this.status = status; }
     public CreditRequest getCreditRequest() { return creditRequest; }
     public void setCreditRequest(CreditRequest creditRequest) { this.creditRequest = creditRequest; }
+    public LineType getLineType() { return lineType; }
+    public void setLineType(LineType lineType) { this.lineType = lineType; }
 
     @Override
     public boolean equals(Object o) {

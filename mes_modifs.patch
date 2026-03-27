@@ -1,0 +1,117 @@
+diff --git a/src/main/java/org/example/forsapidev/Controllers/ChatbotController.java b/src/main/java/org/example/forsapidev/Controllers/ChatbotController.java
+index 03cb581..cbcd90b 100644
+--- a/src/main/java/org/example/forsapidev/Controllers/ChatbotController.java
++++ b/src/main/java/org/example/forsapidev/Controllers/ChatbotController.java
+@@ -1,4 +1,4 @@
+-package org.example.forsapidev.Controllers;
++-/**package org.example.forsapidev.Controllers;
+ 
+ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+ import org.example.forsapidev.openai.ComplaintAiAssistant;
+@@ -49,3 +49,4 @@ public class ChatbotController {
+         return Map.of("answer", answer);
+     }
+ }
++*/
+\ No newline at end of file
+diff --git a/src/main/java/org/example/forsapidev/Services/Implementation/ComplaintService.java b/src/main/java/org/example/forsapidev/Services/Implementation/ComplaintService.java
+index 9156282..cd32c31 100644
+--- a/src/main/java/org/example/forsapidev/Services/Implementation/ComplaintService.java
++++ b/src/main/java/org/example/forsapidev/Services/Implementation/ComplaintService.java
+@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
+ public class ComplaintService implements IComplaintService {
+ 
+     private final ComplaintRepository complaintRepository;
+-    private final ComplaintAiAssistant complaintAiAssistant;
++  //  private final ComplaintAiAssistant complaintAiAssistant;
+     private final UserRepository userRepository;
+     private final ResponseRepository responseRepository;
+     private final FeedbackRepository feedbackRepository;
+@@ -121,7 +121,7 @@ public class ComplaintService implements IComplaintService {
+         // 1) IA pour la catégorie
+         String cat;
+         try {
+-            cat = complaintAiAssistant.classifyCategory(c.getDescription());
++           cat = complaintAiAssistant.classifyCategory(c.getDescription());
+         } catch (Exception e) {
+             cat = "AUTRE";
+         }
+@@ -135,12 +135,12 @@ public class ComplaintService implements IComplaintService {
+             c.setCategory(Category.AUTRE);
+         }
+ 
+-        // 2) Priorité : IA d'abord, fallback sur calculatePriority()
++    //     2) Priorité : IA d'abord, fallback sur calculatePriority()
+         if (c.getPriority() == null) {
+             try {
+-                PriorityLevel aiPriority = complaintAiAssistant.classifyPriority(c.getDescription());
+-                c.setPriority(aiPriority != null ? aiPriority
+-                        : calculatePriority(c.getSubject(), c.getDescription(), c.getCategory()));
++             PriorityLevel aiPriority = complaintAiAssistant.classifyPriority(c.getDescription());
++               c.setPriority(aiPriority != null ? aiPriority
++                       : calculatePriority(c.getSubject(), c.getDescription(), c.getCategory()));
+             } catch (Exception e) {
+                 // ✅ CORRIGÉ : fallback intelligent au lieu de MEDIUM par défaut
+                 c.setPriority(calculatePriority(c.getSubject(), c.getDescription(), c.getCategory()));
+@@ -159,26 +159,26 @@ public class ComplaintService implements IComplaintService {
+     // Génération de réponse IA
+     // ─────────────────────────────────────────────
+     @Override
+-    public Map<String, String> generateResponseForComplaint(Long complaintId) {
++  public Map<String, String> generateResponseForComplaint(Long complaintId) {
+         Complaint c = complaintRepository.findById(complaintId).orElse(null);
+         if (c == null) {
+             return Map.of("error", "Plainte non trouvée");
+         }
+ 
+-        String category    = c.getCategory() != null ? c.getCategory().name() : "AUTRE";
+-        String subject     = c.getSubject() != null ? c.getSubject() : "Votre réclamation";
++        String category = c.getCategory() != null ? c.getCategory().name() : "AUTRE";
++        String subject = c.getSubject() != null ? c.getSubject() : "Votre réclamation";
+         String description = c.getDescription() != null ? c.getDescription() : "";
+ 
+         try {
+             String responseText = complaintAiAssistant.draftResponse(category, subject, description);
+             if (responseText == null || responseText.isBlank()) {
+                 responseText = buildFallbackAiResponse(category, subject, description);
+-            }
+-            return Map.of("response", responseText);
++           }
++           return Map.of("response", responseText);
+         } catch (Exception e) {
+             return Map.of("response", buildFallbackAiResponse(category, subject, description));
+         }
+-    }
++   }
+ 
+     private String buildFallbackAiResponse(String category, String subject, String description) {
+         return "Bonjour,\n\n"
+@@ -201,13 +201,13 @@ public class ComplaintService implements IComplaintService {
+ 
+         String insights;
+         try {
+-            insights = complaintAiAssistant.generateInsightsFromReport(textForAi);
++           insights = complaintAiAssistant.generateInsightsFromReport(textForAi);
+         } catch (Exception e) {
+             insights = "Insights indisponibles (IA non configurée).";
+         }
+ 
+         Map<String, Object> res = new LinkedHashMap<>(base);
+-        res.put("insights", insights);
++       res.put("insights", insights);
+         return res;
+     }
+ 
+diff --git a/src/main/java/org/example/forsapidev/security/WebSecurityConfig.java b/src/main/java/org/example/forsapidev/security/WebSecurityConfig.java
+index ad098e2..3f4a521 100644
+--- a/src/main/java/org/example/forsapidev/security/WebSecurityConfig.java
++++ b/src/main/java/org/example/forsapidev/security/WebSecurityConfig.java
+@@ -41,8 +41,6 @@ public class WebSecurityConfig implements WebMvcConfigurer {
+ 
+   private JwtUtils securityUtils;
+   @Autowired
+-  private AuthAccessDeniedHandler accessDeniedHandler;
+-  @Autowired
+   private UserRepository userRepository;
+ 
+   @Autowired

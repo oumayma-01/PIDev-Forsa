@@ -25,13 +25,7 @@ public class IntegratedInsurancePolicyService implements IIntegratedInsurancePol
     private final UserRepository userRepository;
     private final PremiumPaymentRepository paymentRepository;
 
-    public IntegratedInsurancePolicyService(
-            IPremiumCalculationService premiumCalculationService,
-            IInsuranceAmortizationService amortizationService,
-            InsurancePolicyRepository policyRepository,
-            InsuranceProductRepository productRepository,
-            UserRepository userRepository,
-            PremiumPaymentRepository paymentRepository) {
+    public IntegratedInsurancePolicyService(IPremiumCalculationService premiumCalculationService, IInsuranceAmortizationService amortizationService, InsurancePolicyRepository policyRepository, InsuranceProductRepository productRepository, UserRepository userRepository, PremiumPaymentRepository paymentRepository) {
         this.premiumCalculationService = premiumCalculationService;
         this.amortizationService = amortizationService;
         this.policyRepository = policyRepository;
@@ -74,7 +68,6 @@ public class IntegratedInsurancePolicyService implements IIntegratedInsurancePol
         // 5. Create Insurance Policy with actuarial data
         InsurancePolicy policy = new InsurancePolicy();
         policy.setPolicyNumber(generatePolicyNumber());
-        policy.setPolicyType(product.getPolicyType());
         policy.setUser(user);
         policy.setInsuranceProduct(product);
 

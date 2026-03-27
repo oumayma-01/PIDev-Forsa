@@ -48,6 +48,7 @@ public class JwtUtils {
           "**/swagger-ui/**",
           "/swagger-ui/**",
           "/v2/api-docs/**",
+          "/api-docs/**",
           // Insurance endpoints - for testing purposes
           "/insurance-claim/**",
           "/insurance-policy/**",

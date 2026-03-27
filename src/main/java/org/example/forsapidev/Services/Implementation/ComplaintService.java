@@ -8,6 +8,7 @@ import org.example.forsapidev.Repositories.UserRepository;
 import org.example.forsapidev.Services.Interfaces.IComplaintService;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Category;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Complaint;
+import org.example.forsapidev.entities.ComplaintFeedbackManagement.Priority;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Response;
 import org.example.forsapidev.entities.UserManagement.User;
 import org.example.forsapidev.openai.ComplaintAiAssistant;
@@ -41,7 +42,7 @@ public class ComplaintService implements IComplaintService {
     public Complaint addComplaint(Complaint c) {
         c.setCreatedAt(new Date());
         if (c.getStatus() == null || c.getStatus().isEmpty()) c.setStatus("OPEN");
-        if (c.getCategory() == null) c.setCategory(Category.AUTRE);
+        if (c.getCategory() == null) c.setCategory(Category.OTHER);
         return complaintRepository.save(c);
     }
 
@@ -57,64 +58,66 @@ public class ComplaintService implements IComplaintService {
 
     @Override
     public Complaint addComplaintWithAI(Complaint c) {
-        String cat;
+        // 1. Category
         try {
-            cat = complaintAiAssistant.classifyCategory(c.getDescription());
-        } catch (Exception e) {
-            cat = "AUTRE";
-        }
-
-        if (cat == null) cat = "AUTRE";
-        if ("SUPPORT_GENERAL".equalsIgnoreCase(cat)) cat = "SUPPORT";
-
-        try {
+            String cat = complaintAiAssistant.classifyCategory(c.getDescription());
             c.setCategory(Category.valueOf(cat.toUpperCase()));
         } catch (Exception e) {
-            c.setCategory(Category.AUTRE);
+            c.setCategory(Category.OTHER);
         }
 
-        c.setSubject("Analyse IA : " + (c.getSubject() != null ? c.getSubject() : "Nouveau ticket"));
+        // 2. Priority
+        try {
+            c.setPriority(complaintAiAssistant.simulatePriority(c.getDescription()));
+        } catch (Exception e) {
+            c.setPriority(Priority.MEDIUM);
+        }
+
+        // 3. Other fields
+        c.setSubject("AI Analysis: " + (c.getSubject() != null ? c.getSubject() : "New Ticket"));
         c.setStatus("OPEN");
         c.setCreatedAt(new Date());
+
         return complaintRepository.save(c);
+    }
+
+    @Override
+    public Map<String, Long> getStatsByPriority() {
+        return complaintRepository.findAll().stream()
+                .filter(c -> c.getPriority() != null)
+                .collect(Collectors.groupingBy(
+                        c -> c.getPriority().name(),
+                        Collectors.counting()
+                ));
     }
 
     @Override
     public Map<String, String> generateResponseForComplaint(Long complaintId) {
         Complaint c = complaintRepository.findById(complaintId).orElse(null);
-        if (c == null) {
-            return Map.of("error", "Plainte non trouvée");
-        }
+        if (c == null) return Map.of("error", "Complaint not found");
 
         String category = c.getCategory() != null ? c.getCategory().name() : "AUTRE";
-        String subject = c.getSubject() != null ? c.getSubject() : "Votre réclamation";
+        String subject = c.getSubject() != null ? c.getSubject() : "Your complaint";
         String description = c.getDescription() != null ? c.getDescription() : "";
 
         try {
-            String responseText = complaintAiAssistant.draftResponse(
-                    category,
-                    subject,
-                    description
-            );
-
+            String responseText = complaintAiAssistant.draftResponse(category, subject, description);
             if (responseText == null || responseText.isBlank()) {
-                responseText = buildFallbackAiResponse(category, subject, description);
+                responseText = buildFallbackResponse(category, subject, description);
             }
-
             return Map.of("response", responseText);
         } catch (Exception e) {
-            String responseText = buildFallbackAiResponse(category, subject, description);
-            return Map.of("response", responseText);
+            return Map.of("response", buildFallbackResponse(category, subject, description));
         }
     }
 
-    private String buildFallbackAiResponse(String category, String subject, String description) {
-        return "Bonjour,\n\n"
-                + "Nous avons bien reçu votre réclamation concernant \"" + subject + "\" "
-                + "dans la catégorie " + category + ".\n"
-                + "Notre équipe est en train d'analyser votre demande : " + description + "\n"
-                + "Nous reviendrons vers vous avec plus de détails dans les plus brefs délais.\n\n"
-                + "Cordialement,\nService Support.";
+    private String buildFallbackResponse(String category, String subject, String description) {
+        return "Hello,\n\n"
+                + "We have received your complaint regarding \"" + subject + "\" "
+                + "in the category " + category + ".\n"
+                + "Our team is analyzing your request: " + description + "\n"
+                + "We will get back to you with more details as soon as possible.\n\n"
+                + "Best regards,\nSupport Team.";
     }
 
     @Override
@@ -128,7 +131,7 @@ public class ComplaintService implements IComplaintService {
         try {
             insights = complaintAiAssistant.generateInsightsFromReport(textForAi);
         } catch (Exception e) {
-            insights = "Insights indisponibles (IA non configurée).";
+            insights = "Insights unavailable (AI not configured).";
         }
 
         Map<String, Object> res = new LinkedHashMap<>(base);
@@ -157,8 +160,7 @@ public class ComplaintService implements IComplaintService {
 
     @Override
     public List<Map<String, Object>> getComplaintTrendsLastMonths(int months) {
-        List<Complaint> complaints = complaintRepository.findAll();
-        List<Date> dates = complaints.stream()
+        List<Date> dates = complaintRepository.findAll().stream()
                 .map(Complaint::getCreatedAt)
                 .filter(Objects::nonNull)
                 .toList();
@@ -176,10 +178,8 @@ public class ComplaintService implements IComplaintService {
     public Complaint affectComplaintToUser(Long complaintId, Long userId) {
         Complaint complaint = complaintRepository.findById(complaintId).orElse(null);
         if (complaint == null) return null;
-
         User user = userRepository.findById(userId).orElse(null);
         if (user == null) return null;
-
         complaint.setUser(user);
         return complaintRepository.save(complaint);
     }
@@ -193,12 +193,8 @@ public class ComplaintService implements IComplaintService {
         Response saved = responseRepository.save(r);
 
         String st = complaint.getStatus() == null ? "OPEN" : complaint.getStatus();
-        if ("OPEN".equals(st)) {
-            complaint.setStatus("IN_PROGRESS");
-        }
-        if ("SENT".equals(saved.getResponseStatus())) {
-            complaint.setStatus("RESOLVED");
-        }
+        if ("OPEN".equals(st)) complaint.setStatus("IN_PROGRESS");
+        if ("SENT".equals(saved.getResponseStatus())) complaint.setStatus("RESOLVED");
 
         complaintRepository.save(complaint);
         return saved;
@@ -208,8 +204,6 @@ public class ComplaintService implements IComplaintService {
     public void closeComplaintIfEligible(Long complaintId) {
         Complaint complaint = complaintRepository.findById(complaintId)
                 .orElseThrow(() -> new IllegalArgumentException("Complaint not found"));
-
-        // version simplifiée pour la soutenance
         complaint.setStatus("CLOSED");
         complaintRepository.save(complaint);
     }
@@ -228,15 +222,11 @@ public class ComplaintService implements IComplaintService {
 
         for (Date d : dates) {
             String key = fmt.format(d);
-            if (counts.containsKey(key)) {
-                counts.put(key, counts.get(key) + 1);
-            }
+            if (counts.containsKey(key)) counts.put(key, counts.get(key) + 1);
         }
 
         List<Map<String, Object>> res = new ArrayList<>();
-        counts.forEach((k, v) ->
-                res.add(new LinkedHashMap<>(Map.of("period", k, "count", v)))
-        );
+        counts.forEach((k, v) -> res.add(new LinkedHashMap<>(Map.of("period", k, "count", v))));
         return res;
     }
 }

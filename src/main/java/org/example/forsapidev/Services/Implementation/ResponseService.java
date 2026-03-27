@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.forsapidev.Repositories.ResponseRepository;
 import org.example.forsapidev.Services.Interfaces.IResponseService;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Response;
+import org.example.forsapidev.openai.ComplaintAiAssistant;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashMap;
@@ -15,6 +16,7 @@ import java.util.Map;
 public class ResponseService implements IResponseService {
 
     private final ResponseRepository responseRepository;
+    private final ComplaintAiAssistant complaintAiAssistant;
 
     @Override
     public List<Response> retrieveAllResponses() {
@@ -55,7 +57,17 @@ public class ResponseService implements IResponseService {
         if (r == null) return null;
 
         if (r.getMessage() != null && !r.getMessage().isBlank()) {
-            r.setMessage(r.getMessage().trim() + "\n\n(Corrigé/Amélioré)");
+            try {
+                String improved = complaintAiAssistant.improveResponse(
+                        "SUPPORT",
+                        "Response improvement",
+                        r.getMessage(),
+                        r.getMessage()
+                );
+                r.setMessage(improved);
+            } catch (Exception e) {
+                r.setMessage(r.getMessage().trim() + "\n\n(Reviewed & Improved)");
+            }
         }
         r.setResponseStatus("PROCESSED");
         return responseRepository.save(r);

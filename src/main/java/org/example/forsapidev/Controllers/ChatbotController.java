@@ -21,29 +21,21 @@ public class ChatbotController {
         this.complaintAiAssistant = complaintAiAssistant;
     }
 
-    // Chat général sur les réclamations
     @PostMapping("/ask")
     @PreAuthorize("hasAnyRole('CLIENT','ADMIN','AGENT')")
     public Map<String, String> chat(@RequestBody Map<String, String> body) {
         String message = body.getOrDefault("message", "");
 
-        // Ici on peut réutiliser OpenAI directement
-        String system = "Tu es un assistant virtuel du service réclamations de Forsa Insurance. "
-                + "Réponds en français, de manière courte et claire. "
-                + "Tu aides l'utilisateur à comprendre comment créer, suivre ou fermer une réclamation.";
         String answer;
         try {
-            answer = complaintAiAssistant.improveResponse(
+            answer = complaintAiAssistant.draftResponse(
                     "SUPPORT",
-                    "Question générale",
-                    message,
-                    null
+                    "General Question",
+                    message
             );
         } catch (Exception e) {
-            // Fallback si OpenAI n'est pas dispo
-            answer = "Je suis un assistant virtuel. Pour créer une réclamation, utilisez le bouton "
-                    + "\"Nouvelle réclamation\" puis décrivez votre problème. "
-                    + "Vous pouvez ensuite suivre son statut (OPEN, IN_PROGRESS, RESOLVED, CLOSED).";
+            answer = "I am a virtual assistant. To create a claim, use the \"New Claim\" button "
+                    + "and describe your issue. You can then track its status (OPEN, IN_PROGRESS, RESOLVED, CLOSED).";
         }
 
         return Map.of("answer", answer);
