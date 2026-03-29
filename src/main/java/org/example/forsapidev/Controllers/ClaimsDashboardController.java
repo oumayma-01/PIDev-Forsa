@@ -7,7 +7,7 @@ import lombok.AllArgsConstructor;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/api/claims-dashboard")
+@RequestMapping("/claims-dashboard")
 @CrossOrigin(origins = "*")  // Allow frontend to access
 public class ClaimsDashboardController {
 

@@ -12,7 +12,7 @@ import java.util.List;
 @RestController
 @AllArgsConstructor
 @SecurityRequirement(name = "Bearer Authentication")
-@RequestMapping("/api/premium-payment")
+@RequestMapping("/premium-payment")
 public class PremiumPaymentController {
 
     IPremiumPayment premiumPaymentService;

@@ -42,7 +42,7 @@ public class ComplaintService implements IComplaintService {
     public Complaint addComplaint(Complaint c) {
         c.setCreatedAt(new Date());
         if (c.getStatus() == null || c.getStatus().isEmpty()) c.setStatus("OPEN");
-        if (c.getCategory() == null) c.setCategory(Category.OTHER);
+        if (c.getCategory() == null) c.setCategory(Category.AUTRE);
         return complaintRepository.save(c);
     }
 
@@ -58,29 +58,32 @@ public class ComplaintService implements IComplaintService {
 
     @Override
     public Complaint addComplaintWithAI(Complaint c) {
-        // 1. Category
+        // 1️⃣ Catégorie
+        String cat = "AUTRE";
         try {
-            String cat = complaintAiAssistant.classifyCategory(c.getDescription());
+            cat = complaintAiAssistant.classifyCategory(c.getDescription());
             c.setCategory(Category.valueOf(cat.toUpperCase()));
         } catch (Exception e) {
-            c.setCategory(Category.OTHER);
+            c.setCategory(Category.AUTRE);
         }
 
-        // 2. Priority
+        // 2️⃣ Priorité
+        Priority aiPriority;
         try {
-            c.setPriority(complaintAiAssistant.simulatePriority(c.getDescription()));
+            aiPriority = complaintAiAssistant.simulatePriority(c.getDescription());
         } catch (Exception e) {
-            c.setPriority(Priority.MEDIUM);
+            aiPriority = Priority.MEDIUM;
         }
+        c.setPriority(aiPriority);
 
-        // 3. Other fields
-        c.setSubject("AI Analysis: " + (c.getSubject() != null ? c.getSubject() : "New Ticket"));
+        // 3️⃣ Autres champs
+        c.setSubject("Analyse IA : " + (c.getSubject() != null ? c.getSubject() : "Nouveau ticket"));
         c.setStatus("OPEN");
         c.setCreatedAt(new Date());
 
         return complaintRepository.save(c);
     }
-
+    // ========== NOUVEAU ==========
     @Override
     public Map<String, Long> getStatsByPriority() {
         return complaintRepository.findAll().stream()
@@ -94,30 +97,30 @@ public class ComplaintService implements IComplaintService {
     @Override
     public Map<String, String> generateResponseForComplaint(Long complaintId) {
         Complaint c = complaintRepository.findById(complaintId).orElse(null);
-        if (c == null) return Map.of("error", "Complaint not found");
+        if (c == null) return Map.of("error", "Plainte non trouvée");
 
         String category = c.getCategory() != null ? c.getCategory().name() : "AUTRE";
-        String subject = c.getSubject() != null ? c.getSubject() : "Your complaint";
+        String subject = c.getSubject() != null ? c.getSubject() : "Votre réclamation";
         String description = c.getDescription() != null ? c.getDescription() : "";
 
         try {
             String responseText = complaintAiAssistant.draftResponse(category, subject, description);
             if (responseText == null || responseText.isBlank()) {
-                responseText = buildFallbackResponse(category, subject, description);
+                responseText = buildFallbackAiResponse(category, subject, description);
             }
             return Map.of("response", responseText);
         } catch (Exception e) {
-            return Map.of("response", buildFallbackResponse(category, subject, description));
+            return Map.of("response", buildFallbackAiResponse(category, subject, description));
         }
     }
 
-    private String buildFallbackResponse(String category, String subject, String description) {
-        return "Hello,\n\n"
-                + "We have received your complaint regarding \"" + subject + "\" "
-                + "in the category " + category + ".\n"
-                + "Our team is analyzing your request: " + description + "\n"
-                + "We will get back to you with more details as soon as possible.\n\n"
-                + "Best regards,\nSupport Team.";
+    private String buildFallbackAiResponse(String category, String subject, String description) {
+        return "Bonjour,\n\n"
+                + "Nous avons bien reçu votre réclamation concernant \"" + subject + "\" "
+                + "dans la catégorie " + category + ".\n"
+                + "Notre équipe est en train d'analyser votre demande : " + description + "\n"
+                + "Nous reviendrons vers vous avec plus de détails dans les plus brefs délais.\n\n"
+                + "Cordialement,\nService Support.";
     }
 
     @Override
@@ -131,7 +134,7 @@ public class ComplaintService implements IComplaintService {
         try {
             insights = complaintAiAssistant.generateInsightsFromReport(textForAi);
         } catch (Exception e) {
-            insights = "Insights unavailable (AI not configured).";
+            insights = "Insights indisponibles (IA non configurée).";
         }
 
         Map<String, Object> res = new LinkedHashMap<>(base);
@@ -160,7 +163,8 @@ public class ComplaintService implements IComplaintService {
 
     @Override
     public List<Map<String, Object>> getComplaintTrendsLastMonths(int months) {
-        List<Date> dates = complaintRepository.findAll().stream()
+        List<Complaint> complaints = complaintRepository.findAll();
+        List<Date> dates = complaints.stream()
                 .map(Complaint::getCreatedAt)
                 .filter(Objects::nonNull)
                 .toList();

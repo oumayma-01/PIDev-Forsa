@@ -1,11 +1,11 @@
 package org.example.forsapidev.entities.ComplaintFeedbackManagement;
 
 public enum Category {
-    TECHNICAL,
+    TECHNIQUE,
     FINANCE,
     SUPPORT,
-    FRAUD,
-    ACCOUNT,
+    FRAUDE,
+    COMPTE,
     CREDIT,
-    OTHER
+    AUTRE
 }

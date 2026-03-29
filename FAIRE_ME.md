@@ -1,0 +1,237 @@
+Titre: Plan d'implémentation — Crédit, Assurance, IA, Gift et Pénalités
+
+Résumé
+-------
+Ce document décrit une architecture professionnelle, robuste et bancaire-ready pour :
+- gestion des demandes de crédit (workflow: DEMANDE → VALIDATION → PAIEMENT_ASSURANCE → ACTIVATION → GÉNÉRATION_ÉCHÉANCES)
+- intégration avec une API IA unifiée (scoring + assurance médicale) via upload de rapport santé (multipart)
+- calculs d'échéances mensuelles (Strategy Pattern: ANNUITE_CONSTANTE, AMORTISSEMENT_CONSTANT)
+- obligations métier: chaque crédit a sa propre assurance payée avant activation
+- gestion des agents (assignation, état busy)
+- mécanisme de "gift" cumulatif et pénalités pour retard
+
+Objectifs concrets
+------------------
+1. Ajouter `typeCalcul` sur `CreditRequest` (enum: ANNUITE_CONSTANTE, AMORTISSEMENT_CONSTANT)
+2. Ne déclencher le calcul d'échéances qu'après validation (status=APPROVED) et paiement d'assurance
+3. Chaque CreditRequest possède une entité Insurance liée (montant calculé, facture/opération, statut payé)
+4. Upload de rapport santé lors de la création d'une demande (endpoint multipart) → envoi au service IA (port 8000) → retour rate assurance + scoring
+5. Assignation automatique d'un Agent existant après génération du rapport ; Agent marqué busy tant que request en traitement
+6. Ajout d'une entité Gift: accumulation de 1.5% par crédit (sur taux) ; quand la somme cumulative atteint 500 DT, créditer client et enregistrer l'opération
+7. Pénalité: en cas de retard de paiement d'une tranche, ajouter une ligne finale dans le `RepaymentSchedule` avec montant fixe 200 DT et marquer l'événement
+8. Supprimer ou ignorer les parties liées à l'inflation / duration influence sur le taux si demandé (conserver TMM si nécessaire)
+
+Architecture proposée (haute-niveau)
+-----------------------------------
+- API Backend Spring Boot (port 8089)
+  - Controllers: CreditController, AuthController, AgentController, PaymentController
+  - Services: CreditRequestService, ValidationService, InsuranceService, CalculationService, FeatureCalculationService, ScoringIaClient, AgentAssignmentService, GiftService, PaymentService
+  - Repositories: CreditRequestRepo, RepaymentScheduleRepo, InsuranceRepo, AgentRepo, PaymentRepo, GiftRepo
+  - Domain entities: CreditRequest, RepaymentSchedule, Insurance, Payment, Agent, User, Gift
+  - Security: JWT (HS512/HS256) ; clé secrète centralisée en config et identique côté génération/validation
+  - Integration: Scoring IA Client (WebClient/RestTemplate) avec timeouts configurables et retry/backoff
+
+- API IA Unifiée (port 8000) — service externe
+  - Endpoint: POST /credit-full-analysis (multipart: client_data_json + medical_file + request_id)
+  - Retour: insurance_rate, insurance_decision, fraud_score, recent_credit_requests, detailed_report
+
+Diagramme séquentiel simplifié
+------------------------------
+Client -> Spring /credits/with-health-report (multipart JSON+PDF) [auth bearer]
+1. Authentifier et prendre user courant (SecurityContext) -> fill user_id in request
+2. Save CreditRequest status=SUBMITTED (avec reference to file stored temporarily)
+3. FeatureCalculationService calcule features (avgDelay etc.) à partir des schedules / historiques
+4. ScoringIaClient envoie multipart à AI
+5. AI retourne insurance_rate + fraud decision
+6. InsuranceService calcule montant assurance (BigDecimal, HALF_EVEN), crée Invoice/Payment record (status=PENDING)
+7. Trigger paiement assurance: appeler PaymentService (intégration PSP ou mock) -> si payé -> insurance.status=PAID
+8. Si PAID && CreditRequest.status==APPROVED -> CalculationService génère RepaymentSchedule selon strategy, persiste
+9. AgentAssignmentService affecte la demande à un Agent disponible, met Agent.busy=true
+10. Retour au client/agent
+
+Modèles de données (extraits importants)
+-----------------------------------------
+- CreditRequest
+  - id, user_id, amountRequested (BigDecimal), interestRate (BigDecimal annual), durationMonths (int), typeCalcul (ENUM), status (SUBMITTED/APPROVED/ACTIVE/REJECTED), remainingBalance, paidInstallments, riskLevel, isRisky, scoredAt (timestamp), healthReportPath
+  - insurance_id (FK)
+  - agent_id (FK)
+
+- Insurance
+  - id, credit_request_id, amount (BigDecimal), rate (BigDecimal), method (PERCENT|FIXED), status (PENDING|PAID|REJECTED), createdAt, paidAt, invoiceReference
+
+- RepaymentSchedule (échéance)
+  - id, credit_request_id, installmentNumber, dueDate, principalAmount (BigDecimal), interestAmount (BigDecimal), totalAmount (BigDecimal), remainingBalance (BigDecimal), paid (boolean), paidAt
+  - lineType: NORMAL | PENALTY
+
+- Payment
+  - id, relatedEntityType (INSURANCE | INSTALLMENT), relatedEntityId, amount (BigDecimal), method, status, transactionRef, createdAt
+
+- Agent
+  - id, userId, name, isBusy (boolean), currentAssignedRequestId (nullable)
+
+- Gift
+  - id, clientId, accumulatedPercentAmount (BigDecimal), threshold (BigDecimal default 500.00), awarded (boolean), awardedAt, awardedAmount
+
+Règles de gestion détaillées
+----------------------------
+1. Création d'une demande (endpoint multipart `/credits/with-health-report`):
+   - Authentification JWT obligatoire ; controller prend l'utilisateur courant depuis SecurityContext (id+role) et l'assigne à la demande automatiquement.
+   - Stocker le fichier médical dans un dossier `uploads/health-reports` ou S3 ; conserver chemin dans `CreditRequest.healthReportPath`.
+   - Status initial: SUBMITTED.
+   - Lancer asynchrone (ou synchrone configurable) : feature extraction → appel IA.
+
+2. Appel IA (Scoring + Insurance rate)
+   - Envoyer `client_data_json` (features calculées + `recent_credit_requests`) + `medical_file` (multipart) + `request_id`.
+   - Configurer WebClient avec connectTimeout et readTimeout (proposition: connect 15s, read 120s) et retries (3) en backoff exponen.
+   - Si IA indisponible ou réponse non valide -> garder request en SUBMITTED et loguer, notifier agent manuel.
+
+3. Assurance
+   - Le service IA retourne `insurance_rate` (pourcentage) ou `insurance_fixed_amount` et éventuellement `rejected`.
+   - InsuranceService calcule montant: si method=PERCENT => amount = capital × rate (BigDecimal) ; arrondi HALF_EVEN sur 2 décimales.
+   - Créer `Payment` / `Invoice` pour l'assurance, status PENDING.
+   - Forcer paiement immédiat : déclencher `PaymentService.processInsurancePayment()` (intégration réel ou simulation pour dev).
+   - Si paiement échoue => Insurance.status = PENDING/FAILED ; CreditRequest reste à APPROVED mais non ACTIVE ; ne pas générer échéances.
+   - Si paiement succeed => Insurance.status = PAID, set paidAt, alors seulement: si CreditRequest.status==APPROVED -> passer à ACTIVE et appeler CalculationService pour générer Plan d'amortissement.
+
+4. Génération échéances (CalculationService)
+   - Pattern: Strategy (interface MonthlyCalculationStrategy avec méthode generateSchedule(CreditRequest, BigDecimal capital))
+   - Implémentations: AnnuiteConstanteStrategy, AmortissementConstantStrategy
+   - Tous les calculs en BigDecimal, constantes de scale et RoundingMode.HALF_EVEN
+   - Taux mensuel i = annualRate.divide(new BigDecimal(12), MATH_CTX)
+   - Assurer que la dernière échéance ajuste l’écart d’arrondi afin que la somme des principal rembourse exactement le capital. Approche: calculer n-1 échéances puis la dernière = remainingPrincipal.
+   - Persister toutes les lignes dans `RepaymentScheduleRepo` dans une transaction (si création échoue revert tout).
+
+5. Activation & agent assignement
+   - Activation condition: CreditRequest.status must be APPROVED && Insurance.status==PAID
+   - Activation procède: set status=ACTIVE, remainingBalance=capital, paidInstallments=0, activatedAt
+   - Assignation agent: AgentAssignmentService choisit un agent disponible (isBusy==false) et l'affecte: agent.currentAssignedRequestId=requestId ; agent.isBusy=true ; CreditRequest.agentId = agentId ; creditRequest.status updated to e.g. UNDER_PROCESS_BY_AGENT or leave as ACTIVE with assigned agent depending on domain.
+   - Quand agent termine (action explicite), mark agent.isBusy=false and clear currentAssignedRequestId.
+
+6. Gift logic
+   - Business: chaque crédit accordé augmente un compteur d'accumulation de la part du client de 1.5% (de quel montant ? on utilisera 1.5% du capital de chaque crédit ou 1.5% du montant d'intérêt payé ; clarifier ici on utilisera 1.5% du capital demandé) ; stocker cette valeur dans Gift.accumulatedPercentAmount (somme en DT) par client.
+   - A chaque création/activation de crédit (ou à l'approbation finale), calculer giftIncrement = capital × 1.5% et ajouter à Gift.accumulatedPercentAmount
+   - Si accumulatedPercentAmount >= 500.00 DT && Gift.awarded==false => créer Payment record de type GIFT pour le client, set Gift.awarded=true, awardedAt=now, awardedAmount=accumulatedPercentAmount (ou montant fixé 500)
+   - Enregistrer historique d'attribution et envoyer notification au client.
+   - Remise à zéro après attribution ou garder remainder (dépend business) ; proposer: subtract threshold (500) and garder le surplus comme nouvel accumulatedPercentAmount.
+
+7. Pénalités sur retard
+   - Scheduler (tâche daily) ou événement à chaque échéance dueDate check:
+     - if now > dueDate && paid==false then: create new RepaymentSchedule line of lineType PENALTY with installmentNumber = last+1, dueDate = now, principalAmount=0, interestAmount=0, totalAmount=200.00, remainingBalance = previous remainingBalance + 200.00, paid=false
+     - marquer événement PenaltyEvent table (audit)
+     - envoyer notification / email
+   - Cette ligne PENALTY est toujours la dernière ligne jusqu’à paiement ; si plusieurs retards, on peut décider de n'ajouter qu'une seule pénalité fixe par défaut (option configurable).
+
+8. Sécurité et JWT
+   - Veiller à utiliser la même clé secrète pour génération et validation des JWT (application.properties: jwt.secret). Si tokens générés ailleurs, s'assurer que signature algorithme et secret correspondent.
+   - Controller `POST /credits/with-health-report` doit extraire user courant via SecurityContextHolder.getContext().getAuthentication() et non depuis le payload (sécurité)
+   - Dans Swagger / OpenAPI, configurer le schéma Bearer pour uploader fichiers avec authorization header (OpenAPI30Configuration déjà présent)
+
+9. Upload multipart & Swagger
+   - Use @RequestPart("client_data_json") String clientDataJson et @RequestPart("medical_file") MultipartFile file in controller
+   - Ensure Swagger UI supports multipart: annotate endpoint with @Operation + @Parameters for file
+   - Controller must accept content-type multipart/form-data; if swagger sends application/octet-stream, adjust UI or client to send proper content-type
+
+10. Intégration IA / timeouts
+   - WebClient config: connectTimeout=15s, readTimeout=120s, retry 3 avec backoff
+   - For long processing flows (PDF OCR + LM Studio), prefer async processing: respond 202 Accepted and update request later, or block but use longer read timeout and report progress
+   - Log and fallback when IA unavailable -> keep request SUBMITTED and notify for manual review
+
+11. Tests, monitoring et traçabilité
+   - Unit tests: strategies, InsuranceService (calc & rounding), GiftService (accumulation), PaymentService (status flows)
+   - Integration tests: controller multipart mocks, ScoringIaClient mocked responses
+   - E2E tests: simulate full flow including AI mocked
+   - Metrics: number of requests, IA latency, payment success rate, gifts awarded
+
+Étapes d'implémentation (pipeline détaillé pour développement)
+----------------------------------------------------------------
+Phase 0 — Préparation (1 jour)
+- Revue du schéma actuel (entities: CreditRequest, RepaymentSchedule, Payment) et lister migrations DB nécessaires
+- Ajouter les ENUMs: TypeCalcul {ANNUITE_CONSTANTE, AMORTISSEMENT_CONSTANT}
+- Ajouter entités minimalistes: Insurance, Gift
+- Ajouter configuration WebClient, read/connect timeouts et retry
+
+Phase 1 — Endpoint multipart et intégration IA (2-3 jours)
+- Implémenter controller `/credits/with-health-report` : extract user from SecurityContext
+- Stocker fichier temporairement, persist request SUBMITTED
+- Implement ScoringIaClient to call POST /credit-full-analysis (multipart)
+- Mock IA locally for tests
+- Tests: POST multipart via curl and swagger ; ensure header Authorization fonctionne
+
+Phase 2 — Assurance & paiement (2 jours)
+- InsuranceService: compute amount, create Payment (PENDING)
+- PaymentService: integrate PSP or mock synchronous success/failure
+- On payment success: set Insurance.PAID and record paidAt
+- If CreditRequest.status==APPROVED -> trigger generation of schedule
+
+Phase 3 — Strategy pattern & calcul échéances (2-3 jours)
+- Implement interface MonthlyCalculationStrategy and 2 strategies
+- CalculationService uses selected strategy based on request.typeCalcul
+- Ensure BigDecimal everywhere, HALF_EVEN rounding, adjust last installment
+- Unit tests to verify sums and last-month adjustment
+
+Phase 4 — Agent assignment, busy flag (1 jour)
+- AgentAssignmentService chooses available agent and sets busy flag.
+- When agent is assigned, update CreditRequest.agentId and persist.
+- Provide AgentController to set agent free when task finished.
+
+Phase 5 — Gift & pénalités (1-2 jours)
+- Implement GiftService: accumulate increments (capital × 1.5%), persist, award when >=500DT
+- Scheduler/Task: daily check for overdue installments and create PENALTY line (200DT)
+- Tests for scenario of overdue and penalty creation
+
+Phase 6 — Hardening & Observability (1-2 jours)
+- Add retries, circuit breaker for IA client
+- Add metrics (Micrometer), logs structured
+- Security tests: ensure token signature consistent
+- Documentation Swagger OpenAPI updates
+
+Données de test et critères d'acceptation
+----------------------------------------
+1. Créer une demande via `/credits/with-health-report` avec JWT valide :
+   - request created status=SUBMITTED
+   - IA called with multipart
+   - Insurance calc created and payment attempted
+   - If IA returns rate and payment success & request.status==APPROVED -> schedule generated and persisted
+   - Agent assigned and agent.isBusy==true
+
+2. Gift accumulation: après N crédits, sum(accumulatedPercentAmount) >= 500 => gift awarded and Payment record created type=GIFT
+
+3. Retard: simuler dueDate dépassé -> nouvelle ligne PENALTY ajoutée (200DT) et remainingBalance mis à jour
+
+Considérations techniques et non-fonctionnelles
+-----------------------------------------------
+- Utiliser transactions sur points critiques (génération d'échéances, paiement d'assurance) pour éviter états partiels
+- Manipuler timezone (UTC) pour dates en DB
+- Conserver audit logs (qui a validé, qui a payé, qui a assigné)
+- Rounding: BigDecimal with scale 2 and RoundingMode.HALF_EVEN
+- Conserver tests pour les calculs financiers (somme des principals == capital)
+
+Risques et mitigations
+----------------------
+- IA indisponible : fallback à revue manuelle + garder request SUBMITTED
+- PSP unavailable : marquer insurance PENDING et notifier
+- Concurrence agent assignation : utiliser SELECT FOR UPDATE / pessimistic lock pour éviter conflit lors de la sélection d'un agent disponible
+
+Livrables
+---------
+- API endpoint `/credits/with-health-report` fonctionnel (multipart + JWT)
+- Services: InsuranceService, CalculationService (Strategy), GiftService, AgentAssignmentService
+- DB migrations pour Insurance et Gift
+- Tests unitaires et d'intégration
+- Documentation Swagger et guide d'utilisation de l'endpoint multipart
+
+Annexes — Exemples d'APIs (haute-niveau)
+---------------------------------------
+- POST /forsaPidev/api/credits/with-health-report (multipart): client_data_json, medical_file, request_id
+- POST /forsaPidev/api/credits/{id}/approve : valide la demande (seulement agent ou admin)
+- POST /forsaPidev/api/credits/{id}/pay-insurance : webhook / callback du PSP
+- GET /forsaPidev/api/credits/{id}/schedule : récupérer échéances
+- POST /forsaPidev/api/agents/{id}/finish : agent libère la demande et passe isBusy=false
+
+Notes finales
+-------------
+- Ce plan est conçu pour être mis en place progressivement. Commencez par l'endpoint multipart + IA mock, puis assurez-vous du flux d'assurance et du paiement avant d'implémenter définitivement la génération d'échéances.
+- Je peux appliquer ce plan pas-à-pas dans votre repo : créer les entités, services, controllers et tests. Indiquez quelle phase vous voulez que je code en premier et je m'occupe des modifications, tests, et corrections jusqu'à ce que tout compile et fonctionne.
+
+Fin du document
+

@@ -13,7 +13,7 @@ import java.io.ByteArrayOutputStream;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/api/policy-pdf")
+@RequestMapping("/policy-pdf")
 public class PolicyPdfController {
 
     private final IPolicyPdfService policyPdfService;

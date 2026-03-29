@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/api/product-comparison")
+@RequestMapping("/product-comparison")
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 public class ProductComparisonController {
 

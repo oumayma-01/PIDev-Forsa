@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
-import org.example.forsapidev.entities.UserManagement.User;
+import org.example.forsapidev.entities.UserManagement.User; // Import User entity
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Set;
@@ -20,11 +20,11 @@ public class InsurancePolicy {
     @Column(unique = true, nullable = false)
     private String policyNumber;
 
-    // REMOVED: policyType (get from insuranceProduct instead)
+    private String policyType;
 
-    private BigDecimal premiumAmount;  // Periodic payment amount
+    private BigDecimal premiumAmount;
 
-    private BigDecimal coverageLimit;  // Total coverage for this specific policy
+    private BigDecimal coverageLimit;
 
     @Temporal(TemporalType.DATE)
     private Date startDate;
@@ -36,66 +36,57 @@ public class InsurancePolicy {
     private Date nextPremiumDueDate;
 
     @Enumerated(EnumType.STRING)
-    private PolicyStatus status;  // PENDING, ACTIVE, SUSPENDED, EXPIRED, CANCELLED
+    private PolicyStatus status;
 
-    // ACTUARIAL CALCULATION RESULTS
-    private BigDecimal purePremium;           // Prime Pure (E(N) × E(X))
-    private BigDecimal inventoryPremium;      // Prime Inventaire (Pure + Management Fees)
-    private BigDecimal commercialPremium;     // Prime Commerciale (Inventory / (1 - α))
-    private BigDecimal finalPremium;          // Prime Finale (Total amount to be paid)
+    // NEW ACTUARIAL FIELDS
+    private BigDecimal purePremium;           // Prime Pure
+    private BigDecimal inventoryPremium;      // Prime Inventaire
+    private BigDecimal commercialPremium;     // Prime Commerciale
+    private BigDecimal finalPremium;          // Prime Finale (total)
 
-    // RISK ASSESSMENT RESULTS
-    private Double riskScore;                 // Calculated risk score (0-1)
+    private Double riskScore;                 // Client risk score
     private String riskCategory;              // LOW_RISK, MEDIUM_RISK, HIGH_RISK
-    private Double riskCoefficient;           // Risk multiplier applied to premium
+    private Double riskCoefficient;           // Risk multiplier
 
-    // PAYMENT DETAILS
     private String paymentFrequency;          // MONTHLY, QUARTERLY, SEMI_ANNUAL, ANNUAL
     private BigDecimal periodicPaymentAmount; // Amount per payment period
-    private Integer numberOfPayments;         // Total number of scheduled payments
-    private Double effectiveAnnualRate;       // Interest rate used in calculations
+    private Integer numberOfPayments;         // Total number of payments
+
+    private Double effectiveAnnualRate;       // Interest rate used
 
     @Column(columnDefinition = "TEXT")
-    private String calculationNotes;          // Detailed actuarial calculation notes
+    private String calculationNotes;          // Actuarial calculation details
 
-    // RELATIONSHIP: Many Policies belong to One User (the client/policyholder)
+    // Relationship: Many Policies belong to One User
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    @JsonBackReference("user-policies")
+    @JoinColumn(name = "user_id", nullable = true)   // null for test purposes
     private User user;
 
-    // RELATIONSHIP: Many Policies belong to One Product (the insurance plan)
+    // Relationship: Many Policies belong to One Product
     @ManyToOne
-    @JoinColumn(name = "product_id", nullable = false)
-    @JsonBackReference("product-policies")
-    @JsonIgnoreProperties("policies")
+    @JoinColumn(name = "product_id", nullable = true)
+    @JsonBackReference // This prevents the loop back to InsuranceProduct
     private InsuranceProduct insuranceProduct;
 
-    // RELATIONSHIP: One Policy has Many Premium Payments
+    // Relationship: One Policy has Many Premium Payments
     @OneToMany(mappedBy = "insurancePolicy", cascade = CascadeType.ALL)
-    @JsonManagedReference("policy-payments")
+    @JsonManagedReference // Jackson will follow this link and serialize the claims
     private Set<PremiumPayment> premiumPayments;
 
-    // RELATIONSHIP: One Policy has Many Claims
+    // Relationship: One Policy has Many Claims
     @OneToMany(mappedBy = "insurancePolicy", cascade = CascadeType.ALL)
-    @JsonManagedReference("policy-claims")
+    @JsonManagedReference // Jackson will follow this link and serialize the claims
     private Set<InsuranceClaim> claims;
 
-    // CONSTRUCTORS
-    public InsurancePolicy() {}
-
-    // HELPER METHOD: Get policy type from product
-    @Transient
-    public String getPolicyType() {
-        return insuranceProduct != null ? insuranceProduct.getPolicyType() : null;
-    }
-
-    // GETTERS AND SETTERS
+    // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
     public String getPolicyNumber() { return policyNumber; }
     public void setPolicyNumber(String policyNumber) { this.policyNumber = policyNumber; }
+
+    public String getPolicyType() { return policyType; }
+    public void setPolicyType(String policyType) { this.policyType = policyType; }
 
     public BigDecimal getPremiumAmount() { return premiumAmount; }
     public void setPremiumAmount(BigDecimal premiumAmount) { this.premiumAmount = premiumAmount; }
@@ -115,44 +106,6 @@ public class InsurancePolicy {
     public PolicyStatus getStatus() { return status; }
     public void setStatus(PolicyStatus status) { this.status = status; }
 
-    // Actuarial fields
-    public BigDecimal getPurePremium() { return purePremium; }
-    public void setPurePremium(BigDecimal purePremium) { this.purePremium = purePremium; }
-
-    public BigDecimal getInventoryPremium() { return inventoryPremium; }
-    public void setInventoryPremium(BigDecimal inventoryPremium) { this.inventoryPremium = inventoryPremium; }
-
-    public BigDecimal getCommercialPremium() { return commercialPremium; }
-    public void setCommercialPremium(BigDecimal commercialPremium) { this.commercialPremium = commercialPremium; }
-
-    public BigDecimal getFinalPremium() { return finalPremium; }
-    public void setFinalPremium(BigDecimal finalPremium) { this.finalPremium = finalPremium; }
-
-    public Double getRiskScore() { return riskScore; }
-    public void setRiskScore(Double riskScore) { this.riskScore = riskScore; }
-
-    public String getRiskCategory() { return riskCategory; }
-    public void setRiskCategory(String riskCategory) { this.riskCategory = riskCategory; }
-
-    public Double getRiskCoefficient() { return riskCoefficient; }
-    public void setRiskCoefficient(Double riskCoefficient) { this.riskCoefficient = riskCoefficient; }
-
-    public String getPaymentFrequency() { return paymentFrequency; }
-    public void setPaymentFrequency(String paymentFrequency) { this.paymentFrequency = paymentFrequency; }
-
-    public BigDecimal getPeriodicPaymentAmount() { return periodicPaymentAmount; }
-    public void setPeriodicPaymentAmount(BigDecimal periodicPaymentAmount) { this.periodicPaymentAmount = periodicPaymentAmount; }
-
-    public Integer getNumberOfPayments() { return numberOfPayments; }
-    public void setNumberOfPayments(Integer numberOfPayments) { this.numberOfPayments = numberOfPayments; }
-
-    public Double getEffectiveAnnualRate() { return effectiveAnnualRate; }
-    public void setEffectiveAnnualRate(Double effectiveAnnualRate) { this.effectiveAnnualRate = effectiveAnnualRate; }
-
-    public String getCalculationNotes() { return calculationNotes; }
-    public void setCalculationNotes(String calculationNotes) { this.calculationNotes = calculationNotes; }
-
-    // Relationships
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
 
@@ -164,4 +117,102 @@ public class InsurancePolicy {
 
     public Set<InsuranceClaim> getClaims() { return claims; }
     public void setClaims(Set<InsuranceClaim> claims) { this.claims = claims; }
+
+    // Getters and Setters for actuarial fields
+
+    public String getCalculationNotes() {
+        return calculationNotes;
+    }
+
+    public void setCalculationNotes(String calculationNotes) {
+        this.calculationNotes = calculationNotes;
+    }
+
+    public Double getEffectiveAnnualRate() {
+        return effectiveAnnualRate;
+    }
+
+    public void setEffectiveAnnualRate(Double effectiveAnnualRate) {
+        this.effectiveAnnualRate = effectiveAnnualRate;
+    }
+
+    public Integer getNumberOfPayments() {
+        return numberOfPayments;
+    }
+
+    public void setNumberOfPayments(Integer numberOfPayments) {
+        this.numberOfPayments = numberOfPayments;
+    }
+
+    public BigDecimal getPeriodicPaymentAmount() {
+        return periodicPaymentAmount;
+    }
+
+    public void setPeriodicPaymentAmount(BigDecimal periodicPaymentAmount) {
+        this.periodicPaymentAmount = periodicPaymentAmount;
+    }
+
+    public String getPaymentFrequency() {
+        return paymentFrequency;
+    }
+
+    public void setPaymentFrequency(String paymentFrequency) {
+        this.paymentFrequency = paymentFrequency;
+    }
+
+    public Double getRiskCoefficient() {
+        return riskCoefficient;
+    }
+
+    public void setRiskCoefficient(Double riskCoefficient) {
+        this.riskCoefficient = riskCoefficient;
+    }
+
+    public String getRiskCategory() {
+        return riskCategory;
+    }
+
+    public void setRiskCategory(String riskCategory) {
+        this.riskCategory = riskCategory;
+    }
+
+    public Double getRiskScore() {
+        return riskScore;
+    }
+
+    public void setRiskScore(Double riskScore) {
+        this.riskScore = riskScore;
+    }
+
+    public BigDecimal getFinalPremium() {
+        return finalPremium;
+    }
+
+    public void setFinalPremium(BigDecimal finalPremium) {
+        this.finalPremium = finalPremium;
+    }
+
+    public BigDecimal getCommercialPremium() {
+        return commercialPremium;
+    }
+
+    public void setCommercialPremium(BigDecimal commercialPremium) {
+        this.commercialPremium = commercialPremium;
+    }
+
+    public BigDecimal getInventoryPremium() {
+        return inventoryPremium;
+    }
+
+    public void setInventoryPremium(BigDecimal inventoryPremium) {
+        this.inventoryPremium = inventoryPremium;
+    }
+
+    public BigDecimal getPurePremium() {
+        return purePremium;
+    }
+
+    public void setPurePremium(BigDecimal purePremium) {
+        this.purePremium = purePremium;
+    }
 }

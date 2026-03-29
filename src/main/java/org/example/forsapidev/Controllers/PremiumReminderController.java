@@ -9,7 +9,7 @@ import lombok.AllArgsConstructor;
 @RestController
 @AllArgsConstructor
 @SecurityRequirement(name = "Bearer Authentication")
-@RequestMapping("/api/premium-reminder")
+@RequestMapping("/premium-reminder")
 public class PremiumReminderController {
 
     private final PremiumReminderService premiumReminderService;
