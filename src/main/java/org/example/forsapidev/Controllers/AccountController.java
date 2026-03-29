@@ -23,43 +23,14 @@ public class AccountController {
         this.accountService = accountService;
     }
 
-    // ── CRUD ─────────────────────────────────────────────────────────────────
-
+    // Create account
     @PostMapping("/create")
     public Account createAccount(@RequestParam Long ownerId,
                                  @RequestParam String type) {
         return accountService.createAccount(ownerId, type);
     }
 
-    @GetMapping("/{id}")
-    public Account getAccount(@PathVariable Long id) {
-        return accountService.getAccount(id);
-    }
-
-    @GetMapping("/all")
-    public List<Account> getAllAccounts() {
-        return accountService.getAllAccounts();
-    }
-
-    @GetMapping("/owner/{ownerId}")
-    public List<Account> getAccountsByOwner(@PathVariable Long ownerId) {
-        return accountService.getAccountsByOwner(ownerId);
-    }
-
-    @PutMapping("/{id}/status")
-    public Account updateStatus(@PathVariable Long id,
-                                @RequestParam String status) {
-        return accountService.updateAccountStatus(id, status);
-    }
-
-    @DeleteMapping("/{id}")
-    public String deleteAccount(@PathVariable Long id) {
-        accountService.deleteAccount(id);
-        return "Account deleted successfully";
-    }
-
-    // ── OPERATIONS ───────────────────────────────────────────────────────────
-
+    // Deposit
     @PostMapping("/{id}/deposit")
     public String deposit(@PathVariable Long id,
                           @RequestParam BigDecimal amount) {
@@ -88,13 +59,7 @@ public class AccountController {
         return "Monthly interest applied";
     }
 
-    // ── QUERIES ──────────────────────────────────────────────────────────────
-
-    @GetMapping("/{id}/balance")
-    public BigDecimal getBalance(@PathVariable Long id) {
-        return accountService.getBalance(id);
-    }
-
+    // Statistics
     @GetMapping("/{id}/statistics")
     public WalletStatisticsDTO getStatistics(@PathVariable Long id) {
         return accountService.getStatistics(id);
