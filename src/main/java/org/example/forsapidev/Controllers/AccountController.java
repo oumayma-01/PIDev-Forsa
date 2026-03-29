@@ -75,8 +75,8 @@ public class AccountController {
     }
 
     @PostMapping("/transfer")
-    public String transfer(@RequestParam Long fromAccountId,
-                           @RequestParam Long toAccountId,
+    public String transfer(@RequestParam("fromWalletId") Long fromAccountId,
+                           @RequestParam("toWalletId") Long toAccountId,
                            @RequestParam BigDecimal amount) {
         accountService.transfer(fromAccountId, toAccountId, amount);
         return "Transfer successful";
