@@ -1,11 +1,7 @@
 package org.example.forsapidev.entities.WalletManagement;
 
-
-import org.example.forsapidev.entities.WalletManagement.Wallet;
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Entity
 public class Activity {
@@ -16,12 +12,10 @@ public class Activity {
 
     private String action;
 
-    private Date timestamp;
+    private LocalDateTime timestamp;
 
     @ManyToOne
     private Wallet wallet;
-
-    // getters et setters
 
     public Long getId() {
         return id;
@@ -39,11 +33,11 @@ public class Activity {
         this.action = action;
     }
 
-    public Date getTimestamp() {
+    public LocalDateTime getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(Date timestamp) {
+    public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
     }
 
@@ -54,11 +48,4 @@ public class Activity {
     public void setWallet(Wallet wallet) {
         this.wallet = wallet;
     }
-
-    public void setTimestamp(LocalDateTime now) {
-    }
 }
-
-
-
-

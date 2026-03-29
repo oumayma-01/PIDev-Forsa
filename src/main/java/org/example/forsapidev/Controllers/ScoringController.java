@@ -1,5 +1,6 @@
 package org.example.forsapidev.Controllers;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.example.forsapidev.Services.Interfaces.IAIExplainabilityService;
 import org.example.forsapidev.Services.Interfaces.IRiskCalculationService;
@@ -10,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@SecurityRequirement(name = "Bearer Authentication")
 @RequestMapping("/api/scoring")
 @RequiredArgsConstructor
 public class ScoringController {

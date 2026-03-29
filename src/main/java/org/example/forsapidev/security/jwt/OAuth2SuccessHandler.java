@@ -46,7 +46,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
         if (user == null) {
             user = new User();
-            user.setUsername(email);
+            user.setUsername(name);
             user.setEmail(email);
             user.setIsActive(true);
             user.setCreatedAt(new Date());
@@ -55,8 +55,6 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             String randomPassword = UUID.randomUUID().toString();
             String hashedPassword = new BCryptPasswordEncoder().encode(randomPassword);
             user.setPasswordHash(hashedPassword);
-
-            // Marquer le compte comme compte OAuth2 (optionnel mais recommandé)
 
             Role role = roleRepository.findByName(ERole.CLIENT)
                     .orElseThrow(() -> new RuntimeException("Role not found"));

@@ -1,5 +1,6 @@
 package org.example.forsapidev.Controllers;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.example.forsapidev.DTO.ClaimsDashboardDTO;
 import org.example.forsapidev.Services.Interfaces.IClaimsDashboardService;
 import org.springframework.web.bind.annotation.*;
@@ -7,6 +8,7 @@ import lombok.AllArgsConstructor;
 
 @RestController
 @AllArgsConstructor
+@SecurityRequirement(name = "Bearer Authentication")
 @RequestMapping("/api/claims-dashboard")
 @CrossOrigin(origins = "*")  // Allow frontend to access
 public class ClaimsDashboardController {
