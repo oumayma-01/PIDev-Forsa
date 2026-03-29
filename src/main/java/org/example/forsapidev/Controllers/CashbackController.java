@@ -1,5 +1,6 @@
 package org.example.forsapidev.Controllers;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.example.forsapidev.Services.Interfaces.ICashbackService;
 import org.example.forsapidev.entities.PartnershipManagement.Cashback;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
+@SecurityRequirement(name = "Bearer Authentication")
 @RequestMapping("/api/cashback")
 @RequiredArgsConstructor
 public class CashbackController {

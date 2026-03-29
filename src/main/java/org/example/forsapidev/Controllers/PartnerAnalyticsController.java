@@ -1,5 +1,6 @@
 package org.example.forsapidev.Controllers;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.example.forsapidev.Services.Interfaces.IPartnerAnalyticsService;
 import org.example.forsapidev.entities.PartnershipManagement.PartnerAnalytics;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
+@SecurityRequirement(name = "Bearer Authentication")
 @RequestMapping("/api/partner-analytics")
 @RequiredArgsConstructor
 public class PartnerAnalyticsController {

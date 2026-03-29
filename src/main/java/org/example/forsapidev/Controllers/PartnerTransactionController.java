@@ -1,5 +1,6 @@
 package org.example.forsapidev.Controllers;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.example.forsapidev.Services.Interfaces.IPartnerTransactionService;
 import org.example.forsapidev.entities.PartnershipManagement.PartnerTransaction;
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
+@SecurityRequirement(name = "Bearer Authentication")
 @RequestMapping("/api/partner-transactions")
 @RequiredArgsConstructor
 public class PartnerTransactionController {

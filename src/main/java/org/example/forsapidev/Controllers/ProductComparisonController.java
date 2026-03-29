@@ -23,7 +23,8 @@ import java.util.stream.Collectors;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/product-comparison")
+@SecurityRequirement(name = "Bearer Authentication")
+@RequestMapping("/api/product-comparison")
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 public class ProductComparisonController {
 

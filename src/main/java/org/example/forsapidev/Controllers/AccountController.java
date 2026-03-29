@@ -1,7 +1,12 @@
 package org.example.forsapidev.Controllers;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.example.forsapidev.DTO.WalletStatisticsDTO;
 import org.example.forsapidev.Services.Interfaces.AccountService;
-import org.example.forsapidev.entities.WalletManagement.*;
+import org.example.forsapidev.entities.WalletManagement.Account;
+import org.example.forsapidev.entities.WalletManagement.Activity;
+import org.example.forsapidev.entities.WalletManagement.Transaction;
+import org.example.forsapidev.entities.WalletManagement.TransactionType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -9,7 +14,8 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
-@RequestMapping("/accounts")
+@SecurityRequirement(name = "Bearer Authentication")
+@RequestMapping("/api/accounts")
 public class AccountController {
 
     private final AccountService accountService;
@@ -34,7 +40,6 @@ public class AccountController {
         return "Deposit successful";
     }
 
-    // Withdraw
     @PostMapping("/{id}/withdraw")
     public String withdraw(@PathVariable Long id,
                            @RequestParam BigDecimal amount) {
@@ -42,16 +47,14 @@ public class AccountController {
         return "Withdrawal successful";
     }
 
-    // Transfer
     @PostMapping("/transfer")
-    public String transfer(@RequestParam Long fromWalletId,
-                           @RequestParam Long toWalletId,
+    public String transfer(@RequestParam("fromWalletId") Long fromAccountId,
+                           @RequestParam("toWalletId") Long toAccountId,
                            @RequestParam BigDecimal amount) {
-        accountService.transfer(fromWalletId, toWalletId, amount);
+        accountService.transfer(fromAccountId, toAccountId, amount);
         return "Transfer successful";
     }
 
-    // Apply Monthly Interest
     @PostMapping("/apply-interest")
     public String applyMonthlyInterest() {
         accountService.applyMonthlyInterest();
@@ -60,19 +63,16 @@ public class AccountController {
 
     // Statistics
     @GetMapping("/{id}/statistics")
-    public WalletStatistics getStatistics(@PathVariable Long id) {
+    public WalletStatisticsDTO getStatistics(@PathVariable Long id) {
         return accountService.getStatistics(id);
     }
 
-    // Filter transactions by type
     @GetMapping("/{id}/transactions/filter")
-    public List<Transaction> filterTransactions(
-            @PathVariable Long id,
-            @RequestParam TransactionType type) {
+    public List<Transaction> filterTransactions(@PathVariable Long id,
+                                                @RequestParam TransactionType type) {
         return accountService.filterTransactions(id, type);
     }
 
-    // Historique des activités
     @GetMapping("/{id}/activities")
     public List<Activity> getActivities(@PathVariable Long id) {
         return accountService.getActivities(id);
