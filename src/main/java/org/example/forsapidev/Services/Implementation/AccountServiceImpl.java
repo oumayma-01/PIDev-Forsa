@@ -72,16 +72,6 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional
     public Account createAccount(Long ownerId, String type) {
-        User user = userRepo.findById(ownerId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + ownerId));
-
-        AccountType accountType;
-        try {
-            accountType = AccountType.valueOf(type.toUpperCase());
-        } catch (Exception e) {
-            throw new RuntimeException("Invalid account type: " + type);
-        }
-
         Wallet wallet = new Wallet();
         wallet.setOwnerId(ownerId);
         wallet.setBalance(BigDecimal.ZERO);
@@ -89,14 +79,18 @@ public class AccountServiceImpl implements AccountService {
         Wallet savedWallet = walletRepo.save(wallet);
 
         Account account = new Account();
-        account.setWallet(savedWallet);
-        account.setType(accountType);
-        account.setOwner(user);
-        account.setStatus(accountType == AccountType.INVESTMENT ? AccountStatus.BLOCKED : AccountStatus.ACTIVE);
-        account.setAccountHolderName(user.getUsername());
+        account.setWallet(wallet);
+
+        if (type.equalsIgnoreCase("INVESTMENT")) {
+            account.setType(AccountType.INVESTMENT);
+            account.setStatus(AccountStatus.BLOCKED);
+        } else {
+            account.setType(AccountType.SAVINGS);
+            account.setStatus(AccountStatus.ACTIVE);
+        }
 
         Account saved = accountRepo.save(account);
-        logActivity(saved.getWallet(), "Account created of type: " + accountType);
+        logActivity(wallet, "Account created of type: " + type);
         return saved;
     }
 
