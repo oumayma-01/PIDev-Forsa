@@ -26,14 +26,17 @@ public class AccountController {
         this.accountService = accountService;
     }
 
-    // Create account
+    // ── CRUD ─────────────────────────────────────────────────────────────────
+
     @PostMapping("/create")
     public Account createAccount(@RequestParam Long ownerId,
-                                 @RequestParam String type) {
-        return accountService.createAccount(ownerId, type);
+                                 @RequestParam String type,
+                                 @RequestParam String holderName) {  // ← ajouté
+        return accountService.createAccount(ownerId, type, holderName);
     }
 
-    // Deposit
+    // ── OPERATIONS ───────────────────────────────────────────────────────────
+
     @PostMapping("/{id}/deposit")
     public String deposit(@PathVariable Long id,
                           @RequestParam BigDecimal amount) {
@@ -62,7 +65,8 @@ public class AccountController {
         return "Monthly interest applied";
     }
 
-    // Statistics
+    // ── QUERIES ──────────────────────────────────────────────────────────────
+
     @GetMapping("/{id}/statistics")
     public WalletStatisticsDTO getStatistics(@PathVariable Long id) {
         return accountService.getStatistics(id);

@@ -75,7 +75,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public Account createAccount(Long ownerId, String type) {
+    public Account createAccount(Long ownerId, String type, String holderName) {
         Wallet wallet = new Wallet();
         wallet.setOwnerId(ownerId);
         wallet.setBalance(BigDecimal.ZERO);
@@ -83,6 +83,7 @@ public class AccountServiceImpl implements AccountService {
 
         Account account = new Account();
         account.setWallet(wallet);
+        account.setAccountHolderName(holderName); // ← nouveau
 
         if (type.equalsIgnoreCase("INVESTMENT")) {
             account.setType(AccountType.INVESTMENT);
@@ -93,7 +94,8 @@ public class AccountServiceImpl implements AccountService {
         }
 
         Account saved = accountRepo.save(account);
-        logActivity(wallet, "Account created of type: " + type);
+        logActivity(wallet, "Account created of type: " + type
+                + " for holder: " + holderName);
         return saved;
     }
 
