@@ -1,6 +1,8 @@
 package org.example.forsapidev.Controllers;
 
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.example.forsapidev.DTO.AccountTypeAdviceDTO;
+import org.example.forsapidev.DTO.AdaptiveInterestResultDTO;
+import org.example.forsapidev.DTO.WalletForecastDTO;
 import org.example.forsapidev.DTO.WalletStatisticsDTO;
 import org.example.forsapidev.Services.Interfaces.AccountService;
 import org.example.forsapidev.entities.WalletManagement.Account;
@@ -14,7 +16,6 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
-@SecurityRequirement(name = "Bearer Authentication")
 @RequestMapping("/api/accounts")
 public class AccountController {
 
@@ -48,8 +49,8 @@ public class AccountController {
     }
 
     @PostMapping("/transfer")
-    public String transfer(@RequestParam("fromWalletId") Long fromAccountId,
-                           @RequestParam("toWalletId") Long toAccountId,
+    public String transfer(@RequestParam Long fromAccountId,
+                           @RequestParam Long toAccountId,
                            @RequestParam BigDecimal amount) {
         accountService.transfer(fromAccountId, toAccountId, amount);
         return "Transfer successful";
@@ -68,13 +69,34 @@ public class AccountController {
     }
 
     @GetMapping("/{id}/transactions/filter")
-    public List<Transaction> filterTransactions(@PathVariable Long id,
-                                                @RequestParam TransactionType type) {
+    public List<Transaction> filterTransactions(
+            @PathVariable Long id,
+            @RequestParam TransactionType type) {
         return accountService.filterTransactions(id, type);
     }
 
     @GetMapping("/{id}/activities")
     public List<Activity> getActivities(@PathVariable Long id) {
         return accountService.getActivities(id);
+    }
+
+    // ── IA ───────────────────────────────────────────────────────────────────
+
+    @GetMapping("/{id}/forecast")
+    public WalletForecastDTO forecastBalance(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "30") int days) {
+        return accountService.forecastBalance(id, days);
+    }
+
+    @PostMapping("/{id}/adaptive-interest")
+    public AdaptiveInterestResultDTO applyAdaptiveInterest(
+            @PathVariable Long id) {
+        return accountService.applyAdaptiveInterest(id);
+    }
+
+    @GetMapping("/{id}/account-type-advice")
+    public AccountTypeAdviceDTO adviseAccountType(@PathVariable Long id) {
+        return accountService.adviseAccountType(id);
     }
 }
