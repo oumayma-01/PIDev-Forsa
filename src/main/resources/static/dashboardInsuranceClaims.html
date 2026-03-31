@@ -228,7 +228,7 @@
     // Fetch dashboard data from API
     async function loadDashboard() {
         try {
-            const response = await fetch('http://localhost:8089/forsaPidev/claims-dashboard/analytics');
+            const response = await fetch('http://localhost:8089/forsaPidev/api/claims-dashboard/analytics');
             const data = await response.json();
 
             // Hide loading, show dashboard

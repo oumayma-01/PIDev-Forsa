@@ -356,7 +356,7 @@
 
 <script>
     // API configuration
-    const API_BASE_URL = 'http://localhost:8089/forsaPidev';
+    const API_BASE_URL = 'http://localhost:8089/api/product-comparison';
 
     // State variables
     let selectedProducts = [];
@@ -369,7 +369,7 @@
     // Load all products from API
     async function loadProducts() {
         try {
-            const url = `${API_BASE_URL}/product-comparison/products`;
+            const url = `${API_BASE_URL}/products`;
             console.log('Fetching products from:', url);
 
             const response = await fetch(url, {
@@ -474,7 +474,7 @@
             const productIdsParam = selectedProducts.join(',');
             console.log('Comparing products:', productIdsParam);
 
-            const response = await fetch(`${API_BASE_URL}/product-comparison/compare?productIds=${productIdsParam}`);
+            const response = await fetch(`${API_BASE_URL}/compare?productIds=${productIdsParam}`);
 
             if (!response.ok) {
                 const errorText = await response.text();
@@ -647,7 +647,7 @@
         }
 
         const productIdsParam = selectedProducts.join(',');
-        window.open(`${API_BASE_URL}/product-comparison/download-pdf?productIds=${productIdsParam}`, '_blank');
+        window.open(`${API_BASE_URL}/download-pdf?productIds=${productIdsParam}`, '_blank');
     }
 
     // Show error message
