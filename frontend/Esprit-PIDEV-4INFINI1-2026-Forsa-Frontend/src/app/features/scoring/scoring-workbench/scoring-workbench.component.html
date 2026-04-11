@@ -1,0 +1,159 @@
+<div class="page-toolbar">
+  <div class="page-head page-head--inline">
+    <h2>Credit scoring</h2>
+    <p>Client credit scores, risk metrics, and explanations. Demo data only — no backend calls.</p>
+  </div>
+  <app-forsa-button type="button">
+    <app-forsa-icon name="sparkles" [size]="16" />
+    Run score (mock)
+  </app-forsa-button>
+</div>
+
+<div class="scoring-layout">
+  <app-forsa-card class="scoring-layout__nav">
+    <div class="card-pad-md">
+      <h3 class="nav-title">Clients</h3>
+      <p class="text-muted nav-sub">Select a profile to inspect the latest mock score.</p>
+      <ul class="client-list">
+        @for (d of demos; track d.clientId) {
+          <li>
+            <button
+              type="button"
+              class="client-pill"
+              [class.client-pill--active]="selectedClientId() === d.clientId"
+              (click)="pickClient(d.clientId)"
+            >
+              <span class="client-pill__name">{{ d.clientName }}</span>
+              <span class="client-pill__meta mono">#{{ d.clientId }}</span>
+              <span class="client-pill__score">{{ d.latestScore.finalScore | number: '1.1-1' }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    </div>
+  </app-forsa-card>
+
+  <div class="scoring-layout__main">
+    @let row = selected();
+    @let s = row.latestScore;
+    @let r = row.sampleLoanRisk;
+
+    <div class="grid-2">
+      <app-forsa-card>
+        <div class="card-pad-lg">
+          <header class="sec-head">
+            <h3>Latest score</h3>
+            <p>Most recent scoring run for the selected client.</p>
+          </header>
+          <div class="score-hero">
+            <div>
+              <p class="text-muted sm">Final score</p>
+              <p class="score-hero__val">{{ s.finalScore | number: '1.1-1' }}</p>
+            </div>
+            <app-forsa-badge [tone]="categoryTone(s.riskCategory)" size="xs">{{ s.riskCategory }}</app-forsa-badge>
+          </div>
+          <dl class="meta-dl">
+            <div>
+              <dt>Version</dt>
+              <dd class="mono">{{ s.calculationVersion }}</dd>
+            </div>
+            <div>
+              <dt>Calculated</dt>
+              <dd class="mono sm">{{ s.calculationDate }}</dd>
+            </div>
+            <div>
+              <dt>Engine</dt>
+              <dd class="mono sm">{{ s.calculatedBy }}</dd>
+            </div>
+          </dl>
+        </div>
+      </app-forsa-card>
+
+      <app-forsa-card>
+        <div class="card-pad-lg">
+          <header class="sec-head">
+            <h3>Sample loan risk</h3>
+            <p>Illustrative Basel-style metrics for a sample loan amount and term.</p>
+          </header>
+          <dl class="risk-grid">
+            <div>
+              <dt>Loan amount</dt>
+              <dd>{{ r.loanAmount | number: '1.0-0' }} TND</dd>
+            </div>
+            <div>
+              <dt>Tenor</dt>
+              <dd>{{ r.loanDurationMonths }} months</dd>
+            </div>
+            <div>
+              <dt>PD</dt>
+              <dd>{{ r.probabilityOfDefault | percent: '1.1-1' }}</dd>
+            </div>
+            <div>
+              <dt>LGD</dt>
+              <dd>{{ r.lossGivenDefault | percent: '1.1-1' }}</dd>
+            </div>
+            <div>
+              <dt>EAD</dt>
+              <dd>{{ r.exposureAtDefault | number: '1.0-0' }} TND</dd>
+            </div>
+            <div>
+              <dt>Expected loss</dt>
+              <dd>{{ r.expectedLoss | number: '1.0-0' }} TND</dd>
+            </div>
+            <div>
+              <dt>Indicative rate</dt>
+              <dd>{{ r.personalizedInterestRate | percent: '1.2-2' }}</dd>
+            </div>
+            <div>
+              <dt>Collateral</dt>
+              <dd>{{ r.collateralValue | number: '1.0-0' }} TND</dd>
+            </div>
+          </dl>
+        </div>
+      </app-forsa-card>
+    </div>
+
+    <app-forsa-card>
+      <div class="card-pad-lg">
+        <header class="sec-head">
+          <h3>Factor breakdown</h3>
+          <p>Raw factor scores (0–100) and weighted contributions.</p>
+        </header>
+        <div class="factor-list">
+          @for (f of factorRows(); track f.label) {
+            <div class="factor-row">
+              <div class="factor-row__head">
+                <span class="factor-row__label">{{ f.label }}</span>
+                <span class="factor-row__nums">
+                  <span class="mono">{{ f.raw | number: '1.0-0' }}</span>
+                  <span class="text-muted sm mono">+{{ f.weight | number: '1.1-1' }} pts</span>
+                </span>
+              </div>
+              <div class="factor-bar">
+                <div class="factor-bar__fill" [class]="barClass(f.raw)" [style.width.%]="f.raw"></div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </app-forsa-card>
+
+    <app-forsa-card>
+      <div class="card-pad-lg explain">
+        <header class="sec-head">
+          <h3>AI explanation</h3>
+          <p>Natural-language summary of what drives the score.</p>
+        </header>
+        @if (s.aiExplanation) {
+          <p class="explain__body">{{ s.aiExplanation }}</p>
+          @if (s.aiExplanationGeneratedAt) {
+            <p class="text-muted sm mono">Generated at {{ s.aiExplanationGeneratedAt }}</p>
+          }
+        } @else {
+          <p class="text-muted">No explanation stored for this mock row.</p>
+        }
+      </div>
+    </app-forsa-card>
+
+  </div>
+</div>

@@ -1,0 +1,32 @@
+<aside class="sidebar">
+  <div class="sidebar__brand">
+    <app-forsa-logo [height]="36" />
+    <h1 class="sidebar__title">Forsa</h1>
+  </div>
+
+  <nav class="sidebar__nav">
+    @for (item of navItems; track item.href) {
+      <a
+        [routerLink]="item.href"
+        routerLinkActive="is-active"
+        [routerLinkActiveOptions]="{ exact: item.href === '/dashboard' }"
+        class="nav-item"
+      >
+        <app-forsa-icon [name]="item.icon" [size]="20" />
+        <span>{{ item.label }}</span>
+        <app-forsa-icon name="chevron-right" [size]="16" class="chev" />
+      </a>
+    }
+  </nav>
+
+  <div class="sidebar__footer">
+    <button type="button" class="nav-item nav-item--btn">
+      <app-forsa-icon name="settings" [size]="20" />
+      <span>Settings</span>
+    </button>
+    <button type="button" class="nav-item nav-item--btn nav-item--danger" (click)="logout()">
+      <app-forsa-icon name="log-out" [size]="20" />
+      <span>Logout</span>
+    </button>
+  </div>
+</aside>

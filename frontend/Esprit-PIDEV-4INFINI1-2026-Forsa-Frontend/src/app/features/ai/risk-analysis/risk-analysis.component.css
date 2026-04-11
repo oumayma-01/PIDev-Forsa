@@ -1,0 +1,113 @@
+.title-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 0 0.35rem;
+  font-size: 1.875rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.title-with-icon app-forsa-icon {
+  color: var(--color-primary);
+}
+
+.sec-head h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1.1rem;
+}
+
+.sec-head p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--color-muted-foreground);
+}
+
+.chart-h {
+  height: 400px;
+  margin-top: 0.5rem;
+}
+
+.risk-grid {
+  display: grid;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+  .risk-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.insight-grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .insight-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.insight--blue {
+  background: color-mix(in oklab, var(--color-blue-100) 45%, transparent);
+}
+
+.insight--slate {
+  background: color-mix(in oklab, var(--color-slate-100) 55%, transparent);
+}
+
+.insight--indigo {
+  background: color-mix(in oklab, #e0e7ff 55%, transparent);
+}
+
+.insight-top {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.insight-ico {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.insight-ico.blue {
+  background: var(--color-blue-100);
+  color: var(--color-blue-600);
+}
+
+.insight-ico.slate {
+  background: var(--color-slate-100);
+  color: var(--color-slate-600);
+}
+
+.insight-ico.indigo {
+  background: #e0e7ff;
+  color: #4f46e5;
+}
+
+.insight-lbl {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.insight-val {
+  margin: 0.2rem 0 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.insight-copy {
+  margin: 1rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  opacity: 0.85;
+}

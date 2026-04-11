@@ -1,0 +1,122 @@
+:host {
+  display: inline-flex;
+  max-width: 100%;
+}
+
+:host(.forsa-btn--full-width) {
+  width: 100%;
+  align-self: stretch;
+}
+
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease,
+    opacity 0.15s ease;
+  cursor: pointer;
+  border: 1px solid transparent;
+  text-decoration: none;
+}
+
+button:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.variant-default {
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
+  box-shadow: 0 10px 25px -10px color-mix(in oklab, var(--color-primary) 45%, transparent);
+}
+
+.variant-default:hover {
+  filter: brightness(1.05);
+}
+
+.variant-outline {
+  background: transparent;
+  color: var(--color-foreground);
+  border-color: var(--color-border);
+}
+
+.variant-outline:hover {
+  background: color-mix(in oklab, var(--color-muted) 50%, transparent);
+}
+
+.variant-ghost {
+  background: transparent;
+  color: var(--color-foreground);
+}
+
+.variant-ghost:hover {
+  background: color-mix(in oklab, var(--color-primary) 10%, transparent);
+}
+
+/* Ghost on dark surfaces (e.g. landing CTA): parent styles cannot reach inner <button>. */
+:host-context(.cta__actions) button.cta-btn-ghost.variant-ghost {
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: transparent;
+}
+
+:host-context(.cta__actions) button.cta-btn-ghost.variant-ghost:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
+.variant-secondary {
+  background: var(--color-secondary);
+  color: var(--color-secondary-foreground);
+}
+
+.variant-secondary:hover {
+  filter: brightness(0.97);
+}
+
+.variant-destructive {
+  background: color-mix(in oklab, var(--color-destructive) 12%, transparent);
+  color: var(--color-destructive);
+}
+
+.size-sm {
+  height: 2rem;
+  padding: 0 0.75rem;
+  font-size: 0.75rem;
+}
+
+.size-md {
+  min-height: 2.75rem;
+  padding: 0.5rem 1rem;
+}
+
+.size-lg {
+  min-height: 3.5rem;
+  padding: 0.5rem 1.5rem;
+  font-size: 1.05rem;
+}
+
+.size-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+}
+
+.width-full {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.justify-start {
+  justify-content: flex-start;
+}

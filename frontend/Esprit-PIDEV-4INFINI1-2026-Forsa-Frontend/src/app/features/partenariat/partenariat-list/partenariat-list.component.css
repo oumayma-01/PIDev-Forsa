@@ -1,0 +1,154 @@
+.page-head--inline {
+  margin-bottom: 0;
+  max-width: 42rem;
+}
+
+.page-head--inline h2 {
+  margin-bottom: 0.35rem;
+}
+
+.stat-grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  margin-bottom: 1.5rem;
+}
+
+.stat__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stat__icon {
+  padding: 0.65rem;
+  border-radius: 1rem;
+  background: color-mix(in oklab, var(--color-primary) 10%, transparent);
+  color: var(--color-primary);
+}
+
+.stat__icon--ok {
+  background: color-mix(in oklab, var(--color-emerald-500) 14%, transparent);
+  color: var(--color-emerald-700);
+}
+
+.stat__icon--rate {
+  background: color-mix(in oklab, var(--color-destructive) 12%, transparent);
+  color: var(--color-destructive);
+}
+
+.stat__icon--vol {
+  background: var(--color-blue-100);
+  color: var(--color-blue-700);
+}
+
+.stat__label {
+  margin: 0.85rem 0 0.2rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-muted-foreground);
+}
+
+.stat__value {
+  margin: 0;
+  font-size: 1.45rem;
+  font-weight: 700;
+}
+
+.stat__suffix {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-muted-foreground);
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.table-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.table-head h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.field-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  color: var(--color-muted-foreground);
+}
+
+.field-search app-forsa-icon {
+  position: absolute;
+  left: 0.65rem;
+  pointer-events: none;
+}
+
+.search__input {
+  padding-left: 2.25rem !important;
+  height: 2.25rem;
+  min-width: 220px;
+}
+
+.forsa-select {
+  height: 2.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid transparent;
+  background: color-mix(in oklab, var(--color-muted) 55%, transparent);
+  padding: 0 2rem 0 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-foreground);
+  cursor: pointer;
+}
+
+.forsa-select:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-ring) 55%, transparent);
+}
+
+.forsa-select--wide {
+  min-width: 11rem;
+}
+
+.mono {
+  font-variant-numeric: tabular-nums;
+}
+
+.fw-semibold {
+  font-weight: 600;
+}
+
+.sm {
+  font-size: 0.8rem;
+}
+
+.right {
+  text-align: right;
+}
+
+.cell-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.empty-hint {
+  margin: 1rem 0 0;
+  font-size: 0.875rem;
+}

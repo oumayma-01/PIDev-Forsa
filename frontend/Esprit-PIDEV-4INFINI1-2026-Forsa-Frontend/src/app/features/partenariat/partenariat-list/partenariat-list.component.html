@@ -1,0 +1,156 @@
+<div class="page-toolbar">
+  <div class="page-head page-head--inline">
+    <h2>Partnerships</h2>
+    <p>Manage and explore the partner network. Demo data only - no live backend calls.</p>
+  </div>
+  <app-forsa-button>
+    <app-forsa-icon name="plus" [size]="16"></app-forsa-icon>
+    New partner
+  </app-forsa-button>
+</div>
+
+<div class="stat-grid">
+  <app-forsa-card>
+    <div class="stat card-pad-md">
+      <div class="stat__top">
+        <div class="stat__icon">
+          <app-forsa-icon name="users" [size]="22"></app-forsa-icon>
+        </div>
+      </div>
+      <p class="stat__label">Partners</p>
+      <h3 class="stat__value">{{ stats().total }}</h3>
+    </div>
+  </app-forsa-card>
+  <app-forsa-card>
+    <div class="stat card-pad-md">
+      <div class="stat__top">
+        <div class="stat__icon stat__icon--ok">
+          <app-forsa-icon name="check-circle-2" [size]="22"></app-forsa-icon>
+        </div>
+      </div>
+      <p class="stat__label">Active</p>
+      <h3 class="stat__value">{{ stats().active }}</h3>
+    </div>
+  </app-forsa-card>
+  <app-forsa-card>
+    <div class="stat card-pad-md">
+      <div class="stat__top">
+        <div class="stat__icon stat__icon--rate">
+          <app-forsa-icon name="heart" [size]="22"></app-forsa-icon>
+        </div>
+      </div>
+      <p class="stat__label">Avg. rating</p>
+      <h3 class="stat__value">{{ avgRatingParts().text }}<span class="stat__suffix">{{ avgRatingParts().suffix }}</span></h3>
+    </div>
+  </app-forsa-card>
+  <app-forsa-card>
+    <div class="stat card-pad-md">
+      <div class="stat__top">
+        <div class="stat__icon stat__icon--vol">
+          <app-forsa-icon name="trending-up" [size]="22"></app-forsa-icon>
+        </div>
+      </div>
+      <p class="stat__label">Volume processed (mock)</p>
+      <h3 class="stat__value">{{ stats().volume | number: '1.0-0' }} <span class="stat__suffix">TND</span></h3>
+    </div>
+  </app-forsa-card>
+</div>
+
+<app-forsa-card>
+  <div class="card-pad-lg table-wrap">
+    <div class="table-head">
+      <h3>Partner network</h3>
+      <div class="table-actions">
+        <div class="field-search">
+          <app-forsa-icon name="search" [size]="16"></app-forsa-icon>
+          <input
+            forsaInput
+            type="text"
+            inputmode="search"
+            autocomplete="off"
+            placeholder="Search name, city, registration..."
+            class="search__input"
+            (forsaInputChange)="onPartnerFilterValue($event)"
+          />
+        </div>
+        <select
+          class="forsa-select"
+          aria-label="Filter by status"
+          title="Filter by status"
+          [value]="statusFilter()"
+          (change)="onStatusSelect($event)"
+        >
+          <option *ngFor="let o of statusOptions" [value]="o.value">{{ o.label }}</option>
+        </select>
+        <select
+          class="forsa-select forsa-select--wide"
+          aria-label="Filter by partner type"
+          title="Filter by partner type"
+          [value]="typeFilter()"
+          (change)="onTypeSelect($event)"
+        >
+          <option *ngFor="let o of typeOptions" [value]="o.value">{{ o.label }}</option>
+        </select>
+        <app-forsa-button variant="outline" size="sm" type="button">
+          <app-forsa-icon name="filter" [size]="16"></app-forsa-icon>
+          Filters
+        </app-forsa-button>
+      </div>
+    </div>
+
+    <table class="forsa-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Business</th>
+          <th>Type</th>
+          <th>City</th>
+          <th>Max / txn</th>
+          <th>Commission</th>
+          <th>Rating</th>
+          <th>Badge</th>
+          <th>Status</th>
+          <th class="right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (p of filteredPartners(); track p.id) {
+        <tr>
+          <td class="mono">{{ p.id }}</td>
+          <td>
+            <div class="cell-main">
+              <span class="fw-semibold">{{ p.businessName }}</span>
+              <span *ngIf="p.qrCodeId" class="text-muted sm mono">{{ p.qrCodeId }}</span>
+            </div>
+          </td>
+          <td class="text-muted">{{ p.partnerType | partnerTypeLabel }}</td>
+          <td>{{ p.city }}</td>
+          <td class="mono sm">{{ p.maxTransactionAmount | number: '1.0-0' }} TND</td>
+          <td class="mono sm">{{ p.commissionRate | number: '1.1-1' }}%</td>
+          <td>
+            <ng-container *ngIf="p.averageRating != null && p.averageRating > 0; else noRating">
+              <span class="fw-semibold">{{ p.averageRating | number: '1.1-1' }}</span>
+              <span class="text-muted sm"> ({{ p.totalReviews ?? 0 }})</span>
+            </ng-container>
+            <ng-template #noRating><span class="text-muted sm">-</span></ng-template>
+          </td>
+          <td>
+            <app-forsa-badge *ngIf="p.badge" [tone]="badgeTone(p.badge)" size="xs">{{ p.badge }}</app-forsa-badge>
+            <span *ngIf="!p.badge" class="text-muted sm">-</span>
+          </td>
+          <td>
+            <app-forsa-badge [tone]="statusTone(p.status)" size="xs">{{ p.status }}</app-forsa-badge>
+          </td>
+          <td class="right">
+            <app-forsa-button variant="ghost" size="sm" type="button">
+              <app-forsa-icon name="more-vertical" [size]="16"></app-forsa-icon>
+              Details
+            </app-forsa-button>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+    <p *ngIf="filteredPartners().length === 0" class="empty-hint text-muted">No partners match the current filters.</p>
+  </div>
+</app-forsa-card>

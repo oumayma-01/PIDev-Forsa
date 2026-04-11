@@ -1,0 +1,70 @@
+<div class="page-head">
+  <h2>Insurance System</h2>
+  <p>Browse products and manage your active policies.</p>
+</div>
+
+<div class="prod-grid">
+  @for (p of products; track p.id) {
+    <app-forsa-card class="prod-card">
+      <div class="prod-inner card-pad-lg">
+        <div class="prod-ico" [attr.data-tone]="p.tone">
+          <app-forsa-icon [name]="p.icon" [size]="24" />
+        </div>
+        <h3>{{ p.name }}</h3>
+        <p class="text-muted prod-desc">{{ p.description }}</p>
+        <app-forsa-button variant="ghost" [widthFull]="true" [justifyStart]="true" extraClass="prod-more">
+          Learn More
+          <app-forsa-icon name="arrow-right" [size]="16" />
+        </app-forsa-button>
+      </div>
+    </app-forsa-card>
+  }
+</div>
+
+<h3 class="subhead">Your Active Policies</h3>
+
+<div class="pol-list">
+  @for (policy of policies; track policy.id) {
+    <app-forsa-card [overflowHidden]="true">
+      <div class="pol" [attr.data-status]="policy.status">
+        <div class="pol-strip" [class.active]="policy.status === 'active'"></div>
+        <div class="pol-body card-pad-lg">
+          <div class="pol-left">
+            <div class="pol-avatar">
+              <app-forsa-icon [name]="policyIcon(policy.type)" [size]="24" />
+            </div>
+            <div>
+              <h4 class="pol-title">{{ policy.type | titlecase }} Insurance</h4>
+              <p class="text-muted sm">Policy ID: {{ policy.id }}</p>
+            </div>
+          </div>
+          <div class="pol-stats">
+            <div>
+              <p class="lbl">Coverage</p>
+              <p class="val">${{ policy.coverage | number }}</p>
+            </div>
+            <div>
+              <p class="lbl">Premium</p>
+              <p class="val">${{ policy.premium }}/mo</p>
+            </div>
+            <div class="hide-sm">
+              <p class="lbl">Expiry</p>
+              <p class="val">{{ policy.endDate }}</p>
+            </div>
+          </div>
+          <div class="pol-actions">
+            <app-forsa-badge [tone]="policy.status === 'active' ? 'success' : 'warning'">
+              @if (policy.status === 'active') {
+                <app-forsa-icon name="check-circle-2" [size]="12" />
+              } @else {
+                <app-forsa-icon name="alert-circle" [size]="12" />
+              }
+              {{ policy.status }}
+            </app-forsa-badge>
+            <app-forsa-button variant="outline" size="sm">Manage</app-forsa-button>
+          </div>
+        </div>
+      </div>
+    </app-forsa-card>
+  }
+</div>

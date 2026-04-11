@@ -1,0 +1,64 @@
+<div class="auth-page forsa-gradient-bg">
+  <div class="auth-card-wrap">
+    <div class="auth-brand">
+      <app-forsa-logo [height]="56" />
+      <h1>Forsa</h1>
+      <p class="text-muted">Join the next generation of finance.</p>
+    </div>
+
+    <div class="forsa-auth-card auth-shell">
+      <app-forsa-card [noBorder]="true" [shadow]="'none'">
+        <div class="card-pad">
+          <header class="card-head">
+            <h2>Create an account</h2>
+            <p class="text-muted">Get started with your fintech journey today</p>
+          </header>
+
+          <div class="auth-stack">
+            <div class="grid-2">
+              <div>
+                <label class="forsa-label" for="reg-fn">First Name</label>
+                <input id="reg-fn" forsaInput placeholder="John" class="input-h-12" />
+              </div>
+              <div>
+                <label class="forsa-label" for="reg-ln">Last Name</label>
+                <input id="reg-ln" forsaInput placeholder="Doe" class="input-h-12" />
+              </div>
+            </div>
+            <div>
+              <label class="forsa-label" for="reg-email">Email</label>
+              <input id="reg-email" forsaInput type="email" placeholder="name@example.com" class="input-h-12" />
+            </div>
+            <div>
+              <label class="forsa-label" for="reg-pw">Password</label>
+              <input id="reg-pw" forsaInput type="password" class="input-h-12" />
+            </div>
+            <label class="terms">
+              <input type="checkbox" [(ngModel)]="termsAccepted" name="terms" />
+              <span>
+                I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+              </span>
+            </label>
+          </div>
+
+          <footer class="card-foot">
+            <app-forsa-button link="/dashboard" [widthFull]="true" size="lg">
+              Create Account
+              <app-forsa-icon name="arrow-right" [size]="20" />
+            </app-forsa-button>
+            <p class="muted-center">
+              Already have an account?
+              <a routerLink="/login" class="link-bold">Sign in</a>
+            </p>
+          </footer>
+        </div>
+      </app-forsa-card>
+    </div>
+
+    <div class="perks">
+      <span><app-forsa-icon name="check-circle-2" [size]="14" /> Instant Wallet</span>
+      <span><app-forsa-icon name="check-circle-2" [size]="14" /> AI Risk Check</span>
+      <span><app-forsa-icon name="check-circle-2" [size]="14" /> 24/7 Support</span>
+    </div>
+  </div>
+</div>

@@ -9,5 +9,5 @@ import { RouterOutlet } from '@angular/router';
   styleUrl: './app.component.css'
 })
 export class AppComponent {
-  title = 'Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend';
+  title = 'Forsa';
 }

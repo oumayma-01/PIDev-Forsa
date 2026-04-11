@@ -1,0 +1,134 @@
+.dash {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.stat-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.stat__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stat__icon {
+  padding: 0.75rem;
+  border-radius: 1rem;
+  background: color-mix(in oklab, var(--color-primary) 10%, transparent);
+  color: var(--color-blue-600);
+}
+
+.stat__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-blue-600);
+  background: var(--color-blue-50);
+  padding: 0.2rem 0.45rem;
+  border-radius: 9999px;
+}
+
+.stat__label {
+  margin: 1rem 0 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-muted-foreground);
+}
+
+.stat__value {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.split {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .split {
+    grid-template-columns: minmax(0, 4fr) minmax(0, 3fr);
+    align-items: stretch;
+  }
+}
+
+.sec-head h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1.1rem;
+}
+
+.sec-head p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--color-muted-foreground);
+}
+
+.chart-box {
+  height: 280px;
+  margin-top: 0.5rem;
+}
+
+.tx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-top: 0.5rem;
+}
+
+.tx-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.tx-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.tx-ico {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-slate-100);
+  color: var(--color-slate-600);
+}
+
+.tx-ico.deposit {
+  background: var(--color-blue-100);
+  color: var(--color-blue-600);
+}
+
+.tx-desc {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.tx-date {
+  margin: 0.15rem 0 0;
+  font-size: 0.75rem;
+  color: var(--color-muted-foreground);
+}
+
+.tx-amt {
+  margin: 0;
+  font-weight: 700;
+}
+
+.tx-amt.deposit {
+  color: var(--color-blue-600);
+}

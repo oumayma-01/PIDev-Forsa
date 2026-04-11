@@ -1,1 +1,120 @@
-/* You can add global styles to this file, and also import other style files */
+/* Forsa brand tokens (logo: navy + teal → lime → gold) */
+:root {
+  --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
+  --forsa-navy: #1a4a8d;
+  --forsa-navy-deep: #0f2f5c;
+  --forsa-teal: #2a9d8f;
+  --forsa-lime: #a8d18d;
+  --forsa-gold: #e9d5a1;
+  --color-accent-gradient: linear-gradient(120deg, var(--forsa-teal) 0%, var(--forsa-lime) 50%, var(--forsa-gold) 100%);
+  --color-background: #f4f7fb;
+  --color-foreground: #0f1f33;
+  --color-card: #ffffff;
+  --color-card-foreground: #0f1f33;
+  --color-primary: var(--forsa-navy);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #e8eef6;
+  --color-secondary-foreground: #0f1f33;
+  --color-muted: #e8eef6;
+  --color-muted-foreground: #4a5d78;
+  --color-accent: color-mix(in oklab, var(--forsa-teal) 14%, white);
+  --color-accent-foreground: #0f2f5c;
+  --color-destructive: #c53030;
+  --color-border: #d5deeb;
+  --color-input: #d5deeb;
+  --color-ring: var(--forsa-teal);
+  --color-blue-50: #eef4fc;
+  --color-blue-100: #dbe8f7;
+  --color-blue-600: var(--forsa-navy);
+  --color-blue-700: var(--forsa-navy-deep);
+  --color-slate-100: #f1f5f9;
+  --color-slate-600: #475569;
+  --color-emerald-100: #d1fae5;
+  --color-emerald-500: #10b981;
+  --color-emerald-700: #047857;
+  --color-amber-100: #fef3c7;
+  --color-amber-700: #b45309;
+  --color-zinc-900: #18181b;
+}
+
+/* Logo: light asset by default; dark asset when `html.dark` (dashboard theme toggle). */
+.forsa-logo--light {
+  display: block;
+}
+
+.forsa-logo--dark {
+  display: none;
+}
+
+html.dark .forsa-logo--light {
+  display: none;
+}
+
+html.dark .forsa-logo--dark {
+  display: block;
+}
+
+.dark {
+  --color-background: #0c1524;
+  --color-foreground: #f0f4fa;
+  --color-card: #131f33;
+  --color-card-foreground: #f0f4fa;
+  --color-primary: #3d6fb5;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #1c2a3f;
+  --color-secondary-foreground: #f0f4fa;
+  --color-muted: #1c2a3f;
+  --color-muted-foreground: #9fb0c8;
+  --color-accent: #1e3d36;
+  --color-accent-foreground: #c8ebe4;
+  --color-destructive: #f87171;
+  --color-border: #2a3d55;
+  --color-input: #2a3d55;
+  --color-ring: var(--forsa-teal);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--color-background);
+  color: var(--color-foreground);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+}
+
+input,
+textarea {
+  font-family: inherit;
+}

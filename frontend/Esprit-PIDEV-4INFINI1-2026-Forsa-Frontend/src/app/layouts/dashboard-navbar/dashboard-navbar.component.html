@@ -1,0 +1,51 @@
+<header class="navbar">
+  <div class="navbar__left">
+    <a routerLink="/" class="navbar__brand">
+      <app-forsa-logo [height]="32" />
+      <span class="navbar__brand-name">Forsa</span>
+    </a>
+    <div class="navbar__search">
+      <span class="navbar__search-icon" aria-hidden="true">
+        <app-forsa-icon name="search" [size]="16" />
+      </span>
+      <input forsaInput type="search" placeholder="Search transactions, credits, or policies..." class="navbar__input" />
+    </div>
+  </div>
+
+  <div class="navbar__actions">
+    <button type="button" class="text-btn" (click)="toggleDark()">
+      @if (isDark) {
+        <app-forsa-icon name="sun" [size]="18" />
+      } @else {
+        <app-forsa-icon name="moon" [size]="18" />
+      }
+      <span>{{ isDark ? 'Light mode' : 'Dark mode' }}</span>
+    </button>
+
+    <div class="role-wrap">
+      <label class="visually-hidden" for="role-select">Switch role</label>
+      <select id="role-select" name="role" class="role-select" [(ngModel)]="role">
+        <option value="admin">Admin</option>
+        <option value="client">Client</option>
+        <option value="agent">Agent</option>
+      </select>
+      <app-forsa-badge tone="default" class="role-badge">{{ role }}</app-forsa-badge>
+    </div>
+
+    <button type="button" class="text-btn bell">
+      <app-forsa-icon name="bell" [size]="18" />
+      <span>Notifications</span>
+      <span class="dot" aria-hidden="true"></span>
+    </button>
+
+    <div class="divider"></div>
+
+    <div class="profile">
+      <div class="profile__text">
+        <p class="profile__name">{{ user.name }}</p>
+        <p class="profile__role">{{ role }}</p>
+      </div>
+      <img class="avatar" [src]="user.avatar" width="36" height="36" alt="" />
+    </div>
+  </div>
+</header>

@@ -1,0 +1,198 @@
+.wallet-grid {
+  display: grid;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+  .wallet-grid {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    align-items: stretch;
+  }
+}
+
+.hero-card {
+  box-shadow: 0 20px 45px -15px color-mix(in oklab, var(--color-primary) 45%, transparent);
+}
+
+.hero-inner {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
+  border-radius: var(--radius-xl);
+}
+
+.hero-bg-ico {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 1.5rem;
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+.hero-top {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.muted {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.75;
+}
+
+.balance {
+  margin: 0.35rem 0 0;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+}
+
+.ico-wrap {
+  padding: 0.65rem;
+  border-radius: 1rem;
+  background: color-mix(in oklab, white 12%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.hero-actions {
+  position: relative;
+  z-index: 1;
+  margin-top: 2.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.hero-actions app-forsa-button {
+  flex: 1;
+}
+
+.side-title {
+  margin: 0 0 1rem;
+  font-size: 1.05rem;
+}
+
+.qa-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.qa-ico {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qa-ico--blue {
+  background: var(--color-blue-100);
+  color: var(--color-blue-600);
+}
+
+.qa-ico--purple {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.qa-ico--orange {
+  background: #ffedd5;
+  color: #ea580c;
+}
+
+.qa-txt {
+  font-weight: 600;
+}
+
+.act-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.act-head h3 {
+  margin: 0 0 0.25rem;
+}
+
+.act-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.act-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.35rem;
+  margin: 0 -0.35rem;
+  border-radius: 0.75rem;
+  transition: background 0.15s ease;
+}
+
+.act-row:hover {
+  background: color-mix(in oklab, var(--color-muted) 35%, transparent);
+}
+
+.act-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.act-ico {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-slate-100);
+  color: var(--color-slate-600);
+}
+
+.act-ico.dep {
+  background: var(--color-blue-100);
+  color: var(--color-blue-600);
+}
+
+.act-title {
+  margin: 0;
+  font-weight: 700;
+}
+
+.act-meta {
+  margin: 0.2rem 0 0;
+  font-size: 0.75rem;
+  color: var(--color-muted-foreground);
+  text-transform: capitalize;
+}
+
+.act-right {
+  text-align: right;
+}
+
+.act-amt {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.act-amt.dep {
+  color: var(--color-blue-600);
+}
+
+.sm {
+  font-size: 0.8rem;
+  margin: 0;
+}

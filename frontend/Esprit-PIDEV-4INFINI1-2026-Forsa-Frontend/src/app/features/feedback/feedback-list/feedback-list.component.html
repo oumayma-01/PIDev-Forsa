@@ -1,0 +1,42 @@
+<div class="page-toolbar">
+  <div class="page-head">
+    <h2>Feedback & Complaints</h2>
+    <p>Submit feedback or track your existing complaints.</p>
+  </div>
+  <app-forsa-button>
+    <app-forsa-icon name="plus" [size]="16" />
+    New Complaint
+  </app-forsa-button>
+</div>
+
+<div class="fb-list">
+  @for (item of items; track item.id) {
+    <app-forsa-card class="fb-card">
+      <div class="fb-inner card-pad-lg">
+        <div class="fb-main">
+          <div class="fb-ico" [attr.data-status]="item.status">
+            <app-forsa-icon [name]="statusIcon(item.status)" [size]="24" />
+          </div>
+          <div>
+            <div class="fb-headline">
+              <h4>{{ item.subject }}</h4>
+              <app-forsa-badge [tone]="priorityTone(item.priority)" size="xs">{{ item.priority }} Priority</app-forsa-badge>
+            </div>
+            <p class="text-muted fb-desc">{{ item.description }}</p>
+            <div class="fb-meta">
+              <span><app-forsa-icon name="clock" [size]="12" /> Submitted on {{ item.date }}</span>
+              <span><app-forsa-icon name="message-square" [size]="12" /> 2 Updates</span>
+            </div>
+          </div>
+        </div>
+        <div class="fb-side">
+          <app-forsa-badge [tone]="statusTone(item.status)">{{ item.status }}</app-forsa-badge>
+          <app-forsa-button variant="ghost" size="sm" extraClass="fb-more">
+            <app-forsa-icon name="more-horizontal" [size]="16" />
+            More
+          </app-forsa-button>
+        </div>
+      </div>
+    </app-forsa-card>
+  }
+</div>

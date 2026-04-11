@@ -1,0 +1,71 @@
+<div class="page-toolbar">
+  <div class="page-head">
+    <h2>Credit Management</h2>
+    <p>Manage and track all credit requests and disbursements.</p>
+  </div>
+  <app-forsa-button>
+    <app-forsa-icon name="plus" [size]="16" />
+    New Request
+  </app-forsa-button>
+</div>
+
+<app-forsa-card>
+  <div class="card-pad-lg table-wrap">
+    <div class="table-head">
+      <h3>Credit Requests</h3>
+      <div class="table-actions">
+        <div class="search">
+          <app-forsa-icon name="search" [size]="16" />
+          <input forsaInput type="search" placeholder="Search clients..." class="search__input" />
+        </div>
+        <app-forsa-button variant="outline" size="sm">
+          <app-forsa-icon name="filter" [size]="16" />
+          Filter
+        </app-forsa-button>
+      </div>
+    </div>
+
+    <table class="forsa-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Client</th>
+          <th>Amount</th>
+          <th>Purpose</th>
+          <th>Risk Score</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th class="right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (c of credits; track c.id) {
+          <tr>
+            <td class="mono">{{ c.id }}</td>
+            <td>{{ c.clientName }}</td>
+            <td class="fw-semibold">${{ c.amount | number }}</td>
+            <td class="text-muted">{{ c.purpose }}</td>
+            <td>
+              <div class="risk">
+                <div class="risk-bar">
+                  <div class="risk-bar__fill" [class]="riskClass(c.riskScore)" [style.width.%]="c.riskScore"></div>
+                </div>
+                <span class="risk__val">{{ c.riskScore }}</span>
+              </div>
+            </td>
+            <td>
+              <app-forsa-badge [tone]="statusTone(c.status)">{{ c.status }}</app-forsa-badge>
+            </td>
+            <td class="text-muted sm">{{ c.date }}</td>
+            <td class="right">
+              <app-forsa-button variant="ghost" size="sm">
+                <app-forsa-icon name="more-vertical" [size]="16" />
+                More
+              </app-forsa-button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</app-forsa-card>

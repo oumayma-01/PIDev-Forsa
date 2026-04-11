@@ -1,0 +1,120 @@
+<div class="landing">
+  <div class="landing__bg" aria-hidden="true">
+    <div class="orb orb--a"></div>
+    <div class="orb orb--b"></div>
+  </div>
+
+  <nav class="landing-nav max-w-7xl">
+    <a routerLink="/" class="landing-nav__brand">
+      <app-forsa-logo [height]="44" />
+      <span class="landing-nav__name">Forsa</span>
+    </a>
+    <div class="landing-nav__links">
+      <a href="#features" class="landing-nav__link">Features</a>
+      <a href="#about" class="landing-nav__link">About</a>
+      <div class="landing-nav__cta">
+        <app-forsa-button variant="ghost" link="/login">Sign In</app-forsa-button>
+        <app-forsa-button link="/register">Get Started</app-forsa-button>
+      </div>
+    </div>
+  </nav>
+
+  <section class="hero max-w-7xl">
+    <div class="hero__copy">
+      <div class="hero__badge">
+        <app-forsa-icon name="sparkles" [size]="14" />
+        The Future of Fintech
+      </div>
+      <h1 class="hero__title">
+        Empowering Your
+        <span class="hero__accent">Financial Destiny.</span>
+      </h1>
+      <p class="hero__lead text-muted">
+        Smart Credit, Digital Wallet & AI-Driven Risk Analysis. Experience the next generation of financial freedom with Forsa.
+      </p>
+      <div class="hero__actions">
+        <app-forsa-button size="lg" link="/register" extraClass="shadow-primary-soft">
+          Start Your Journey
+          <app-forsa-icon name="arrow-right" [size]="20" />
+        </app-forsa-button>
+        <app-forsa-button size="lg" variant="outline" link="/login">Access Platform</app-forsa-button>
+      </div>
+    </div>
+
+    <div class="hero__visual" aria-hidden="true">
+      <div class="hero__glow"></div>
+      <div class="float-card float-card--primary">
+        <div class="float-card__row">
+          <span class="chip"></span>
+          <app-forsa-icon name="zap" [size]="28" />
+        </div>
+        <div class="float-card__bars">
+          <span></span><span></span>
+        </div>
+        <span class="float-card__sig">Forsa</span>
+      </div>
+      <div class="float-card float-card--dark">
+        <div class="float-card__row">
+          <span class="icon-ring"><app-forsa-icon name="shield" [size]="20" /></span>
+          <span class="secured">Secured</span>
+        </div>
+        <div class="float-card__progress"><span></span><span></span></div>
+      </div>
+      <div class="rings">
+        <span class="ring ring--a"></span>
+        <span class="ring ring--b"></span>
+      </div>
+    </div>
+  </section>
+
+  <section id="features" class="features">
+    <div class="max-w-7xl">
+      <div class="features__head">
+        <h2>Precision Engineered Finance</h2>
+        <p class="text-muted">
+          Our platform combines cutting-edge AI with traditional financial wisdom to provide an unparalleled experience.
+        </p>
+      </div>
+      <div class="features__grid">
+        @for (f of features; track f.title) {
+          <article class="feature-card" [attr.data-tone]="f.tone">
+            <div class="feature-card__icon">
+              <app-forsa-icon [name]="f.icon" [size]="28" />
+            </div>
+            <h3>{{ f.title }}</h3>
+            <p class="text-muted">{{ f.description }}</p>
+          </article>
+        }
+      </div>
+    </div>
+  </section>
+
+  <section id="about" class="cta">
+    <div class="cta__card max-w-7xl">
+      <h2>Ready to redefine <br />your wealth?</h2>
+      <div class="cta__actions">
+        <app-forsa-button size="lg" link="/register">Create Free Account</app-forsa-button>
+        <app-forsa-button size="lg" variant="ghost" link="/login" extraClass="cta-btn-ghost">
+          Talk to an Advisor
+        </app-forsa-button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer max-w-7xl">
+    <div class="footer__brand">
+      <app-forsa-logo [height]="36" />
+      <span class="footer__name">Forsa</span>
+    </div>
+    <p class="text-muted footer__copy">© 2026 Forsa. All rights reserved.</p>
+    <div class="footer__links">
+      <a href="#">Privacy</a>
+      <a href="#">Terms</a>
+      <a href="#">Security</a>
+    </div>
+  </footer>
+
+  <div class="scroll-hint" aria-hidden="true">
+    <app-forsa-icon name="chevron-down" [size]="24" />
+  </div>
+</div>

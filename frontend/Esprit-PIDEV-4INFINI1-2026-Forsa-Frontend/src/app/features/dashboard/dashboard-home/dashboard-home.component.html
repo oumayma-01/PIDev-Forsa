@@ -1,0 +1,71 @@
+<div class="dash">
+  <div class="page-head">
+    <h2>Welcome back, John</h2>
+    <p>Here's what's happening with Forsa today.</p>
+  </div>
+
+  <div class="stat-grid">
+    @for (s of stats; track s.label) {
+      <app-forsa-card>
+        <div class="stat card-pad-md">
+          <div class="stat__top">
+            <div class="stat__icon" [attr.data-tone]="s.tone">
+              <app-forsa-icon [name]="s.icon" [size]="24" />
+            </div>
+            <span class="stat__chip">
+              <app-forsa-icon name="arrow-up-right" [size]="12" />
+              {{ s.change }}
+            </span>
+          </div>
+          <p class="stat__label">{{ s.label }}</p>
+          <h3 class="stat__value">{{ s.value }}</h3>
+        </div>
+      </app-forsa-card>
+    }
+  </div>
+
+  <div class="split">
+    <app-forsa-card class="split__main">
+      <div class="card-pad-lg">
+        <header class="sec-head">
+          <h3>Revenue Overview</h3>
+          <p>Monthly revenue growth across all modules.</p>
+        </header>
+        <div class="chart-box">
+          <app-mini-area-chart [values]="chartValues" [w]="520" [h]="260" />
+        </div>
+      </div>
+    </app-forsa-card>
+
+    <app-forsa-card class="split__side">
+      <div class="card-pad-lg">
+        <header class="sec-head">
+          <h3>Recent Transactions</h3>
+          <p>Latest activity from your wallet.</p>
+        </header>
+        <div class="tx-list">
+          @for (tx of transactions.slice(0, 5); track tx.id) {
+            <div class="tx-row">
+              <div class="tx-left">
+                <span class="tx-ico" [class.deposit]="tx.type === 'deposit'">
+                  @if (tx.type === 'deposit') {
+                    <app-forsa-icon name="arrow-up-right" [size]="20" />
+                  } @else {
+                    <app-forsa-icon name="arrow-down-right" [size]="20" />
+                  }
+                </span>
+                <div>
+                  <p class="tx-desc">{{ tx.description }}</p>
+                  <p class="tx-date">{{ tx.date }}</p>
+                </div>
+              </div>
+              <p class="tx-amt" [class.deposit]="tx.type === 'deposit'">
+                {{ tx.type === 'deposit' ? '+' : '-' }}${{ tx.amount | number : '1.2-2' }}
+              </p>
+            </div>
+          }
+        </div>
+      </div>
+    </app-forsa-card>
+  </div>
+</div>

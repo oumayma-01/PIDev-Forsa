@@ -1,0 +1,50 @@
+<div class="auth-page forsa-gradient-bg">
+  <div class="auth-card-wrap">
+    <div class="auth-brand">
+      <app-forsa-logo [height]="56" />
+      <h1>Forsa</h1>
+      <p class="text-muted">The future of fintech is here.</p>
+    </div>
+
+    <div class="forsa-auth-card auth-shell">
+      <app-forsa-card [noBorder]="true" [shadow]="'none'">
+      <div class="card-pad">
+        <header class="card-head">
+          <h2>Welcome back</h2>
+          <p class="text-muted">Enter your credentials to access your account</p>
+        </header>
+
+        <div class="auth-stack">
+          <div>
+            <label class="forsa-label" for="login-email">Email</label>
+            <input id="login-email" forsaInput type="email" placeholder="name@example.com" class="input-h-12" />
+          </div>
+          <div>
+            <div class="row-labels">
+              <label class="forsa-label" for="login-password">Password</label>
+              <a href="#" class="link-sm">Forgot password?</a>
+            </div>
+            <input id="login-password" forsaInput type="password" class="input-h-12" />
+          </div>
+        </div>
+
+        <footer class="card-foot">
+          <app-forsa-button link="/dashboard" [widthFull]="true" size="lg">
+            Sign In
+            <app-forsa-icon name="arrow-right" [size]="20" />
+          </app-forsa-button>
+          <p class="muted-center">
+            Don't have an account?
+            <a routerLink="/register" class="link-bold">Sign up</a>
+          </p>
+        </footer>
+      </div>
+      </app-forsa-card>
+    </div>
+
+    <div class="auth-foot">
+      <app-forsa-icon name="shield" [size]="16" />
+      Secured by Forsa
+    </div>
+  </div>
+</div>

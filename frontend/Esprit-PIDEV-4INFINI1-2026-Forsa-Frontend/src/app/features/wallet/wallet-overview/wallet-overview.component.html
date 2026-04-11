@@ -1,0 +1,90 @@
+<div class="page-head">
+  <h2>Digital Wallet</h2>
+  <p>Manage your funds, transfers, and transaction history.</p>
+</div>
+
+<div class="wallet-grid">
+  <app-forsa-card class="hero-card" [noBorder]="true">
+    <div class="hero-inner card-pad-lg">
+      <div class="hero-bg-ico" aria-hidden="true">
+        <app-forsa-icon name="wallet" [size]="180" />
+      </div>
+      <div class="hero-top">
+        <div>
+          <p class="muted">Available Balance</p>
+          <h3 class="balance">$24,580.00</h3>
+        </div>
+        <div class="ico-wrap">
+          <app-forsa-icon name="credit-card" [size]="28" />
+        </div>
+      </div>
+      <div class="hero-actions">
+        <app-forsa-button extraClass="forsa-hero-wallet-solid">
+          <app-forsa-icon name="plus" [size]="20" />
+          Add Funds
+        </app-forsa-button>
+        <app-forsa-button variant="secondary" extraClass="forsa-hero-wallet-ghost">
+          <app-forsa-icon name="send" [size]="20" />
+          Send Money
+        </app-forsa-button>
+      </div>
+    </div>
+  </app-forsa-card>
+
+  <app-forsa-card>
+    <div class="card-pad-lg">
+      <h3 class="side-title">Quick Actions</h3>
+      <div class="qa-list">
+        <app-forsa-button variant="outline" [widthFull]="true" [justifyStart]="true" extraClass="qa-row">
+          <span class="qa-ico qa-ico--blue"><app-forsa-icon name="history" [size]="16" /></span>
+          <span class="qa-txt">View Statements</span>
+        </app-forsa-button>
+        <app-forsa-button variant="outline" [widthFull]="true" [justifyStart]="true" extraClass="qa-row">
+          <span class="qa-ico qa-ico--purple"><app-forsa-icon name="credit-card" [size]="16" /></span>
+          <span class="qa-txt">Manage Cards</span>
+        </app-forsa-button>
+        <app-forsa-button variant="outline" [widthFull]="true" [justifyStart]="true" extraClass="qa-row">
+          <span class="qa-ico qa-ico--orange"><app-forsa-icon name="plus" [size]="16" /></span>
+          <span class="qa-txt">Request Payment</span>
+        </app-forsa-button>
+      </div>
+    </div>
+  </app-forsa-card>
+</div>
+
+<app-forsa-card>
+  <div class="card-pad-lg">
+    <div class="act-head">
+      <div>
+        <h3>Recent Activity</h3>
+        <p class="text-muted sm">Your latest financial movements.</p>
+      </div>
+      <app-forsa-button variant="ghost">View All</app-forsa-button>
+    </div>
+    <div class="act-list">
+      @for (tx of transactions; track tx.id) {
+        <div class="act-row">
+          <div class="act-left">
+            <span class="act-ico" [class.dep]="tx.type === 'deposit'">
+              @if (tx.type === 'deposit') {
+                <app-forsa-icon name="arrow-up-right" [size]="22" />
+              } @else {
+                <app-forsa-icon name="arrow-down-right" [size]="22" />
+              }
+            </span>
+            <div>
+              <p class="act-title">{{ tx.description }}</p>
+              <p class="act-meta">{{ tx.date }} · {{ tx.type }}</p>
+            </div>
+          </div>
+          <div class="act-right">
+            <p class="act-amt" [class.dep]="tx.type === 'deposit'">
+              {{ tx.type === 'deposit' ? '+' : '-' }}${{ tx.amount | number : '1.2-2' }}
+            </p>
+            <app-forsa-badge tone="muted" size="xs">{{ tx.status }}</app-forsa-badge>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</app-forsa-card>

@@ -1,0 +1,88 @@
+<div class="page-toolbar">
+  <div class="page-head">
+    <h2 class="title-with-icon">
+      <app-forsa-icon name="brain" [size]="28" />
+      AI Risk Analysis
+    </h2>
+    <p>Advanced predictive analytics and risk assessment dashboard.</p>
+  </div>
+  <app-forsa-badge tone="default" extraClass="model-badge">
+    <app-forsa-icon name="zap" [size]="14" />
+    Forsa AI v2.4
+  </app-forsa-badge>
+</div>
+
+<div class="risk-grid">
+  <app-forsa-card>
+    <div class="card-pad-lg">
+      <header class="sec-head">
+        <h3>Risk Profile Overview</h3>
+        <p>Multi-dimensional analysis of current portfolio risk.</p>
+      </header>
+      <div class="chart-h">
+        <app-mini-radar-chart [data]="radarData" [size]="360" />
+      </div>
+    </div>
+  </app-forsa-card>
+
+  <app-forsa-card>
+    <div class="card-pad-lg">
+      <header class="sec-head">
+        <h3>Risk Score Trend</h3>
+        <p>Historical progression of the aggregate risk score.</p>
+      </header>
+      <div class="chart-h">
+        <app-mini-line-chart [points]="trendPoints" [w]="480" [h]="320" [yMin]="0" [yMax]="100" />
+      </div>
+    </div>
+  </app-forsa-card>
+</div>
+
+<div class="insight-grid">
+  <app-forsa-card class="insight insight--blue">
+    <div class="card-pad-md">
+      <div class="insight-top">
+        <div class="insight-ico blue">
+          <app-forsa-icon name="shield-check" [size]="24" />
+        </div>
+        <div>
+          <p class="insight-lbl">Overall Safety</p>
+          <h3 class="insight-val">High</h3>
+        </div>
+      </div>
+      <p class="insight-copy">
+        The portfolio maintains a strong safety margin with 85% of assets in low-risk categories.
+      </p>
+    </div>
+  </app-forsa-card>
+
+  <app-forsa-card class="insight insight--slate">
+    <div class="card-pad-md">
+      <div class="insight-top">
+        <div class="insight-ico slate">
+          <app-forsa-icon name="shield-alert" [size]="24" />
+        </div>
+        <div>
+          <p class="insight-lbl">Alerts</p>
+          <h3 class="insight-val">3 Active</h3>
+        </div>
+      </div>
+      <p class="insight-copy">Detected unusual patterns in 3 credit requests. Manual review recommended.</p>
+    </div>
+  </app-forsa-card>
+
+  <app-forsa-card class="insight insight--indigo">
+    <div class="card-pad-md">
+      <div class="insight-top">
+        <div class="insight-ico indigo">
+          <app-forsa-icon name="trending-down" [size]="24" />
+        </div>
+        <div>
+          <p class="insight-lbl">Default Probability</p>
+          <h3 class="insight-val">1.2%</h3>
+        </div>
+      </div>
+      <p class="insight-copy">Down from 1.5% last month. AI optimization has improved selection accuracy.</p>
+    </div>
+  </app-forsa-card>
+</div>
