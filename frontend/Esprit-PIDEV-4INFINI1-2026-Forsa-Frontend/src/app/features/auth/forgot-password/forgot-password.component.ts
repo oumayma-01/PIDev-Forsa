@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ForsaLogoComponent } from '../../../shared/branding/forsa-logo.component';
 import { ForsaButtonComponent } from '../../../shared/ui/forsa-button/forsa-button.component';
@@ -9,7 +9,7 @@ import { ForsaIconComponent } from '../../../shared/ui/forsa-icon/forsa-icon.com
 import { ForsaInputDirective } from '../../../shared/directives/forsa-input.directive';
 
 @Component({
-  selector: 'app-login',
+  selector: 'app-forgot-password',
   standalone: true,
   imports: [
     FormsModule,
@@ -20,33 +20,34 @@ import { ForsaInputDirective } from '../../../shared/directives/forsa-input.dire
     ForsaIconComponent,
     ForsaInputDirective,
   ],
-  templateUrl: './login.component.html',
-  styleUrl: './login.component.css',
+  templateUrl: './forgot-password.component.html',
+  styleUrl: './forgot-password.component.css',
 })
-export class LoginComponent {
+export class ForgotPasswordComponent {
   private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
 
-  username = '';
-  password = '';
+  email = '';
 
   readonly busy = signal(false);
   readonly error = signal<string | null>(null);
+  readonly success = signal<string | null>(null);
 
   submit(): void {
-    if (!this.username.trim() || !this.password) {
-      this.error.set('Please enter your username and password.');
+    const mail = this.email.trim();
+    if (!mail) {
+      this.error.set('Please enter your email address.');
       return;
     }
     this.busy.set(true);
     this.error.set(null);
-    this.auth.login(this.username.trim(), this.password).subscribe({
-      next: () => {
-        void this.router.navigateByUrl('/dashboard');
+    this.success.set(null);
+    this.auth.requestPasswordReset(mail).subscribe({
+      next: (res) => {
+        this.success.set(res.message);
         this.busy.set(false);
       },
       error: (e) => {
-        this.error.set(e.error?.message ?? 'Sign in failed.');
+        this.error.set(e.error?.message ?? 'Could not send reset email.');
         this.busy.set(false);
       },
     });

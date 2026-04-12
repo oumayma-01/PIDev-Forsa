@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
 import { ForsaLogoComponent } from '../../shared/branding/forsa-logo.component';
 import { ForsaIconComponent } from '../../shared/ui/forsa-icon/forsa-icon.component';
 import type { ForsaIconName } from '../../shared/ui/forsa-icon/forsa-icon.types';
@@ -18,7 +19,7 @@ interface NavItem {
   styleUrl: './dashboard-sidebar.component.css',
 })
 export class DashboardSidebarComponent {
-  private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
 
   readonly navItems: NavItem[] = [
     { label: 'Dashboard', href: '/dashboard', icon: 'layout-dashboard' },
@@ -32,6 +33,6 @@ export class DashboardSidebarComponent {
   ];
 
   logout(): void {
-    void this.router.navigateByUrl('/');
+    this.auth.logout();
   }
 }

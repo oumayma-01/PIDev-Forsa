@@ -31,8 +31,16 @@ public class JwtUtils {
   public Integer SET_PWD_TOKEN_EXPIRATION = 1000 * 3600 * 24 * 5;
 
 
+  /**
+   * Public routes only. {@code /api/auth/current} is authenticated and must not be matched here.
+   */
   public String[] AUTH_WHITELIST = {
-          "/api/auth/**",
+          "/api/auth/signin",
+          "/api/auth/signup",
+          "/api/auth/google-login-url",
+          "/api/auth/ForgottenPassword",
+          "/api/auth/resetpass",
+          "/api/auth/activate/**",
           "/api/test/**",
           "/v2/api-docs",
           "/oauth2/**",

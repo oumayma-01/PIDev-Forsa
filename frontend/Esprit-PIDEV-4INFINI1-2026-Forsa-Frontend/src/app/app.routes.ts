@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth.guard';
 import { RiskAnalysisComponent } from './features/ai/risk-analysis/risk-analysis.component';
+import { ForgotPasswordComponent } from './features/auth/forgot-password/forgot-password.component';
 import { LoginComponent } from './features/auth/login/login.component';
 import { RegisterComponent } from './features/auth/register/register.component';
 import { CreditListComponent } from './features/credit/credit-list/credit-list.component';
@@ -16,9 +18,21 @@ export const routes: Routes = [
   { path: '', component: LandingPageComponent },
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
+  { path: 'forgot-password', component: ForgotPasswordComponent },
+  {
+    path: 'pages/validateUser/:id',
+    loadComponent: () =>
+      import('./features/auth/validate-user/validate-user.component').then((m) => m.ValidateUserComponent),
+  },
+  {
+    path: 'pages/changepassword/:token/:email',
+    loadComponent: () =>
+      import('./features/auth/change-password/change-password.component').then((m) => m.ChangePasswordComponent),
+  },
   {
     path: 'dashboard',
     component: DashboardLayoutComponent,
+    canMatch: [authGuard],
     children: [
       { path: '', component: DashboardHomeComponent },
       { path: 'credit', component: CreditListComponent },

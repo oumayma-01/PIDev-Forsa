@@ -51,3 +51,19 @@
 .perks app-forsa-icon {
   color: var(--color-emerald-500);
 }
+
+.auth-error {
+  color: #b42318;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.auth-success {
+  color: #067647;
+  font-size: 0.9375rem;
+  margin: 0 0 0.5rem;
+}
+
+.sm {
+  font-size: 0.875rem;
+}

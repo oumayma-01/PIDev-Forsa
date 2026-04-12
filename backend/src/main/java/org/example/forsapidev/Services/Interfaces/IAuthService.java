@@ -18,4 +18,6 @@ public interface IAuthService {
     ResponseEntity<?> ForgottenPassword(ForgottenPasswordRequest loginRequest) throws Exception;
 
     ResponseEntity<?> resetpass(ResetRequest restRequest) throws Exception;
+
+    ResponseEntity<?> getCurrentUser();
 }

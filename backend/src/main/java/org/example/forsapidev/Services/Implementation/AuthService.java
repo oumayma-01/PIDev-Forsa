@@ -12,11 +12,13 @@ import org.example.forsapidev.payload.request.ForgottenPasswordRequest;
 import org.example.forsapidev.payload.request.LoginRequest;
 import org.example.forsapidev.payload.request.ResetRequest;
 import org.example.forsapidev.payload.request.SignupRequest;
+import org.example.forsapidev.payload.response.CurrentUserResponse;
 import org.example.forsapidev.payload.response.JwtResponse;
 import org.example.forsapidev.payload.response.MessageResponse;
 import org.example.forsapidev.security.jwt.JwtUtils;
 import org.example.forsapidev.security.services.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -51,6 +53,10 @@ class AuthService implements IAuthService {
     PasswordEncoder encoder;
     @Autowired
     AgentRegistryService agentRegistryService;
+
+    @Value("${app.frontend.base-url:http://localhost:4200}")
+    private String frontendBaseUrl;
+
     @Override
     public ResponseEntity<?> authenticateUser(LoginRequest loginRequest) {
         if (userRepository.existsByUsername(loginRequest.getUsername())) {
@@ -117,7 +123,7 @@ class AuthService implements IAuthService {
             // ne pas bloquer l'inscription si la sync agent échoue
         }
 
-        String request = "http://localhost:4200/pages/validateUser/";
+        String request = trimTrailingSlash(frontendBaseUrl) + "/pages/validateUser/";
         String subject ="Verification of your email";
         String imagePath = "classpath:static/uploads/logoforsa.png";
         String appUrl = request + user.getId();
@@ -225,7 +231,7 @@ class AuthService implements IAuthService {
     public ResponseEntity<?> ForgottenPassword(ForgottenPasswordRequest loginRequest) throws Exception {
 
         Optional<User> optional = userRepository.findByEmail(loginRequest.getEmail());
-        String request = "http://localhost:4200/pages/changepassword/";
+        String request = trimTrailingSlash(frontendBaseUrl) + "/pages/changepassword/";
 
         if (optional.isEmpty()) {
             return ResponseEntity
@@ -386,5 +392,32 @@ String email = EmailEncryptionUtil.decryptEmail(restRequest.getEmail());
         return ResponseEntity.ok(
                 new MessageResponse("Password changed successfully")
         );
+    }
+
+    @Override
+    public ResponseEntity<?> getCurrentUser() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || auth.getPrincipal() == null) {
+            return ResponseEntity.status(401).body(new MessageResponse("Unauthorized"));
+        }
+        if (!(auth.getPrincipal() instanceof UserDetailsImpl)) {
+            return ResponseEntity.status(401).body(new MessageResponse("Unauthorized"));
+        }
+        UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+        List<String> roles = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(new CurrentUserResponse(
+                userDetails.getId(),
+                userDetails.getUsername(),
+                userDetails.getEmail(),
+                roles));
+    }
+
+    private static String trimTrailingSlash(String url) {
+        if (url == null || url.isEmpty()) {
+            return "";
+        }
+        return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
     }
 }

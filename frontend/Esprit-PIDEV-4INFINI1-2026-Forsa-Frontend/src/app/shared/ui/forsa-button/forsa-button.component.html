@@ -1,7 +1,8 @@
-<!-- Label comes from projected content; aria-label is set in ngAfterViewInit. -->
 <button
   #actionButton
+  title="Button"
   [type]="link ? 'button' : type"
+  [attr.form]="formId || null"
   [class]="classes"
   [disabled]="disabled"
   (click)="onHostClick($event)"

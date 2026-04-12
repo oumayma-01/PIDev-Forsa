@@ -1,0 +1,16 @@
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.auth-card-wrap {
+  width: 100%;
+  max-width: 420px;
+}
+
+.text-danger {
+  color: #b42318;
+}

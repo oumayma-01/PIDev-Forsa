@@ -1,1 +1,25 @@
 /* Shared auth layout lives in forsa-app.css */
+
+.auth-error {
+  color: #b42318;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.login-form.auth-stack {
+  gap: 0.75rem;
+}
+
+.login-card-foot {
+  margin-top: 0.5rem;
+}
+
+.forgot-password-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+
+.forgot-password-link {
+  margin-top: 0;
+}

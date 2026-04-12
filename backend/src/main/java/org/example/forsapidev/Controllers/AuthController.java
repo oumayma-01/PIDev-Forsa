@@ -50,4 +50,10 @@ public class AuthController {
   public ResponseEntity<?> resetpass(@RequestBody ResetRequest resetRequest) throws Exception {
     return iAuthService.resetpass(resetRequest);
   }
+
+  /** Returns the authenticated user when a valid Bearer JWT is sent. */
+  @GetMapping("/current")
+  public ResponseEntity<?> getCurrentUser() {
+    return iAuthService.getCurrentUser();
+  }
 }

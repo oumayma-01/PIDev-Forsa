@@ -1,0 +1,19 @@
+<div class="auth-page forsa-gradient-bg">
+  <div class="auth-card-wrap">
+    <app-forsa-card [noBorder]="true" [shadow]="'sm'">
+      <div class="card-pad-lg">
+        @if (busy()) {
+          <p class="text-muted">Verifying your email…</p>
+        } @else if (message()) {
+          <h2>Email verified</h2>
+          <p>{{ message() }}</p>
+          <app-forsa-button link="/login" [widthFull]="true" size="lg">Sign in</app-forsa-button>
+        } @else {
+          <h2>Verification issue</h2>
+          <p class="text-danger">{{ error() }}</p>
+          <app-forsa-button link="/login" variant="outline" [widthFull]="true">Back to sign in</app-forsa-button>
+        }
+      </div>
+    </app-forsa-card>
+  </div>
+</div>

@@ -5,7 +5,9 @@ import {
   EventEmitter,
   HostBinding,
   Input,
+  OnChanges,
   Output,
+  SimpleChanges,
   ViewChild,
   inject,
 } from '@angular/core';
@@ -18,7 +20,7 @@ import { Router } from '@angular/router';
   templateUrl: './forsa-button.component.html',
   styleUrls: ['./forsa-button.component.css'],
 })
-export class ForsaButtonComponent implements AfterViewInit {
+export class ForsaButtonComponent implements AfterViewInit, OnChanges {
   private readonly router = inject(Router);
 
   @ViewChild('actionButton', { read: ElementRef }) private actionButtonRef?: ElementRef<HTMLButtonElement>;
@@ -31,6 +33,8 @@ export class ForsaButtonComponent implements AfterViewInit {
   @Input() variant: 'default' | 'outline' | 'ghost' | 'secondary' | 'destructive' = 'default';
   @Input() size: 'sm' | 'md' | 'lg' | 'icon' = 'md';
   @Input() type: 'button' | 'submit' = 'button';
+  /** When set, associates a submit button with a `<form id="...">` outside this component. */
+  @Input() formId: string | null = null;
   @Input() link: string | null = null;
   @Input() external = false;
   @Input() disabled = false;
@@ -59,6 +63,12 @@ export class ForsaButtonComponent implements AfterViewInit {
     return parts.filter(Boolean).join(' ');
   }
 
+  ngOnChanges(_changes: SimpleChanges): void {
+    if (this.actionButtonRef) {
+      this.syncButtonAccessibleName();
+    }
+  }
+
   ngAfterViewInit(): void {
     this.syncButtonAccessibleName();
   }
@@ -76,8 +86,8 @@ export class ForsaButtonComponent implements AfterViewInit {
 
     const fromContent = btn.textContent?.replace(/\s+/g, ' ').trim() ?? '';
     if (fromContent) {
-      btn.setAttribute('aria-label', fromContent);
-      btn.removeAttribute('title');
+      btn.removeAttribute('aria-label');
+      btn.setAttribute('title', fromContent);
       return;
     }
 
@@ -89,7 +99,7 @@ export class ForsaButtonComponent implements AfterViewInit {
     }
 
     btn.setAttribute('aria-label', 'Button');
-    btn.removeAttribute('title');
+    btn.setAttribute('title', 'Button');
   }
 
   onHostClick(ev: MouseEvent): void {
