@@ -23,13 +23,7 @@
     </button>
 
     <div class="role-wrap">
-      <label class="visually-hidden" for="role-select">Switch role</label>
-      <select id="role-select" name="role" class="role-select" [(ngModel)]="role">
-        <option value="admin">Admin</option>
-        <option value="client">Client</option>
-        <option value="agent">Agent</option>
-      </select>
-      <app-forsa-badge tone="default" class="role-badge">{{ role }}</app-forsa-badge>
+      <app-forsa-badge tone="default" class="role-badge">{{ rolesLabel() }}</app-forsa-badge>
     </div>
 
     <button type="button" class="text-btn bell">
@@ -42,10 +36,17 @@
 
     <div class="profile">
       <div class="profile__text">
-        <p class="profile__name">{{ user.name }}</p>
-        <p class="profile__role">{{ role }}</p>
+        <p class="profile__name">{{ displayName() }}</p>
+        <p class="profile__role">{{ rolesLabel() }}</p>
       </div>
-      <img class="avatar" [src]="user.avatar" width="36" height="36" alt="" />
+      <img
+        class="avatar"
+        [src]="avatarSrc()"
+        width="36"
+        height="36"
+        alt="Profile photo of {{ displayName() }}"
+        title="Profile photo of {{ displayName() }}"
+      />
     </div>
   </div>
 </header>

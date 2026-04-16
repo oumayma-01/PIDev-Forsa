@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, firstValueFrom, tap } from 'rxjs';
+import { Observable, firstValueFrom, tap, timeout } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import type { CurrentUser, JwtResponse, MessageResponse, SignupPayload } from '../models/auth.model';
 
@@ -45,6 +45,20 @@ export class AuthService {
     return this.http.post<MessageResponse>(`${environment.apiBaseUrl}/auth/signup`, payload);
   }
 
+  /** Public URL returned by the backend to start Google OAuth (full-page redirect). */
+  getGoogleLoginUrl(): Observable<MessageResponse> {
+    return this.http.get<MessageResponse>(`${environment.apiBaseUrl}/auth/google-login-url`);
+  }
+
+  /** Stores the JWT from OAuth redirect and loads the current user from the API. */
+  completeOAuthSession(token: string): Observable<CurrentUser> {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(TOKEN_KEY, token);
+    }
+    return this.http.get<CurrentUser>(`${environment.apiBaseUrl}/auth/current`).pipe(
+      tap((u) => this.currentUser.set(u)),
+    );
+  }
   /** Sends a reset link to the given email (backend `POST /auth/ForgottenPassword`). */
   requestPasswordReset(email: string): Observable<MessageResponse> {
     return this.http.post<MessageResponse>(`${environment.apiBaseUrl}/auth/ForgottenPassword`, { email });
@@ -62,7 +76,7 @@ export class AuthService {
     }
     try {
       const u = await firstValueFrom(
-        this.http.get<CurrentUser>(`${environment.apiBaseUrl}/auth/current`),
+        this.http.get<CurrentUser>(`${environment.apiBaseUrl}/auth/current`).pipe(timeout(10_000)),
       );
       this.currentUser.set(u);
       return true;

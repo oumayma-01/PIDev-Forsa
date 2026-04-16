@@ -1,8 +1,10 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { guestGuard } from './core/guards/guest.guard';
 import { RiskAnalysisComponent } from './features/ai/risk-analysis/risk-analysis.component';
 import { ForgotPasswordComponent } from './features/auth/forgot-password/forgot-password.component';
 import { LoginComponent } from './features/auth/login/login.component';
+import { OAuthSuccessComponent } from './features/auth/oauth-success/oauth-success.component';
 import { RegisterComponent } from './features/auth/register/register.component';
 import { CreditListComponent } from './features/credit/credit-list/credit-list.component';
 import { DashboardHomeComponent } from './features/dashboard/dashboard-home/dashboard-home.component';
@@ -15,10 +17,12 @@ import { ScoringWorkbenchComponent } from './features/scoring/scoring-workbench/
 import { DashboardLayoutComponent } from './layouts/dashboard-layout/dashboard-layout.component';
 
 export const routes: Routes = [
-  { path: '', component: LandingPageComponent },
-  { path: 'login', component: LoginComponent },
-  { path: 'register', component: RegisterComponent },
-  { path: 'forgot-password', component: ForgotPasswordComponent },
+  /** `pathMatch: 'full'` avoids the empty path acting as a prefix for every URL. */
+  { path: '', pathMatch: 'full', component: LandingPageComponent, canMatch: [guestGuard] },
+  { path: 'login', component: LoginComponent, canMatch: [guestGuard] },
+  { path: 'register', component: RegisterComponent, canMatch: [guestGuard] },
+  { path: 'oauth-success', component: OAuthSuccessComponent },
+  { path: 'forgot-password', component: ForgotPasswordComponent, canMatch: [guestGuard] },
   {
     path: 'pages/validateUser/:id',
     loadComponent: () =>

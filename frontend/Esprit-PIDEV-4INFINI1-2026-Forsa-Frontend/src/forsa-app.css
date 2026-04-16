@@ -183,6 +183,40 @@ textarea.forsa-input:focus-visible {
   color: var(--color-muted-foreground);
 }
 
+/* OAuth (Google) on login / register */
+.auth-oauth {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.auth-oauth__divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+  color: var(--color-muted-foreground);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.auth-oauth__divider::before,
+.auth-oauth__divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: color-mix(in oklab, var(--color-border) 80%, transparent);
+}
+
+.auth-google-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
 .link-bold {
   font-weight: 700;
   color: var(--color-primary);

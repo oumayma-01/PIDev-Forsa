@@ -1,6 +1,6 @@
 <div class="dash">
   <div class="page-head">
-    <h2>Welcome back, John</h2>
+    <h2>Welcome back, {{ auth.currentUser()?.username ?? 'there' }}</h2>
     <p>Here's what's happening with Forsa today.</p>
   </div>
 

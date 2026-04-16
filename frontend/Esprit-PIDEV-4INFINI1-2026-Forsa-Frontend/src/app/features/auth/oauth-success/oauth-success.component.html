@@ -1,0 +1,10 @@
+<div class="auth-page forsa-gradient-bg oauth-success-page">
+  <div class="oauth-success-card">
+    @if (status() === 'loading') {
+      <p class="oauth-success-text">{{ message() }}</p>
+    } @else {
+      <p class="auth-error" role="alert">{{ message() }}</p>
+      <button type="button" class="oauth-success-back" (click)="goToLogin()">Back to sign in</button>
+    }
+  </div>
+</div>
