@@ -22,6 +22,7 @@ public class User {
 
     private String username;
 
+    @JsonIgnore
     private String passwordHash;
 
     private String email;

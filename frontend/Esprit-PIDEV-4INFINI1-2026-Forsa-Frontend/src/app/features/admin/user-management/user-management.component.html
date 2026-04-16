@@ -1,0 +1,279 @@
+<div class="page-toolbar">
+  <div class="page-head">
+    <h2>User management</h2>
+    <p>View accounts, roles, activation status, and onboard agents.</p>
+  </div>
+  <app-forsa-button type="button" (clicked)="openAddAgent()" [disabled]="loading()">
+    <app-forsa-icon name="plus" [size]="16" />
+    Add agent
+  </app-forsa-button>
+</div>
+
+@if (banner()) {
+  <div class="um-banner" [attr.data-tone]="banner()!.tone" role="status">
+    {{ banner()!.text }}
+  </div>
+}
+
+<app-forsa-card>
+  <div class="card-pad-lg table-wrap">
+    <div class="table-head">
+      <h3>Users</h3>
+      <div class="table-actions">
+        <div class="search">
+          <app-forsa-icon name="search" [size]="16" />
+          <input
+            forsaInput
+            type="search"
+            placeholder="Search username, email, id…"
+            class="search__input"
+            [ngModel]="searchText()"
+            (ngModelChange)="searchText.set($event)"
+          />
+        </div>
+        <select
+          class="um-filter forsa-input"
+          [ngModel]="statusFilter()"
+          (ngModelChange)="statusFilter.set($event)"
+          aria-label="Filter by status"
+        >
+          @for (opt of statusFilterOptions; track opt.value) {
+            <option [ngValue]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+        <select
+          class="um-filter forsa-input"
+          [ngModel]="roleFilter()"
+          (ngModelChange)="roleFilter.set($event)"
+          aria-label="Filter by role"
+        >
+          @for (opt of roleFilterOptions; track opt.value) {
+            <option [ngValue]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+        @if (filtersActive()) {
+          <app-forsa-button type="button" variant="ghost" size="sm" (clicked)="clearFilters()">Clear</app-forsa-button>
+        }
+      </div>
+    </div>
+
+    @if (loading()) {
+      <p class="text-muted">Loading users…</p>
+    } @else if (users().length === 0) {
+      <p class="text-muted">No users returned from the API.</p>
+    } @else if (filteredUsers().length === 0) {
+      <p class="text-muted">No users match your search or filters.</p>
+    } @else {
+      <table class="forsa-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th class="right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (u of paginatedUsers(); track u.id) {
+            <tr>
+              <td class="mono">{{ u.id }}</td>
+              <td class="fw-semibold">{{ u.username }}</td>
+              <td class="text-muted">{{ u.email }}</td>
+              <td>
+                <app-forsa-badge [tone]="roleTone(u.role.name)">{{ u.role.name }}</app-forsa-badge>
+              </td>
+              <td>
+                <app-forsa-badge [tone]="u.isActive ? 'success' : 'warning'">{{ activeLabel(u) }}</app-forsa-badge>
+              </td>
+              <td class="right">
+                <div class="um-actions-cell">
+                  <app-forsa-button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    [disabled]="rowBusy(u)"
+                    (clicked)="toggleRowMenu(u.id)"
+                  >
+                    <app-forsa-icon name="more-vertical" [size]="16" />
+                    More
+                  </app-forsa-button>
+                  @if (openMenuUserId() === u.id) {
+                    <div class="um-row-menu" role="menu" (click)="$event.stopPropagation()">
+                      <button type="button" class="um-row-menu__item" role="menuitem" (click)="openEdit(u)">
+                        <app-forsa-icon name="pencil" [size]="16" />
+                        Edit user
+                      </button>
+                      <button type="button" class="um-row-menu__item" role="menuitem" (click)="toggleActive(u)">
+                        <app-forsa-icon name="power" [size]="16" />
+                        {{ u.isActive ? 'Deactivate' : 'Activate' }}
+                      </button>
+                      <button
+                        type="button"
+                        class="um-row-menu__item um-row-menu__item--danger"
+                        role="menuitem"
+                        (click)="openDeleteConfirm(u)"
+                      >
+                        <app-forsa-icon name="trash-2" [size]="16" />
+                        Delete
+                      </button>
+                    </div>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <div class="um-pagination">
+        <div class="um-pagination__left">
+          <span class="um-pagination__meta text-muted sm">
+            @if (paginationInfo().total === 0) {
+              No results
+            } @else {
+              Showing {{ paginationInfo().start }}–{{ paginationInfo().end }} of {{ paginationInfo().total }}
+            }
+          </span>
+          <label class="um-pagination__size">
+            <span class="sr-only">Rows per page</span>
+            <select
+              class="um-filter forsa-input um-filter--narrow"
+              [ngModel]="pageSize()"
+              (ngModelChange)="onPageSizeChange($event)"
+            >
+              @for (n of pageSizeOptions; track n) {
+                <option [ngValue]="n">{{ n }} / page</option>
+              }
+            </select>
+          </label>
+        </div>
+        <div class="um-pagination__right">
+          <span class="um-pagination__pages text-muted sm">
+            Page {{ paginationInfo().page }} of {{ paginationInfo().totalPages }}
+          </span>
+          <app-forsa-button
+            type="button"
+            variant="outline"
+            size="sm"
+            [disabled]="paginationInfo().page <= 1"
+            (clicked)="goPrevPage()"
+            aria-label="Previous page"
+          >
+            <app-forsa-icon name="chevron-left" [size]="16" />
+          </app-forsa-button>
+          <app-forsa-button
+            type="button"
+            variant="outline"
+            size="sm"
+            [disabled]="paginationInfo().page >= paginationInfo().totalPages"
+            (clicked)="goNextPage()"
+            aria-label="Next page"
+          >
+            <app-forsa-icon name="chevron-right" [size]="16" />
+          </app-forsa-button>
+        </div>
+      </div>
+    }
+  </div>
+</app-forsa-card>
+
+@if (deleteConfirmUser()) {
+  <div class="um-overlay" role="dialog" aria-modal="true" aria-labelledby="um-delete-title" (click)="closeDeleteConfirm()">
+    <div class="um-modal um-modal--confirm" (click)="$event.stopPropagation()">
+      <header class="um-modal__head">
+        <h3 id="um-delete-title">Delete user</h3>
+        <button type="button" class="um-modal__close" (click)="closeDeleteConfirm()" [disabled]="deleteSubmitting()" aria-label="Close">
+          ×
+        </button>
+      </header>
+      <div class="um-modal__body">
+        <p class="um-confirm__lead">
+          You are about to permanently remove this account. This action cannot be undone.
+        </p>
+        <div class="um-confirm__card">
+          <p class="um-confirm__name">{{ deleteConfirmUser()!.username }}</p>
+          <p class="um-confirm__meta text-muted sm">{{ deleteConfirmUser()!.email }}</p>
+          <p class="um-confirm__meta text-muted sm">ID {{ deleteConfirmUser()!.id }} · {{ deleteConfirmUser()!.role.name }}</p>
+        </div>
+      </div>
+      <footer class="um-modal__foot">
+        <app-forsa-button type="button" variant="outline" (clicked)="closeDeleteConfirm()" [disabled]="deleteSubmitting()">
+          Cancel
+        </app-forsa-button>
+        <app-forsa-button type="button" variant="destructive" (clicked)="confirmDelete()" [disabled]="deleteSubmitting()">
+          {{ deleteSubmitting() ? 'Deleting…' : 'Delete user' }}
+        </app-forsa-button>
+      </footer>
+    </div>
+  </div>
+}
+
+@if (dialogMode() !== 'closed') {
+  <div class="um-overlay" (click)="closeDialog()">
+    <div class="um-modal" (click)="$event.stopPropagation()">
+      <header class="um-modal__head">
+        <h3>{{ dialogMode() === 'add-agent' ? 'Add agent' : 'Edit user' }}</h3>
+        <button type="button" class="um-modal__close" (click)="closeDialog()" aria-label="Close">×</button>
+      </header>
+      <div class="um-modal__body">
+        <div class="um-field">
+          <label class="forsa-label" for="um-username">Username</label>
+          <input
+            id="um-username"
+            forsaInput
+            name="um-username"
+            [(ngModel)]="formUsername"
+            class="input-h-12"
+            [attr.placeholder]="dialogMode() === 'add-agent' ? 'e.g. agent_maria' : 'Username'"
+          />
+        </div>
+        <div class="um-field">
+          <label class="forsa-label" for="um-email">Email</label>
+          <input
+            id="um-email"
+            forsaInput
+            type="email"
+            name="um-email"
+            [(ngModel)]="formEmail"
+            class="input-h-12"
+            [attr.placeholder]="dialogMode() === 'add-agent' ? 'agent.name@example.com' : 'name@example.com'"
+          />
+        </div>
+        @if (dialogMode() === 'edit') {
+          <div class="um-field">
+            <label class="forsa-label" for="um-role">Role</label>
+            <select id="um-role" class="um-select input-h-12" name="um-role" [(ngModel)]="formRoleId">
+              @for (opt of roleOptions; track opt.id) {
+                <option [ngValue]="opt.id">{{ opt.label }}</option>
+              }
+            </select>
+          </div>
+        }
+        <div class="um-field">
+          <app-forsa-password-field
+            inputId="um-password"
+            name="um-password"
+            [(ngModel)]="formPassword"
+            autocomplete="new-password"
+            [labelText]="dialogMode() === 'add-agent' ? 'Temporary password' : 'New password'"
+            [placeholder]="dialogMode() === 'add-agent' ? 'At least 6 characters (first login password)' : 'At least 6 characters'"
+            inputClass="input-h-12"
+          />
+        </div>
+        @if (dialogMode() === 'edit') {
+          <p class="text-muted sm">The backend always sets a freshly hashed password on update.</p>
+        }
+      </div>
+      <footer class="um-modal__foot">
+        <app-forsa-button type="button" variant="outline" (clicked)="closeDialog()" [disabled]="dialogSaving()">
+          Cancel
+        </app-forsa-button>
+        <app-forsa-button type="button" (clicked)="submitDialog()" [disabled]="dialogSaving()">
+          {{ dialogSaving() ? 'Saving…' : dialogMode() === 'add-agent' ? 'Create agent' : 'Save changes' }}
+        </app-forsa-button>
+      </footer>
+    </div>
+  </div>
+}

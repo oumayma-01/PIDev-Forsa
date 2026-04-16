@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ForsaLogoComponent } from '../../shared/branding/forsa-logo.component';
@@ -21,7 +21,7 @@ interface NavItem {
 export class DashboardSidebarComponent {
   private readonly auth = inject(AuthService);
 
-  readonly navItems: NavItem[] = [
+  private readonly baseNav: NavItem[] = [
     { label: 'Dashboard', href: '/dashboard', icon: 'layout-dashboard' },
     { label: 'Credit Management', href: '/dashboard/credit', icon: 'credit-card' },
     { label: 'Digital Wallet', href: '/dashboard/wallet', icon: 'wallet' },
@@ -31,6 +31,15 @@ export class DashboardSidebarComponent {
     { label: 'Feedback', href: '/dashboard/feedback', icon: 'message-square' },
     { label: 'AI Risk Analysis', href: '/dashboard/ai', icon: 'bar-chart-3' },
   ];
+
+  readonly navItems = computed<NavItem[]>(() => {
+    const roles = this.auth.currentUser()?.roles ?? [];
+    if (!roles.includes('ROLE_ADMIN')) {
+      return this.baseNav;
+    }
+    const adminItem: NavItem = { label: 'User management', href: '/dashboard/users', icon: 'settings' };
+    return [this.baseNav[0], adminItem, ...this.baseNav.slice(1)];
+  });
 
   logout(): void {
     this.auth.logout();

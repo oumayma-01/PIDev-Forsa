@@ -59,4 +59,18 @@ return iUserService.UpdateUser(signUpRequest,id);
   public ResponseEntity<?> UpdatePassword(@RequestParam Long id, @RequestParam String password) {
 return iUserService.updatePassword(id,password);
   }
+
+  @SecurityRequirement(name = "Bearer Authentication")
+  @PreAuthorize("hasRole('ADMIN')")
+  @PatchMapping("/active/{id}")
+  public ResponseEntity<?> setActive(@PathVariable("id") long id, @RequestParam("active") boolean active) {
+    return iUserService.setUserActive(id, active);
+  }
+
+  @SecurityRequirement(name = "Bearer Authentication")
+  @PreAuthorize("hasRole('ADMIN')")
+  @PostMapping("/agent")
+  public ResponseEntity<?> createAgent(@Valid @RequestBody SignupRequest signUpRequest) {
+    return iUserService.createAgent(signUpRequest);
+  }
 }

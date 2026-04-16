@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { adminGuard } from './core/guards/admin.guard';
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
 import { RiskAnalysisComponent } from './features/ai/risk-analysis/risk-analysis.component';
@@ -46,6 +47,12 @@ export const routes: Routes = [
       { path: 'partenariat', component: PartenariatListComponent },
       { path: 'scoring', component: ScoringWorkbenchComponent },
       { path: 'ai', component: RiskAnalysisComponent },
+      {
+        path: 'users',
+        canMatch: [adminGuard],
+        loadComponent: () =>
+          import('./features/admin/user-management/user-management.component').then((m) => m.UserManagementComponent),
+      },
     ],
   },
   { path: '**', redirectTo: '', pathMatch: 'full' },
