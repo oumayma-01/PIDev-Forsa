@@ -1,0 +1,102 @@
+<div class="page-toolbar">
+  <div class="page-head">
+    <h2>{{ isEditMode ? 'Edit Complaint' : 'New Complaint' }}</h2>
+    <p>{{ isEditMode ? 'Update your complaint details' : 'Submit a new complaint' }}</p>
+  </div>
+</div>
+
+@if (error) {
+  <div class="form-error">{{ error }}</div>
+}
+
+<app-forsa-card>
+  <div class="card-pad-lg">
+    <!-- Subject -->
+    <div class="form-group">
+      <label class="forsa-label">Subject *</label>
+      <input
+        forsaInput
+        type="text"
+        [(ngModel)]="complaint.subject"
+        placeholder="Enter complaint subject (min 5 characters)"
+        class="input-h-12"
+      />
+    </div>
+
+    <!-- Description -->
+    <div class="form-group">
+      <label class="forsa-label">Description *</label>
+      <textarea
+        forsaInput
+        [(ngModel)]="complaint.description"
+        placeholder="Describe your complaint in detail (min 10 characters)"
+        rows="5"
+      ></textarea>
+    </div>
+
+    <!-- Category — hidden if useAI -->
+    @if (!useAI || isEditMode) {
+      <div class="form-group">
+        <label class="forsa-label">Category</label>
+        <select forsaInput [(ngModel)]="complaint.category">
+          @for (cat of categories; track cat) {
+            <option [value]="cat">{{ cat }}</option>
+          }
+        </select>
+      </div>
+    }
+
+    <!-- Priority — ADMIN/AGENT only or edit mode -->
+    @if (isAdminOrAgent || isEditMode) {
+      <div class="form-group">
+        <label class="forsa-label">Priority</label>
+        <select forsaInput [(ngModel)]="complaint.priority">
+          @for (p of priorities; track p) {
+            <option [value]="p">{{ p }}</option>
+          }
+        </select>
+      </div>
+    }
+
+    <!-- Status — edit mode only -->
+    @if (isEditMode && isAdminOrAgent) {
+      <div class="form-group">
+        <label class="forsa-label">Status</label>
+        <select forsaInput [(ngModel)]="complaint.status">
+          <option value="OPEN">OPEN</option>
+          <option value="IN_PROGRESS">IN_PROGRESS</option>
+          <option value="RESOLVED">RESOLVED</option>
+          <option value="CLOSED">CLOSED</option>
+          <option value="REJECTED">REJECTED</option>
+        </select>
+      </div>
+    }
+
+    <!-- Use AI toggle — add mode only -->
+    @if (!isEditMode) {
+      <div class="form-ai-toggle">
+        <label class="ai-label">
+          <input type="checkbox" [(ngModel)]="useAI" />
+          <app-forsa-icon name="sparkles" [size]="16" />
+          <span>Use AI to auto-detect category & priority</span>
+        </label>
+      </div>
+    }
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <app-forsa-button variant="outline" (clicked)="cancel()">
+        Cancel
+      </app-forsa-button>
+      <app-forsa-button (clicked)="save()" [disabled]="loading">
+        @if (loading) {
+          <app-forsa-icon name="zap" [size]="16" />
+          Saving...
+        } @else {
+          <app-forsa-icon name="check-circle-2" [size]="16" />
+          {{ isEditMode ? 'Update' : (useAI ? 'Submit with AI' : 'Submit') }}
+        }
+      </app-forsa-button>
+    </div>
+  </div>
+</app-forsa-card>

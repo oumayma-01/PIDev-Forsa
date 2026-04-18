@@ -1,0 +1,170 @@
+<div class="page-toolbar">
+  <div class="page-head">
+    <h2>Statistics & Reports</h2>
+    <p>Analyze complaints and feedback metrics</p>
+  </div>
+  <app-forsa-button (clicked)="loadAllStats()">
+    <app-forsa-icon name="history" [size]="16" />
+    Refresh
+  </app-forsa-button>
+</div>
+
+@if (error) {
+  <div class="stats-error">{{ error }}</div>
+}
+
+@if (loading) {
+  <div class="stats-loading">
+    <app-forsa-icon name="zap" [size]="32" />
+    <p>Loading statistics...</p>
+  </div>
+}
+
+@if (!loading) {
+  <!-- Complaint Statistics -->
+  <div class="stats-section">
+    <h3>Complaint Metrics</h3>
+    <div class="stats-grid">
+      <app-forsa-card class="stat-card">
+        <div class="stat-content">
+          <div class="stat-icon" style="background: #3b82f6; color: white;">
+            <app-forsa-icon name="alert-circle" [size]="24" />
+          </div>
+          <div>
+            <p class="stat-label">Total Complaints</p>
+            <p class="stat-value">{{ getTotalComplaints() }}</p>
+          </div>
+        </div>
+      </app-forsa-card>
+
+      <app-forsa-card class="stat-card">
+        <div class="stat-content">
+          <div class="stat-icon" style="background: #f59e0b; color: white;">
+            <app-forsa-icon name="clock" [size]="24" />
+          </div>
+          <div>
+            <p class="stat-label">Open Complaints</p>
+            <p class="stat-value">{{ getOpenComplaints() }}</p>
+          </div>
+        </div>
+      </app-forsa-card>
+
+      <app-forsa-card class="stat-card">
+        <div class="stat-content">
+          <div class="stat-icon" style="background: #10b981; color: white;">
+            <app-forsa-icon name="check-circle-2" [size]="24" />
+          </div>
+          <div>
+            <p class="stat-label">Resolved Complaints</p>
+            <p class="stat-value">{{ getResolvedComplaints() }}</p>
+          </div>
+        </div>
+      </app-forsa-card>
+    </div>
+  </div>
+
+  <!-- Complaints by Category -->
+  @if (statsByCategory) {
+    <div class="stats-section">
+      <h3>Complaints by Category</h3>
+      <app-forsa-card>
+        <div class="card-pad-lg">
+          <div class="stats-table">
+            @for (category of getCategoryKeys(); track category) {
+              <div class="table-row">
+                <span class="table-label">{{ category }}</span>
+                <div class="progress-bar">
+                  <div
+                    class="progress-fill"
+                    [style.width.%]="
+                      (getCategoryValue(category) / (getTotalComplaints() || 1)) * 100
+                    "
+                  ></div>
+                </div>
+                <span class="table-value">{{ getCategoryValue(category) }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </app-forsa-card>
+    </div>
+  }
+
+  <!-- Complaints by Priority -->
+  @if (statsByPriority) {
+    <div class="stats-section">
+      <h3>Complaints by Priority</h3>
+      <app-forsa-card>
+        <div class="card-pad-lg">
+          <div class="stats-table">
+            @for (priority of getPriorityKeys(); track priority) {
+              <div class="table-row">
+                <span class="table-label">{{ priority }}</span>
+                <div class="progress-bar">
+                  <div
+                    class="progress-fill"
+                    [style.width.%]="
+                      (getPriorityValue(priority) / (getTotalComplaints() || 1)) * 100
+                    "
+                  ></div>
+                </div>
+                <span class="table-value">{{ getPriorityValue(priority) }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </app-forsa-card>
+    </div>
+  }
+
+  <!-- Feedback Statistics -->
+  <div class="stats-section">
+    <h3>Feedback Metrics</h3>
+    <div class="stats-grid">
+      <app-forsa-card class="stat-card">
+        <div class="stat-content">
+          <div class="stat-icon" style="background: #8b5cf6; color: white;">
+            <app-forsa-icon name="message-square" [size]="24" />
+          </div>
+          <div>
+            <p class="stat-label">Total Feedback</p>
+            <p class="stat-value">{{ getTotalFeedback() }}</p>
+          </div>
+        </div>
+      </app-forsa-card>
+
+      <app-forsa-card class="stat-card">
+        <div class="stat-content">
+          <div class="stat-icon" style="background: #ec4899; color: white;">
+            <app-forsa-icon name="heart" [size]="24" />
+          </div>
+          <div>
+            <p class="stat-label">Average Rating</p>
+            <p class="stat-value">{{ (getAverageFeedbackRating() | number: '1.1-1') }}/5</p>
+          </div>
+        </div>
+      </app-forsa-card>
+    </div>
+  </div>
+
+  <!-- Average Rating by Category -->
+  @if (avgRatingByCategory) {
+    <div class="stats-section">
+      <h3>Average Rating by Category</h3>
+      <app-forsa-card>
+        <div class="card-pad-lg">
+          <div class="rating-grid">
+            @for (category of getCategoryKeys(); track category) {
+              <div class="rating-card">
+                <p class="rating-category">{{ category }}</p>
+                <p class="rating-score">
+                  {{ (avgRatingByCategory[category] | number: '1.1-1') ?? 'N/A' }}
+                </p>
+              </div>
+            }
+          </div>
+        </div>
+      </app-forsa-card>
+    </div>
+  }
+}

@@ -48,7 +48,58 @@ export const routes: Routes = [
       { path: 'credit', component: CreditListComponent },
       { path: 'wallet', component: WalletOverviewComponent },
       { path: 'insurance', component: InsuranceProductsComponent },
-      { path: 'feedback', component: FeedbackListComponent },
+      {
+        path: 'feedback',
+        children: [
+          { path: '', component: FeedbackListComponent },
+          {
+            path: 'complaint/add',
+            loadComponent: () =>
+              import('./features/feedback/complaint-form/complaint-form.component').then((m) => m.ComplaintFormComponent),
+          },
+          {
+            path: 'complaint/:id',
+            loadComponent: () =>
+              import('./features/feedback/complaint-form/complaint-form.component').then((m) => m.ComplaintFormComponent),
+          },
+          {
+            path: 'feedback',
+            loadComponent: () =>
+              import('./features/feedback/feedback-form/feedback-form.component').then((m) => m.FeedbackFormComponent),
+          },
+          {
+            path: 'feedback/:id',
+            loadComponent: () =>
+              import('./features/feedback/feedback-form/feedback-form.component').then((m) => m.FeedbackFormComponent),
+          },
+          {
+            path: 'responses',
+            loadComponent: () =>
+              import('./features/feedback/response-list/response-list.component').then((m) => m.ResponseListComponent),
+          },
+          {
+            path: 'response/add',
+            loadComponent: () =>
+              import('./features/feedback/response-form/response-form.component').then((m) => m.ResponseFormComponent),
+          },
+          {
+            path: 'response/:id',
+            loadComponent: () =>
+              import('./features/feedback/response-form/response-form.component').then((m) => m.ResponseFormComponent),
+          },
+          {
+            path: 'chatbot',
+            loadComponent: () =>
+              import('./features/feedback/chatbot/chatbot.component').then((m) => m.ChatbotComponent),
+          },
+          {
+            path: 'stats',
+            canMatch: [adminGuard],
+            loadComponent: () =>
+              import('./features/feedback/feedback-stats/feedback-stats.component').then((m) => m.FeedbackStatsComponent),
+          },
+        ],
+      },
       { path: 'partenariat', component: PartenariatListComponent },
       { path: 'scoring', component: ScoringWorkbenchComponent },
       { path: 'ai', component: RiskAnalysisComponent },

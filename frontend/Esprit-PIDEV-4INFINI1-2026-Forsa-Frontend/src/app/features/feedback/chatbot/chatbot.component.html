@@ -1,0 +1,66 @@
+<div class="page-toolbar">
+  <div class="page-head">
+    <h2>Support Chatbot</h2>
+    <p>Get instant answers to your questions</p>
+  </div>
+  <app-forsa-button variant="outline" size="sm" (clicked)="clearChat()">
+    <app-forsa-icon name="trash-2" [size]="16" />
+    Clear
+  </app-forsa-button>
+</div>
+
+@if (error) {
+  <div class="chat-error">{{ error }}</div>
+}
+
+<app-forsa-card class="chat-container">
+  <div class="chat-messages" #messagesContainer>
+    @for (message of messages; track message.timestamp) {
+      <div [class]="'chat-message ' + message.role">
+        <div class="message-bubble">
+          <p>{{ message.content }}</p>
+          @if (message.timestamp) {
+            <span class="message-time">{{ message.timestamp | date: 'HH:mm' }}</span>
+          }
+        </div>
+      </div>
+    }
+
+    @if (loading) {
+      <div class="chat-message bot">
+        <div class="message-bubble">
+          <div class="typing-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</app-forsa-card>
+
+<div class="chat-input-area">
+  <app-forsa-card class="input-card">
+    <div class="input-wrapper">
+      <input
+        forsaInput
+        type="text"
+        [(ngModel)]="userMessage"
+        (keyup.enter)="sendMessage()"
+        placeholder="Type your message here..."
+        [disabled]="loading"
+        class="chat-input"
+      />
+      <app-forsa-button
+        variant="ghost"
+        size="icon"
+        (clicked)="sendMessage()"
+        [disabled]="loading || !userMessage.trim()"
+        [accessibleName]="'Send message'"
+      >
+        <app-forsa-icon name="send" [size]="20" />
+      </app-forsa-button>
+    </div>
+  </app-forsa-card>
+</div>
