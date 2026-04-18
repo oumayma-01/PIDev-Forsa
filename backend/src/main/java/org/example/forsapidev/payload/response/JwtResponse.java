@@ -13,6 +13,9 @@ public class JwtResponse {
   private String username;
   private String email;
   private List<String> roles;
+  private Boolean hasProfileImage;
+  /** True when the user must set a password in profile (Google-created account, no known password yet). */
+  private Boolean oauthAccount;
 
   public JwtResponse(String accessToken, Long id, String username, String email,List<String> roles) {
     this.token = accessToken;

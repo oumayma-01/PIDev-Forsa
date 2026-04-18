@@ -40,6 +40,11 @@ export const routes: Routes = [
     canMatch: [authGuard],
     children: [
       { path: '', component: DashboardHomeComponent },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/profile/profile-page/profile-page.component').then((m) => m.ProfilePageComponent),
+      },
       { path: 'credit', component: CreditListComponent },
       { path: 'wallet', component: WalletOverviewComponent },
       { path: 'insurance', component: InsuranceProductsComponent },

@@ -41,4 +41,5 @@ export type ForsaIconName =
   | 'pencil'
   | 'power'
   | 'trash-2'
-  | 'chevron-left';
+  | 'chevron-left'
+  | 'user-circle';

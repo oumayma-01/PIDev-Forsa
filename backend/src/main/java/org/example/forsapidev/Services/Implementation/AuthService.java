@@ -77,11 +77,15 @@ class AuthService implements IAuthService {
                         .map(GrantedAuthority::getAuthority)
                         .collect(Collectors.toList());
 
-                return ResponseEntity.ok(new JwtResponse(jwt,
+                JwtResponse jwtResponse = new JwtResponse(jwt,
                         userDetails.getId(),
                         userDetails.getUsername(),
                         userDetails.getEmail(),
-                        roles));
+                        roles);
+                jwtResponse.setHasProfileImage(
+                        user.getProfileImageKey() != null && !user.getProfileImageKey().isBlank());
+                jwtResponse.setOauthAccount(isGoogleOnly(user));
+                return ResponseEntity.ok(jwtResponse);
             } catch (Exception e) {
                 return ResponseEntity
                         .badRequest()
@@ -114,6 +118,7 @@ class AuthService implements IAuthService {
         Role role = roleRepository.findById(signUpRequest.getIdrole())
                 .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
         user.setRole(role);
+        user.setAuthProvider("LOCAL");
         userRepository.save(user);
 
         // Synchronisation AGENT (si le rôle choisi est AGENT)
@@ -407,11 +412,24 @@ String email = EmailEncryptionUtil.decryptEmail(restRequest.getEmail());
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
+        User user = userRepository.findById(userDetails.getId()).orElse(null);
+        boolean hasImage = user != null
+                && user.getProfileImageKey() != null
+                && !user.getProfileImageKey().isBlank();
+        String email = user != null ? user.getEmail() : userDetails.getEmail();
+        String username = user != null ? user.getUsername() : userDetails.getUsername();
+        boolean oauthAccount = user != null && isGoogleOnly(user);
         return ResponseEntity.ok(new CurrentUserResponse(
                 userDetails.getId(),
-                userDetails.getUsername(),
-                userDetails.getEmail(),
-                roles));
+                username,
+                email,
+                roles,
+                hasImage,
+                oauthAccount));
+    }
+
+    private static boolean isGoogleOnly(User user) {
+        return user != null && "GOOGLE".equalsIgnoreCase(user.getAuthProvider());
     }
 
     private static String trimTrailingSlash(String url) {

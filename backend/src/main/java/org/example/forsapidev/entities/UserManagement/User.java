@@ -27,6 +27,17 @@ public class User {
 
     private String email;
 
+    /** Stored filename under {@code app.profile.upload-dir} (e.g. {@code user-12.png}); null if no avatar. */
+    @Column(name = "profile_image_key", length = 255)
+    private String profileImageKey;
+
+    /**
+     * {@code GOOGLE} = account created via Google OAuth (unknown random password until user sets one in profile).
+     * {@code LOCAL} or {@code null} = classic registration or user has set a known password.
+     */
+    @Column(name = "auth_provider", length = 20)
+    private String authProvider;
+
     private Boolean isActive;
     @Column(name = "reset_token")
     @JsonIgnore

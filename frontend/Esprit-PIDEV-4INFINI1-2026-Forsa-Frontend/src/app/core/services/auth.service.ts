@@ -36,6 +36,8 @@ export class AuthService {
             username: res.username,
             email: res.email,
             roles: res.roles ?? [],
+            hasProfileImage: res.hasProfileImage ?? false,
+            oauthAccount: res.oauthAccount ?? false,
           });
         }),
       );
@@ -94,5 +96,12 @@ export class AuthService {
   logout(): void {
     this.clearSession();
     void this.router.navigateByUrl('/login');
+  }
+
+  /** Reloads the signed-in user from {@code GET /auth/current} (e.g. after profile or avatar changes). */
+  refreshCurrentUser(): Observable<CurrentUser> {
+    return this.http.get<CurrentUser>(`${environment.apiBaseUrl}/auth/current`).pipe(
+      tap((u) => this.currentUser.set(u)),
+    );
   }
 }
