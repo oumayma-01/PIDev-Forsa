@@ -1,0 +1,41 @@
+.oauth-success-page {
+  text-align: center;
+}
+
+.oauth-success-page .auth-error {
+  color: #b42318;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.oauth-success-card {
+  padding: 2rem 1.5rem;
+  border-radius: var(--radius-xl);
+  background: color-mix(in oklab, var(--color-card) 85%, transparent);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 25px 50px -12px color-mix(in oklab, var(--color-primary) 12%, transparent);
+  max-width: 22rem;
+}
+
+.oauth-success-text {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--color-foreground);
+}
+
+.oauth-success-back {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  border: none;
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.oauth-success-back:hover {
+  opacity: 0.92;
+}

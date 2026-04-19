@@ -2,6 +2,7 @@
   height: 4rem;
   border-bottom: 1px solid var(--color-border);
   background: color-mix(in oklab, var(--color-background) 82%, transparent);
+  -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   position: sticky;
   top: 0;
@@ -142,6 +143,8 @@
 .avatar {
   border-radius: 9999px;
   border: 2px solid color-mix(in oklab, var(--color-primary) 22%, transparent);
+  object-fit: cover;
+  background: var(--color-muted);
 }
 
 .role-wrap {

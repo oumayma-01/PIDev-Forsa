@@ -60,10 +60,11 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                     .orElseThrow(() -> new RuntimeException("Role not found"));
 
             user.setRole(role);
+            user.setAuthProvider("GOOGLE");
             userRepository.save(user);
         }
 
-        String jwt = jwtUtils.generateJwtFromUsername(user.getUsername());
+        String jwt = jwtUtils.generateJwtForUserId(user.getId());
         response.sendRedirect("http://localhost:4200/oauth-success?token=" + jwt);
     }
 }

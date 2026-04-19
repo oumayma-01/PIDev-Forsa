@@ -16,4 +16,11 @@ public class CurrentUserResponse {
   private String username;
   private String email;
   private List<String> roles;
+  /** True when the user has uploaded a profile picture (served at {@code GET /api/profile/me/avatar}). */
+  private boolean hasProfileImage;
+  /**
+   * True when the account was created with Google and the user has not yet set a password in profile
+   * ({@code authProvider} is {@code GOOGLE}); current password is not required to set one.
+   */
+  private boolean oauthAccount;
 }

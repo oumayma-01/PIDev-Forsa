@@ -1,5 +1,6 @@
 import { DecimalPipe } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { AuthService } from '../../../core/services/auth.service';
 import { ForsaCardComponent } from '../../../shared/ui/forsa-card/forsa-card.component';
 import { ForsaIconComponent } from '../../../shared/ui/forsa-icon/forsa-icon.component';
 import { MiniAreaChartComponent } from '../../../shared/charts/mini-area-chart.component';
@@ -13,6 +14,7 @@ import { MOCK_TRANSACTIONS } from '../../../core/data/mock-data';
   styleUrl: './dashboard-home.component.css',
 })
 export class DashboardHomeComponent {
+  readonly auth = inject(AuthService);
   readonly transactions = MOCK_TRANSACTIONS;
   readonly chartValues = [4000, 3000, 2000, 2780, 1890, 2390, 3490];
   readonly stats = [

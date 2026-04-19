@@ -37,4 +37,9 @@ export type ForsaIconName =
   | 'trending-down'
   | 'trending-up'
   | 'eye'
-  | 'eye-off';
+  | 'eye-off'
+  | 'pencil'
+  | 'power'
+  | 'trash-2'
+  | 'chevron-left'
+  | 'user-circle';

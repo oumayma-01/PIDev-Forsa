@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import org.example.forsapidev.entities.UserManagement.User;
 import org.example.forsapidev.security.services.UserDetailsImpl;
 
 import java.util.Date;
@@ -65,10 +66,14 @@ public class JwtUtils {
     return ""+(m + new Random().nextInt(9 * m));
   }
 
+  /**
+   * JWT subject is {@code uid:<userId>} so the token stays valid after username changes.
+   * Legacy tokens used the username as subject; see {@link org.example.forsapidev.security.services.UserDetailsServiceImpl#loadUserByJwtSubject}.
+   */
   public String generateJwtToken(Authentication authentication) {
     UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
     return Jwts.builder()
-            .setSubject(userPrincipal.getUsername())
+            .setSubject(jwtSubjectForUserId(userPrincipal.getId()))
             .claim("role", userPrincipal.getAuthorities()
                     .stream()
                     .findFirst()
@@ -80,13 +85,24 @@ public class JwtUtils {
             .compact();
   }
 
-  public String generateJwtFromUsername(String username) {
+  public String generateJwtForUserId(long userId) {
     return Jwts.builder()
-            .setSubject(username)
+            .setSubject(jwtSubjectForUserId(userId))
             .setIssuedAt(new Date())
             .setExpiration(new Date((new Date()).getTime() + SESSION_EXPIRATION))
             .signWith(SignatureAlgorithm.HS512, SECRET)
             .compact();
+  }
+
+  /** Resolves username to id then issues a uid-subject token (same format as login). */
+  public String generateJwtFromUsername(String username) {
+    User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
+    return generateJwtForUserId(user.getId());
+  }
+
+  public static String jwtSubjectForUserId(long userId) {
+    return "uid:" + userId;
   }
 
   public String parseJwt(HttpServletRequest request) {

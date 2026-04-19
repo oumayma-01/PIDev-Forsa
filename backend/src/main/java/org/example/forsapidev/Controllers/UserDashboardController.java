@@ -7,6 +7,7 @@ import org.example.forsapidev.payload.response.UserDashboardOverviewDTO;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @SecurityRequirement(name = "Bearer Authentication")
 @RequestMapping("/api/dashboard/users")

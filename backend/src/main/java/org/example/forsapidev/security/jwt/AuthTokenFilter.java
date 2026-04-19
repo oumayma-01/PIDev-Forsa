@@ -35,6 +35,11 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
     String path = request.getServletPath();
 
+    // CORS preflight: no Authorization header — must not block or the browser rejects the real request.
+    if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+      filterChain.doFilter(request, response);
+      return;
+    }
 
     // Skip JWT check for public paths using AntPathMatcher
     if (isPublicPath(path)) {
@@ -51,8 +56,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
       }
 
       if (jwtUtils.validateJwtToken(jwt)) {
-        String username = jwtUtils.getUserNameFromJwtToken(jwt);
-        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        String subject = jwtUtils.getUserNameFromJwtToken(jwt);
+        UserDetails userDetails = userDetailsService.loadUserByJwtSubject(subject);
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
