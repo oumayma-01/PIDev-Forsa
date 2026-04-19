@@ -5,6 +5,8 @@ package org.example.forsapidev.security;
 import lombok.NoArgsConstructor;
 import org.example.forsapidev.Repositories.RoleRepository;
 import org.example.forsapidev.Repositories.UserRepository;
+import org.example.forsapidev.Services.Interfaces.IRoleAccessService;
+import org.example.forsapidev.security.access.RoleResourceAccessFilter;
 import org.example.forsapidev.security.jwt.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -60,6 +62,12 @@ public class WebSecurityConfig implements WebMvcConfigurer {
     return new AuthTokenFilter();
   }
 
+  @Bean
+  public RoleResourceAccessFilter roleResourceAccessFilter(
+      JwtUtils jwtUtils, IRoleAccessService roleAccessService) {
+    return new RoleResourceAccessFilter(jwtUtils, roleAccessService);
+  }
+
   /**
    * Global CORS for the Angular dev server (and Swagger). Per-controller {@code @CrossOrigin} is not enough if
    * preflight fails in the JWT filter.
@@ -93,7 +101,8 @@ public class WebSecurityConfig implements WebMvcConfigurer {
   }
 
   @Bean
-  protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+  protected SecurityFilterChain filterChain(
+      HttpSecurity http, RoleResourceAccessFilter roleResourceAccessFilter) throws Exception {
 
     http
             .cors().and()
@@ -118,7 +127,8 @@ public class WebSecurityConfig implements WebMvcConfigurer {
             .and()
 
             .addFilterBefore(authenticationJwtTokenFilter(),
-                    UsernamePasswordAuthenticationFilter.class);
+                    UsernamePasswordAuthenticationFilter.class)
+            .addFilterAfter(roleResourceAccessFilter, AuthTokenFilter.class);
 
     return http.build();
   }

@@ -4,6 +4,7 @@ package org.example.forsapidev.Services.Interfaces;
 
 import org.example.forsapidev.entities.UserManagement.ERole;
 import org.example.forsapidev.entities.UserManagement.Role;
+import org.example.forsapidev.payload.response.RoleWithStatsDTO;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
@@ -14,4 +15,6 @@ public interface IRoleService {
     Role findbyId(Integer id);
     Role findbyName(ERole name);
     ResponseEntity<?> delete (Integer id );
+
+    List<RoleWithStatsDTO> listRolesWithUserCounts();
 }

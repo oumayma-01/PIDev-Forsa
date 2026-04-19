@@ -1,0 +1,94 @@
+.rm-wrap {
+  overflow-x: auto;
+}
+
+.rm-desc {
+  max-width: 36rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.rm-banner {
+  margin: 0 0 1rem;
+  padding: 0.65rem 1rem;
+  border-radius: var(--radius-lg, 0.75rem);
+  font-size: 0.9rem;
+}
+
+.rm-banner[data-tone='ok'] {
+  background: color-mix(in oklab, var(--color-primary) 12%, transparent);
+}
+
+.rm-banner[data-tone='err'] {
+  background: color-mix(in oklab, #ef4444 12%, transparent);
+  color: #b91c1c;
+}
+
+.rm-banner-tight {
+  margin-top: 1.25rem;
+}
+
+.rm-access-section {
+  margin-top: 2rem;
+}
+
+.rm-access-head {
+  margin-bottom: 0.75rem;
+}
+
+.rm-access-head h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.125rem;
+}
+
+.rm-access-lead {
+  margin: 0;
+  max-width: 52rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--color-muted, #64748b);
+}
+
+.rm-access-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.rm-access-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.rm-access-select {
+  min-width: 10rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: var(--radius-md, 0.5rem);
+  border: 1px solid var(--color-border, #e2e8f0);
+  background: var(--color-surface, #fff);
+  font-size: 0.9rem;
+}
+
+.rm-access-table .rm-col-check {
+  width: 5.5rem;
+  text-align: center;
+}
+
+.rm-access-table input[type='checkbox'] {
+  width: 1.1rem;
+  height: 1.1rem;
+  cursor: pointer;
+}
+
+.rm-code {
+  white-space: nowrap;
+}
+
+.rm-path {
+  font-size: 0.8rem;
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

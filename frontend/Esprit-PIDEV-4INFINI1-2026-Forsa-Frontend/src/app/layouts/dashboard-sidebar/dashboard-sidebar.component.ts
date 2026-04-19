@@ -38,8 +38,9 @@ export class DashboardSidebarComponent {
     if (!roles.includes('ROLE_ADMIN')) {
       return this.baseNav;
     }
-    const adminItem: NavItem = { label: 'User management', href: '/dashboard/users', icon: 'settings' };
-    return [this.baseNav[0], adminItem, ...this.baseNav.slice(1)];
+    const userMgmt: NavItem = { label: 'User management', href: '/dashboard/users', icon: 'settings' };
+    const roleMgmt: NavItem = { label: 'Role management', href: '/dashboard/roles', icon: 'shield' };
+    return [this.baseNav[0], userMgmt, roleMgmt, ...this.baseNav.slice(1)];
   });
 
   logout(): void {
