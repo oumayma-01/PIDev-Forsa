@@ -1,0 +1,92 @@
+<div class="page-head">
+  <div>
+    <h2>Insurance Products</h2>
+    <p>Manage the product catalogue available to clients.</p>
+  </div>
+  <a routerLink="../products/new">
+    <app-forsa-button>
+      <app-forsa-icon name="plus" [size]="16" />
+      New Product
+    </app-forsa-button>
+  </a>
+</div>
+
+@if (loading()) {
+  <div class="state-box">
+    <app-forsa-icon name="history" [size]="32" class="spin" />
+    <p>Loading products…</p>
+  </div>
+} @else if (error()) {
+  <div class="state-box state-error">
+    <app-forsa-icon name="alert-circle" [size]="32" />
+    <p>{{ error() }}</p>
+    <app-forsa-button variant="outline" (click)="load()">Retry</app-forsa-button>
+  </div>
+} @else if (products().length === 0) {
+  <div class="state-box">
+    <app-forsa-icon name="shield" [size]="48" class="empty-ico" />
+    <p>No products yet.</p>
+    <a routerLink="../products/new">
+      <app-forsa-button>Create First Product</app-forsa-button>
+    </a>
+  </div>
+} @else {
+  <div class="prod-grid">
+    @for (p of products(); track p.id) {
+      <app-forsa-card class="prod-card">
+        <div class="prod-body">
+          <div class="prod-header">
+            <div class="prod-ico" [attr.data-tone]="typeTone(p.policyType)">
+              <app-forsa-icon [name]="$any(typeIcon(p.policyType))" [size]="22" />
+            </div>
+            <div class="prod-meta">
+              <h3>{{ p.productName }}</h3>
+              <app-forsa-badge [tone]="p.isActive ? 'success' : 'muted'">
+                {{ p.isActive ? 'Active' : 'Inactive' }}
+              </app-forsa-badge>
+            </div>
+          </div>
+
+          <p class="text-muted prod-desc">{{ p.description || '—' }}</p>
+
+          <div class="prod-stats">
+            <div>
+              <span class="lbl">Type</span>
+              <span class="val">{{ p.policyType | titlecase }}</span>
+            </div>
+            <div>
+              <span class="lbl">Base Premium</span>
+              <span class="val">{{ p.premiumAmount | number:'1.2-2' }} TND</span>
+            </div>
+            <div>
+              <span class="lbl">Coverage</span>
+              <span class="val">{{ p.coverageLimit | number:'1.0-0' }} TND</span>
+            </div>
+            <div>
+              <span class="lbl">Duration</span>
+              <span class="val">{{ p.durationMonths }} months</span>
+            </div>
+          </div>
+
+          <div class="prod-actions">
+            <a [routerLink]="['/dashboard/insurance/products', p.id]">
+              <app-forsa-button variant="outline" size="sm">
+                <app-forsa-icon name="eye" [size]="14" /> View
+              </app-forsa-button>
+            </a>
+            <a [routerLink]="['/dashboard/insurance/products', p.id, 'edit']">
+              <app-forsa-button variant="ghost" size="sm">
+                <app-forsa-icon name="settings" [size]="14" /> Edit
+              </app-forsa-button>
+            </a>
+            <app-forsa-button variant="ghost" size="sm" extraClass="btn-danger"
+              [disabled]="deletingId() === p.id" (click)="delete(p.id!)">
+              <app-forsa-icon name="shield-alert" [size]="14" />
+              {{ deletingId() === p.id ? '…' : 'Delete' }}
+            </app-forsa-button>
+          </div>
+        </div>
+      </app-forsa-card>
+    }
+  </div>
+}

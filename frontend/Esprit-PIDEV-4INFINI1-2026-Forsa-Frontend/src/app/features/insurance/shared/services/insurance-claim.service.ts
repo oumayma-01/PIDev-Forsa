@@ -1,0 +1,35 @@
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
+import { environment } from '../../../../../environments/environment';
+import { InsuranceClaim } from '../models/insurance.models';
+
+@Injectable({ providedIn: 'root' })
+export class InsuranceClaimService {
+  private readonly http = inject(HttpClient);
+  private readonly base = `${environment.apiBaseUrl}/insurance-claim`;
+
+  getAll(): Observable<InsuranceClaim[]> {
+    return this.http.get<InsuranceClaim[]>(`${this.base}/retrieve-all-insurance-claims`);
+  }
+
+  getMyClaims(): Observable<InsuranceClaim[]> {
+    return this.http.get<InsuranceClaim[]>(`${this.base}/my-claims`);
+  }
+
+  getById(id: number): Observable<InsuranceClaim> {
+    return this.http.get<InsuranceClaim>(`${this.base}/retrieve-insurance-claim/${id}`);
+  }
+
+  create(claim: InsuranceClaim): Observable<InsuranceClaim> {
+    return this.http.post<InsuranceClaim>(`${this.base}/add-insurance-claim`, claim);
+  }
+
+  update(claim: InsuranceClaim): Observable<InsuranceClaim> {
+    return this.http.put<InsuranceClaim>(`${this.base}/modify-insurance-claim`, claim);
+  }
+
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/remove-insurance-claim/${id}`);
+  }
+}

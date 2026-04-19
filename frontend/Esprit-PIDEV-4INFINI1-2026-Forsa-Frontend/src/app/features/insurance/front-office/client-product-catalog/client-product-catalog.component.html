@@ -1,0 +1,119 @@
+<div class="catalog-container">
+  <div class="header-section">
+    <button routerLink="/dashboard/insurance/client" class="back-btn glass-btn">
+      <i class="fe fe-arrow-left"></i> Back to Hub
+    </button>
+    <h1>Our Insurance Products</h1>
+    <p>Discover plans tailored to your needs. Compare, choose, and secure your future.</p>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading products...</p>
+  </div>
+
+  <div *ngIf="!isLoading && !comparisonResult" class="product-grid">
+    <div *ngFor="let p of products" class="product-card" [class.selected]="isSelected(p.id)">
+      <div class="card-header">
+        <h3>{{ p.productName }}</h3>
+        <span class="badge">{{ p.policyType }}</span>
+      </div>
+      
+      <div class="price-section">
+        <span class="currency">$</span>
+        <span class="amount">{{ p.premiumAmount }}</span>
+        <span class="period">/ {{ p.durationMonths }} mo</span>
+      </div>
+
+      <div class="features">
+        <p><strong>Coverage:</strong> ${{ p.coverageLimit | number }}</p>
+        <p><strong>Value Score:</strong> {{ p.valueScore | number:'1.0-1' }} / 10</p>
+        <p><strong>Rating:</strong> <span class="rating-badge {{ p.valueRating | lowercase }}">{{ p.valueRating }}</span></p>
+      </div>
+
+      <p class="description">{{ p.description }}</p>
+
+      <div class="card-actions">
+        <button class="btn btn-outline" (click)="toggleComparison(p.id)">
+          {{ isSelected(p.id) ? 'Remove' : 'Compare' }}
+        </button>
+        <button class="btn btn-primary" (click)="applyForProduct(p.id)">
+          Apply Now
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Bar for Comparison -->
+  <div class="compare-action-bar glass-panel" *ngIf="selectedForComparison.size > 0 && !comparisonResult">
+    <span>{{ selectedForComparison.size }} product(s) selected</span>
+    <div class="actions">
+      <button class="btn btn-text" (click)="clearComparison()">Clear</button>
+      <button class="btn btn-secondary" [disabled]="selectedForComparison.size < 2" (click)="compareSelected()">
+        Compare Products
+      </button>
+    </div>
+  </div>
+
+  <!-- Comparison Results View -->
+  <div class="comparison-view" *ngIf="comparisonResult">
+    <div class="comparison-header">
+      <h2>Comparison Results</h2>
+      <button class="btn btn-outline" (click)="clearComparison()">Back to Catalog</button>
+    </div>
+
+    <div class="comparison-table-wrapper">
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th *ngFor="let p of comparisonResult.products">{{ p.productName }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Type</td>
+            <td *ngFor="let p of comparisonResult.products">{{ p.policyType }}</td>
+          </tr>
+          <tr>
+            <td>Base Premium</td>
+            <td *ngFor="let p of comparisonResult.products" class="highlight">${{ p.premiumAmount }}</td>
+          </tr>
+          <tr>
+            <td>Coverage Limit</td>
+            <td *ngFor="let p of comparisonResult.products">${{ p.coverageLimit | number }}</td>
+          </tr>
+          <tr>
+            <td>Value Score</td>
+            <td *ngFor="let p of comparisonResult.products">{{ p.valueScore | number:'1.0-1' }}/10</td>
+          </tr>
+          <tr>
+            <td>Rating</td>
+            <td *ngFor="let p of comparisonResult.products">
+              <span class="rating-badge {{ p.valueRating | lowercase }}">{{ p.valueRating }}</span>
+            </td>
+          </tr>
+          <tr>
+            <td>Duration</td>
+            <td *ngFor="let p of comparisonResult.products">{{ p.durationMonths }} months</td>
+          </tr>
+          <tr>
+            <td>Cost per Month</td>
+            <td *ngFor="let p of comparisonResult.products">${{ p.costPerMonth | number:'1.0-2' }}</td>
+          </tr>
+          <tr>
+            <td>Action</td>
+            <td *ngFor="let p of comparisonResult.products">
+              <button class="btn btn-primary w-100" (click)="applyForProduct(p.id)">Apply</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="recommendation-panel glass-panel" *ngIf="comparisonResult.bestValueProduct">
+      <h3><i class="fe fe-star"></i> Recommended Plan</h3>
+      <p>Based on coverage value, we recommend <strong>{{ comparisonResult.bestValueProduct.productName }}</strong>.</p>
+    </div>
+  </div>
+</div>

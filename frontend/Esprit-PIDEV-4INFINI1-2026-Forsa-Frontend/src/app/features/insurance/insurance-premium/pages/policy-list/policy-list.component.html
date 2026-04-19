@@ -1,0 +1,97 @@
+<div class="page-head">
+  <div>
+    <h2>Insurance Policies</h2>
+    <p>All client policy applications — approve, review or delete.</p>
+  </div>
+  <a routerLink="/dashboard/insurance/policies/apply">
+    <app-forsa-button>
+      <app-forsa-icon name="plus" [size]="16" /> Apply for Policy
+    </app-forsa-button>
+  </a>
+</div>
+
+@if (loading()) {
+  <div class="state-box"><app-forsa-icon name="history" [size]="32" class="spin" /></div>
+} @else if (error()) {
+  <div class="state-box state-error">
+    <app-forsa-icon name="alert-circle" [size]="28" /><p>{{ error() }}</p>
+    <app-forsa-button variant="outline" (click)="load()">Retry</app-forsa-button>
+  </div>
+} @else if (policies().length === 0) {
+  <div class="state-box">
+    <app-forsa-icon name="layout-dashboard" [size]="48" class="empty-ico" />
+    <p>No policies found.</p>
+    <a routerLink="/dashboard/insurance/policies/apply">
+      <app-forsa-button>Apply for Policy</app-forsa-button>
+    </a>
+  </div>
+} @else {
+  <app-forsa-card [overflowHidden]="true">
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Policy #</th>
+            <th>Product</th>
+            <th>Status</th>
+            <th>Premium</th>
+            <th>Coverage</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Risk</th>
+            <th class="th-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of policies(); track p.id) {
+            <tr>
+              <td class="td-mono">{{ p.policyNumber ?? '—' }}</td>
+              <td>{{ p.insuranceProduct?.productName ?? '—' }}</td>
+              <td>
+                <app-forsa-badge [tone]="statusTone(p.status)">
+                  <app-forsa-icon [name]="statusIcon(p.status)" [size]="12" />
+                  {{ p.status }}
+                </app-forsa-badge>
+              </td>
+              <td>{{ (p.finalPremium ?? p.premiumAmount) | number:'1.2-2' }} TND</td>
+              <td>{{ p.coverageLimit | number:'1.0-0' }} TND</td>
+              <td>{{ p.startDate | date:'dd/MM/yyyy' }}</td>
+              <td>{{ p.endDate | date:'dd/MM/yyyy' }}</td>
+              <td>
+                @if (p.riskCategory) {
+                  <app-forsa-badge
+                    [tone]="p.riskCategory === 'LOW_RISK' ? 'success' : p.riskCategory === 'HIGH_RISK' ? 'danger' : 'warning'">
+                    {{ p.riskCategory }}
+                  </app-forsa-badge>
+                } @else { — }
+              </td>
+              <td>
+                <div class="row-actions">
+                  <a [routerLink]="['/dashboard/insurance/policies', p.id]">
+                    <app-forsa-button variant="ghost" size="sm">
+                      <app-forsa-icon name="eye" [size]="14" />
+                    </app-forsa-button>
+                  </a>
+                  @if (p.status === 'PENDING') {
+                    <app-forsa-button variant="ghost" size="sm" extraClass="btn-success"
+                      [disabled]="reviewingId() === p.id" (click)="approve(p.id!)">
+                      <app-forsa-icon name="check-circle-2" [size]="14" />
+                    </app-forsa-button>
+                    <app-forsa-button variant="ghost" size="sm" extraClass="btn-danger"
+                      [disabled]="reviewingId() === p.id" (click)="reject(p.id!)">
+                      <app-forsa-icon name="alert-circle" [size]="14" />
+                    </app-forsa-button>
+                  }
+                  <app-forsa-button variant="ghost" size="sm" extraClass="btn-danger"
+                    [disabled]="deletingId() === p.id" (click)="delete(p.id!)">
+                    <app-forsa-icon name="shield-alert" [size]="14" />
+                  </app-forsa-button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </app-forsa-card>
+}

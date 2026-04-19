@@ -1,0 +1,70 @@
+<div class="page-head">
+  <div><h2>Insurance Claims</h2><p>Track and process all client insurance claims.</p></div>
+  <a routerLink="/dashboard/insurance/claims/new">
+    <app-forsa-button><app-forsa-icon name="plus" [size]="16" /> New Claim</app-forsa-button>
+  </a>
+</div>
+
+@if (loading()) {
+  <div class="state-box"><app-forsa-icon name="history" [size]="32" class="spin" /></div>
+} @else if (error()) {
+  <div class="state-box state-error">
+    <app-forsa-icon name="alert-circle" [size]="28" /><p>{{ error() }}</p>
+    <app-forsa-button variant="outline" (click)="load()">Retry</app-forsa-button>
+  </div>
+} @else if (claims().length === 0) {
+  <div class="state-box">
+    <app-forsa-icon name="alert-circle" [size]="48" class="empty-ico" /><p>No claims found.</p>
+    <a routerLink="/dashboard/insurance/claims/new"><app-forsa-button>Submit First Claim</app-forsa-button></a>
+  </div>
+} @else {
+  <app-forsa-card [overflowHidden]="true">
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Claim #</th>
+            <th>Policy</th>
+            <th>Status</th>
+            <th>Claim Amount</th>
+            <th>Approved</th>
+            <th>Indemnif. Paid</th>
+            <th>Incident Date</th>
+            <th class="th-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of claims(); track c.id) {
+            <tr>
+              <td class="td-mono">{{ c.claimNumber ?? '—' }}</td>
+              <td class="td-mono">{{ c.insurancePolicy?.policyNumber ?? '—' }}</td>
+              <td>
+                <app-forsa-badge [tone]="statusTone(c.status)">
+                  <app-forsa-icon [name]="statusIcon(c.status)" [size]="12" />{{ c.status }}
+                </app-forsa-badge>
+              </td>
+              <td>{{ (c.claimAmount ?? 0) | number:'1.2-2' }} TND</td>
+              <td>{{ (c.approvedAmount ?? 0) | number:'1.2-2' }} TND</td>
+              <td>{{ (c.indemnificationPaid ?? 0) | number:'1.2-2' }} TND</td>
+              <td>{{ c.incidentDate | date:'dd/MM/yyyy' }}</td>
+              <td>
+                <div class="row-actions">
+                  <a [routerLink]="['/dashboard/insurance/claims', c.id]">
+                    <app-forsa-button variant="ghost" size="sm"><app-forsa-icon name="eye" [size]="14" /></app-forsa-button>
+                  </a>
+                  <a [routerLink]="['/dashboard/insurance/claims', c.id, 'edit']">
+                    <app-forsa-button variant="ghost" size="sm"><app-forsa-icon name="settings" [size]="14" /></app-forsa-button>
+                  </a>
+                  <app-forsa-button variant="ghost" size="sm" extraClass="btn-danger"
+                    [disabled]="deletingId() === c.id" (click)="delete(c.id!)">
+                    <app-forsa-icon name="shield-alert" [size]="14" />
+                  </app-forsa-button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </app-forsa-card>
+}

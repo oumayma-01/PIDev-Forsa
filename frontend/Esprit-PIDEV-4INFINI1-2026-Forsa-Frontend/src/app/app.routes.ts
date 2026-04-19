@@ -47,7 +47,7 @@ export const routes: Routes = [
       },
       { path: 'credit', component: CreditListComponent },
       { path: 'wallet', component: WalletOverviewComponent },
-      { path: 'insurance', component: InsuranceProductsComponent },
+      { path: 'insurance', loadChildren: () => import('./features/insurance/insurance.routes').then(m => m.insuranceRoutes) },
       { path: 'feedback', component: FeedbackListComponent },
       { path: 'partenariat', component: PartenariatListComponent },
       { path: 'scoring', component: ScoringWorkbenchComponent },

@@ -1,0 +1,89 @@
+<div class="portal-container">
+  <div class="header-section">
+    <button routerLink="/dashboard/insurance/client" class="back-btn glass-btn">
+      <i class="fe fe-arrow-left"></i> Back to Hub
+    </button>
+    <h1>My Claims</h1>
+    <p>Track your insurance claims and submit new incident reports.</p>
+    <button class="btn btn-primary mt-3" (click)="toggleForm()">
+      <i class="fe" [ngClass]="showForm ? 'fe-x' : 'fe-plus'"></i>
+      {{ showForm ? 'Cancel Claim Submission' : 'File New Claim' }}
+    </button>
+  </div>
+
+  <div *ngIf="showForm" class="claim-form-section glass-panel animation-fade-in mb-4">
+    <h2><i class="fe fe-file-text"></i> Submit a New Claim</h2>
+    <form [formGroup]="claimForm" (ngSubmit)="submitClaim()">
+      <div formGroupName="insurancePolicy">
+        <div class="form-group">
+          <label>Policy ID</label>
+          <input type="number" formControlName="id" class="form-control" placeholder="Enter the ID of the policy this claim applies to" />
+          <small class="text-muted">You can find this in the 'My Policies' tab.</small>
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date of Incident</label>
+          <input type="date" formControlName="incidentDate" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>Estimated Claim Amount ($)</label>
+          <input type="number" formControlName="claimAmount" class="form-control" placeholder="0.00" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Description of Incident</label>
+        <textarea formControlName="description" class="form-control" rows="4" placeholder="Detail what happened..."></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100 mt-2" [disabled]="claimForm.invalid || isSubmitting">
+        <span *ngIf="isSubmitting" class="spinner-sm"></span>
+        Submit Claim Request
+      </button>
+    </form>
+  </div>
+
+  <div *ngIf="isLoading && !showForm" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading your claims...</p>
+  </div>
+
+  <div *ngIf="!isLoading && claims.length === 0 && !showForm" class="empty-state glass-panel">
+    <i class="fe fe-folder"></i>
+    <h3>No Claims Found</h3>
+    <p>You haven't filed any claims yet.</p>
+  </div>
+
+  <div *ngIf="!isLoading && claims.length > 0 && !showForm" class="claims-list">
+    <div *ngFor="let c of claims" class="claim-card glass-panel flex-row justify-between align-center">
+      
+      <div class="claim-info">
+        <h3 class="m-0 text-xl font-bold">Claim Ref: #{{ c.claimNumber || 'Pending Assignment' }}</h3>
+        <p class="text-sm text-muted mb-2">Policy: {{ c.insurancePolicy?.policyNumber || c.insurancePolicy?.id }}</p>
+        
+        <p class="description">{{ c.description }}</p>
+        
+        <div class="claim-meta mt-3">
+          <span><i class="fe fe-calendar"></i> Incident: {{ c.incidentDate | date:'mediumDate' }}</span>
+          <span><i class="fe fe-calendar"></i> Filed: {{ c.claimDate | date:'mediumDate' }}</span>
+        </div>
+      </div>
+
+      <div class="claim-status-block flex-column align-end">
+        <span class="status-badge" [ngClass]="c.status | lowercase">{{ c.status }}</span>
+        <div class="claim-amount mt-2">
+          Requested: <strong>${{ c.claimAmount | number:'1.2-2' }}</strong>
+        </div>
+        <div class="approved-amount mt-1 text-success" *ngIf="c.approvedAmount">
+          Approved: <strong>${{ c.approvedAmount | number:'1.2-2' }}</strong>
+        </div>
+        <div class="paid-amount mt-1 text-primary" *ngIf="c.indemnificationPaid">
+          Paid: <strong>${{ c.indemnificationPaid | number:'1.2-2' }}</strong>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

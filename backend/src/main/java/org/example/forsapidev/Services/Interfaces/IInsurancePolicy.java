@@ -14,6 +14,7 @@ public interface IInsurancePolicy {
     public void removeInsurancePolicy(Long policyId);
     public InsurancePolicy modifyInsurancePolicy(InsurancePolicy policy);
     public InsurancePolicy affectClaimsToPolicy(List<Long> claimIds, Long policyId);
+    public List<InsurancePolicy> retrieveMyPolicies(Long userId);
 
     // NEW METHODS - with throws Exception
     InsurancePolicy clientSubmitApplication(InsurancePolicyApplicationDTO application, Long userId) throws Exception;

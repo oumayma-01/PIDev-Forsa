@@ -1,0 +1,26 @@
+<div class="page-head">
+  <h2>Insurance Management</h2>
+  <p>Full lifecycle management — products, policies, claims and premium payments.</p>
+</div>
+
+<div class="hub-grid">
+  @for (mod of modules; track mod.route) {
+    <a [routerLink]="mod.route" class="hub-link">
+      <app-forsa-card class="hub-card">
+        <div class="hub-inner">
+          <div class="hub-ico" [attr.data-tone]="mod.tone">
+            <app-forsa-icon [name]="$any(mod.icon)" [size]="28" />
+          </div>
+          <div class="hub-text">
+            <h3>{{ mod.title }}</h3>
+            <p class="text-muted">{{ mod.description }}</p>
+          </div>
+          <div class="hub-cta">
+            <span>{{ mod.stats }}</span>
+            <app-forsa-icon name="arrow-right" [size]="16" />
+          </div>
+        </div>
+      </app-forsa-card>
+    </a>
+  }
+</div>

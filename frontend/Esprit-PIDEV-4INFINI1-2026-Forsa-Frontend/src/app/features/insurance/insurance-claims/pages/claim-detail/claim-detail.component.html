@@ -1,0 +1,68 @@
+<div class="page-head">
+  <div>
+    <h2>Claim Detail</h2>
+    <p>Detailed view of an insurance claim.</p>
+  </div>
+  <div class="head-actions">
+    <a routerLink="/dashboard/insurance/claims">
+      <app-forsa-button variant="outline">Back</app-forsa-button>
+    </a>
+    @if (claim()) {
+      <a [routerLink]="['/dashboard/insurance/claims', claim()!.id, 'edit']">
+        <app-forsa-button><app-forsa-icon name="settings" [size]="16" /> Edit</app-forsa-button>
+      </a>
+    }
+  </div>
+</div>
+
+@if (loading()) {
+  <div class="state-box"><app-forsa-icon name="history" [size]="32" class="spin" /></div>
+} @else if (error()) {
+  <div class="state-box state-error"><app-forsa-icon name="alert-circle" [size]="28" /><p>{{ error() }}</p></div>
+} @else { @if (claim(); as c) {
+  <div class="detail-grid">
+    <app-forsa-card>
+      <div class="card-pad">
+        <div class="detail-header">
+          <div>
+            <h3>Claim #{{ c.claimNumber }}</h3>
+            <p class="text-muted">Policy: {{ c.insurancePolicy?.policyNumber ?? 'N/A' }}</p>
+          </div>
+          <app-forsa-badge [tone]="statusTone(c.status)">
+            {{ c.status }}
+          </app-forsa-badge>
+        </div>
+        <p class="desc">{{ c.description || 'No description provided.' }}</p>
+      </div>
+    </app-forsa-card>
+
+    <app-forsa-card>
+      <div class="card-pad">
+        <h4 class="section-title">Claim Data</h4>
+        <div class="stat-grid">
+          <div class="stat">
+            <span class="lbl">Claim Date</span>
+            <span class="val">{{ c.claimDate | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+          <div class="stat">
+            <span class="lbl">Incident Date</span>
+            <span class="val">{{ c.incidentDate | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <div class="stat">
+            <span class="lbl">Claim Amount</span>
+            <span class="val">{{ c.claimAmount | number:'1.2-2' }} TND</span>
+          </div>
+          <div class="stat">
+            <span class="lbl">Approved Amount</span>
+            <span class="val">{{ (c.approvedAmount ?? 0) | number:'1.2-2' }} TND</span>
+          </div>
+          <div class="stat">
+            <span class="lbl">Indemnification Paid</span>
+            <span class="val">{{ (c.indemnificationPaid ?? 0) | number:'1.2-2' }} TND</span>
+          </div>
+        </div>
+      </div>
+    </app-forsa-card>
+  </div>
+}
+}
