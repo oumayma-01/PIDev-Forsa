@@ -30,6 +30,12 @@ public class FeedbackService implements IFeedbackService {
     }
 
     @Override
+    public List<Feedback> getFeedbacksByUsername(String username) {
+        if (username == null || username.isBlank()) return Collections.emptyList();
+        return feedbackRepository.findByComplaintUserUsername(username);
+    }
+
+    @Override
     public Feedback addFeedback(Feedback f) {
         if (f == null) return null;
         return feedbackRepository.save(f);
@@ -77,23 +83,42 @@ public class FeedbackService implements IFeedbackService {
 
     @Override
     public List<Map<String, Object>> getAvgRatingByCategory() {
-        Map<String, Double> avgBySat = feedbackRepository.findAll().stream()
+        List<Feedback> all = feedbackRepository.findAll().stream()
                 .filter(f -> f.getRating() != null)
-                .collect(Collectors.groupingBy(
-                        f -> (f.getSatisfactionLevel() == null || f.getSatisfactionLevel().isBlank())
-                                ? "UNKNOWN"
-                                : f.getSatisfactionLevel(),
-                        Collectors.averagingInt(Feedback::getRating)
-                ));
+                .toList();
 
-        List<Map<String, Object>> res = new ArrayList<>();
-        avgBySat.forEach((k, v) -> {
+        Map<String, List<Integer>> grouped = new LinkedHashMap<>();
+        grouped.put("VERY_SATISFIED", new ArrayList<>());
+        grouped.put("SATISFIED", new ArrayList<>());
+        grouped.put("NEUTRAL", new ArrayList<>());
+        grouped.put("DISSATISFIED", new ArrayList<>());
+        grouped.put("VERY_DISSATISFIED", new ArrayList<>());
+
+        for (Feedback f : all) {
+            String level;
+            if (f.getSatisfactionLevel() != null && !f.getSatisfactionLevel().isBlank()) {
+                level = f.getSatisfactionLevel();
+            } else {
+                int r = f.getRating();
+                if (r >= 5) level = "VERY_SATISFIED";
+                else if (r == 4) level = "SATISFIED";
+                else if (r == 3) level = "NEUTRAL";
+                else if (r == 2) level = "DISSATISFIED";
+                else level = "VERY_DISSATISFIED";
+            }
+            grouped.getOrDefault(level, grouped.get("NEUTRAL")).add(f.getRating());
+        }
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        grouped.forEach((key, ratings) -> {
             Map<String, Object> row = new LinkedHashMap<>();
-            row.put("group", k);
-            row.put("avgRating", v);
-            res.add(row);
+            row.put("group", key);
+            double avg = ratings.isEmpty() ? 0.0 :
+                    ratings.stream().mapToInt(Integer::intValue).average().orElse(0.0);
+            row.put("avgRating", Math.round(avg * 10.0) / 10.0);
+            result.add(row);
         });
-        return res;
+        return result;
     }
 
     @Override

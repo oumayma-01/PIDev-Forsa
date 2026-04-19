@@ -8,6 +8,7 @@ import java.util.Map;
 public interface IFeedbackService {
     List<Feedback> retrieveAllFeedbacks();
     Feedback retrieveFeedback(Long feedbackId);
+    List<Feedback> getFeedbacksByUsername(String username);
     Feedback addFeedback(Feedback f);
     void removeFeedback(Long feedbackId);
     Feedback modifyFeedback(Feedback feedback);

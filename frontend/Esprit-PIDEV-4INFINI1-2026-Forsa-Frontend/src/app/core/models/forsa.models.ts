@@ -36,14 +36,7 @@ export interface InsurancePolicy {
   endDate: string;
 }
 
-export interface Complaint {
-  id: string;
-  subject: string;
-  description: string;
-  status: 'open' | 'in-progress' | 'resolved';
-  priority: 'high' | 'medium' | 'low';
-  date: string;
-}
+
 
 /** Mirrors the backend `Partner` entity for `GET/POST /api/partners`. */
 export type PartnerType =
@@ -149,4 +142,50 @@ export interface ScoringClientDemo {
   clientName: string;
   latestScore: ScoreResult;
   sampleLoanRisk: RiskMetrics;
+}
+// ===== ENUMS =====
+export type Category = 'TECHNICAL' | 'FINANCE' | 'SUPPORT' | 'FRAUD' | 'ACCOUNT' | 'CREDIT' | 'OTHER';
+export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type ComplaintStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED' | 'REJECTED';
+export type SatisfactionLevel = 'VERY_SATISFIED' | 'SATISFIED' | 'NEUTRAL' | 'DISSATISFIED' | 'VERY_DISSATISFIED';
+export type ResponseStatus = 'PENDING' | 'PROCESSED' | 'SENT' | 'FAILED';
+
+// ===== FEEDBACK =====
+export interface Feedback {
+  id?: number;
+  rating: number;
+  comment?: string;
+  satisfactionLevel?: SatisfactionLevel;
+  createdAt?: string;
+  isAnonymous: boolean;
+  complaint?: ComplaintBackend;
+}
+
+// ===== COMPLAINT =====
+export interface ComplaintBackend {
+  id?: number;
+  subject: string;
+  description: string;
+  category?: Category;
+  status?: ComplaintStatus;
+  createdAt?: string;
+  priority?: Priority;
+}
+
+// ===== RESPONSE =====
+export interface ComplaintResponse {
+  id?: number;
+  message: string;
+  responderRole: string;
+  responderName: string;
+  responseDate?: string;
+  responseStatus?: ResponseStatus;
+  complaint?: ComplaintBackend;
+}
+
+// ===== CHATBOT =====
+export interface ChatMessage {
+  role: 'user' | 'bot';
+  content: string;
+  timestamp?: Date;
 }

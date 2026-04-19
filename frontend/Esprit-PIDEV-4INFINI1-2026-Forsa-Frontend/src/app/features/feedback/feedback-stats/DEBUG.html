@@ -1,0 +1,69 @@
+<div class="debug-section">
+  <h3>🔧 DEBUG: API Response Data</h3>
+
+  <div class="debug-box">
+    <h4>📊 Summary Report (Raw JSON):</h4>
+    <pre>{{ summaryReport | json }}</pre>
+  </div>
+
+  <div class="debug-box">
+    <h4>📂 Stats by Category (Raw JSON):</h4>
+    <pre>{{ statsByCategory | json }}</pre>
+  </div>
+
+  <div class="debug-box">
+    <h4>⭐ Stats by Priority (Raw JSON):</h4>
+    <pre>{{ statsByPriority | json }}</pre>
+  </div>
+
+  <div class="debug-box">
+    <h4>📝 Feedback Summary (Raw JSON):</h4>
+    <pre>{{ feedbackSummary | json }}</pre>
+  </div>
+
+  <div class="debug-box">
+    <h4>⭐ Avg Rating by Category (Raw JSON):</h4>
+    <pre>{{ avgRatingByCategory | json }}</pre>
+  </div>
+</div>
+
+<style>
+  .debug-section {
+    margin-top: 40px;
+    padding: 20px;
+    background: #1a1a1a;
+    border: 2px solid #ff0000;
+    border-radius: 8px;
+  }
+
+  .debug-section h3 {
+    color: #ff0000;
+    margin-top: 0;
+  }
+
+  .debug-box {
+    margin: 16px 0;
+    padding: 12px;
+    background: #0d0d0d;
+    border-left: 3px solid #ff6b6b;
+    border-radius: 4px;
+  }
+
+  .debug-box h4 {
+    margin: 0 0 8px 0;
+    color: #ffd700;
+    font-size: 12px;
+  }
+
+  pre {
+    margin: 0;
+    background: #000;
+    padding: 10px;
+    border-radius: 4px;
+    overflow-x: auto;
+    color: #0f0;
+    font-size: 11px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+</style>

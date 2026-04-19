@@ -8,6 +8,8 @@ import org.example.forsapidev.Services.Interfaces.IFeedbackService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
@@ -20,12 +22,12 @@ import java.util.*;
 @RequiredArgsConstructor
 public class FeedbackController {
 
-    private final IFeedbackService feedbackService;
+    private final IFeedbackService FeedbackService;
 
     @PreAuthorize("hasAnyRole('AGENT','ADMIN')")
     @GetMapping("/retrieve-all-feedbacks")
     public ResponseEntity<List<Feedback>> getFeedbacks() {
-        List<Feedback> feedbacks = feedbackService.retrieveAllFeedbacks();
+        List<Feedback> feedbacks = FeedbackService.retrieveAllFeedbacks();
         return ResponseEntity.ok(feedbacks);
     }
 
@@ -33,7 +35,7 @@ public class FeedbackController {
     @GetMapping("/retrieve-feedback/{feedback-id}")
     public ResponseEntity<Feedback> retrieveFeedback(
             @PathVariable("feedback-id") Long fId) {
-        Feedback feedback = feedbackService.retrieveFeedback(fId);
+        Feedback feedback = FeedbackService.retrieveFeedback(fId);
         if (feedback == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
@@ -41,9 +43,15 @@ public class FeedbackController {
     }
 
     @PreAuthorize("hasRole('CLIENT')")
+    @GetMapping("/my-feedbacks")
+    public ResponseEntity<List<Feedback>> getMyFeedbacks(@AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(FeedbackService.getFeedbacksByUsername(userDetails.getUsername()));
+    }
+
+    @PreAuthorize("hasRole('CLIENT')")
     @PostMapping("/add-feedback")
     public ResponseEntity<Feedback> addFeedback(@Valid @RequestBody Feedback f) {
-        Feedback saved = feedbackService.addFeedback(f);
+        Feedback saved = FeedbackService.addFeedback(f);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
@@ -51,34 +59,34 @@ public class FeedbackController {
     @DeleteMapping("/remove-feedback/{feedback-id}")
     public ResponseEntity<Void> removeFeedback(
             @PathVariable("feedback-id") Long fId) {
-        feedbackService.removeFeedback(fId);
+        FeedbackService.removeFeedback(fId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     @PreAuthorize("hasRole('CLIENT')")
     @PutMapping("/modify-feedback")
     public ResponseEntity<Feedback> modifyFeedback(@Valid @RequestBody Feedback f) {
-        Feedback updated = feedbackService.modifyFeedback(f);
+        Feedback updated = FeedbackService.modifyFeedback(f);
         return ResponseEntity.ok(updated);
     }
 
     @PreAuthorize("hasAnyRole('AGENT','ADMIN')")
     @GetMapping("/report/summary")
     public ResponseEntity<Map<String, Object>> feedbackSummaryReport() {
-        return ResponseEntity.ok(feedbackService.getFeedbackSummaryReport());
+        return ResponseEntity.ok(FeedbackService.getFeedbackSummaryReport());
     }
 
     @PreAuthorize("hasAnyRole('AGENT','ADMIN')")
     @GetMapping("/report/trends")
     public ResponseEntity<List<Map<String, Object>>> feedbackTrends(
             @RequestParam(defaultValue = "6") int months) {
-        return ResponseEntity.ok(feedbackService.getFeedbackTrendsLastMonths(months));
+        return ResponseEntity.ok(FeedbackService.getFeedbackTrendsLastMonths(months));
     }
 
     @PreAuthorize("hasAnyRole('AGENT','ADMIN')")
     @GetMapping("/report/avg-rating-by-category")
     public ResponseEntity<List<Map<String, Object>>> avgRatingByCategory() {
-        return ResponseEntity.ok(feedbackService.getAvgRatingByCategory());
+        return ResponseEntity.ok(FeedbackService.getAvgRatingByCategory());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -107,7 +115,7 @@ public class FeedbackController {
     @PreAuthorize("hasRole('CLIENT')")
     @PostMapping("/add-feedback-ai")
     public ResponseEntity<Feedback> addFeedbackWithAI(@Valid @RequestBody Feedback f) {
-        Feedback saved = feedbackService.addFeedbackWithAI(f);
+        Feedback saved = FeedbackService.addFeedbackWithAI(f);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 }

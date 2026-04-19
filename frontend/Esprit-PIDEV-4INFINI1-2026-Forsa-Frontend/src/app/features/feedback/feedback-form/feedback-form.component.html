@@ -1,0 +1,103 @@
+<div class="page-toolbar">
+  <div class="page-head">
+    <h2>{{ isEditMode ? 'Edit Feedback' : 'Share Your Feedback' }}</h2>
+    <p>{{ isEditMode ? 'Update your feedback' : 'Help us improve our services' }}</p>
+  </div>
+</div>
+
+@if (error) {
+  <div class="form-error">{{ error }}</div>
+}
+
+@if (loading && isEditMode) {
+  <div class="form-loading">
+    <app-forsa-icon name="zap" [size]="20" />
+    Loading feedback...
+  </div>
+}
+
+<app-forsa-card>
+  <div class="card-pad-lg">
+    <!-- Star Rating -->
+    <div class="form-group">
+      <label class="forsa-label">Rating *</label>
+      <div class="star-rating">
+        @for (star of getRatingStars(5); track star) {
+          <button
+            class="star-btn"
+            [class]="getStarClass(star)"
+            (click)="setRating(star)"
+            type="button"
+          >
+            <app-forsa-icon name="heart" [size]="32" />
+          </button>
+        }
+      </div>
+      <p class="rating-text">{{ feedback.rating || 0 }} / 5</p>
+    </div>
+
+    <!-- Comment -->
+    <div class="form-group">
+      <label class="forsa-label">Comment (max 500 characters)</label>
+      <textarea
+        forsaInput
+        [(ngModel)]="feedback.comment"
+        placeholder="Tell us what you think (optional)"
+        rows="5"
+      ></textarea>
+      <p class="char-count">{{ (feedback.comment || '').length }} / 500</p>
+    </div>
+
+    <!-- Satisfaction Level — hidden if useAI -->
+    @if (!useAI || isEditMode) {
+      <div class="form-group">
+        <label class="forsa-label">How satisfied are you?</label>
+        <select forsaInput [(ngModel)]="feedback.satisfactionLevel">
+          @for (level of satisfactionLevels; track level) {
+            <option [value]="level">{{ level }}</option>
+          }
+        </select>
+      </div>
+    }
+
+    <!-- Anonymous toggle -->
+    <div class="form-group">
+      <label class="checkbox-label">
+        <input type="checkbox" [(ngModel)]="feedback.isAnonymous" />
+        <span>Submit as anonymous</span>
+      </label>
+    </div>
+
+    <!-- Use AI toggle — add mode only -->
+    @if (!isEditMode) {
+      <div class="form-ai-toggle">
+        <label class="ai-label">
+          <input type="checkbox" [(ngModel)]="useAI" />
+          <app-forsa-icon name="sparkles" [size]="16" />
+          <span>Use AI to determine satisfaction level</span>
+        </label>
+      </div>
+    }
+
+    <!-- Actions -->
+    <div class="form-actions">
+      @if (isEditMode) {
+        <app-forsa-button variant="outline" (clicked)="remove()">
+          Delete
+        </app-forsa-button>
+      }
+      <app-forsa-button variant="outline" (clicked)="cancel()">
+        Cancel
+      </app-forsa-button>
+      <app-forsa-button (clicked)="save()" [disabled]="loading">
+        @if (loading) {
+          <app-forsa-icon name="zap" [size]="16" />
+          Saving...
+        } @else {
+          <app-forsa-icon name="check-circle-2" [size]="16" />
+          {{ isEditMode ? 'Update Feedback' : 'Submit Feedback' }}
+        }
+      </app-forsa-button>
+    </div>
+  </div>
+</app-forsa-card>
