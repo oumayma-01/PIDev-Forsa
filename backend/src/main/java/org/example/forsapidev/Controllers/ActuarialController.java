@@ -99,6 +99,7 @@ public class ActuarialController {
             );
 
             // 3. Build complete quote
+            premiumResult.setPeriodicPayment(amortization.getPeriodicPayment());
             InsuranceCompleteQuoteDTO quote = new InsuranceCompleteQuoteDTO();
             quote.setPremiumDetails(premiumResult);
             quote.setAmortizationSchedule(amortization);

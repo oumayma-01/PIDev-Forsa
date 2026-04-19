@@ -11,6 +11,7 @@ import java.util.List;
 @AllArgsConstructor
 @SecurityRequirement(name = "Bearer Authentication")
 @RequestMapping("/api/insurance-claim")
+@CrossOrigin(origins = "*")
 public class InsuranceClaimController {
 
     IInsuranceClaim insuranceClaimService;
@@ -19,6 +20,16 @@ public class InsuranceClaimController {
     public List<InsuranceClaim> retrieveAllInsuranceClaims() {
         List<InsuranceClaim> claims = insuranceClaimService.retrieveAllInsuranceClaims();
         return claims;
+    }
+
+    @GetMapping("/my-claims")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('CLIENT')")
+    public List<InsuranceClaim> retrieveMyClaims() {
+        org.springframework.security.core.Authentication authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) return null;
+        org.example.forsapidev.security.services.UserDetailsImpl userDetails = (org.example.forsapidev.security.services.UserDetailsImpl) authentication.getPrincipal();
+        // Since we don't have UserRepository here, we can just use the user ID from UserDetailsImpl
+        return insuranceClaimService.retrieveMyClaims(userDetails.getId());
     }
 
     @PostMapping("/add-insurance-claim")

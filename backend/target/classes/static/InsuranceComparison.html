@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insurance Product Comparison - Forsa</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .selection-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .selection-title {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .product-checkbox {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .product-checkbox:hover {
+            border-color: #667eea;
+            background: #f5f7ff;
+        }
+
+        .product-checkbox.selected {
+            border-color: #667eea;
+            background: #e8ecff;
+        }
+
+        .product-checkbox input[type="checkbox"] {
+            margin-right: 10px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .product-details {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #38a169;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            opacity: 0.6;
+        }
+
+        .comparison-result {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: none;
+        }
+
+        .result-header {
+            margin-bottom: 25px;
+        }
+
+        .result-title {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .summary-box {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 20px;
+        }
+
+        .summary-text {
+            color: #666;
+            line-height: 1.6;
+            margin-top: 10px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+
+        .comparison-table table {
+            width: 100%;
+            min-width: 700px;
+            border-collapse: collapse;
+        }
+
+        .comparison-table th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .comparison-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .comparison-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .badge-best {
+            background: #48bb78;
+            color: white;
+        }
+
+        .badge-good {
+            background: #4299e1;
+            color: white;
+        }
+
+        .badge-standard {
+            background: #ed8936;
+            color: white;
+        }
+
+        .highlight-column {
+            background: #fff5e6 !important;
+            border-left: 3px solid #ffa500;
+            border-right: 3px solid #ffa500;
+        }
+
+        .best-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .best-option-card {
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            text-align: center;
+        }
+
+        .best-option-card.best-value {
+            border-color: #48bb78;
+            background: #f0fff4;
+        }
+
+        .best-option-card.lowest-premium {
+            border-color: #4299e1;
+            background: #ebf8ff;
+        }
+
+        .best-option-card.highest-coverage {
+            border-color: #9f7aea;
+            background: #faf5ff;
+        }
+
+        .option-label {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #666;
+        }
+
+        .option-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+            font-size: 18px;
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .product-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>🔍 Insurance Product Comparison</h1>
+        <p class="subtitle">Compare insurance products side-by-side to find the best option</p>
+    </header>
+
+    <div class="selection-card">
+        <div class="selection-title">Step 1: Select 2 or 3 Products to Compare</div>
+        <div id="productGrid" class="product-grid">
+            <div class="loading">Loading available products...</div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn btn-primary" id="compareBtn" onclick="compareProducts()" disabled>
+                Compare Selected Products
+            </button>
+            <button class="btn btn-secondary" id="downloadBtn" onclick="downloadPdf()" disabled style="display: none;">
+                📄 Download as PDF
+            </button>
+        </div>
+
+        <div id="errorMessage" class="error"></div>
+    </div>
+
+    <div class="comparison-result" id="comparisonResult">
+        <div class="result-header">
+            <div class="result-title">Comparison Results</div>
+            <div class="summary-box">
+                <strong>💡 Recommendation:</strong>
+                <p class="summary-text" id="summaryText"></p>
+            </div>
+        </div>
+
+        <div class="best-options" id="bestOptions"></div>
+
+        <div class="comparison-table">
+            <table id="comparisonTable"></table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // API configuration
+    const API_BASE_URL = 'http://localhost:8089/api/product-comparison';
+
+    // State variables
+    let selectedProducts = [];
+    let allProducts = [];
+    let currentComparison = null;
+
+    // Load products when page loads
+    document.addEventListener('DOMContentLoaded', loadProducts);
+
+    // Load all products from API
+    async function loadProducts() {
+        try {
+            const url = `${API_BASE_URL}/products`;
+            console.log('Fetching products from:', url);
+
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            console.log('Response status:', response.status);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            allProducts = await response.json();
+            console.log('Products loaded:', allProducts);
+
+            displayProducts(allProducts);
+
+        } catch (error) {
+            console.error('Error loading products:', error);
+            document.getElementById('productGrid').innerHTML = `
+                <div style="grid-column: 1/-1; text-align: center; color: #c53030; padding: 30px;">
+                    <h3>❌ Error Loading Products</h3>
+                    <p>${error.message}</p>
+                    <p>Please make sure the backend server is running on port 8089</p>
+                    <button onclick="loadProducts()" style="margin-top: 15px; padding: 8px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        Retry
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    // Display products in grid
+    function displayProducts(products) {
+        const grid = document.getElementById('productGrid');
+
+        if (!products || products.length === 0) {
+            grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 30px;">No products available</p>';
+            return;
+        }
+
+        grid.innerHTML = '';
+        products.forEach(product => {
+            const productDiv = document.createElement('div');
+            productDiv.className = 'product-checkbox';
+            productDiv.innerHTML = `
+                <input type="checkbox"
+                       id="product-${product.id}"
+                       value="${product.id}"
+                       onchange="handleProductSelection(${product.id})">
+                <div class="product-info">
+                    <div class="product-name">${product.productName || 'Unnamed Product'}</div>
+                    <div class="product-details">
+                        ${product.policyType || 'N/A'} • $${product.premiumAmount?.toFixed(2) || '0'} premium • $${product.coverageLimit?.toFixed(2) || '0'} coverage
+                    </div>
+                </div>
+            `;
+            grid.appendChild(productDiv);
+        });
+    }
+
+    // Handle product selection
+    function handleProductSelection(productId) {
+        const checkbox = document.getElementById(`product-${productId}`);
+        const container = checkbox.parentElement;
+
+        if (checkbox.checked) {
+            if (selectedProducts.length >= 3) {
+                checkbox.checked = false;
+                showError('You can only compare up to 3 products at once');
+                return;
+            }
+            selectedProducts.push(productId);
+            container.classList.add('selected');
+        } else {
+            selectedProducts = selectedProducts.filter(id => id !== productId);
+            container.classList.remove('selected');
+        }
+
+        updateCompareButton();
+        hideError();
+    }
+
+    // Update compare button state
+    function updateCompareButton() {
+        const compareBtn = document.getElementById('compareBtn');
+        compareBtn.disabled = selectedProducts.length < 2 || selectedProducts.length > 3;
+    }
+
+    // Compare selected products
+    async function compareProducts() {
+        if (selectedProducts.length < 2 || selectedProducts.length > 3) {
+            showError('Please select 2 or 3 products to compare');
+            return;
+        }
+
+        try {
+            const productIdsParam = selectedProducts.join(',');
+            console.log('Comparing products:', productIdsParam);
+
+            const response = await fetch(`${API_BASE_URL}/compare?productIds=${productIdsParam}`);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Comparison failed:', errorText);
+                throw new Error('Comparison failed');
+            }
+
+            currentComparison = await response.json();
+            console.log('Comparison result:', currentComparison);
+
+            // Hide any existing error messages
+            hideError();
+
+            // Display the comparison
+            displayComparison(currentComparison);
+
+            // Show download button
+            document.getElementById('downloadBtn').style.display = 'inline-block';
+            document.getElementById('downloadBtn').disabled = false;
+
+        } catch (error) {
+            console.error('Error comparing products:', error);
+            showError('Error comparing products. Please try again.');
+        }
+    }
+
+    // Display comparison results
+    function displayComparison(comparison) {
+        const resultDiv = document.getElementById('comparisonResult');
+        resultDiv.style.display = 'block';
+        resultDiv.scrollIntoView({ behavior: 'smooth' });
+
+        // Display summary
+        if (comparison.comparisonSummary) {
+            document.getElementById('summaryText').textContent = comparison.comparisonSummary;
+        } else {
+            // Create a summary if not provided
+            const bestProduct = comparison.products?.find(p => p.id === comparison.bestValueProductId);
+            if (bestProduct) {
+                document.getElementById('summaryText').textContent =
+                    `${bestProduct.productName} offers the best value with $${bestProduct.coveragePerDollar?.toFixed(2) || '0'} coverage per dollar spent. ` +
+                    `It provides $${bestProduct.coverageLimit?.toFixed(2)} coverage for $${bestProduct.premiumAmount?.toFixed(2)} premium.`;
+            }
+        }
+
+        displayBestOptions(comparison);
+        displayComparisonTable(comparison);
+    }
+
+    // Display best options cards
+    function displayBestOptions(comparison) {
+        const container = document.getElementById('bestOptions');
+        container.innerHTML = '';
+
+        if (!comparison.products || comparison.products.length === 0) return;
+
+        // Find best value product
+        const bestValue = comparison.products.find(p => p.id === comparison.bestValueProductId);
+        if (bestValue) {
+            container.innerHTML += `
+                <div class="best-option-card best-value">
+                    <div class="option-label">⭐ Best Value</div>
+                    <div class="option-value">${bestValue.productName}</div>
+                </div>
+            `;
+        }
+
+        // Find lowest premium product
+        const lowestPremium = comparison.products.reduce((min, p) =>
+            (!min || p.premiumAmount < min.premiumAmount) ? p : min, null);
+        if (lowestPremium) {
+            container.innerHTML += `
+                <div class="best-option-card lowest-premium">
+                    <div class="option-label">💰 Lowest Premium</div>
+                    <div class="option-value">${lowestPremium.productName}</div>
+                </div>
+            `;
+        }
+
+        // Find highest coverage product
+        const highestCoverage = comparison.products.reduce((max, p) =>
+            (!max || p.coverageLimit > max.coverageLimit) ? p : max, null);
+        if (highestCoverage) {
+            container.innerHTML += `
+                <div class="best-option-card highest-coverage">
+                    <div class="option-label">🛡️ Highest Coverage</div>
+                    <div class="option-value">${highestCoverage.productName}</div>
+                </div>
+            `;
+        }
+    }
+
+    // Display comparison table
+    function displayComparisonTable(comparison) {
+        const table = document.getElementById('comparisonTable');
+        const products = comparison.products || [];
+
+        if (products.length === 0) {
+            table.innerHTML = '<tr><td colspan="2">No products to compare</td></tr>';
+            return;
+        }
+
+        let html = '<thead><tr><th>Feature</th>';
+        products.forEach(product => {
+            const isBestValue = product.id === comparison.bestValueProductId;
+            html += `<th ${isBestValue ? 'class="highlight-column"' : ''}>${product.productName}</th>`;
+        });
+        html += '</tr></thead><tbody>';
+
+        // Define features to display
+        const features = [
+            { label: 'Policy Type', field: 'policyType' },
+            { label: 'Premium Amount', field: 'premiumAmount', format: (v) => `$${v?.toFixed(2) || '0'}` },
+            { label: 'Coverage Limit', field: 'coverageLimit', format: (v) => `$${v?.toFixed(2) || '0'}` },
+            { label: 'Duration', field: 'durationMonths', format: (v) => `${v || 0} months` },
+            { label: 'Cost per Month', field: 'costPerMonth', format: (v) => `$${v?.toFixed(2) || '0'}` },
+            { label: 'Coverage per $1', field: 'coveragePerDollar', format: (v) => `$${v?.toFixed(2) || '0'}` }
+        ];
+
+        features.forEach(feature => {
+            html += '<tr><td><strong>' + feature.label + '</strong></td>';
+            products.forEach(product => {
+                const isBestValue = product.id === comparison.bestValueProductId;
+                let value = product[feature.field];
+
+                if (feature.format) {
+                    value = feature.format(value);
+                }
+
+                html += `<td ${isBestValue ? 'class="highlight-column"' : ''}>${value || 'N/A'}</td>`;
+            });
+            html += '</tr>';
+        });
+
+        // Add value rating row
+        html += '<tr><td><strong>Value Rating</strong></td>';
+        products.forEach(product => {
+            const isBestValue = product.id === comparison.bestValueProductId;
+            let rating = product.valueRating || 'Standard';
+            let badgeClass = 'badge-standard';
+
+            if (rating === 'Best Value') badgeClass = 'badge-best';
+            else if (rating === 'Good Value') badgeClass = 'badge-good';
+
+            html += `<td ${isBestValue ? 'class="highlight-column"' : ''}>
+                <span class="badge ${badgeClass}">${rating}</span>
+            </td>`;
+        });
+        html += '</tr>';
+
+        // Add description row if available
+        if (products.some(p => p.description)) {
+            html += '<tr><td><strong>Description</strong></td>';
+            products.forEach(product => {
+                const isBestValue = product.id === comparison.bestValueProductId;
+                html += `<td ${isBestValue ? 'class="highlight-column"' : ''}>${product.description || 'N/A'}</td>`;
+            });
+            html += '</tr>';
+        }
+
+        html += '</tbody>';
+        table.innerHTML = html;
+    }
+
+    // Download PDF
+    function downloadPdf() {
+        if (!currentComparison || selectedProducts.length < 2) {
+            showError('Please compare products first');
+            return;
+        }
+
+        const productIdsParam = selectedProducts.join(',');
+        window.open(`${API_BASE_URL}/download-pdf?productIds=${productIdsParam}`, '_blank');
+    }
+
+    // Show error message
+    function showError(message) {
+        const errorDiv = document.getElementById('errorMessage');
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+    }
+
+    // Hide error message
+    function hideError() {
+        const errorDiv = document.getElementById('errorMessage');
+        errorDiv.style.display = 'none';
+        errorDiv.textContent = '';
+    }
+</script>
+</body>
+</html>

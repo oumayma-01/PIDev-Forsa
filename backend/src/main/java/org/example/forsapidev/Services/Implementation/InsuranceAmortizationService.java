@@ -26,7 +26,7 @@ public class InsuranceAmortizationService implements IInsuranceAmortizationServi
 
         int periodsPerYear = getPeriodsPerYear(paymentFrequency);
         double periodicRate = annualRate / periodsPerYear;
-        int totalPeriods = (durationMonths / 12) * periodsPerYear;
+        int totalPeriods = Math.max(1, (int) Math.ceil((durationMonths / 12.0) * periodsPerYear));
 
         // Calculate fixed payment using formula: M = P × [r(1+r)^n] / [(1+r)^n - 1]
         BigDecimal fixedPayment = calculateFixedPayment(principal, periodicRate, totalPeriods);

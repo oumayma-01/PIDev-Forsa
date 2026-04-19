@@ -20,6 +20,15 @@ public class PremiumPaymentImp implements IPremiumPayment {
         return premiumPaymentRepository.findAll();
     }
 
+    @Override
+    public List<PremiumPayment> retrieveMyPayments(Long userId) {
+        return premiumPaymentRepository.findAll().stream()
+                .filter(p -> p.getInsurancePolicy() != null 
+                        && p.getInsurancePolicy().getUser() != null 
+                        && p.getInsurancePolicy().getUser().getId().equals(userId))
+                .toList();
+    }
+
     public PremiumPayment retrievePremiumPayment(Long paymentId) {
         return premiumPaymentRepository.findById(paymentId).get();
     }
@@ -33,6 +42,16 @@ public class PremiumPaymentImp implements IPremiumPayment {
     }
 
     public PremiumPayment modifyPremiumPayment(PremiumPayment payment) {
+        if (payment.getId() != null) {
+            PremiumPayment existing = premiumPaymentRepository.findById(payment.getId()).orElse(null);
+            if (existing != null) {
+                existing.setStatus(payment.getStatus());
+                existing.setPaidDate(payment.getPaidDate());
+                existing.setTransactionId(payment.getTransactionId());
+                // The policy relationship (insurancePolicy) is preserved because we're modifying 'existing'
+                return premiumPaymentRepository.save(existing);
+            }
+        }
         return premiumPaymentRepository.save(payment);
     }
 

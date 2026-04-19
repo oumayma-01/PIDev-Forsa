@@ -9,4 +9,6 @@ public interface IInsuranceClaim {
     public InsuranceClaim addInsuranceClaim(InsuranceClaim claim);
     public void removeInsuranceClaim(Long claimId);
     public InsuranceClaim modifyInsuranceClaim(InsuranceClaim claim);
+    public List<InsuranceClaim> retrieveMyClaims(Long userId);
+
 }
