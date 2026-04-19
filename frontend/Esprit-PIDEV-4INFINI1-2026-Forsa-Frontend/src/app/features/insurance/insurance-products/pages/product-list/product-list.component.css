@@ -1,0 +1,60 @@
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.prod-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 768px) { .prod-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1200px) { .prod-grid { grid-template-columns: repeat(3, 1fr); } }
+
+.prod-card { transition: box-shadow 0.2s, transform 0.2s; }
+.prod-card:hover { box-shadow: 0 20px 40px -16px rgb(0 0 0 / 0.12); transform: translateY(-2px); }
+
+.prod-body { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+
+.prod-header { display: flex; align-items: center; gap: 0.875rem; }
+
+.prod-ico {
+  width: 3rem; height: 3rem; border-radius: 0.875rem;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.prod-ico[data-tone='rose']    { background: #ffe4e6; color: #e11d48; }
+.prod-ico[data-tone='emerald'] { background: #d1fae5; color: #047857; }
+.prod-ico[data-tone='amber']   { background: #fef3c7; color: #b45309; }
+.prod-ico[data-tone='blue'],
+.prod-ico[data-tone='info']    { background: var(--color-blue-100); color: var(--color-blue-600); }
+
+.prod-meta h3 { margin: 0 0 0.3rem; font-size: 1rem; }
+
+.prod-desc { margin: 0; font-size: 0.85rem; line-height: 1.5; min-height: 2.5rem; }
+
+.prod-stats {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;
+  background: var(--color-muted); border-radius: 0.75rem; padding: 0.875rem;
+}
+.lbl { display: block; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.07em;
+  text-transform: uppercase; color: var(--color-muted-foreground); }
+.val { display: block; font-weight: 600; font-size: 0.9rem; margin-top: 0.2rem; }
+
+.prod-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+.prod-actions a { text-decoration: none; }
+
+:host ::ng-deep .btn-danger { color: var(--color-destructive) !important; }
+
+/* States */
+.state-box {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1rem; padding: 5rem 2rem; text-align: center; color: var(--color-muted-foreground);
+}
+.state-error { color: var(--color-destructive); }
+.empty-ico { opacity: 0.25; }
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }

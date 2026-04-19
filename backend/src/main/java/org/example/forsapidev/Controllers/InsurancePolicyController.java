@@ -29,6 +29,7 @@ import java.util.List;
 @AllArgsConstructor
 @SecurityRequirement(name = "Bearer Authentication")
 @RequestMapping("/api/insurance-policy")
+@CrossOrigin(origins = "*")
 public class InsurancePolicyController {
 
     IInsurancePolicy insurancePolicyService;
@@ -95,6 +96,19 @@ public class InsurancePolicyController {
     @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
     public List<InsurancePolicy> retrieveAllInsurancePolicies() {
         return insurancePolicyService.retrieveAllInsurancePolicies();
+    }
+
+    @GetMapping("/my-policies")
+    @PreAuthorize("hasRole('CLIENT')")
+    public List<InsurancePolicy> retrieveMyPolicies() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) return null;
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        User connectedUser = userRepository.findByUsername(userDetails.getUsername()).orElse(null);
+        if (connectedUser != null) {
+            return insurancePolicyService.retrieveMyPolicies(connectedUser.getId());
+        }
+        return null;
     }
 
     @GetMapping("/retrieve-insurance-policy/{policy-id}")

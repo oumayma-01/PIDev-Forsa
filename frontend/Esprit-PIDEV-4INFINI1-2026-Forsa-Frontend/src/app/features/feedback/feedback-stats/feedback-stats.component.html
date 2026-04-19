@@ -148,23 +148,69 @@
   </div>
 
   <!-- Average Rating by Category -->
-  @if (avgRatingByCategory) {
-    <div class="stats-section">
-      <h3>Average Rating by Category</h3>
-      <app-forsa-card>
-        <div class="card-pad-lg">
+  <div class="stats-section">
+    <h3>Average Rating by Category</h3>
+    <app-forsa-card>
+      <div class="card-pad-lg">
+        @if (getCategoryKeys().length > 0) {
+          <!-- Ratings Available -->
           <div class="rating-grid">
             @for (category of getCategoryKeys(); track category) {
               <div class="rating-card">
                 <p class="rating-category">{{ category }}</p>
                 <p class="rating-score">
-                  {{ (avgRatingByCategory[category] | number: '1.1-1') ?? 'N/A' }}
+                  {{ (getCategoryRating(category) | number: '1.1-1') }}
                 </p>
               </div>
             }
           </div>
-        </div>
-      </app-forsa-card>
+        } @else {
+          <!-- Ratings Not Available - Show Categories as Placeholder -->
+          <div style="background: var(--color-secondary); padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+            <p style="margin: 0; color: var(--color-muted-foreground); font-size: 13px;">
+              ⚠️ Average ratings by category are not yet available from the backend.
+            </p>
+            <p style="margin: 8px 0 0 0; color: var(--color-muted-foreground); font-size: 12px;">
+              The system is collecting feedback data. Ratings will appear once sufficient feedback is analyzed.
+            </p>
+          </div>
+          <div class="rating-grid">
+            @for (category of getCategoryKeys(); track category) {
+              <div class="rating-card" style="opacity: 0.6;">
+                <p class="rating-category">{{ category }}</p>
+                <p class="rating-score" style="color: var(--color-muted-foreground);">
+                  —
+                </p>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </app-forsa-card>
+  </div>
+
+  <!-- DEBUG SECTION -->
+  <div style="margin-top: 40px; padding: 20px; background: #1a1a1a; border: 2px solid #ff0000; border-radius: 8px;">
+    <h3 style="color: #ff0000; margin-top: 0;">🔧 DEBUG: API Response Data</h3>
+
+    <div style="margin: 16px 0; padding: 12px; background: #0d0d0d; border-left: 3px solid #ff6b6b; border-radius: 4px;">
+      <h4 style="margin: 0 0 8px 0; color: #ffd700; font-size: 12px;">📊 Summary Report (Raw JSON):</h4>
+      <pre style="margin: 0; background: #000; padding: 10px; border-radius: 4px; overflow-x: auto; color: #0f0; font-size: 11px; max-height: 200px; overflow-y: auto;">{{ summaryReport | json }}</pre>
     </div>
-  }
+
+    <div style="margin: 16px 0; padding: 12px; background: #0d0d0d; border-left: 3px solid #ff6b6b; border-radius: 4px;">
+      <h4 style="margin: 0 0 8px 0; color: #ffd700; font-size: 12px;">📂 Stats by Category:</h4>
+      <pre style="margin: 0; background: #000; padding: 10px; border-radius: 4px; overflow-x: auto; color: #0f0; font-size: 11px;">{{ statsByCategory | json }}</pre>
+    </div>
+
+    <div style="margin: 16px 0; padding: 12px; background: #0d0d0d; border-left: 3px solid #ff6b6b; border-radius: 4px;">
+      <h4 style="margin: 0 0 8px 0; color: #ffd700; font-size: 12px;">⭐ Stats by Priority:</h4>
+      <pre style="margin: 0; background: #000; padding: 10px; border-radius: 4px; overflow-x: auto; color: #0f0; font-size: 11px;">{{ statsByPriority | json }}</pre>
+    </div>
+
+    <div style="margin: 16px 0; padding: 12px; background: #0d0d0d; border-left: 3px solid #ff6b6b; border-radius: 4px;">
+      <h4 style="margin: 0 0 8px 0; color: #ffd700; font-size: 12px;">⭐ Avg Rating by Category:</h4>
+      <pre style="margin: 0; background: #000; padding: 10px; border-radius: 4px; overflow-x: auto; color: #0f0; font-size: 11px;">{{ avgRatingByCategory | json }}</pre>
+    </div>
+  </div>
 }

@@ -11,4 +11,6 @@ public interface IPremiumPayment {
     public void removePremiumPayment(Long paymentId);
     public PremiumPayment modifyPremiumPayment(PremiumPayment payment);
     public InsurancePolicy affectPremiumPaymentsToPolicy(List<Long> paymentIds, Long policyId);
+    public List<PremiumPayment> retrieveMyPayments(Long userId);
+
 }

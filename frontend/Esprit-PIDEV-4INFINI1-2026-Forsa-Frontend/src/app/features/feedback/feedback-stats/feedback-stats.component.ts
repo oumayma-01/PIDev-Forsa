@@ -31,7 +31,11 @@ export class FeedbackStatsComponent implements OnInit {
   // Feedback statistics
   feedbackSummary: any = null;
   feedbackTrends: any = null;
-  avgRatingByCategory: any = null;
+  avgRatingByCategory: Record<string, number> = {};
+  private complaintsRaw: any[] = [];
+
+  // Make Object available to template
+  Object = Object;
 
   loading = false;
   error = '';
@@ -59,98 +63,234 @@ export class FeedbackStatsComponent implements OnInit {
 
     this.loading = true;
     this.error = '';
+    console.log('🔄 Loading statistics from backend...');
 
     // Load complaint statistics
     this.complaintService.getSummaryReport().subscribe({
       next: (data) => {
+        console.log('📊 Summary Report received:', data);
         this.summaryReport = data;
       },
-      error: () => {
-        this.error = 'Error loading summary report';
+      error: (err) => {
+        console.error('❌ Error loading summary report:', err);
+        this.error = 'Error loading complaint summary';
       },
     });
 
-    this.complaintService.getTrendsLastMonths(6).subscribe({
+    this.complaintService.getAll().subscribe({
       next: (data) => {
-        this.trendsReport = data;
+        this.complaintsRaw = Array.isArray(data) ? data : [];
+        if (Object.keys(this.avgRatingByCategory).length === 0) {
+          this.applyFallbackCategoryRatings();
+        }
       },
-      error: () => {
-        console.error('Error loading trends');
+      error: (err) => {
+        console.error('Error loading complaints for rating fallback:', err);
       },
     });
 
     this.complaintService.getStatsByCategory().subscribe({
       next: (data) => {
+        console.log('📂 Category Stats received:', data);
         this.statsByCategory = data;
+        this.seedRatingsFromComplaintCategories();
       },
-      error: () => {
-        console.error('Error loading category stats');
+      error: (err) => {
+        console.error('❌ Error loading category stats:', err);
       },
     });
 
     this.complaintService.getStatsByPriority().subscribe({
       next: (data) => {
+        console.log('⭐ Priority Stats received:', data);
         this.statsByPriority = data;
         this.loading = false;
       },
-      error: () => {
-        console.error('Error loading priority stats');
+      error: (err) => {
+        console.error('❌ Error loading priority stats:', err);
         this.loading = false;
       },
     });
 
-    // Load feedback statistics
     this.feedbackService.getSummaryReport().subscribe({
       next: (data) => {
+        console.log('📝 Feedback Summary received:', data);
         this.feedbackSummary = data;
       },
-      error: () => {
-        console.error('Error loading feedback summary');
-      },
-    });
-
-    this.feedbackService.getTrendsReport(6).subscribe({
-      next: (data) => {
-        this.feedbackTrends = data;
-      },
-      error: () => {
-        console.error('Error loading feedback trends');
+      error: (err) => {
+        console.error('❌ Error loading feedback summary:', err);
       },
     });
 
     this.feedbackService.getAvgRatingByCategory().subscribe({
       next: (data) => {
-        this.avgRatingByCategory = data;
+        console.log('⭐ Rating by Category received:', data);
+        console.log('⭐ Type:', typeof data);
+        console.log('⭐ Is Array:', Array.isArray(data));
+
+        const normalized = this.normalizeAvgRatingByCategory(data);
+        this.avgRatingByCategory = {
+          ...this.avgRatingByCategory,
+          ...normalized,
+        };
+        console.log('⭐ Normalized rating by category:', this.avgRatingByCategory);
+
+        if (Object.keys(this.avgRatingByCategory).length === 0) {
+          this.applyFallbackCategoryRatings();
+        }
       },
-      error: () => {
-        console.error('Error loading rating stats');
+      error: (err) => {
+        console.error('❌ Error loading rating stats:', err);
+        this.seedRatingsFromComplaintCategories();
+        this.applyFallbackCategoryRatings();
       },
     });
   }
 
+  private seedRatingsFromComplaintCategories(): void {
+    if (!this.statsByCategory || typeof this.statsByCategory !== 'object') {
+      return;
+    }
+
+    const seeded: Record<string, number> = { ...this.avgRatingByCategory };
+    Object.keys(this.statsByCategory).forEach((category) => {
+      if (!Number.isFinite(seeded[category])) {
+        seeded[category] = 0;
+      }
+    });
+    this.avgRatingByCategory = seeded;
+  }
+
+  private normalizeAvgRatingByCategory(data: any): Record<string, number> {
+    const normalized: Record<string, number> = {};
+
+    if (!data) {
+      return normalized;
+    }
+
+    if (Array.isArray(data)) {
+      data.forEach((item: any) => {
+        if (!item || typeof item !== 'object') {
+          return;
+        }
+
+        const category = item.category ?? item.CATEGORY ?? item.complaintCategory;
+        const ratingValue = item.avgRating ?? item.averageRating ?? item.AVG_RATING ?? item.value;
+        const numericRating = Number(ratingValue);
+
+        if (category && Number.isFinite(numericRating)) {
+          normalized[String(category)] = numericRating;
+          return;
+        }
+
+        const keys = Object.keys(item);
+        if (keys.length === 1) {
+          const singleKey = keys[0];
+          const singleValue = Number(item[singleKey]);
+          if (singleKey && Number.isFinite(singleValue)) {
+            normalized[String(singleKey)] = singleValue;
+          }
+        }
+      });
+      return normalized;
+    }
+
+    if (typeof data === 'object') {
+      Object.entries(data).forEach(([key, value]) => {
+        const numericValue = Number(value);
+        if (Number.isFinite(numericValue)) {
+          normalized[key] = numericValue;
+        }
+      });
+    }
+
+    return normalized;
+  }
+
+  private applyFallbackCategoryRatings(): void {
+    if (!Array.isArray(this.complaintsRaw) || this.complaintsRaw.length === 0) {
+      return;
+    }
+
+    const byCategory: Record<string, { sum: number; count: number }> = {};
+
+    this.complaintsRaw.forEach((complaint: any) => {
+      const category = complaint?.category;
+      const rating = complaint?.feedback?.rating;
+      const numericRating = Number(rating);
+
+      if (!category || !Number.isFinite(numericRating)) {
+        return;
+      }
+
+      if (!byCategory[category]) {
+        byCategory[category] = { sum: 0, count: 0 };
+      }
+
+      byCategory[category].sum += numericRating;
+      byCategory[category].count += 1;
+    });
+
+    const fallback: Record<string, number> = {};
+    Object.entries(byCategory).forEach(([category, stats]) => {
+      if (stats.count > 0) {
+        fallback[category] = stats.sum / stats.count;
+      }
+    });
+
+    if (Object.keys(fallback).length > 0) {
+      this.avgRatingByCategory = fallback;
+      console.log('⭐ Applied fallback rating by category:', fallback);
+    }
+  }
+
   // Helper methods to extract data from API responses
   getTotalComplaints(): number {
-    return this.summaryReport?.totalComplaints ?? 0;
+    const value = this.summaryReport?.total
+      ?? this.summaryReport?.totalComplaints
+      ?? 0;
+    return value;
   }
 
   getOpenComplaints(): number {
-    return this.summaryReport?.openComplaints ?? 0;
+    const value = this.summaryReport?.byStatus?.OPEN
+      ?? this.summaryReport?.openComplaints
+      ?? 0;
+    return value;
   }
 
   getResolvedComplaints(): number {
-    return this.summaryReport?.resolvedComplaints ?? 0;
+    const value = this.summaryReport?.byStatus?.RESOLVED
+      ?? this.summaryReport?.resolvedComplaints
+      ?? 0;
+    return value;
   }
 
   getAverageFeedbackRating(): number {
-    return this.feedbackSummary?.averageRating ?? 0;
+    const value = this.feedbackSummary?.avgRating
+      ?? this.feedbackSummary?.averageRating
+      ?? 0;
+    return value;
   }
 
   getTotalFeedback(): number {
-    return this.feedbackSummary?.totalCount ?? 0;
+    const value = this.feedbackSummary?.total
+      ?? this.feedbackSummary?.totalCount
+      ?? 0;
+    return value;
   }
 
   getCategoryKeys(): string[] {
-    return this.statsByCategory ? Object.keys(this.statsByCategory) : [];
+    // Si on a avgRatingByCategory avec données, utiliser ses clés
+    const keys = new Set<string>();
+    if (this.avgRatingByCategory && Object.keys(this.avgRatingByCategory).length > 0) {
+      Object.keys(this.avgRatingByCategory).forEach((k) => keys.add(k));
+    }
+    // Sinon utiliser les catégories de complaints (fallback)
+    if (this.statsByCategory && Object.keys(this.statsByCategory).length > 0) {
+      Object.keys(this.statsByCategory).forEach((k) => keys.add(k));
+    }
+    return Array.from(keys);
   }
 
   getPriorityKeys(): string[] {
@@ -163,5 +303,13 @@ export class FeedbackStatsComponent implements OnInit {
 
   getPriorityValue(priority: string): number {
     return this.statsByPriority?.[priority] ?? 0;
+  }
+
+  getCategoryRating(category: string): number {
+    const rating = this.avgRatingByCategory?.[category];
+    if (rating !== undefined && rating !== null && Number.isFinite(Number(rating))) {
+      return rating;
+    }
+    return 0;
   }
 }

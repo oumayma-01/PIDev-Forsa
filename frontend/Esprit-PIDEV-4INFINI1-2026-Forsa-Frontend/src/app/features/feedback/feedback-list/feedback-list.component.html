@@ -4,15 +4,21 @@
     <p>Submit feedback or track your existing complaints.</p>
   </div>
   <div class="toolbar-actions">
-    <app-forsa-button variant="outline" (clicked)="goToFeedback()">
+    <app-forsa-button variant="outline" size="sm" (clicked)="goToFeedback()">
       <app-forsa-icon name="message-square" [size]="16" />
       Feedback
     </app-forsa-button>
-    <app-forsa-button variant="outline" (clicked)="goToResponses()">
+    <app-forsa-button variant="outline" size="sm" (clicked)="goToResponses()">
       <app-forsa-icon name="arrow-right" [size]="16" />
       Responses
     </app-forsa-button>
-    <app-forsa-button variant="outline" (clicked)="goToChatbot()">
+    @if (isAdmin || isAgent) {
+      <app-forsa-button variant="outline" size="sm" (clicked)="goToStats()">
+        <app-forsa-icon name="bar-chart-3" [size]="16" />
+        Stats
+      </app-forsa-button>
+    }
+    <app-forsa-button variant="outline" size="sm" (clicked)="goToChatbot()">
       <app-forsa-icon name="zap" [size]="16" />
       Chatbot
     </app-forsa-button>

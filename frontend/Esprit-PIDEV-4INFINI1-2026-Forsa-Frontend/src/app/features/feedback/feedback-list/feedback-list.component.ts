@@ -82,6 +82,10 @@ export class FeedbackListComponent implements OnInit {
     this.router.navigate(['/dashboard/feedback/responses']);
   }
 
+  goToStats(): void {
+    this.router.navigate(['/dashboard/feedback/stats']);
+  }
+
   delete(id: number): void {
     if (confirm('Delete this complaint?')) {
       this.complaintService.delete(id).subscribe({

@@ -60,6 +60,11 @@ export const routes: Routes = [
           {
             path: 'complaint/:id',
             loadComponent: () =>
+              import('./features/feedback/complaint-detail/complaint-detail.component').then((m) => m.ComplaintDetailComponent),
+          },
+          {
+            path: 'complaint/:id/edit',
+            loadComponent: () =>
               import('./features/feedback/complaint-form/complaint-form.component').then((m) => m.ComplaintFormComponent),
           },
           {

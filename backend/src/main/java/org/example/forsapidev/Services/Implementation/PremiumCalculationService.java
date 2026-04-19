@@ -43,7 +43,7 @@ public class PremiumCalculationService implements IPremiumCalculationService {
 
         // 6. Calculate periodic payment based on frequency
         int periodsPerYear = getPeriodsPerYear(request.getPaymentFrequency());
-        int totalPayments = (request.getDurationMonths() / 12) * periodsPerYear;
+        int totalPayments = Math.max(1, (int) Math.ceil((request.getDurationMonths() / 12.0) * periodsPerYear));
         BigDecimal periodicPayment = finalPremium.divide(
                 BigDecimal.valueOf(totalPayments), 2, RoundingMode.HALF_UP
         );

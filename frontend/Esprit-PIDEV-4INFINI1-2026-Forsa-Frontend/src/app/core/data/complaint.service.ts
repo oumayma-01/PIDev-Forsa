@@ -41,6 +41,10 @@ export class ComplaintService {
     return this.http.get<{ response: string }>(`${this.baseUrl}/${id}/ai-response`);
   }
 
+  getAIFullReport(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/ai-full-report`);
+  }
+
   getSummaryReport(): Observable<any> {
     return this.http.get<any>(`${this.baseUrl}/summary-report`);
   }
@@ -63,5 +67,9 @@ export class ComplaintService {
       responderRole,
       responderName
     });
+  }
+
+  assignToUser(complaintId: number, userId: number): Observable<ComplaintBackend> {
+    return this.http.post<ComplaintBackend>(`${this.baseUrl}/${complaintId}/assign/${userId}`, {});
   }
 }

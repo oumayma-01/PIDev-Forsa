@@ -1,0 +1,19 @@
+.page-head { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:2rem; flex-wrap:wrap; }
+.page-head a { text-decoration:none; }
+.table-wrap { overflow-x:auto; }
+.table { width:100%; border-collapse:collapse; font-size:.875rem; }
+.table th { text-align:left; padding:.75rem 1rem; font-size:.65rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--color-muted-foreground); border-bottom:1px solid var(--color-border,#e2e8f0); white-space:nowrap; }
+.table td { padding:.85rem 1rem; border-bottom:1px solid var(--color-border,#e2e8f0); vertical-align:middle; white-space:nowrap; }
+.table tbody tr:last-child td { border-bottom:none; }
+.table tbody tr:hover { background:color-mix(in oklab,var(--color-primary) 4%,transparent); }
+.td-mono { font-family:monospace; font-size:.8rem; }
+.th-actions { text-align:right; }
+.row-actions { display:flex; justify-content:flex-end; gap:.25rem; }
+.row-actions a { text-decoration:none; }
+:host ::ng-deep .btn-danger { color:var(--color-destructive) !important; }
+.state-box { display:flex; flex-direction:column; align-items:center; gap:1rem; padding:5rem 1rem; color:var(--color-muted-foreground); }
+.state-error { color:var(--color-destructive); }
+.state-box a { text-decoration:none; }
+.empty-ico { opacity:.2; }
+.spin { animation:spin 1s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg);} }

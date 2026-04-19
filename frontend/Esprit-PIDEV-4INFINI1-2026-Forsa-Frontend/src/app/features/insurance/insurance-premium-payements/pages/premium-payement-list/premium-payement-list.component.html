@@ -1,0 +1,67 @@
+<div class="page-head">
+  <div><h2>Premium Payments</h2><p>Track and record all periodic premium payments.</p></div>
+  <a routerLink="/dashboard/insurance/payments/new">
+    <app-forsa-button><app-forsa-icon name="plus" [size]="16" /> Record Payment</app-forsa-button>
+  </a>
+</div>
+
+@if (loading()) {
+  <div class="state-box"><app-forsa-icon name="history" [size]="32" class="spin" /></div>
+} @else if (error()) {
+  <div class="state-box state-error"><app-forsa-icon name="alert-circle" [size]="28" /><p>{{ error() }}</p><app-forsa-button variant="outline" (click)="load()">Retry</app-forsa-button></div>
+} @else if (payments().length === 0) {
+  <div class="state-box">
+    <app-forsa-icon name="credit-card" [size]="48" class="empty-ico" /><p>No payments recorded.</p>
+    <a routerLink="/dashboard/insurance/payments/new"><app-forsa-button>Record First Payment</app-forsa-button></a>
+  </div>
+} @else {
+  <app-forsa-card [overflowHidden]="true">
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Policy</th>
+            <th>Status</th>
+            <th>Amount</th>
+            <th>Due Date</th>
+            <th>Paid Date</th>
+            <th>Transaction ID</th>
+            <th class="th-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of payments(); track p.id) {
+            <tr>
+              <td class="td-mono">#{{ p.id }}</td>
+              <td class="td-mono">{{ p.insurancePolicy?.policyNumber ?? '—' }}</td>
+              <td>
+                <app-forsa-badge [tone]="statusTone(p.status)">
+                  <app-forsa-icon [name]="statusIcon(p.status)" [size]="12" />{{ p.status }}
+                </app-forsa-badge>
+              </td>
+              <td>{{ p.amount | number:'1.2-2' }} TND</td>
+              <td>{{ p.dueDate | date:'dd/MM/yyyy' }}</td>
+              <td>{{ p.paidDate ? (p.paidDate | date:'dd/MM/yyyy') : '—' }}</td>
+              <td class="td-mono">{{ p.transactionId ?? '—' }}</td>
+              <td>
+                <div class="row-actions">
+                  <a [routerLink]="['/dashboard/insurance/payments', p.id]">
+                    <app-forsa-button variant="ghost" size="sm"><app-forsa-icon name="eye" [size]="14" /></app-forsa-button>
+                  </a>
+                  <a [routerLink]="['/dashboard/insurance/payments', p.id, 'edit']">
+                    <app-forsa-button variant="ghost" size="sm"><app-forsa-icon name="settings" [size]="14" /></app-forsa-button>
+                  </a>
+                  <app-forsa-button variant="ghost" size="sm" extraClass="btn-danger"
+                    [disabled]="deletingId() === p.id" (click)="delete(p.id!)">
+                    <app-forsa-icon name="shield-alert" [size]="14" />
+                  </app-forsa-button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </app-forsa-card>
+}

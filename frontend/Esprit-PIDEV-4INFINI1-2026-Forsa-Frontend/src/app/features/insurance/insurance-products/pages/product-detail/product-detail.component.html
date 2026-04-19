@@ -1,0 +1,64 @@
+<div class="page-head">
+  <div>
+    <h2>Product Detail</h2>
+    <p>Full details for this insurance product.</p>
+  </div>
+  <div class="head-actions">
+    <a routerLink="/dashboard/insurance/products">
+      <app-forsa-button variant="outline">Back</app-forsa-button>
+    </a>
+    @if (product()) {
+      <a [routerLink]="['/dashboard/insurance/products', product()!.id, 'edit']">
+        <app-forsa-button><app-forsa-icon name="settings" [size]="16" /> Edit</app-forsa-button>
+      </a>
+    }
+  </div>
+</div>
+
+@if (loading()) {
+  <div class="state-box"><app-forsa-icon name="history" [size]="32" class="spin" /></div>
+} @else if (error()) {
+  <div class="state-box state-error"><app-forsa-icon name="alert-circle" [size]="28" /><p>{{ error() }}</p></div>
+} @else { @if (product(); as p) {
+  <div class="detail-grid">
+    <app-forsa-card>
+      <div class="card-pad">
+        <div class="detail-header">
+          <div>
+            <h3>{{ p.productName }}</h3>
+            <p class="text-muted">{{ p.policyType }}</p>
+          </div>
+          <app-forsa-badge [tone]="p.isActive ? 'success' : 'muted'">
+            {{ p.isActive ? 'Active' : 'Inactive' }}
+          </app-forsa-badge>
+        </div>
+        <p class="desc">{{ p.description || 'No description provided.' }}</p>
+      </div>
+    </app-forsa-card>
+
+    <app-forsa-card>
+      <div class="card-pad">
+        <h4 class="section-title">Pricing & Coverage</h4>
+        <div class="stat-grid">
+          <div class="stat">
+            <span class="lbl">Base Premium</span>
+            <span class="val">{{ p.premiumAmount | number:'1.2-2' }} TND/mo</span>
+          </div>
+          <div class="stat">
+            <span class="lbl">Coverage Limit</span>
+            <span class="val">{{ p.coverageLimit | number:'1.0-0' }} TND</span>
+          </div>
+          <div class="stat">
+            <span class="lbl">Duration</span>
+            <span class="val">{{ p.durationMonths }} months</span>
+          </div>
+          <div class="stat">
+            <span class="lbl">Linked Policies</span>
+            <span class="val">{{ p.policies?.length ?? 0 }}</span>
+          </div>
+        </div>
+      </div>
+    </app-forsa-card>
+  </div>
+}
+}

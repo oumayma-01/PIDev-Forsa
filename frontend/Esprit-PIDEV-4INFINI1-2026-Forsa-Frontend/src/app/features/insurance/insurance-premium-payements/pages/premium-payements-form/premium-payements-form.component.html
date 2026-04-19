@@ -1,0 +1,67 @@
+<div class="page-head">
+  <div>
+    <h2>{{ isEdit() ? 'Edit Payment' : 'Record Payment' }}</h2>
+    <p>{{ isEdit() ? 'Update existing payment details.' : 'Record a new premium payment.' }}</p>
+  </div>
+  <a routerLink="/dashboard/insurance/payments">
+    <app-forsa-button variant="outline">Back</app-forsa-button>
+  </a>
+</div>
+
+@if (loading()) {
+  <div class="state-box"><app-forsa-icon name="history" [size]="32" class="spin" /></div>
+} @else {
+  <app-forsa-card>
+    <form class="form-body" (ngSubmit)="submit()" #f="ngForm">
+      @if (error()) { <div class="form-alert"><app-forsa-icon name="alert-circle" [size]="16" />{{ error() }}</div> }
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="policyId">Related Policy *</label>
+          <select id="policyId" [(ngModel)]="policyId" name="policyId" required>
+             <option [value]="0" disabled>— Select Policy —</option>
+             @for (p of policies(); track p.id) {
+               <option [value]="p.id">{{ p.policyNumber ?? p.insuranceProduct?.productName ?? ('Policy ' + p.id) }}</option>
+             }
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="amount">Amount (TND) *</label>
+          <input id="amount" type="number" [(ngModel)]="form.amount" name="amount" required min="0" step="0.01" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="dueDate">Due Date *</label>
+          <input id="dueDate" type="date" [ngModel]="form.dueDate | date:'yyyy-MM-dd'" (ngModelChange)="form.dueDate = $event" name="dueDate" required />
+        </div>
+        <div class="form-group">
+          <label for="paidDate">Paid Date</label>
+          <input id="paidDate" type="date" [ngModel]="form.paidDate | date:'yyyy-MM-dd'" (ngModelChange)="form.paidDate = $event" name="paidDate" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="status">Status *</label>
+          <select id="status" [(ngModel)]="form.status" name="status" required>
+            @for (s of statuses; track s) { <option [value]="s">{{ s }}</option> }
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="transactionId">Transaction ID</label>
+          <input id="transactionId" type="number" [(ngModel)]="form.transactionId" name="transactionId" />
+        </div>
+      </div>
+
+      <div class="form-footer">
+        <a routerLink="/dashboard/insurance/payments"><app-forsa-button type="button" variant="ghost">Cancel</app-forsa-button></a>
+        <app-forsa-button type="submit" [disabled]="saving() || !!f.invalid">
+          @if (saving()) { <app-forsa-icon name="history" [size]="16" class="spin" /> }
+          {{ saving() ? 'Saving…' : (isEdit() ? 'Update Payment' : 'Record Payment') }}
+        </app-forsa-button>
+      </div>
+    </form>
+  </app-forsa-card>
+}

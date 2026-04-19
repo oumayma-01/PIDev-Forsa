@@ -32,4 +32,8 @@ export class ResponseService {
   improveWithAI(id: number): Observable<ComplaintResponse> {
     return this.http.put<ComplaintResponse>(`${this.baseUrl}/improve-response-ai/${id}`, {});
   }
+
+  getSummaryReport(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/report/summary`);
+  }
 }

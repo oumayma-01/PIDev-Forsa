@@ -1,0 +1,81 @@
+<div class="page-head">
+  <div>
+    <h2>{{ isEdit() ? 'Edit Product' : 'New Insurance Product' }}</h2>
+    <p>{{ isEdit() ? 'Update product details.' : 'Add a new product to the catalogue.' }}</p>
+  </div>
+  <a routerLink="/dashboard/insurance/products">
+    <app-forsa-button variant="outline">Back</app-forsa-button>
+  </a>
+</div>
+
+@if (loading()) {
+  <div class="state-box">
+    <app-forsa-icon name="history" [size]="32" class="spin" />
+  </div>
+} @else {
+  <app-forsa-card>
+    <form class="form-body" (ngSubmit)="submit()" #f="ngForm">
+
+      @if (error()) {
+        <div class="form-alert">
+          <app-forsa-icon name="alert-circle" [size]="16" />{{ error() }}
+        </div>
+      }
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="productName">Product Name *</label>
+          <input id="productName" type="text" [(ngModel)]="form.productName"
+            name="productName" required placeholder="e.g. Basic Health Plan" />
+        </div>
+        <div class="form-group">
+          <label for="policyType">Policy Type *</label>
+          <select id="policyType" [(ngModel)]="form.policyType" name="policyType" required>
+            @for (t of policyTypes; track t) {
+              <option [value]="t">{{ t }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea id="description" [(ngModel)]="form.description" name="description"
+          rows="3" placeholder="Detailed product description…"></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="premiumAmount">Base Premium (TND/month) *</label>
+          <input id="premiumAmount" type="number" [(ngModel)]="form.premiumAmount"
+            name="premiumAmount" required min="0" step="0.01" />
+        </div>
+        <div class="form-group">
+          <label for="coverageLimit">Coverage Limit (TND) *</label>
+          <input id="coverageLimit" type="number" [(ngModel)]="form.coverageLimit"
+            name="coverageLimit" required min="0" step="0.01" />
+        </div>
+        <div class="form-group">
+          <label for="durationMonths">Duration (months) *</label>
+          <input id="durationMonths" type="number" [(ngModel)]="form.durationMonths"
+            name="durationMonths" required min="1" />
+        </div>
+      </div>
+
+      <label class="toggle-row">
+        <input type="checkbox" [(ngModel)]="form.isActive" name="isActive" />
+        <span>Product is active (available to clients)</span>
+      </label>
+
+      <div class="form-footer">
+        <a routerLink="/dashboard/insurance/products">
+          <app-forsa-button type="button" variant="ghost">Cancel</app-forsa-button>
+        </a>
+        <app-forsa-button type="submit" [disabled]="saving() || !!f.invalid">
+          @if (saving()) { <app-forsa-icon name="history" [size]="16" class="spin" /> }
+          {{ saving() ? 'Saving…' : (isEdit() ? 'Update Product' : 'Create Product') }}
+        </app-forsa-button>
+      </div>
+    </form>
+  </app-forsa-card>
+}

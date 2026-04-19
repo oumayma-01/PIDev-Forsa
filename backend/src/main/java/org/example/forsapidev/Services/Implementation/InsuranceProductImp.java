@@ -16,24 +16,37 @@ public class InsuranceProductImp implements IInsuranceProduct {
     InsuranceProductRepository insuranceProductRepository;
     InsurancePolicyRepository insurancePolicyRepository;
 
+    @Override
     public List<InsuranceProduct> retrieveAllInsuranceProducts() {
         return insuranceProductRepository.findAll();
     }
 
+    @Override
     public InsuranceProduct retrieveInsuranceProduct(Long productId) {
         return insuranceProductRepository.findById(productId).get();
     }
 
+    @Override
     public InsuranceProduct addInsuranceProduct(InsuranceProduct product) {
         return insuranceProductRepository.save(product);
     }
 
+    @Override
     public void removeInsuranceProduct(Long productId) {
         insuranceProductRepository.deleteById(productId);
     }
 
+    @Override
     public InsuranceProduct modifyInsuranceProduct(InsuranceProduct product) {
-        return insuranceProductRepository.save(product);
+        InsuranceProduct existing = insuranceProductRepository.findById(product.getId()).get();
+        existing.setProductName(product.getProductName());
+        existing.setPolicyType(product.getPolicyType());
+        existing.setDescription(product.getDescription());
+        existing.setPremiumAmount(product.getPremiumAmount());
+        existing.setCoverageLimit(product.getCoverageLimit());
+        existing.setDurationMonths(product.getDurationMonths());
+        existing.setIsActive(product.getIsActive());
+        return insuranceProductRepository.save(existing);
     }
 
     @Override

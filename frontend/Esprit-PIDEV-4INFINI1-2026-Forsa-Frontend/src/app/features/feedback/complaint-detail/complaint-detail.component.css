@@ -1,0 +1,310 @@
+.page-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.page-head h2 {
+  margin: 0 0 4px 0;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.page-head p {
+  margin: 0;
+  color: var(--color-muted-foreground);
+  font-size: 14px;
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.error-box {
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.loading-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px;
+  color: var(--color-muted-foreground);
+}
+
+.complaint-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 1024px) {
+  .complaint-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.complaint-card,
+.responses-card,
+.add-response-card {
+  margin: 0;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.card-header h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.card-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-row label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-row span {
+  font-size: 14px;
+  color: var(--color-foreground);
+  font-weight: 500;
+}
+
+.description {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-foreground);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.actions-section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border);
+}
+
+.actions-section h4 {
+  margin: 0 0 12px 0;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.info-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--color-secondary);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--color-secondary-foreground);
+  margin-top: 12px;
+}
+
+.responses-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.loading-responses {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 40px 20px;
+  color: var(--color-muted-foreground);
+}
+
+.loading-responses p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.empty-responses {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--color-muted-foreground);
+  font-size: 14px;
+}
+
+.empty-responses p {
+  margin: 0;
+}
+
+.responses-list {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.response-item {
+  padding: 16px;
+  background: var(--color-secondary);
+  border-radius: 8px;
+  border-left: 3px solid var(--color-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.response-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.response-header strong {
+  display: block;
+  font-size: 14px;
+  color: var(--color-foreground);
+  margin-bottom: 2px;
+}
+
+.role {
+  font-size: 12px;
+  color: var(--color-muted-foreground);
+  font-weight: 400;
+}
+
+.date {
+  font-size: 12px;
+  color: var(--color-muted-foreground);
+  white-space: nowrap;
+}
+
+.response-message {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-foreground);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.delete-btn {
+  margin-top: 8px;
+}
+
+.add-response-card {
+  position: sticky;
+  bottom: 0;
+  background: var(--color-card);
+  border-top: 2px solid var(--color-primary);
+}
+
+.info-card {
+  margin: 0;
+  background: var(--color-secondary);
+}
+
+.responder-info {
+  padding: 12px;
+  background: var(--color-secondary);
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+.responder-info p {
+  margin: 0;
+  color: var(--color-foreground);
+  font-weight: 500;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.forsa-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-foreground);
+}
+
+textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-input-border, #e5e7eb);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: inherit;
+  resize: vertical;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.char-count {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-muted-foreground);
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
