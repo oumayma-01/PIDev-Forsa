@@ -18,6 +18,15 @@ public class InsuranceClaimImp implements IInsuranceClaim {
     }
 
     @Override
+    public List<InsuranceClaim> retrieveMyClaims(Long userId) {
+        return insuranceClaimRepository.findAll().stream()
+                .filter(c -> c.getInsurancePolicy() != null 
+                        && c.getInsurancePolicy().getUser() != null 
+                        && c.getInsurancePolicy().getUser().getId().equals(userId))
+                .toList();
+    }
+
+    @Override
     public InsuranceClaim retrieveInsuranceClaim(Long claimId) {
         return insuranceClaimRepository.findById(claimId).get();
     }

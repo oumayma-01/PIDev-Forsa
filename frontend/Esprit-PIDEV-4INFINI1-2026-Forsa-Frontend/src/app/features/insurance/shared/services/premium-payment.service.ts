@@ -13,6 +13,10 @@ export class PremiumPaymentService {
     return this.http.get<PremiumPayment[]>(`${this.base}/retrieve-all-premium-payments`);
   }
 
+  getMyPayments(): Observable<PremiumPayment[]> {
+    return this.http.get<PremiumPayment[]>(`${this.base}/my-payments`);
+  }
+
   getById(id: number): Observable<PremiumPayment> {
     return this.http.get<PremiumPayment>(`${this.base}/retrieve-premium-payment/${id}`);
   }
@@ -31,5 +35,15 @@ export class PremiumPaymentService {
 
   affectPaymentsToPolicy(policyId: number, paymentIds: number[]): Observable<InsurancePolicy> {
     return this.http.put<InsurancePolicy>(`${this.base}/affect-premium-payments/${policyId}`, paymentIds);
+  }
+
+  createStripeSession(paymentData: { 
+    amount: number, 
+    currency: string, 
+    productName: string, 
+    successUrl: string, 
+    cancelUrl: string 
+  }): Observable<{ sessionUrl: string }> {
+    return this.http.post<{ sessionUrl: string }>(`${environment.apiBaseUrl}/payments/create-checkout-session`, paymentData);
   }
 }

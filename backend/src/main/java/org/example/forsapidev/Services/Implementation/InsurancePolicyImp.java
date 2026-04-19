@@ -164,6 +164,13 @@ public class InsurancePolicyImp implements IInsurancePolicy {    InsurancePolicy
     }
 
     @Override
+    public List<InsurancePolicy> retrieveMyPolicies(Long userId) {
+        return insurancePolicyRepository.findAll().stream()
+                .filter(p -> p.getUser() != null && p.getUser().getId().equals(userId))
+                .toList();
+    }
+
+    @Override
     public InsurancePolicy retrieveInsurancePolicy(Long id) {
         return insurancePolicyRepository.findById(id).orElse(null);
     }

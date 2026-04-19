@@ -14,6 +14,10 @@ export class InsurancePolicyService {
     return this.http.get<InsurancePolicy[]>(`${this.base}/retrieve-all-insurance-policies`);
   }
 
+  getMyPolicies(): Observable<InsurancePolicy[]> {
+    return this.http.get<InsurancePolicy[]>(`${this.base}/my-policies`);
+  }
+
   getById(id: number): Observable<InsurancePolicy> {
     return this.http.get<InsurancePolicy>(`${this.base}/retrieve-insurance-policy/${id}`);
   }

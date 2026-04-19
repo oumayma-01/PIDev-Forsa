@@ -13,6 +13,10 @@ export class InsuranceClaimService {
     return this.http.get<InsuranceClaim[]>(`${this.base}/retrieve-all-insurance-claims`);
   }
 
+  getMyClaims(): Observable<InsuranceClaim[]> {
+    return this.http.get<InsuranceClaim[]>(`${this.base}/my-claims`);
+  }
+
   getById(id: number): Observable<InsuranceClaim> {
     return this.http.get<InsuranceClaim>(`${this.base}/retrieve-insurance-claim/${id}`);
   }

@@ -30,10 +30,11 @@ export class PolicyFormComponent implements OnInit {
 
   form: InsurancePolicyApplicationDTO = {
     productId: 0,
-    requestedCoverageLimit: undefined,
-    paymentFrequency: 'MONTHLY',
-    notes: '',
+    desiredCoverage: 100000,
+    durationMonths: 12,
+    paymentFrequency: 'MONTHLY'
   };
+
 
   ngOnInit(): void {
     this.productSvc.getAll().subscribe({

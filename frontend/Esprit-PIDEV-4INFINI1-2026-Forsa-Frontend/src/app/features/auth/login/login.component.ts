@@ -43,8 +43,10 @@ export class LoginComponent {
     this.busy.set(true);
     this.error.set(null);
     this.auth.login(this.username.trim(), this.password).subscribe({
-      next: () => {
-        void this.router.navigateByUrl('/dashboard');
+      next: (res) => {
+        const isClient = (res.roles ?? []).includes('ROLE_CLIENT');
+        const target = isClient ? '/dashboard/insurance/client' : '/dashboard';
+        void this.router.navigateByUrl(target);
         this.busy.set(false);
       },
       error: (e) => {

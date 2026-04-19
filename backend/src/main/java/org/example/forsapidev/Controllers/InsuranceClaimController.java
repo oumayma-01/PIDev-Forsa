@@ -22,6 +22,16 @@ public class InsuranceClaimController {
         return claims;
     }
 
+    @GetMapping("/my-claims")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('CLIENT')")
+    public List<InsuranceClaim> retrieveMyClaims() {
+        org.springframework.security.core.Authentication authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) return null;
+        org.example.forsapidev.security.services.UserDetailsImpl userDetails = (org.example.forsapidev.security.services.UserDetailsImpl) authentication.getPrincipal();
+        // Since we don't have UserRepository here, we can just use the user ID from UserDetailsImpl
+        return insuranceClaimService.retrieveMyClaims(userDetails.getId());
+    }
+
     @PostMapping("/add-insurance-claim")
     public InsuranceClaim addInsuranceClaim(@RequestBody InsuranceClaim claim) {
         InsuranceClaim insuranceClaim = insuranceClaimService.addInsuranceClaim(claim);

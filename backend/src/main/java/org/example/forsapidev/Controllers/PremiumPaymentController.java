@@ -24,6 +24,15 @@ public class PremiumPaymentController {
         return payments;
     }
 
+    @GetMapping("/my-payments")
+    @PreAuthorize("hasRole('CLIENT')")
+    public List<PremiumPayment> retrieveMyPayments() {
+        org.springframework.security.core.Authentication authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) return null;
+        org.example.forsapidev.security.services.UserDetailsImpl userDetails = (org.example.forsapidev.security.services.UserDetailsImpl) authentication.getPrincipal();
+        return premiumPaymentService.retrieveMyPayments(userDetails.getId());
+    }
+
     @PreAuthorize("hasAnyRole('CLIENT','ADMIN')")
     @PostMapping("/add-premium-payment")
     public PremiumPayment addPremiumPayment(@RequestBody PremiumPayment payment) {
@@ -41,7 +50,7 @@ public class PremiumPaymentController {
     public void removePremiumPayment(@PathVariable("payment-id") Long paymentId) {
         premiumPaymentService.removePremiumPayment(paymentId);
     }
-    @PreAuthorize("hasAnyRole('AGENT','ADMIN')")
+    @PreAuthorize("hasAnyRole('AGENT','ADMIN','CLIENT')")
     @PutMapping("/modify-premium-payment")
     public PremiumPayment modifyPremiumPayment(@RequestBody PremiumPayment payment) {
         PremiumPayment premiumPayment = premiumPaymentService.modifyPremiumPayment(payment);

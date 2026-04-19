@@ -98,6 +98,19 @@ public class InsurancePolicyController {
         return insurancePolicyService.retrieveAllInsurancePolicies();
     }
 
+    @GetMapping("/my-policies")
+    @PreAuthorize("hasRole('CLIENT')")
+    public List<InsurancePolicy> retrieveMyPolicies() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) return null;
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        User connectedUser = userRepository.findByUsername(userDetails.getUsername()).orElse(null);
+        if (connectedUser != null) {
+            return insurancePolicyService.retrieveMyPolicies(connectedUser.getId());
+        }
+        return null;
+    }
+
     @GetMapping("/retrieve-insurance-policy/{policy-id}")
     @PreAuthorize("hasAnyRole('CLIENT', 'AGENT', 'ADMIN')")
     public InsurancePolicy retrieveInsurancePolicy(@PathVariable("policy-id") Long policyId) {
