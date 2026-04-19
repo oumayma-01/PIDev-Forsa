@@ -51,6 +51,14 @@
   gap: 16px;
 }
 
+.filter-card {
+  margin-bottom: 12px;
+}
+
+.filter-inner {
+  padding: 12px;
+}
+
 .resp-card {
   margin: 0;
 }

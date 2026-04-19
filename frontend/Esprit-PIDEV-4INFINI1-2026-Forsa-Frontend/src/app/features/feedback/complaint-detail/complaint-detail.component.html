@@ -1,234 +1,59 @@
-<div class="page-toolbar">
-  <div class="page-head">
-    <h2>{{ complaint?.subject }}</h2>
-    <p>Complaint Details & Responses</p>
-  </div>
-  <div class="toolbar-actions">
-    <app-forsa-button variant="outline" size="sm" (clicked)="goToFeedback()">
-      <app-forsa-icon name="message-square" [size]="16" />
-      Feedback
-    </app-forsa-button>
-    <app-forsa-button variant="outline" size="sm" (clicked)="goToResponses()">
-      <app-forsa-icon name="arrow-right" [size]="16" />
-      Responses
-    </app-forsa-button>
-    @if (isAdminOrAgent) {
-      <app-forsa-button variant="outline" size="sm" (clicked)="goToStats()">
-        <app-forsa-icon name="bar-chart-3" [size]="16" />
-        Stats
-      </app-forsa-button>
-    }
-    <app-forsa-button variant="outline" size="sm" (clicked)="goToChatbot()">
-      <app-forsa-icon name="zap" [size]="16" />
-      Chatbot
-    </app-forsa-button>
-    <app-forsa-button variant="outline" (clicked)="goBack()">
-      <app-forsa-icon name="arrow-right" [size]="16" />
-      Back to List
-    </app-forsa-button>
-  </div>
+<div class="head">
+  <h2>Complaint Detail</h2>
+  <app-forsa-button variant="outline" (clicked)="goBack()">Back</app-forsa-button>
 </div>
 
 @if (error) {
-  <div class="error-box">{{ error }}</div>
+  <div class="error">{{ error }}</div>
 }
 
 @if (loading) {
-  <div class="loading-box">
-    <app-forsa-icon name="zap" [size]="32" />
-    <p>Loading complaint details...</p>
-  </div>
+  <div class="state">Loading complaint...</div>
 }
 
-@if (complaint && !loading) {
-  <div class="complaint-grid">
-    <!-- LEFT: COMPLAINT DETAILS -->
-    <app-forsa-card class="complaint-card">
-      <div class="card-header">
-        <h3>Complaint Details</h3>
-        <div class="badges">
-          <app-forsa-badge [tone]="statusTone(complaint.status!)">
-            {{ complaint.status }}
-          </app-forsa-badge>
-          <app-forsa-badge [tone]="priorityTone(complaint.priority!)">
-            {{ complaint.priority }} Priority
-          </app-forsa-badge>
-        </div>
+@if (!loading && complaint) {
+  <app-forsa-card>
+    <div class="pad">
+      <h3>{{ complaint.subject }}</h3>
+      <p>{{ complaint.description }}</p>
+      <div class="meta">
+        <app-forsa-badge [tone]="statusTone(complaint.status)">{{ complaint.status || 'OPEN' }}</app-forsa-badge>
+        <app-forsa-badge [tone]="priorityTone(complaint.priority)">{{ complaint.priority || 'MEDIUM' }}</app-forsa-badge>
+        <span>{{ complaint.category || 'OTHER' }}</span>
+        <span>{{ complaint.createdAt | date: 'yyyy-MM-dd HH:mm' }}</span>
       </div>
-
-      <div class="card-body">
-        <div class="detail-row">
-          <label>Subject:</label>
-          <span>{{ complaint.subject }}</span>
-        </div>
-
-        <div class="detail-row">
-          <label>Description:</label>
-          <p class="description">{{ complaint.description }}</p>
-        </div>
-
-        <div class="detail-row">
-          <label>Category:</label>
-          <span>{{ complaint.category }}</span>
-        </div>
-
-        <div class="detail-row">
-          <label>Created:</label>
-          <span>{{ complaint.createdAt | date: 'yyyy-MM-dd HH:mm' }}</span>
-        </div>
-
-        <!-- ACTIONS FOR ADMIN/AGENT -->
+      <div class="actions">
         @if (isAdminOrAgent) {
-          <div class="actions-section">
-            <h4>Actions</h4>
-            <div class="action-buttons">
-              @if (complaint.status !== 'CLOSED') {
-                <app-forsa-button variant="outline" size="sm" (clicked)="closeComplaint()">
-                  <app-forsa-icon name="alert-circle" [size]="16" />
-                  Close Complaint
-                </app-forsa-button>
-              }
-              <app-forsa-button variant="outline" size="sm" (clicked)="editComplaint()">
-                <app-forsa-icon name="pencil" [size]="16" />
-                Edit Details
-              </app-forsa-button>
-            </div>
-          </div>
+          <app-forsa-button (clicked)="goToAddResponse()">Add Response</app-forsa-button>
+          <app-forsa-button variant="outline" (clicked)="closeComplaint()">Close Complaint</app-forsa-button>
+          <app-forsa-button variant="outline" (clicked)="generateAiResponse()">Generate AI Response</app-forsa-button>
         }
-
-        <!-- VISIBILITY NOTE FOR CLIENT -->
-        @if (isClient && !isAdminOrAgent) {
-          <div class="info-box">
-            <app-forsa-icon name="bell" [size]="16" />
-            <span>You can view your complaint details and responses from our support team.</span>
-          </div>
+        @if (canAddFeedback()) {
+          <app-forsa-button (clicked)="goToAddFeedback()">Add Feedback</app-forsa-button>
         }
       </div>
-    </app-forsa-card>
-
-    <!-- RIGHT: RESPONSES SECTION -->
-    <div class="responses-section">
-      <!-- EXISTING RESPONSES -->
-      <app-forsa-card class="responses-card">
-        <div class="card-header">
-          <h3>Responses ({{ responses.length }})</h3>
-        </div>
-
-        @if (loadingResponses) {
-          <div class="loading-responses">
-            <app-forsa-icon name="zap" [size]="20" />
-            <p>Loading responses...</p>
-          </div>
-        }
-
-        @if (!loadingResponses && responses.length === 0) {
-          <div class="empty-responses">
-            <p>No responses yet. @if (isAdminOrAgent) { <strong>Add one below.</strong> }</p>
-          </div>
-        }
-
-        <div class="responses-list">
-          @for (response of responses; track response.id) {
-            <div class="response-item">
-              <div class="response-header">
-                <div>
-                  <strong>{{ response.responderName }}</strong>
-                  <span class="role">{{ response.responderRole }}</span>
-                </div>
-                <span class="date">{{ response.responseDate | date: 'yyyy-MM-dd HH:mm' }}</span>
-              </div>
-              <p class="response-message">{{ response.message }}</p>
-              <app-forsa-badge [tone]="response.responseStatus === 'SENT' ? 'success' : 'warning'">
-                {{ response.responseStatus }}
-              </app-forsa-badge>
-
-              <!-- DELETE BUTTON FOR ADMIN/AGENT -->
-              @if (isAdminOrAgent) {
-                <app-forsa-button
-                  variant="ghost"
-                  size="sm"
-                  class="delete-btn"
-                  (clicked)="deleteResponse(response.id!)"
-                >
-                  <app-forsa-icon name="trash-2" [size]="14" />
-                  Delete
-                </app-forsa-button>
-              }
-            </div>
-          }
-        </div>
-      </app-forsa-card>
-
-      <!-- ADD RESPONSE SECTION (ADMIN/AGENT ONLY) -->
-      @if (isAdminOrAgent) {
-        <app-forsa-card class="add-response-card">
-          <div class="card-header">
-            <h3>✉️ Respond to This Complaint</h3>
-            <p style="margin: 0; font-size: 12px; color: var(--color-muted-foreground);">
-              Your response will be sent to the customer immediately
-            </p>
-          </div>
-
-          <div class="card-body">
-            <div class="responder-info">
-              <p>
-                <strong>From:</strong> {{ auth.currentUser()?.username || 'Agent' }}
-              </p>
-              <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--color-muted-foreground);">
-                Role: {{ auth.currentUser()?.roles?.[0]?.replace('ROLE_', '') || 'AGENT' }}
-              </p>
-            </div>
-
-            <div class="form-group">
-              <label class="forsa-label">Your Response Message *</label>
-              <textarea
-                forsaInput
-                [(ngModel)]="newResponse"
-                placeholder="Type your professional response to help resolve this complaint (min 10 characters, max 1000)"
-                rows="6"
-              ></textarea>
-              <p class="char-count">
-                {{ (newResponse || '').length }} / 1000 characters
-              </p>
-            </div>
-
-            <div class="form-actions">
-              <app-forsa-button
-                variant="outline"
-                (clicked)="newResponse = ''"
-                [disabled]="!newResponse.trim()"
-              >
-                <app-forsa-icon name="trash-2" [size]="16" />
-                Clear
-              </app-forsa-button>
-              <app-forsa-button
-                (clicked)="addResponse()"
-                [disabled]="loading || !newResponse.trim() || newResponse.length < 10"
-              >
-                @if (loading) {
-                  <app-forsa-icon name="zap" [size]="16" />
-                  Sending Response...
-                } @else {
-                  <app-forsa-icon name="send" [size]="16" />
-                  Send Response to Customer
-                }
-              </app-forsa-button>
-            </div>
-          </div>
-        </app-forsa-card>
-      }
-
-      <!-- MESSAGE FOR NON-ADMIN -->
-      @if (!isAdminOrAgent) {
-        <app-forsa-card class="info-card">
-          <div class="card-body" style="text-align: center; padding: 40px 20px;">
-            <app-forsa-icon name="bell" [size]="32" />
-            <p style="margin: 12px 0 0 0; font-size: 14px;">
-              Only support team members can add responses to this complaint.
-            </p>
-          </div>
-        </app-forsa-card>
+      @if (aiResponse) {
+        <div class="ai-box">{{ aiResponse }}</div>
       }
     </div>
-  </div>
+  </app-forsa-card>
+
+  <app-forsa-card class="responses">
+    <div class="pad">
+      <h3>Responses</h3>
+      @if (responses.length === 0) {
+        <div class="state">No responses yet.</div>
+      }
+      @for (response of responses; track response.id) {
+        <div class="response">
+          <div class="row">
+            <strong>{{ response.responderName }}</strong>
+            <app-forsa-badge tone="info">{{ response.responseStatus || 'PENDING' }}</app-forsa-badge>
+          </div>
+          <p>{{ response.message }}</p>
+          <small>{{ response.responseDate | date: 'yyyy-MM-dd HH:mm' }}</small>
+        </div>
+      }
+    </div>
+  </app-forsa-card>
 }

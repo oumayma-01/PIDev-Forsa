@@ -27,6 +27,19 @@
   font-size: 14px;
 }
 
+.form-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-muted-foreground);
+  margin-bottom: 12px;
+}
+
+.linked {
+  margin: 0 0 12px 0;
+  color: var(--color-muted-foreground);
+}
+
 .form-group {
   margin-bottom: 20px;
 }

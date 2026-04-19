@@ -1,35 +1,118 @@
 <div class="page-toolbar">
   <div class="page-head">
-    <h2>Feedback & Complaints</h2>
-    <p>Submit feedback or track your existing complaints.</p>
+    <h2>{{ isClient ? 'My Complaints & Feedbacks' : 'Feedback & Complaints' }}</h2>
+    <p>{{ isClient ? 'Track your submitted complaints and feedbacks' : pageDescription }}</p>
   </div>
-  <div class="toolbar-actions">
-    <app-forsa-button variant="outline" size="sm" (clicked)="goToFeedback()">
-      <app-forsa-icon name="message-square" [size]="16" />
-      Feedback
-    </app-forsa-button>
-    <app-forsa-button variant="outline" size="sm" (clicked)="goToResponses()">
-      <app-forsa-icon name="arrow-right" [size]="16" />
-      Responses
-    </app-forsa-button>
-    @if (isAdmin || isAgent) {
-      <app-forsa-button variant="outline" size="sm" (clicked)="goToStats()">
-        <app-forsa-icon name="bar-chart-3" [size]="16" />
-        Stats
-      </app-forsa-button>
-    }
-    <app-forsa-button variant="outline" size="sm" (clicked)="goToChatbot()">
-      <app-forsa-icon name="zap" [size]="16" />
-      Chatbot
-    </app-forsa-button>
-    @if (isClient || isAdmin || isAgent) {
+  @if (isClient) {
+    <div class="toolbar-actions">
       <app-forsa-button (clicked)="goToAdd()">
         <app-forsa-icon name="plus" [size]="16" />
         New Complaint
       </app-forsa-button>
+      <app-forsa-button variant="outline" (clicked)="goToAddFeedbackDirect()">
+        <app-forsa-icon name="plus" [size]="16" />
+        Add Feedback
+      </app-forsa-button>
+      <app-forsa-button variant="outline" (clicked)="goToChatbot()">
+        <app-forsa-icon name="message-square" [size]="16" />
+        Open Chatbot
+      </app-forsa-button>
+    </div>
+  }
+</div>
+
+@if (!isClient) {
+  <div class="role-grid">
+    @for (card of roleCards; track card.title) {
+      <app-forsa-card class="role-card" (click)="onRoleCardClick(card.action)">
+        <div class="role-card-inner">
+          <div class="role-icon" [attr.data-color]="card.color">
+            <app-forsa-icon [name]="card.icon" [size]="20" />
+          </div>
+          <h3>{{ card.title }}</h3>
+          <p>{{ card.description }}</p>
+          <button class="card-link" type="button">{{ card.linkText }}</button>
+        </div>
+      </app-forsa-card>
     }
   </div>
-</div>
+}
+
+@if (isClient) {
+  <div class="client-sections">
+    <app-forsa-card class="section-card">
+      <div class="section-pad">
+        <div class="section-head">
+          <h3>My Complaints</h3>
+          <app-forsa-button size="sm" (clicked)="goToAdd()">
+            <app-forsa-icon name="plus" [size]="14" />
+            New Complaint
+          </app-forsa-button>
+        </div>
+        @if (loadingClientComplaints) {
+          <p class="muted">Loading complaints...</p>
+        }
+        @for (item of clientComplaints; track item.id) {
+          <div class="client-item">
+            <div class="client-line">
+              <strong>{{ item.subject }}</strong>
+              <app-forsa-badge [tone]="statusTone(item.status || 'OPEN')">{{ item.status || 'OPEN' }}</app-forsa-badge>
+            </div>
+            <p>{{ item.description }}</p>
+            <div class="client-meta">
+              <app-forsa-badge [tone]="priorityTone(item.priority || 'MEDIUM')">{{ item.priority || 'MEDIUM' }}</app-forsa-badge>
+              <span>{{ item.createdAt | date:'yyyy-MM-dd HH:mm' }}</span>
+            </div>
+            <div class="client-actions">
+              @if (canAddFeedback(item)) {
+                <app-forsa-button size="sm" variant="outline" (clicked)="goToAddFeedback(item.id!)">Add Feedback</app-forsa-button>
+              }
+            </div>
+          </div>
+        }
+        @if (!loadingClientComplaints && clientComplaints.length === 0) {
+          <p class="muted">No complaints yet.</p>
+        }
+      </div>
+    </app-forsa-card>
+
+    <app-forsa-card class="section-card">
+      <div class="section-pad">
+        <div class="section-head">
+          <h3>My Feedbacks</h3>
+          <app-forsa-button size="sm" (clicked)="onRoleCardClick('newFeedback')">
+            <app-forsa-icon name="plus" [size]="14" />
+            Add Feedback
+          </app-forsa-button>
+        </div>
+        @if (loadingClientFeedbacks) {
+          <p class="muted">Loading feedbacks...</p>
+        }
+        @for (item of clientFeedbacks; track item.id) {
+          <div class="client-item">
+            <div class="client-line">
+              <strong>{{ feedbackStars(item.rating) }}</strong>
+              <span>{{ item.rating | number:'1.1-1' }}/5</span>
+            </div>
+            <p>{{ item.comment || 'No comment' }}</p>
+            <div class="client-meta">
+              <span>{{ item.satisfactionLevel || 'NEUTRAL' }}</span>
+              <span>{{ item.isAnonymous ? 'Anonymous' : 'Public' }}</span>
+              <span>{{ item.createdAt | date:'yyyy-MM-dd HH:mm' }}</span>
+            </div>
+            <div class="client-actions">
+              <app-forsa-button size="sm" variant="ghost" (clicked)="goToEditFeedback(item.id!)">Edit</app-forsa-button>
+              <app-forsa-button size="sm" variant="outline" (clicked)="deleteFeedback(item.id!)">Delete</app-forsa-button>
+            </div>
+          </div>
+        }
+        @if (!loadingClientFeedbacks && clientFeedbacks.length === 0) {
+          <p class="muted">No feedbacks yet.</p>
+        }
+      </div>
+    </app-forsa-card>
+  </div>
+}
 
 @if (error) {
   <div class="fb-error">{{ error }}</div>
@@ -42,80 +125,119 @@
   </div>
 }
 
-<div class="fb-list">
-  @for (item of items; track item.id) {
-    <app-forsa-card class="fb-card">
-      <div class="fb-inner card-pad-lg">
-        <div class="fb-main">
-          <div class="fb-ico" [attr.data-status]="item.status">
-            <app-forsa-icon [name]="statusIcon(item.status!)" [size]="24" />
-          </div>
-          <div>
-            <div class="fb-headline">
-              <h4>{{ item.subject }}</h4>
-              <app-forsa-badge [tone]="priorityTone(item.priority!)" size="xs">
-                {{ item.priority }} Priority
-              </app-forsa-badge>
-            </div>
-            <p class="text-muted fb-desc">{{ item.description }}</p>
-            <div class="fb-meta">
-              <span>
-                <app-forsa-icon name="clock" [size]="12" />
-                Submitted on {{ item.createdAt | date:'yyyy-MM-dd' }}
-              </span>
-              <span>
-                <app-forsa-icon name="filter" [size]="12" />
-                {{ item.category }}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div class="fb-side">
-          <app-forsa-badge [tone]="statusTone(item.status!)">
-            {{ item.status }}
-          </app-forsa-badge>
-
-          @if (isClient || isAdminOrAgent) {
-            <app-forsa-button
-              variant="ghost"
-              size="sm"
-              (clicked)="goToEdit(item.id!)"
-            >
-              <app-forsa-icon name="pencil" [size]="16" />
-              Edit
-            </app-forsa-button>
-          }
-
-          @if (isAdminOrAgent) {
-            <app-forsa-button
-              variant="ghost"
-              size="sm"
-              (clicked)="close(item.id!)"
-            >
-              <app-forsa-icon name="alert-circle" [size]="16" />
-              Close
-            </app-forsa-button>
-          }
-
-          @if (isAdmin) {
-            <app-forsa-button
-              variant="ghost"
-              size="sm"
-              (clicked)="delete(item.id!)"
-            >
-              <app-forsa-icon name="trash-2" [size]="16" />
-            </app-forsa-button>
-          }
-        </div>
-      </div>
-    </app-forsa-card>
-  }
-
-  @if (!loading && items.length === 0) {
-    <div class="fb-empty">
-      <app-forsa-icon name="message-square" [size]="48" />
-      <p>No complaints found.</p>
+@if (showComplaintsSection && isAdminOrAgent) {
+  <app-forsa-card class="filters">
+    <div class="filters-inner">
+      <select forsaInput [(ngModel)]="statusFilter" (ngModelChange)="applyFilters()">
+        @for (status of statuses; track status) {
+          <option [value]="status">{{ status || 'All Statuses' }}</option>
+        }
+      </select>
+      <select forsaInput [(ngModel)]="categoryFilter" (ngModelChange)="applyFilters()">
+        @for (category of categories; track category) {
+          <option [value]="category">{{ category || 'All Categories' }}</option>
+        }
+      </select>
     </div>
-  }
-</div>
+  </app-forsa-card>
+}
+
+@if (showComplaintsSection && isAdminOrAgent) {
+  <div class="fb-list">
+    @for (item of filteredItems; track item.id) {
+      <app-forsa-card class="fb-card">
+        <div class="fb-inner card-pad-lg">
+          <div class="fb-main">
+            <div class="fb-ico" [attr.data-status]="item.status">
+              <app-forsa-icon [name]="statusIcon(item.status!)" [size]="24" />
+            </div>
+            <div>
+              <div class="fb-headline">
+                <h4>{{ item.subject }}</h4>
+                <app-forsa-badge [tone]="priorityTone(item.priority!)" size="xs">
+                  {{ item.priority }} Priority
+                </app-forsa-badge>
+              </div>
+              <p class="text-muted fb-desc">{{ item.description }}</p>
+              <div class="fb-meta">
+                <span>
+                  <app-forsa-icon name="clock" [size]="12" />
+                  Submitted on {{ item.createdAt | date:'yyyy-MM-dd' }}
+                </span>
+                <span>
+                  <app-forsa-icon name="filter" [size]="12" />
+                  {{ item.category }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="fb-side">
+            <app-forsa-badge [tone]="statusTone(item.status!)">
+              {{ item.status }}
+            </app-forsa-badge>
+
+            <app-forsa-button variant="ghost" size="sm" (clicked)="goToDetail(item.id!)">
+              <app-forsa-icon name="arrow-right" [size]="16" />
+              Details
+            </app-forsa-button>
+
+            @if (isAdminOrAgent) {
+              <app-forsa-button
+                variant="ghost"
+                size="sm"
+                (clicked)="goToAddResponse(item.id!)"
+              >
+                <app-forsa-icon name="send" [size]="16" />
+                Add Response
+              </app-forsa-button>
+              <app-forsa-button
+                variant="ghost"
+                size="sm"
+                (clicked)="goToDetail(item.id!)"
+              >
+                <app-forsa-icon name="pencil" [size]="16" />
+                Edit
+              </app-forsa-button>
+            }
+
+            @if (isAdminOrAgent) {
+              <app-forsa-button
+                variant="ghost"
+                size="sm"
+                (clicked)="close(item.id!)"
+              >
+                <app-forsa-icon name="alert-circle" [size]="16" />
+                Close
+              </app-forsa-button>
+            }
+
+            @if (isAdmin) {
+              <app-forsa-button
+                variant="ghost"
+                size="sm"
+                (clicked)="delete(item.id!)"
+              >
+                <app-forsa-icon name="trash-2" [size]="16" />
+              </app-forsa-button>
+            }
+
+            @if (canAddFeedback(item)) {
+              <app-forsa-button variant="ghost" size="sm" (clicked)="goToAddFeedback(item.id!)">
+                <app-forsa-icon name="message-square" [size]="16" />
+                Add Feedback
+              </app-forsa-button>
+            }
+          </div>
+        </div>
+      </app-forsa-card>
+    }
+
+    @if (!loading && filteredItems.length === 0) {
+      <div class="fb-empty">
+        <app-forsa-icon name="message-square" [size]="48" />
+        <p>No complaints yet.</p>
+      </div>
+    }
+  </div>
+}

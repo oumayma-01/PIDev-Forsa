@@ -9,8 +9,18 @@
   <div class="form-error">{{ error }}</div>
 }
 
+@if (loading && isEditMode) {
+  <div class="form-loading">
+    <app-forsa-icon name="zap" [size]="20" />
+    Loading response...
+  </div>
+}
+
 <app-forsa-card>
   <div class="card-pad-lg">
+    @if (!isEditMode && complaintId) {
+      <p class="linked">Linked complaint: #{{ complaintId }}</p>
+    }
     <!-- Responder Name -->
     <div class="form-group">
       <label class="forsa-label">Responder Name *</label>

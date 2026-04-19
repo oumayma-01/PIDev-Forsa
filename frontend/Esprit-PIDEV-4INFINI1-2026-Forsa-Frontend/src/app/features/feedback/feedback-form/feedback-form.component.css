@@ -27,6 +27,14 @@
   font-size: 14px;
 }
 
+.form-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: var(--color-muted-foreground);
+}
+
 .form-group {
   margin-bottom: 20px;
 }

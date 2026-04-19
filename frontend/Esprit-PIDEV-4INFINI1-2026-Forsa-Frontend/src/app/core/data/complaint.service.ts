@@ -13,6 +13,10 @@ export class ComplaintService {
     return this.http.get<ComplaintBackend[]>(`${this.baseUrl}/retrieve-all-complaints`);
   }
 
+  getMyComplaints(): Observable<ComplaintBackend[]> {
+    return this.http.get<ComplaintBackend[]>(`${this.baseUrl}/my-complaints`);
+  }
+
   getById(id: number): Observable<ComplaintBackend> {
     return this.http.get<ComplaintBackend>(`${this.baseUrl}/retrieve-complaint/${id}`);
   }

@@ -34,10 +34,9 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
   constructor(private chatbotService: ChatbotService) {}
 
   ngOnInit(): void {
-    // Optional: Add initial greeting
     this.messages.push({
       role: 'bot',
-      content: 'Hello! How can I help you today?',
+      content: 'Hello! I am your Forsa virtual assistant. How can I help you?',
       timestamp: new Date(),
     });
   }
@@ -81,8 +80,14 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
         this.shouldScroll = true;
       },
       error: () => {
-        this.error = 'Error communicating with chatbot';
+        this.messages.push({
+          role: 'bot',
+          content: 'Sorry, I could not reach the assistant right now. Please try again.',
+          timestamp: new Date(),
+        });
+        this.error = 'Unable to reach chatbot service.';
         this.loading = false;
+        this.shouldScroll = true;
       },
     });
   }
@@ -101,7 +106,7 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
       this.messages = [
         {
           role: 'bot',
-          content: 'Hello! How can I help you today?',
+          content: 'Hello! I am your Forsa virtual assistant. How can I help you?',
           timestamp: new Date(),
         },
       ];

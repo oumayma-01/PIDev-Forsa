@@ -9,7 +9,6 @@ import { OAuthSuccessComponent } from './features/auth/oauth-success/oauth-succe
 import { RegisterComponent } from './features/auth/register/register.component';
 import { CreditListComponent } from './features/credit/credit-list/credit-list.component';
 import { DashboardHomeComponent } from './features/dashboard/dashboard-home/dashboard-home.component';
-import { FeedbackListComponent } from './features/feedback/feedback-list/feedback-list.component';
 import { InsuranceProductsComponent } from './features/insurance/insurance-products/insurance-products.component';
 import { LandingPageComponent } from './features/landing/landing-page.component';
 import { WalletOverviewComponent } from './features/wallet/wallet-overview/wallet-overview.component';
@@ -47,11 +46,15 @@ export const routes: Routes = [
       },
       { path: 'credit', component: CreditListComponent },
       { path: 'wallet', component: WalletOverviewComponent },
-      { path: 'insurance', component: InsuranceProductsComponent },
+      { path: 'insurance', loadChildren: () => import('./features/insurance/insurance.routes').then(m => m.insuranceRoutes) },
       {
         path: 'feedback',
         children: [
-          { path: '', component: FeedbackListComponent },
+          {
+            path: '',
+            loadComponent: () =>
+              import('./features/feedback/feedback-list/feedback-list.component').then((m) => m.FeedbackListComponent),
+          },
           {
             path: 'complaint/add',
             loadComponent: () =>
@@ -68,7 +71,7 @@ export const routes: Routes = [
               import('./features/feedback/complaint-form/complaint-form.component').then((m) => m.ComplaintFormComponent),
           },
           {
-            path: 'feedback',
+            path: 'feedback/add',
             loadComponent: () =>
               import('./features/feedback/feedback-form/feedback-form.component').then((m) => m.FeedbackFormComponent),
           },

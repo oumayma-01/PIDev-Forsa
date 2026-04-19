@@ -15,7 +15,7 @@
 
 <app-forsa-card class="chat-container">
   <div class="chat-messages" #messagesContainer>
-    @for (message of messages; track message.timestamp) {
+    @for (message of messages; track $index) {
       <div [class]="'chat-message ' + message.role">
         <div class="message-bubble">
           <p>{{ message.content }}</p>

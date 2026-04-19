@@ -2,7 +2,12 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Feedback, SatisfactionLevel } from '../models/forsa.models';
+import { Feedback } from '../models/forsa.models';
+
+export interface FeedbackAvgByGroup {
+  group: string;
+  avgRating: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class FeedbackService {
@@ -11,6 +16,10 @@ export class FeedbackService {
 
   getAll(): Observable<Feedback[]> {
     return this.http.get<Feedback[]>(`${this.baseUrl}/retrieve-all-feedbacks`);
+  }
+
+  getMyFeedbacks(): Observable<Feedback[]> {
+    return this.http.get<Feedback[]>(`${this.baseUrl}/my-feedbacks`);
   }
 
   getById(id: number): Observable<Feedback> {
@@ -33,15 +42,24 @@ export class FeedbackService {
     return this.http.delete<void>(`${this.baseUrl}/remove-feedback/${id}`);
   }
 
-  getSummaryReport(): Observable<any> {
+  getSummary(): Observable<any> {
     return this.http.get<any>(`${this.baseUrl}/report/summary`);
   }
 
-  getTrendsReport(months: number = 6): Observable<any> {
+  getTrends(months: number = 6): Observable<any> {
     return this.http.get<any>(`${this.baseUrl}/report/trends?months=${months}`);
   }
 
-  getAvgRatingByCategory(): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/report/avg-rating-by-category`);
+  getAvgRatingByCategory(): Observable<FeedbackAvgByGroup[]> {
+    return this.http.get<FeedbackAvgByGroup[]>(`${this.baseUrl}/report/avg-rating-by-category`);
+  }
+
+  // Backward-compatible aliases used by existing components.
+  getSummaryReport(): Observable<any> {
+    return this.getSummary();
+  }
+
+  getTrendsReport(months: number = 6): Observable<any> {
+    return this.getTrends(months);
   }
 }

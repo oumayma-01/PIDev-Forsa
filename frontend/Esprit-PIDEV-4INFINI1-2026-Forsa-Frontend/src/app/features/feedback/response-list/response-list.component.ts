@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ResponseService } from '../../../core/data/response.service';
@@ -8,19 +9,23 @@ import { ForsaBadgeComponent } from '../../../shared/ui/forsa-badge/forsa-badge.
 import { ForsaButtonComponent } from '../../../shared/ui/forsa-button/forsa-button.component';
 import { ForsaCardComponent } from '../../../shared/ui/forsa-card/forsa-card.component';
 import { ForsaIconComponent } from '../../../shared/ui/forsa-icon/forsa-icon.component';
+import { ForsaInputDirective } from '../../../shared/directives/forsa-input.directive';
 import type { ForsaIconName } from '../../../shared/ui/forsa-icon/forsa-icon.types';
 
 @Component({
   selector: 'app-response-list',
   standalone: true,
-  imports: [CommonModule, ForsaBadgeComponent, ForsaButtonComponent, ForsaCardComponent, ForsaIconComponent],
+  imports: [CommonModule, FormsModule, ForsaBadgeComponent, ForsaButtonComponent, ForsaCardComponent, ForsaIconComponent, ForsaInputDirective],
   templateUrl: './response-list.component.html',
   styleUrl: './response-list.component.css',
 })
 export class ResponseListComponent implements OnInit {
   items: ComplaintResponse[] = [];
+  filteredItems: ComplaintResponse[] = [];
   loading = false;
   error = '';
+  statusFilter = '';
+  readonly statuses = ['', 'PENDING', 'PROCESSED', 'SENT', 'FAILED'];
 
   constructor(
     private responseService: ResponseService,
@@ -29,6 +34,10 @@ export class ResponseListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    if (!this.isAdminOrAgent) {
+      this.router.navigate(['/dashboard/feedback']);
+      return;
+    }
     this.loadResponses();
   }
 
@@ -49,6 +58,7 @@ export class ResponseListComponent implements OnInit {
     this.responseService.getAll().subscribe({
       next: (data: ComplaintResponse[]) => {
         this.items = data;
+        this.applyFilter();
         this.loading = false;
       },
       error: () => {
@@ -79,6 +89,12 @@ export class ResponseListComponent implements OnInit {
     this.responseService.improveWithAI(id).subscribe({
       next: () => this.loadResponses(),
       error: () => (this.error = 'Error improving response'),
+    });
+  }
+
+  applyFilter(): void {
+    this.filteredItems = this.items.filter((item) => {
+      return this.statusFilter ? item.responseStatus === this.statusFilter : true;
     });
   }
 

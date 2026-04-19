@@ -1,53 +1,43 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ComplaintService } from '../../../core/data/complaint.service';
 import { FeedbackService } from '../../../core/data/feedback.service';
 import { ForsaButtonComponent } from '../../../shared/ui/forsa-button/forsa-button.component';
 import { ForsaCardComponent } from '../../../shared/ui/forsa-card/forsa-card.component';
-import { ForsaIconComponent } from '../../../shared/ui/forsa-icon/forsa-icon.component';
-import { ForsaBadgeComponent } from '../../../shared/ui/forsa-badge/forsa-badge.component';
+
+type SatisfactionAvg = { group: string; avgRating: number };
+type TrendItem = { period: string; count: number; label: string };
 
 @Component({
   selector: 'app-feedback-stats',
   standalone: true,
-  imports: [
-    CommonModule,
-    ForsaButtonComponent,
-    ForsaCardComponent,
-    ForsaIconComponent,
-    ForsaBadgeComponent,
-  ],
+  imports: [CommonModule, ForsaButtonComponent, ForsaCardComponent],
   templateUrl: './feedback-stats.component.html',
   styleUrl: './feedback-stats.component.css',
 })
 export class FeedbackStatsComponent implements OnInit {
-  // Complaint statistics
-  summaryReport: any = null;
-  trendsReport: any = null;
-  statsByCategory: any = null;
-  statsByPriority: any = null;
+  private readonly complaintService = inject(ComplaintService);
+  private readonly feedbackService = inject(FeedbackService);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
 
-  // Feedback statistics
+  summary: any = null;
+  byCategory: Record<string, number> = {};
+  byPriority: Record<string, number> = {};
+  trendsData: TrendItem[] = [];
   feedbackSummary: any = null;
-  feedbackTrends: any = null;
-  avgRatingByCategory: Record<string, number> = {};
-  private complaintsRaw: any[] = [];
-
-  // Make Object available to template
-  Object = Object;
-
+  satisfactionAverages: SatisfactionAvg[] = [];
   loading = false;
   error = '';
 
-  constructor(
-    private complaintService: ComplaintService,
-    private feedbackService: FeedbackService,
-    private auth: AuthService
-  ) {}
-
   ngOnInit(): void {
-    this.loadAllStats();
+    if (!this.isAdminOrAgent) {
+      this.router.navigate(['/dashboard/feedback']);
+      return;
+    }
+    this.load();
   }
 
   get isAdminOrAgent(): boolean {
@@ -55,261 +45,172 @@ export class FeedbackStatsComponent implements OnInit {
     return roles.includes('ROLE_ADMIN') || roles.includes('ROLE_AGENT');
   }
 
-  loadAllStats(): void {
-    if (!this.isAdminOrAgent) {
-      this.error = 'You do not have permission to view statistics';
-      return;
-    }
-
+  load(): void {
     this.loading = true;
     this.error = '';
-    console.log('🔄 Loading statistics from backend...');
-
-    // Load complaint statistics
-    this.complaintService.getSummaryReport().subscribe({
-      next: (data) => {
-        console.log('📊 Summary Report received:', data);
-        this.summaryReport = data;
+    this.complaintService.getSummaryReport().subscribe({ next: (d) => (this.summary = d), error: () => (this.error = 'Unable to load complaint summary.') });
+    this.complaintService.getStatsByCategory().subscribe({ next: (d) => (this.byCategory = d ?? {}), error: () => void 0 });
+    this.complaintService.getStatsByPriority().subscribe({ next: (d) => (this.byPriority = d ?? {}), error: () => void 0 });
+    const trendsRequest = (this.complaintService as any).getTrends
+      ? (this.complaintService as any).getTrends(6)
+      : this.complaintService.getTrendsLastMonths(6);
+    trendsRequest.subscribe({
+      next: (d: any) => {
+        this.trendsData = (Array.isArray(d) ? d : []).map((item: any) => ({
+          period: item['period'] ?? item.period ?? '',
+          count: Number(item['count'] ?? item.count ?? 0),
+          label: this.formatPeriodLabel(item['period'] ?? item.period ?? ''),
+        }));
       },
-      error: (err) => {
-        console.error('❌ Error loading summary report:', err);
-        this.error = 'Error loading complaint summary';
-      },
-    });
-
-    this.complaintService.getAll().subscribe({
-      next: (data) => {
-        this.complaintsRaw = Array.isArray(data) ? data : [];
-        if (Object.keys(this.avgRatingByCategory).length === 0) {
-          this.applyFallbackCategoryRatings();
-        }
-      },
-      error: (err) => {
-        console.error('Error loading complaints for rating fallback:', err);
+      error: () => {
+        this.trendsData = [];
       },
     });
-
-    this.complaintService.getStatsByCategory().subscribe({
-      next: (data) => {
-        console.log('📂 Category Stats received:', data);
-        this.statsByCategory = data;
-        this.seedRatingsFromComplaintCategories();
-      },
-      error: (err) => {
-        console.error('❌ Error loading category stats:', err);
-      },
-    });
-
-    this.complaintService.getStatsByPriority().subscribe({
-      next: (data) => {
-        console.log('⭐ Priority Stats received:', data);
-        this.statsByPriority = data;
-        this.loading = false;
-      },
-      error: (err) => {
-        console.error('❌ Error loading priority stats:', err);
-        this.loading = false;
-      },
-    });
-
-    this.feedbackService.getSummaryReport().subscribe({
-      next: (data) => {
-        console.log('📝 Feedback Summary received:', data);
-        this.feedbackSummary = data;
-      },
-      error: (err) => {
-        console.error('❌ Error loading feedback summary:', err);
-      },
-    });
-
+    this.feedbackService.getSummary().subscribe({ next: (d) => (this.feedbackSummary = d), error: () => void 0 });
     this.feedbackService.getAvgRatingByCategory().subscribe({
-      next: (data) => {
-        console.log('⭐ Rating by Category received:', data);
-        console.log('⭐ Type:', typeof data);
-        console.log('⭐ Is Array:', Array.isArray(data));
-
-        const normalized = this.normalizeAvgRatingByCategory(data);
-        this.avgRatingByCategory = {
-          ...this.avgRatingByCategory,
-          ...normalized,
-        };
-        console.log('⭐ Normalized rating by category:', this.avgRatingByCategory);
-
-        if (Object.keys(this.avgRatingByCategory).length === 0) {
-          this.applyFallbackCategoryRatings();
-        }
+      next: (d: any) => {
+        console.log('RAW avg rating response:', d);
+        console.log('Type:', typeof d);
+        console.log('Is array:', Array.isArray(d));
+        this.satisfactionAverages = this.normalizeSatisfaction(d);
+        this.loading = false;
       },
-      error: (err) => {
-        console.error('❌ Error loading rating stats:', err);
-        this.seedRatingsFromComplaintCategories();
-        this.applyFallbackCategoryRatings();
+      error: () => {
+        this.satisfactionAverages = [];
+        this.loading = false;
       },
     });
   }
 
-  private seedRatingsFromComplaintCategories(): void {
-    if (!this.statsByCategory || typeof this.statsByCategory !== 'object') {
-      return;
-    }
-
-    const seeded: Record<string, number> = { ...this.avgRatingByCategory };
-    Object.keys(this.statsByCategory).forEach((category) => {
-      if (!Number.isFinite(seeded[category])) {
-        seeded[category] = 0;
-      }
-    });
-    this.avgRatingByCategory = seeded;
+  total(): number {
+    return Number(this.summary?.total ?? 0);
   }
 
-  private normalizeAvgRatingByCategory(data: any): Record<string, number> {
-    const normalized: Record<string, number> = {};
+  countStatus(status: string): number {
+    return Number(this.summary?.byStatus?.[status] ?? 0);
+  }
 
-    if (!data) {
-      return normalized;
+  categoryKeys(): string[] {
+    return Object.keys(this.byCategory ?? {});
+  }
+
+  priorityKeys(): string[] {
+    return Object.keys(this.byPriority ?? {});
+  }
+
+  getPriorityColor(priority: string): string {
+    switch (priority) {
+      case 'CRITICAL':
+        return '#dc2626';
+      case 'HIGH':
+        return '#f97316';
+      case 'MEDIUM':
+        return '#f59e0b';
+      case 'LOW':
+        return '#22c55e';
+      default:
+        return '#94a3b8';
     }
+  }
+
+  getPriorityDonutBackground(): string {
+    const keys = this.priorityKeys();
+    const total = keys.reduce((acc, k) => acc + Number(this.byPriority[k] ?? 0), 0);
+    if (!total) {
+      return 'conic-gradient(#e2e8f0 0 100%)';
+    }
+
+    let start = 0;
+    const parts: string[] = [];
+    keys.forEach((key) => {
+      const value = Number(this.byPriority[key] ?? 0);
+      const slice = (value / total) * 100;
+      const end = start + slice;
+      parts.push(`${this.getPriorityColor(key)} ${start}% ${end}%`);
+      start = end;
+    });
+    return `conic-gradient(${parts.join(', ')})`;
+  }
+
+  hasSatisfactionData(): boolean {
+    return this.satisfactionAverages.some((x) => x.avgRating > 0);
+  }
+
+  ratingStars(value: number): string {
+    const rounded = Math.max(0, Math.min(5, Math.round(value || 0)));
+    return '★★★★★'.slice(0, rounded) + '☆☆☆☆☆'.slice(0, 5 - rounded);
+  }
+
+  satisfactionColor(group: string): string {
+    if (group === 'VERY_SATISFIED') return '#16a34a';
+    if (group === 'SATISFIED') return '#65a30d';
+    if (group === 'NEUTRAL') return '#eab308';
+    if (group === 'DISSATISFIED') return '#f97316';
+    return '#dc2626';
+  }
+
+  satisfactionLevelsMissing(): boolean {
+    return this.totalFeedbacks() > 0 && !this.hasSatisfactionData();
+  }
+
+  private normalizeSatisfaction(data: any): SatisfactionAvg[] {
+    const defaults = ['VERY_SATISFIED', 'SATISFIED', 'NEUTRAL', 'DISSATISFIED', 'VERY_DISSATISFIED'];
+    const map = new Map<string, number>();
+    defaults.forEach((d) => map.set(d, 0));
 
     if (Array.isArray(data)) {
       data.forEach((item: any) => {
-        if (!item || typeof item !== 'object') {
-          return;
-        }
-
-        const category = item.category ?? item.CATEGORY ?? item.complaintCategory;
-        const ratingValue = item.avgRating ?? item.averageRating ?? item.AVG_RATING ?? item.value;
-        const numericRating = Number(ratingValue);
-
-        if (category && Number.isFinite(numericRating)) {
-          normalized[String(category)] = numericRating;
-          return;
-        }
-
-        const keys = Object.keys(item);
-        if (keys.length === 1) {
-          const singleKey = keys[0];
-          const singleValue = Number(item[singleKey]);
-          if (singleKey && Number.isFinite(singleValue)) {
-            normalized[String(singleKey)] = singleValue;
-          }
-        }
+        const group = String(item?.group ?? item?.satisfactionLevel ?? item?.category ?? item?.label ?? 'UNKNOWN');
+        const avgRating = Number(item?.avgRating ?? item?.averageRating ?? item?.rating ?? item?.value ?? 0);
+        if (group) map.set(group, Number.isFinite(avgRating) ? avgRating : 0);
       });
-      return normalized;
+    } else if (data && typeof data === 'object') {
+      Object.entries(data).forEach(([k, v]) => map.set(k, Number(v ?? 0)));
     }
 
-    if (typeof data === 'object') {
-      Object.entries(data).forEach(([key, value]) => {
-        const numericValue = Number(value);
-        if (Number.isFinite(numericValue)) {
-          normalized[key] = numericValue;
-        }
-      });
-    }
-
-    return normalized;
+    return defaults.map((group) => ({ group, avgRating: map.get(group) ?? 0 }));
   }
 
-  private applyFallbackCategoryRatings(): void {
-    if (!Array.isArray(this.complaintsRaw) || this.complaintsRaw.length === 0) {
-      return;
+  totalFeedbacks(): number {
+    return Number(this.feedbackSummary?.total ?? this.feedbackSummary?.count ?? 0);
+  }
+
+  formatPeriodLabel(period: string): string {
+    if (!period) return '';
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const parts = period.split('-');
+    if (parts.length === 2) {
+      const monthIndex = parseInt(parts[1], 10) - 1;
+      return `${months[monthIndex]} ${parts[0]}`;
     }
+    return period;
+  }
 
-    const byCategory: Record<string, { sum: number; count: number }> = {};
-
-    this.complaintsRaw.forEach((complaint: any) => {
-      const category = complaint?.category;
-      const rating = complaint?.feedback?.rating;
-      const numericRating = Number(rating);
-
-      if (!category || !Number.isFinite(numericRating)) {
-        return;
-      }
-
-      if (!byCategory[category]) {
-        byCategory[category] = { sum: 0, count: 0 };
-      }
-
-      byCategory[category].sum += numericRating;
-      byCategory[category].count += 1;
+  get trendsSvgPath(): string {
+    if (!this.trendsData.length) return '';
+    const width = 600;
+    const height = 200;
+    const padding = 40;
+    const maxCount = Math.max(...this.trendsData.map((d) => d.count), 1);
+    const points = this.trendsData.map((d, i) => {
+      const x = padding + (i / (this.trendsData.length - 1)) * (width - 2 * padding);
+      const y = height - padding - (d.count / maxCount) * (height - 2 * padding);
+      return { x, y, count: d.count, label: d.label };
     });
+    return points.map((p, i) => (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' ');
+  }
 
-    const fallback: Record<string, number> = {};
-    Object.entries(byCategory).forEach(([category, stats]) => {
-      if (stats.count > 0) {
-        fallback[category] = stats.sum / stats.count;
-      }
+  get trendsPoints(): { x: number; y: number; count: number; label: string }[] {
+    if (!this.trendsData.length) return [];
+    const width = 600;
+    const height = 200;
+    const padding = 40;
+    const maxCount = Math.max(...this.trendsData.map((d) => d.count), 1);
+    return this.trendsData.map((d, i) => {
+      const x = padding + (i / (this.trendsData.length - 1)) * (width - 2 * padding);
+      const y = height - padding - (d.count / maxCount) * (height - 2 * padding);
+      return { x, y, count: d.count, label: d.label };
     });
-
-    if (Object.keys(fallback).length > 0) {
-      this.avgRatingByCategory = fallback;
-      console.log('⭐ Applied fallback rating by category:', fallback);
-    }
-  }
-
-  // Helper methods to extract data from API responses
-  getTotalComplaints(): number {
-    const value = this.summaryReport?.total
-      ?? this.summaryReport?.totalComplaints
-      ?? 0;
-    return value;
-  }
-
-  getOpenComplaints(): number {
-    const value = this.summaryReport?.byStatus?.OPEN
-      ?? this.summaryReport?.openComplaints
-      ?? 0;
-    return value;
-  }
-
-  getResolvedComplaints(): number {
-    const value = this.summaryReport?.byStatus?.RESOLVED
-      ?? this.summaryReport?.resolvedComplaints
-      ?? 0;
-    return value;
-  }
-
-  getAverageFeedbackRating(): number {
-    const value = this.feedbackSummary?.avgRating
-      ?? this.feedbackSummary?.averageRating
-      ?? 0;
-    return value;
-  }
-
-  getTotalFeedback(): number {
-    const value = this.feedbackSummary?.total
-      ?? this.feedbackSummary?.totalCount
-      ?? 0;
-    return value;
-  }
-
-  getCategoryKeys(): string[] {
-    // Si on a avgRatingByCategory avec données, utiliser ses clés
-    const keys = new Set<string>();
-    if (this.avgRatingByCategory && Object.keys(this.avgRatingByCategory).length > 0) {
-      Object.keys(this.avgRatingByCategory).forEach((k) => keys.add(k));
-    }
-    // Sinon utiliser les catégories de complaints (fallback)
-    if (this.statsByCategory && Object.keys(this.statsByCategory).length > 0) {
-      Object.keys(this.statsByCategory).forEach((k) => keys.add(k));
-    }
-    return Array.from(keys);
-  }
-
-  getPriorityKeys(): string[] {
-    return this.statsByPriority ? Object.keys(this.statsByPriority) : [];
-  }
-
-  getCategoryValue(category: string): number {
-    return this.statsByCategory?.[category] ?? 0;
-  }
-
-  getPriorityValue(priority: string): number {
-    return this.statsByPriority?.[priority] ?? 0;
-  }
-
-  getCategoryRating(category: string): number {
-    const rating = this.avgRatingByCategory?.[category];
-    if (rating !== undefined && rating !== null && Number.isFinite(Number(rating))) {
-      return rating;
-    }
-    return 0;
   }
 }

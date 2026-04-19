@@ -11,6 +11,7 @@ public interface IComplaintService {
     List<Complaint> retrieveAllComplaints();
     Complaint retrieveComplaint(Long complaintId);
     Complaint addComplaint(Complaint c);
+    List<Complaint> getComplaintsByUsername(String username);
     void removeComplaint(Long complaintId);
     Complaint modifyComplaint(Complaint complaint);
 

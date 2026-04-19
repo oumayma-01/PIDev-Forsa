@@ -11,6 +11,16 @@
   }
 </div>
 
+<app-forsa-card class="filter-card">
+  <div class="filter-inner">
+    <select forsaInput [(ngModel)]="statusFilter" (ngModelChange)="applyFilter()">
+      @for (status of statuses; track status) {
+        <option [value]="status">{{ status || 'All Statuses' }}</option>
+      }
+    </select>
+  </div>
+</app-forsa-card>
+
 @if (error) {
   <div class="resp-error">{{ error }}</div>
 }
@@ -23,7 +33,7 @@
 }
 
 <div class="resp-list">
-  @for (item of items; track item.id) {
+  @for (item of filteredItems; track item.id) {
     <app-forsa-card class="resp-card">
       <div class="resp-inner card-pad-lg">
         <div class="resp-main">
@@ -64,7 +74,7 @@
     </app-forsa-card>
   }
 
-  @if (!loading && items.length === 0) {
+  @if (!loading && filteredItems.length === 0) {
     <div class="resp-empty">
       <app-forsa-icon name="message-square" [size]="48" />
       <p>No responses found.</p>

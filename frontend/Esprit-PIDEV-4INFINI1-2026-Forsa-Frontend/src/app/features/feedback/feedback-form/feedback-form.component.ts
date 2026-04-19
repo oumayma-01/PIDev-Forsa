@@ -35,6 +35,7 @@ export class FeedbackFormComponent implements OnInit {
   useAI = false;
   loading = false;
   error = '';
+  complaintId?: number;
 
   satisfactionLevels: SatisfactionLevel[] = [
     'VERY_SATISFIED',
@@ -52,15 +53,27 @@ export class FeedbackFormComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    if (!this.isClient) {
+      this.router.navigate(['/dashboard/feedback']);
+      return;
+    }
+    const queryComplaintId = Number(this.route.snapshot.queryParamMap.get('complaintId'));
+    if (queryComplaintId) {
+      this.complaintId = queryComplaintId;
+      this.feedback.complaint = { id: queryComplaintId, subject: '', description: '' };
+    }
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.isEditMode = true;
+      this.loading = true;
       this.feedbackService.getById(+id).subscribe({
         next: (data: Feedback) => {
           this.feedback = data;
+          this.loading = false;
         },
         error: () => {
           this.error = 'Error loading feedback';
+          this.loading = false;
         },
       });
     }
@@ -84,11 +97,23 @@ export class FeedbackFormComponent implements OnInit {
   }
 
   save(): void {
+    if (!this.feedback.rating || this.feedback.rating < 1 || this.feedback.rating > 5) {
+      this.error = 'Rating must be between 1 and 5.';
+      return;
+    }
+    if ((this.feedback.comment ?? '').length > 500) {
+      this.error = 'Comment must be 500 characters max.';
+      return;
+    }
     this.loading = true;
     this.error = '';
+    const payload: Feedback = {
+      ...this.feedback,
+      complaint: this.feedback.complaint ?? (this.complaintId ? { id: this.complaintId, subject: '', description: '' } : undefined),
+    };
 
     if (this.isEditMode) {
-      this.feedbackService.update(this.feedback).subscribe({
+      this.feedbackService.update(payload).subscribe({
         next: () => this.router.navigate(['/dashboard/feedback']),
         error: () => {
           this.error = 'Error updating feedback';
@@ -97,8 +122,8 @@ export class FeedbackFormComponent implements OnInit {
       });
     } else {
       const action = this.useAI
-        ? this.feedbackService.addWithAI(this.feedback)
-        : this.feedbackService.add(this.feedback);
+        ? this.feedbackService.addWithAI(payload)
+        : this.feedbackService.add(payload);
 
       action.subscribe({
         next: () => this.router.navigate(['/dashboard/feedback']),
@@ -112,5 +137,15 @@ export class FeedbackFormComponent implements OnInit {
 
   cancel(): void {
     this.router.navigate(['/dashboard/feedback']);
+  }
+
+  remove(): void {
+    if (!this.isEditMode || !this.feedback.id) {
+      return;
+    }
+    this.feedbackService.delete(this.feedback.id).subscribe({
+      next: () => this.router.navigate(['/dashboard/feedback']),
+      error: () => (this.error = 'Error deleting feedback'),
+    });
   }
 }

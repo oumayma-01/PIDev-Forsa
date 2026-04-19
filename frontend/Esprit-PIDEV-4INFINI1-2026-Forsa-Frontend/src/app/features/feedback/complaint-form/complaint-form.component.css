@@ -26,6 +26,17 @@
   margin-bottom: 16px;
   font-size: 14px;
 }
+.form-error p {
+  margin: 0;
+}
+
+.form-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-muted-foreground);
+  margin-bottom: 16px;
+}
 
 .form-group {
   margin-bottom: 20px;

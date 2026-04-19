@@ -35,6 +35,7 @@ export class ResponseFormComponent implements OnInit {
   isEditMode = false;
   loading = false;
   error = '';
+  complaintId?: number;
 
   statuses: ResponseStatus[] = ['PENDING', 'PROCESSED', 'SENT', 'FAILED'];
 
@@ -46,15 +47,26 @@ export class ResponseFormComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    if (!this.isAdminOrAgent) {
+      this.router.navigate(['/dashboard/feedback']);
+      return;
+    }
+    const queryComplaintId = Number(this.route.snapshot.queryParamMap.get('complaintId'));
+    if (queryComplaintId) {
+      this.complaintId = queryComplaintId;
+    }
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.isEditMode = true;
+      this.loading = true;
       this.responseService.getById(+id).subscribe({
         next: (data: ComplaintResponse) => {
           this.response = data;
+          this.loading = false;
         },
         error: () => {
           this.error = 'Error loading response';
+          this.loading = false;
         },
       });
     }
@@ -80,20 +92,32 @@ export class ResponseFormComponent implements OnInit {
   }
 
   save(): void {
+    if ((this.response.message ?? '').trim().length < 10) {
+      this.error = 'Message must be at least 10 characters.';
+      return;
+    }
+    if ((this.response.responderRole ?? '').trim().length === 0 || (this.response.responderName ?? '').trim().length < 2) {
+      this.error = 'Responder name and role are required.';
+      return;
+    }
     this.loading = true;
     this.error = '';
 
     if (this.isEditMode) {
       this.responseService.update(this.response).subscribe({
-        next: () => this.router.navigate(['/dashboard/feedback/responses']),
+        next: () => this.router.navigate(['/dashboard/feedback']),
         error: () => {
           this.error = 'Error updating response';
           this.loading = false;
         },
       });
     } else {
-      this.responseService.add(this.response).subscribe({
-        next: () => this.router.navigate(['/dashboard/feedback/responses']),
+      const payload: ComplaintResponse = {
+        ...this.response,
+        complaint: this.complaintId ? { id: this.complaintId, subject: '', description: '' } : this.response.complaint,
+      };
+      this.responseService.add(payload).subscribe({
+        next: () => this.router.navigate(['/dashboard/feedback']),
         error: () => {
           this.error = 'Error creating response';
           this.loading = false;
@@ -103,6 +127,6 @@ export class ResponseFormComponent implements OnInit {
   }
 
   cancel(): void {
-    this.router.navigate(['/dashboard/feedback/responses']);
+    this.router.navigate(['/dashboard/feedback']);
   }
 }

@@ -9,6 +9,21 @@
   <div class="form-error">{{ error }}</div>
 }
 
+@if (validationErrors.length > 0) {
+  <div class="form-error">
+    @for (msg of validationErrors; track msg) {
+      <p>{{ msg }}</p>
+    }
+  </div>
+}
+
+@if (loading && isEditMode) {
+  <div class="form-loading">
+    <app-forsa-icon name="zap" [size]="20" />
+    Loading complaint...
+  </div>
+}
+
 <app-forsa-card>
   <div class="card-pad-lg">
     <!-- Subject -->
@@ -35,7 +50,7 @@
     </div>
 
     <!-- Category — hidden if useAI -->
-    @if (!useAI || isEditMode) {
+    @if ((!useAI || isEditMode) && isAdminOrAgent) {
       <div class="form-group">
         <label class="forsa-label">Category</label>
         <select forsaInput [(ngModel)]="complaint.category">
@@ -47,7 +62,7 @@
     }
 
     <!-- Priority — ADMIN/AGENT only or edit mode -->
-    @if (isAdminOrAgent || isEditMode) {
+    @if (isAdminOrAgent) {
       <div class="form-group">
         <label class="forsa-label">Priority</label>
         <select forsaInput [(ngModel)]="complaint.priority">

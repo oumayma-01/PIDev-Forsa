@@ -52,10 +52,142 @@
   flex-wrap: wrap;
 }
 
+.role-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.client-sections {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.section-card {
+  margin: 0;
+}
+
+.section-pad {
+  padding: 16px;
+}
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.section-head h3 {
+  margin: 0;
+}
+
+.client-item {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+}
+
+.client-item p {
+  margin: 8px 0;
+}
+
+.client-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.client-meta {
+  display: flex;
+  gap: 12px;
+  color: var(--color-muted-foreground);
+  font-size: 12px;
+  align-items: center;
+}
+
+.client-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.muted {
+  color: var(--color-muted-foreground);
+}
+
+.role-card {
+  cursor: pointer;
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.role-card:hover {
+  transform: translateY(-2px);
+}
+
+.role-card-inner {
+  padding: 18px;
+}
+
+.role-card-inner h3 {
+  margin: 10px 0 6px 0;
+  font-size: 18px;
+}
+
+.role-card-inner p {
+  margin: 0;
+  color: var(--color-muted-foreground);
+  font-size: 14px;
+  min-height: 36px;
+}
+
+.card-link {
+  margin-top: 14px;
+  border: 0;
+  background: transparent;
+  color: var(--color-primary);
+  font-weight: 600;
+  padding: 0;
+  cursor: pointer;
+}
+
+.role-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.role-icon[data-color='blue'] { background: #2563eb; }
+.role-icon[data-color='yellow'] { background: #eab308; }
+.role-icon[data-color='green'] { background: #16a34a; }
+.role-icon[data-color='purple'] { background: #7c3aed; }
+.role-icon[data-color='orange'] { background: #ea580c; }
+
 .fb-list {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.filters {
+  margin-bottom: 16px;
+}
+
+.filters-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 16px;
 }
 
 .fb-card {
@@ -153,4 +285,18 @@
   gap: 8px;
   flex-direction: column;
   align-items: flex-end;
+}
+
+@media (max-width: 768px) {
+  .role-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .client-sections {
+    grid-template-columns: 1fr;
+  }
+
+  .filters-inner {
+    grid-template-columns: 1fr;
+  }
 }
