@@ -1,0 +1,87 @@
+<div class="page-toolbar">
+  <div class="page-head">
+    <h2>{{ isEditMode ? 'Edit Response' : 'New Response' }}</h2>
+    <p>{{ isEditMode ? 'Update response details' : 'Create a new response to a complaint' }}</p>
+  </div>
+</div>
+
+@if (error) {
+  <div class="form-error">{{ error }}</div>
+}
+
+@if (loading && isEditMode) {
+  <div class="form-loading">
+    <app-forsa-icon name="zap" [size]="20" />
+    Loading response...
+  </div>
+}
+
+<app-forsa-card>
+  <div class="card-pad-lg">
+    @if (!isEditMode && complaintId) {
+      <p class="linked">Linked complaint: #{{ complaintId }}</p>
+    }
+    <!-- Responder Name -->
+    <div class="form-group">
+      <label class="forsa-label">Responder Name *</label>
+      <input
+        forsaInput
+        type="text"
+        [(ngModel)]="response.responderName"
+        placeholder="Your name"
+        class="input-h-12"
+      />
+    </div>
+
+    <!-- Responder Role -->
+    <div class="form-group">
+      <label class="forsa-label">Responder Role *</label>
+      <input
+        forsaInput
+        type="text"
+        [(ngModel)]="response.responderRole"
+        placeholder="Your role (e.g., AGENT, ADMIN)"
+        class="input-h-12"
+      />
+    </div>
+
+    <!-- Message -->
+    <div class="form-group">
+      <label class="forsa-label">Response Message *</label>
+      <textarea
+        forsaInput
+        [(ngModel)]="response.message"
+        placeholder="Enter your response message (min 10 characters)"
+        rows="6"
+      ></textarea>
+    </div>
+
+    <!-- Status — edit mode only -->
+    @if (isEditMode) {
+      <div class="form-group">
+        <label class="forsa-label">Status</label>
+        <select forsaInput [(ngModel)]="response.responseStatus">
+          @for (status of statuses; track status) {
+            <option [value]="status">{{ status }}</option>
+          }
+        </select>
+      </div>
+    }
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <app-forsa-button variant="outline" (clicked)="cancel()">
+        Cancel
+      </app-forsa-button>
+      <app-forsa-button (clicked)="save()" [disabled]="loading || !isAdminOrAgent">
+        @if (loading) {
+          <app-forsa-icon name="zap" [size]="16" />
+          Saving...
+        } @else {
+          <app-forsa-icon name="check-circle-2" [size]="16" />
+          {{ isEditMode ? 'Update Response' : 'Create Response' }}
+        }
+      </app-forsa-button>
+    </div>
+  </div>
+</app-forsa-card>

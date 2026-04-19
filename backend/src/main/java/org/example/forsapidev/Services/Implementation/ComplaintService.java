@@ -47,6 +47,14 @@ public class ComplaintService implements IComplaintService {
     }
 
     @Override
+    public List<Complaint> getComplaintsByUsername(String username) {
+        if (username == null || username.isBlank()) {
+            return Collections.emptyList();
+        }
+        return complaintRepository.findByUserUsername(username);
+    }
+
+    @Override
     public void removeComplaint(Long complaintId) {
         complaintRepository.deleteById(complaintId);
     }

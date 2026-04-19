@@ -1,0 +1,83 @@
+<div class="page-toolbar">
+  <div class="page-head">
+    <h2>Responses</h2>
+    <p>Manage complaint responses</p>
+  </div>
+  @if (isAdminOrAgent) {
+    <app-forsa-button (clicked)="goToAdd()">
+      <app-forsa-icon name="plus" [size]="16" />
+      New Response
+    </app-forsa-button>
+  }
+</div>
+
+<app-forsa-card class="filter-card">
+  <div class="filter-inner">
+    <select forsaInput [(ngModel)]="statusFilter" (ngModelChange)="applyFilter()">
+      @for (status of statuses; track status) {
+        <option [value]="status">{{ status || 'All Statuses' }}</option>
+      }
+    </select>
+  </div>
+</app-forsa-card>
+
+@if (error) {
+  <div class="resp-error">{{ error }}</div>
+}
+
+@if (loading) {
+  <div class="resp-loading">
+    <app-forsa-icon name="zap" [size]="32" />
+    <p>Loading...</p>
+  </div>
+}
+
+<div class="resp-list">
+  @for (item of filteredItems; track item.id) {
+    <app-forsa-card class="resp-card">
+      <div class="resp-inner card-pad-lg">
+        <div class="resp-main">
+          <div class="resp-ico" [attr.data-status]="item.responseStatus">
+            <app-forsa-icon [name]="statusIcon(item.responseStatus!)" [size]="24" />
+          </div>
+          <div>
+            <div class="resp-headline">
+              <h4>{{ item.responderName }}</h4>
+              <app-forsa-badge [tone]="statusTone(item.responseStatus!)">
+                {{ item.responseStatus }}
+              </app-forsa-badge>
+            </div>
+            <p class="text-muted resp-role">Role: {{ item.responderRole }}</p>
+            <p class="resp-message">{{ item.message }}</p>
+            <p class="text-muted resp-date">
+              <app-forsa-icon name="clock" [size]="12" />
+              {{ item.responseDate | date: 'yyyy-MM-dd HH:mm' }}
+            </p>
+          </div>
+        </div>
+
+        @if (isAdminOrAgent) {
+          <div class="resp-actions">
+            <app-forsa-button variant="ghost" size="sm" (clicked)="improveWithAI(item.id!)">
+              <app-forsa-icon name="sparkles" [size]="16" />
+              Improve
+            </app-forsa-button>
+            <app-forsa-button variant="ghost" size="sm" (clicked)="goToEdit(item.id!)">
+              <app-forsa-icon name="pencil" [size]="16" />
+            </app-forsa-button>
+            <app-forsa-button variant="ghost" size="sm" (clicked)="delete(item.id!)">
+              <app-forsa-icon name="trash-2" [size]="16" />
+            </app-forsa-button>
+          </div>
+        }
+      </div>
+    </app-forsa-card>
+  }
+
+  @if (!loading && filteredItems.length === 0) {
+    <div class="resp-empty">
+      <app-forsa-icon name="message-square" [size]="48" />
+      <p>No responses found.</p>
+    </div>
+  }
+</div>

@@ -7,7 +7,10 @@ import lombok.Setter;
 import org.example.forsapidev.Services.Interfaces.IComplaintService;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Complaint;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Response;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -41,6 +44,12 @@ public class ComplaintController {
     @PreAuthorize("hasAnyRole('CLIENT','ADMIN','AGENT')")
     public Complaint addComplaint(@RequestBody Complaint c) {
         return complaintService.addComplaint(c);
+    }
+
+    @GetMapping("/my-complaints")
+    @PreAuthorize("hasRole('CLIENT')")
+    public ResponseEntity<List<Complaint>> getMyComplaints(@AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(complaintService.getComplaintsByUsername(userDetails.getUsername()));
     }
 
     @DeleteMapping("/remove-complaint/{complaint-id}")

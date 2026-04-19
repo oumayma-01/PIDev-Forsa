@@ -1,5 +1,5 @@
 import type {
-  Complaint,
+  ComplaintBackend,
   CreditRequest,
   InsurancePolicy,
   Partner,
@@ -36,10 +36,10 @@ export const MOCK_POLICIES: InsurancePolicy[] = [
   { id: 'P3', type: 'life', status: 'pending', premium: 200, coverage: 100000, startDate: '2024-04-01', endDate: '2025-03-31' },
 ];
 
-export const MOCK_COMPLAINTS: Complaint[] = [
-  { id: 'COM1', subject: 'Transaction Failed', description: 'My deposit of $500 failed but money was deducted.', status: 'in-progress', priority: 'high', date: '2024-03-10' },
-  { id: 'COM2', subject: 'App Crash', description: 'The app crashes when I try to open the wallet.', status: 'open', priority: 'medium', date: '2024-03-09' },
-  { id: 'COM3', subject: 'New Feature Request', description: 'Would love to see crypto integration.', status: 'resolved', priority: 'low', date: '2024-03-05' },
+export const MOCK_COMPLAINTS: ComplaintBackend[] = [
+  { id: 1, subject: 'Transaction Failed', description: 'My deposit of $500 failed but money was deducted.', status: 'CLOSED', priority: 'HIGH', createdAt: '2024-03-10' },
+  { id: 2, subject: 'App Crash', description: 'The app crashes when I try to open the wallet.', status: 'OPEN', priority: 'MEDIUM', createdAt: '2024-03-09' },
+  { id: 3, subject: 'New Feature Request', description: 'Would love to see crypto integration.', status: 'RESOLVED', priority: 'LOW', createdAt: '2024-03-05' },
 ];
 
 /** Sample data matching the `Partner` /api/partners contract (no HTTP). */
