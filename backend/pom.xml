@@ -117,9 +117,8 @@
         <dependency>
             <groupId>com.stripe</groupId>
             <artifactId>stripe-java</artifactId>
-            <version>24.21.1</version>
+            <version>24.21.0</version>
         </dependency>
-
         <!-- Dotenv for loading .env files -->
         <dependency>
             <groupId>io.github.cdimascio</groupId>

@@ -1,0 +1,6 @@
+### Maven (monorepo) ###
+**/target/
+**/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst
+
+### VS Code ###
+.vscode/extensions.json
