@@ -23,4 +23,6 @@ public class CurrentUserResponse {
    * ({@code authProvider} is {@code GOOGLE}); current password is not required to set one.
    */
   private boolean oauthAccount;
+  /** Angular routes allowed for navigation (e.g. {@code /dashboard/credit}) for this user's role. */
+  private List<String> allowedNavPaths;
 }

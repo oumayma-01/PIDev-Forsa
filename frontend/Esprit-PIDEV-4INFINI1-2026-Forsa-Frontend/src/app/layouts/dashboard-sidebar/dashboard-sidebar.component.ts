@@ -1,5 +1,6 @@
 import { Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { isNavPathAllowed } from '../../core/utils/nav-path-access';
 import { AuthService } from '../../core/services/auth.service';
 import { ForsaLogoComponent } from '../../shared/branding/forsa-logo.component';
 import { ForsaIconComponent } from '../../shared/ui/forsa-icon/forsa-icon.component';
@@ -33,18 +34,18 @@ export class DashboardSidebarComponent {
     { label: 'AI Risk Analysis', href: '/dashboard/ai', icon: 'bar-chart-3' },
   ];
 
+  /** Lien profil dans le pied de page : même règle que l’entrée « My profile » du menu. */
+  readonly showFooterProfile = computed(() =>
+    isNavPathAllowed('/dashboard/profile', this.auth.currentUser()?.allowedNavPaths),
+  );
+
   readonly navItems = computed<NavItem[]>(() => {
     const roles = this.auth.currentUser()?.roles ?? [];
-    const isAdmin = roles.includes('ROLE_ADMIN');
-
-    let items = [...this.baseNav];
-
-    if (isAdmin) {
-      const adminItem: NavItem = { label: 'User management', href: '/dashboard/users', icon: 'settings' };
-      items.splice(1, 0, adminItem);
+    if (!roles.includes('ROLE_ADMIN')) {
+      return this.baseNav;
     }
-
-    return items;
+    const adminItem: NavItem = { label: 'User management', href: '/dashboard/users', icon: 'settings' };
+    return [this.baseNav[0], adminItem, ...this.baseNav.slice(1)];
   });
 
   logout(): void {
