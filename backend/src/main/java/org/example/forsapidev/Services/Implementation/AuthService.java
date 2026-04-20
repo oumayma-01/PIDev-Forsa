@@ -5,7 +5,9 @@ import org.example.forsapidev.Repositories.RoleRepository;
 import org.example.forsapidev.Repositories.UserRepository;
 import org.example.forsapidev.Services.AgentRegistryService;
 import org.example.forsapidev.Services.Interfaces.IAuthService;
+import org.example.forsapidev.Services.Interfaces.IRoleAccessService;
 import org.example.forsapidev.Utils.EmailEncryptionUtil;
+import org.example.forsapidev.entities.UserManagement.ERole;
 import org.example.forsapidev.entities.UserManagement.Role;
 import org.example.forsapidev.entities.UserManagement.User;
 import org.example.forsapidev.payload.request.ForgottenPasswordRequest;
@@ -53,6 +55,8 @@ class AuthService implements IAuthService {
     PasswordEncoder encoder;
     @Autowired
     AgentRegistryService agentRegistryService;
+    @Autowired
+    IRoleAccessService roleAccessService;
 
     @Value("${app.frontend.base-url:http://localhost:4200}")
     private String frontendBaseUrl;
@@ -85,6 +89,8 @@ class AuthService implements IAuthService {
                 jwtResponse.setHasProfileImage(
                         user.getProfileImageKey() != null && !user.getProfileImageKey().isBlank());
                 jwtResponse.setOauthAccount(isGoogleOnly(user));
+                jwtResponse.setAllowedNavPaths(
+                    roleAccessService.permittedNavPathsForRole(user.getRole().getName()));
                 return ResponseEntity.ok(jwtResponse);
             } catch (Exception e) {
                 return ResponseEntity
@@ -419,13 +425,16 @@ String email = EmailEncryptionUtil.decryptEmail(restRequest.getEmail());
         String email = user != null ? user.getEmail() : userDetails.getEmail();
         String username = user != null ? user.getUsername() : userDetails.getUsername();
         boolean oauthAccount = user != null && isGoogleOnly(user);
+        ERole appRole =
+            user != null ? user.getRole().getName() : userDetails.getAppRole();
         return ResponseEntity.ok(new CurrentUserResponse(
                 userDetails.getId(),
                 username,
                 email,
                 roles,
                 hasImage,
-                oauthAccount));
+                oauthAccount,
+                roleAccessService.permittedNavPathsForRole(appRole)));
     }
 
     private static boolean isGoogleOnly(User user) {

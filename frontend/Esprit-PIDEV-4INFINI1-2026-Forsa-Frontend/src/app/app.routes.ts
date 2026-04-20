@@ -117,6 +117,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/admin/user-management/user-management.component').then((m) => m.UserManagementComponent),
       },
+      {
+        path: 'roles',
+        canMatch: [adminGuard],
+        loadComponent: () =>
+          import('./features/admin/role-management/role-management.component').then((m) => m.RoleManagementComponent),
+      },
     ],
   },
   { path: '**', redirectTo: '', pathMatch: 'full' },
