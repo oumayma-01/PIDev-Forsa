@@ -38,6 +38,7 @@ export class AuthService {
             roles: res.roles ?? [],
             hasProfileImage: res.hasProfileImage ?? false,
             oauthAccount: res.oauthAccount ?? false,
+            allowedNavPaths: res.allowedNavPaths,
           });
         }),
       );
