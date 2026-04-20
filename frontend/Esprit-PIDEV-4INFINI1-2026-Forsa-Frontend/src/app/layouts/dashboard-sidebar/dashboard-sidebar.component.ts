@@ -35,11 +35,16 @@ export class DashboardSidebarComponent {
 
   readonly navItems = computed<NavItem[]>(() => {
     const roles = this.auth.currentUser()?.roles ?? [];
-    if (!roles.includes('ROLE_ADMIN')) {
-      return this.baseNav;
+    const isAdmin = roles.includes('ROLE_ADMIN');
+
+    let items = [...this.baseNav];
+
+    if (isAdmin) {
+      const adminItem: NavItem = { label: 'User management', href: '/dashboard/users', icon: 'settings' };
+      items.splice(1, 0, adminItem);
     }
-    const adminItem: NavItem = { label: 'User management', href: '/dashboard/users', icon: 'settings' };
-    return [this.baseNav[0], adminItem, ...this.baseNav.slice(1)];
+
+    return items;
   });
 
   logout(): void {
