@@ -1,0 +1,36 @@
+@if (localError()) {
+  <p class="notice notice--err" role="alert">{{ localError() }}</p>
+} @else if (localLoading()) {
+  <p class="text-muted">Chargement des échéances...</p>
+} @else if (localRepayments().length > 0) {
+  <div class="table-wrapper">
+    <table class="forsa-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Date d'échéance</th>
+          <th>Montant Total</th>
+          <th>Principal</th>
+          <th>Intérêts</th>
+          <th>Statut</th>
+          <th>Date de paiement</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of localRepayments(); track item.id) {
+          <tr>
+            <td>{{ item.id }}</td>
+            <td>{{ item.dueDate | date: 'dd/MM/yyyy' }}</td>
+            <td>{{ item.totalAmount | number: '1.2-2' }}</td>
+            <td>{{ item.principalPart | number: '1.2-2' }}</td>
+            <td>{{ item.interestPart | number: '1.2-2' }}</td>
+            <td><app-forsa-badge [tone]="statusTone(item.status)">{{ item.status }}</app-forsa-badge></td>
+            <td>{{ item.paidDate ? (item.paidDate | date: 'dd/MM/yyyy') : '-' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+} @else {
+  <p class="text-muted">Aucun échéancier de remboursement disponible pour ce crédit.</p>
+}

@@ -38,7 +38,7 @@ public class InterestRateEngineService {
      * @return Taux annuel final en pourcentage
      */
     public BigDecimal computeAnnualRatePercent(LocalDateTime requestDate,
-                                              int durationMonths,
+                                              Integer durationMonths,
                                               BigDecimal tmmOverride,
                                               BigDecimal inflationOverride) {
         Integer year = requestDate != null ? requestDate.getYear() : null;

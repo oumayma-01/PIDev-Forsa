@@ -1,6 +1,9 @@
 package org.example.forsapidev.Services;
 
 import org.example.forsapidev.DTO.CreditRequestCreateDTO;
+import org.example.forsapidev.DTO.CreditRequestDTO;
+import org.example.forsapidev.DTO.CreditRequestUpdateDTO;
+import org.example.forsapidev.Mappers.CreditRequestMapper;
 import org.example.forsapidev.entities.CreditManagement.AmortizationType;
 import org.example.forsapidev.entities.CreditManagement.CreditRequest;
 import org.example.forsapidev.entities.CreditManagement.CreditStatus;
@@ -25,7 +28,9 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class CreditRequestService {
@@ -39,6 +44,7 @@ public class CreditRequestService {
     private final CreditScoringService creditScoringService;
     private final UnifiedCreditAnalysisService unifiedCreditAnalysisService;
     private final AgentAssignmentService agentAssignmentService;
+    private final CreditRequestMapper creditRequestMapper;
 
     public CreditRequestService(CreditRequestRepository creditRequestRepository,
                                 RepaymentScheduleRepository repaymentScheduleRepository,
@@ -46,7 +52,8 @@ public class CreditRequestService {
                                 AmortizationCalculatorService amortizationCalculatorService,
                                 CreditScoringService creditScoringService,
                                 UnifiedCreditAnalysisService unifiedCreditAnalysisService,
-                                AgentAssignmentService agentAssignmentService) {
+                                AgentAssignmentService agentAssignmentService,
+                                CreditRequestMapper creditRequestMapper) {
         this.creditRequestRepository = creditRequestRepository;
         this.repaymentScheduleRepository = repaymentScheduleRepository;
         this.interestRateEngineService = interestRateEngineService;
@@ -54,6 +61,70 @@ public class CreditRequestService {
         this.creditScoringService = creditScoringService;
         this.unifiedCreditAnalysisService = unifiedCreditAnalysisService;
         this.agentAssignmentService = agentAssignmentService;
+        this.creditRequestMapper = creditRequestMapper;
+    }
+
+    @Transactional(readOnly = true)
+    public List<CreditRequestDTO> getAllDtos() {
+        return creditRequestRepository.findAll()
+                .stream()
+                .map(creditRequestMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<CreditRequestDTO> getCreditsForUserIdDtos(Long userId) {
+        return creditRequestRepository.findByUserIdOrderByRequestDateDesc(userId)
+                .stream()
+                .map(creditRequestMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<CreditRequestDTO> getCreditsForUsernameDtos(String username) {
+        return creditRequestRepository.findByUserUsernameOrderByRequestDateDesc(username)
+                .stream()
+                .map(creditRequestMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<CreditRequestDTO> getByIdDto(Long id) {
+        return creditRequestRepository.findById(id).map(creditRequestMapper::toDto);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CreditRequestDTO> getPendingCreditsDtos() {
+        return creditRequestRepository.findAll()
+                .stream()
+                .filter(c -> c.getStatus() == CreditStatus.UNDER_REVIEW || c.getStatus() == CreditStatus.SUBMITTED)
+                .map(creditRequestMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public CreditRequestDTO updateCreditDto(Long id, CreditRequestUpdateDTO update) {
+        CreditRequest existing = creditRequestRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Credit not found"));
+
+        creditRequestMapper.updateEntity(update, existing);
+        CreditRequest saved = creditRequestRepository.save(existing);
+        return creditRequestMapper.toDto(saved);
+    }
+
+    @Transactional
+    public CreditRequestDTO validateCreditDto(Long id) {
+        return creditRequestMapper.toDto(validateCredit(id));
+    }
+
+    @Transactional
+    public CreditRequestDTO approveCreditDto(Long id) {
+        return creditRequestMapper.toDto(approveCredit(id));
+    }
+
+    @Transactional
+    public CreditRequestDTO rejectCreditDto(Long id, String reason) {
+        return creditRequestMapper.toDto(rejectCredit(id, reason));
     }
 
     // Create a credit request and generate repayment schedules automatically
