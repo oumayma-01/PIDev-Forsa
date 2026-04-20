@@ -150,3 +150,64 @@ export interface ScoringClientDemo {
   latestScore: ScoreResult;
   sampleLoanRisk: RiskMetrics;
 }
+
+// ── AI Scoring (agent Python sur port 5000, proxié via /api/ai-score/*) ───────
+
+/** Corps de la requête envoyée à POST /api/ai-score/calculate/{clientId}. */
+export interface AIScoreRequest {
+  clientId: number;
+  monthlySalary: number;
+  stegPaidOnTime: boolean;
+  sondePaidOnTime: boolean;
+  cinVerified: boolean;
+}
+
+/** Niveaux de score retournés par l'agent IA. */
+export type AIScoreLevel =
+  | 'VERY_LOW'
+  | 'LOW'
+  | 'MEDIUM'
+  | 'GOOD'
+  | 'VERY_GOOD'
+  | 'EXCELLENT'
+  | 'PREMIUM';
+
+/** Features individuelles extraites par l'agent IA. */
+export interface AIScoreFeatures {
+  f1_salary: number;
+  f2_income_stability: number;
+  f3_savings_rate: number;
+  f4_account_age: number;
+  f5_current_balance: number;
+  f6_activity: number;
+  f7_avg_income: number;
+  f8_steg_on_time: number;
+  f9_sonede_on_time: number;
+  f10_cin_verified: number;
+}
+
+/** Détail d'un critère dans score_details (retourné par Python v3). */
+export interface AIScoreDetailItem {
+  points: number;
+  max: number;
+  comment: string;
+  valeur?: number;
+}
+
+/** Réponse complète de l'agent IA (score + explication Mistral). */
+export interface AIScoreResponse {
+  clientId: number;
+  /** Score entre 0 et 1000. */
+  score: number;
+  scoreLevel: AIScoreLevel;
+  /** Montant maximum de crédit autorisé en TND. */
+  creditThreshold: number;
+  salaryVerified: number;
+  /** Explication en langage naturel générée par Mistral. */
+  explanation: string;
+  features: AIScoreFeatures;
+  /** Détail des critères (v3 scoring intelligent). */
+  scoreDetails?: Record<string, AIScoreDetailItem>;
+  /** Indique si des données bancaires existent en DB. */
+  hasDbData?: boolean;
+}

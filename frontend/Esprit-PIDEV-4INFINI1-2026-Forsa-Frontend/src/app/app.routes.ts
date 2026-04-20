@@ -12,6 +12,7 @@ import { LandingPageComponent } from './features/landing/landing-page.component'
 import { WalletOverviewComponent } from './features/wallet/wallet-overview/wallet-overview.component';
 import { PartenariatListComponent } from './features/partenariat/partenariat-list/partenariat-list.component';
 import { ScoringWorkbenchComponent } from './features/scoring/scoring-workbench/scoring-workbench.component';
+import { ScoreRequestComponent } from './features/scoring/score-request/score-request.component';
 import { DashboardLayoutComponent } from './layouts/dashboard-layout/dashboard-layout.component';
 
 export const routes: Routes = [
@@ -41,6 +42,7 @@ export const routes: Routes = [
       { path: 'feedback', component: FeedbackListComponent },
       { path: 'partenariat', component: PartenariatListComponent },
       { path: 'scoring', component: ScoringWorkbenchComponent },
+      { path: 'ai-score', component: ScoreRequestComponent },
       { path: 'ai', component: RiskAnalysisComponent },
     ],
   },
