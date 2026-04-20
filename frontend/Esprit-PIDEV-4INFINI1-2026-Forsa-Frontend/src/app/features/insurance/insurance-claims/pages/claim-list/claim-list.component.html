@@ -1,8 +1,13 @@
 <div class="page-head">
   <div><h2>Insurance Claims</h2><p>Track and process all client insurance claims.</p></div>
-  <a routerLink="/dashboard/insurance/claims/new">
-    <app-forsa-button><app-forsa-icon name="plus" [size]="16" /> New Claim</app-forsa-button>
-  </a>
+  <div class="head-actions">
+    <a routerLink="/dashboard/insurance/claims-analytics">
+      <app-forsa-button variant="outline"><app-forsa-icon name="bar-chart-3" [size]="16" /> Analytics</app-forsa-button>
+    </a>
+    <a routerLink="/dashboard/insurance/claims/new">
+      <app-forsa-button><app-forsa-icon name="plus" [size]="16" /> New Claim</app-forsa-button>
+    </a>
+  </div>
 </div>
 
 @if (loading()) {
@@ -25,6 +30,7 @@
           <tr>
             <th>Claim #</th>
             <th>Policy</th>
+            <th>Type</th>
             <th>Status</th>
             <th>Claim Amount</th>
             <th>Approved</th>
@@ -38,6 +44,12 @@
             <tr>
               <td class="td-mono">{{ c.claimNumber ?? '—' }}</td>
               <td class="td-mono">{{ c.insurancePolicy?.policyNumber ?? '—' }}</td>
+              <td>
+                <div class="d-flex align-center gap-2">
+                  {{ c.accidentType ?? '—' }}
+                  <app-forsa-icon *ngIf="c.attachmentUrl" name="history" [size]="14" class="text-primary" />
+                </div>
+              </td>
               <td>
                 <app-forsa-badge [tone]="statusTone(c.status)">
                   <app-forsa-icon [name]="statusIcon(c.status)" [size]="12" />{{ c.status }}

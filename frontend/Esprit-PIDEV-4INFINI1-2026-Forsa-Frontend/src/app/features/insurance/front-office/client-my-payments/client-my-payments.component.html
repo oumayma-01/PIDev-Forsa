@@ -43,7 +43,7 @@
               Paid on {{ p.paidDate | date:'shortDate' }}
             </div>
           </td>
-          <td class="amount-cell">${{ p.amount | number:'1.2-2' }}</td>
+          <td class="amount-cell">{{ p.amount | number:'1.2-2' }} TND</td>
           <td>
             <span class="status-badge" [ngClass]="p.status | lowercase">{{ p.status }}</span>
           </td>

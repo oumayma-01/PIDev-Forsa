@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -29,7 +30,7 @@
             padding: 30px;
             border-radius: 15px;
             margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         }
 
         h1 {
@@ -54,7 +55,7 @@
             background: white;
             padding: 25px;
             border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             transition: transform 0.3s;
         }
 
@@ -91,7 +92,7 @@
             background: white;
             padding: 25px;
             border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         }
 
         .chart-title {
@@ -105,7 +106,7 @@
             background: white;
             padding: 25px;
             border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             overflow-x: auto;
         }
 
@@ -138,10 +139,25 @@
             font-weight: bold;
         }
 
-        .status-approved { background: #d4edda; color: #155724; }
-        .status-rejected { background: #f8d7da; color: #721c24; }
-        .status-submitted { background: #fff3cd; color: #856404; }
-        .status-paid { background: #d1ecf1; color: #0c5460; }
+        .status-approved {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-submitted {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-paid {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
 
         .loading {
             text-align: center;
@@ -157,195 +173,197 @@
         }
     </style>
 </head>
+
 <body>
-<div class="container">
-    <header>
-        <h1>📊 Claims Dashboard</h1>
-        <p class="subtitle">Real-time insurance claims analytics</p>
-    </header>
+    <div class="container">
+        <header>
+            <h1>📊 Claims Dashboard</h1>
+            <p class="subtitle">Real-time insurance claims analytics</p>
+        </header>
 
-    <div id="loading" class="loading">Loading dashboard data...</div>
+        <div id="loading" class="loading">Loading dashboard data...</div>
 
-    <div id="dashboard" style="display: none;">
-        <!-- Stats Cards -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">Total Claims</div>
-                <div class="stat-value" id="totalClaims">0</div>
+        <div id="dashboard" style="display: none;">
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Claims</div>
+                    <div class="stat-value" id="totalClaims">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Amount</div>
+                    <div class="stat-value">$<span id="totalAmount">0</span></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Average Claim</div>
+                    <div class="stat-value">$<span id="avgAmount">0</span></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Approval Rate</div>
+                    <div class="stat-value"><span id="approvalRate">0</span><span class="stat-unit">%</span></div>
+                </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-label">Total Amount</div>
-                <div class="stat-value">$<span id="totalAmount">0</span></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Average Claim</div>
-                <div class="stat-value">$<span id="avgAmount">0</span></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Approval Rate</div>
-                <div class="stat-value"><span id="approvalRate">0</span><span class="stat-unit">%</span></div>
-            </div>
-        </div>
 
-        <!-- Charts -->
-        <div class="charts-grid">
-            <div class="chart-card">
-                <div class="chart-title">Claims by Status</div>
-                <canvas id="statusChart"></canvas>
+            <!-- Charts -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-title">Claims by Status</div>
+                    <canvas id="statusChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">Claims by Insurance Type</div>
+                    <canvas id="typeChart"></canvas>
+                </div>
             </div>
-            <div class="chart-card">
-                <div class="chart-title">Claims by Insurance Type</div>
-                <canvas id="typeChart"></canvas>
+
+            <div class="chart-card" style="margin-bottom: 30px;">
+                <div class="chart-title">Monthly Claim Trends</div>
+                <canvas id="trendChart"></canvas>
             </div>
-        </div>
 
-        <div class="chart-card" style="margin-bottom: 30px;">
-            <div class="chart-title">Monthly Claim Trends</div>
-            <canvas id="trendChart"></canvas>
-        </div>
-
-        <!-- Top Claims Table -->
-        <div class="table-card">
-            <div class="chart-title">Top 10 Highest Claims</div>
-            <table>
-                <thead>
-                <tr>
-                    <th>Claim #</th>
-                    <th>Policy #</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                    <th>Date</th>
-                </tr>
-                </thead>
-                <tbody id="topClaimsTable">
-                </tbody>
-            </table>
+            <!-- Top Claims Table -->
+            <div class="table-card">
+                <div class="chart-title">Top 10 Highest Claims</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Claim #</th>
+                            <th>Policy #</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="topClaimsTable">
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-</div>
 
-<script>
-    // Fetch dashboard data from API
-    async function loadDashboard() {
-        try {
-            const response = await fetch('http://localhost:8089/forsaPidev/api/claims-dashboard/analytics');
-            const data = await response.json();
+    <script>
+        // Fetch dashboard data from API
+        async function loadDashboard() {
+            try {
+                const response = await fetch('http://localhost:8089/forsaPidev/api/claims-dashboard/analytics');
+                const data = await response.json();
 
-            // Hide loading, show dashboard
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('dashboard').style.display = 'block';
+                // Hide loading, show dashboard
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
 
-            // Update stats cards
-            document.getElementById('totalClaims').textContent = data.totalClaims;
-            document.getElementById('totalAmount').textContent = data.totalClaimAmount.toFixed(2);
-            document.getElementById('avgAmount').textContent = data.averageClaimAmount.toFixed(2);
-            document.getElementById('approvalRate').textContent = data.approvalRate.toFixed(1);
+                // Update stats cards
+                document.getElementById('totalClaims').textContent = data.totalClaims;
+                document.getElementById('totalAmount').textContent = data.totalClaimAmount.toFixed(2);
+                document.getElementById('avgAmount').textContent = data.averageClaimAmount.toFixed(2);
+                document.getElementById('approvalRate').textContent = data.approvalRate.toFixed(1);
 
-            // Create charts
-            createStatusChart(data.claimsByStatus);
-            createTypeChart(data.claimsByType);
-            createTrendChart(data.monthlyTrends);
-            createTopClaimsTable(data.topClaims);
+                // Create charts
+                createStatusChart(data.claimsByStatus);
+                createTypeChart(data.claimsByType);
+                createTrendChart(data.monthlyTrends);
+                createTopClaimsTable(data.topClaims);
 
-        } catch (error) {
-            document.getElementById('loading').textContent = 'Error loading dashboard: ' + error.message;
+            } catch (error) {
+                document.getElementById('loading').textContent = 'Error loading dashboard: ' + error.message;
+            }
         }
-    }
 
-    function createStatusChart(data) {
-        const ctx = document.getElementById('statusChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: data.map(d => d.status),
-                datasets: [{
-                    data: data.map(d => d.count),
-                    backgroundColor: ['#4CAF50', '#FF9800', '#F44336', '#2196F3', '#9C27B0']
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { position: 'bottom' }
-                }
-            }
-        });
-    }
-
-    function createTypeChart(data) {
-        const ctx = document.getElementById('typeChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: data.map(d => d.policyType),
-                datasets: [{
-                    label: 'Number of Claims',
-                    data: data.map(d => d.count),
-                    backgroundColor: '#667eea'
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { display: false }
+        function createStatusChart(data) {
+            const ctx = document.getElementById('statusChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.map(d => d.status),
+                    datasets: [{
+                        data: data.map(d => d.count),
+                        backgroundColor: ['#4CAF50', '#FF9800', '#F44336', '#2196F3', '#9C27B0']
+                    }]
                 },
-                scales: {
-                    y: { beginAtZero: true }
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
                 }
-            }
-        });
-    }
+            });
+        }
 
-    function createTrendChart(data) {
-        const ctx = document.getElementById('trendChart').getContext('2d');
-        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: data.map(d => monthNames[d.month - 1] + ' ' + d.year),
-                datasets: [{
-                    label: 'Claims Count',
-                    data: data.map(d => d.count),
-                    borderColor: '#667eea',
-                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: { beginAtZero: true }
+        function createTypeChart(data) {
+            const ctx = document.getElementById('typeChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.policyType),
+                    datasets: [{
+                        label: 'Number of Claims',
+                        data: data.map(d => d.count),
+                        backgroundColor: '#667eea'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
                 }
-            }
-        });
-    }
+            });
+        }
 
-    function createTopClaimsTable(data) {
-        const tbody = document.getElementById('topClaimsTable');
-        tbody.innerHTML = '';
+        function createTrendChart(data) {
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-        data.forEach(claim => {
-            const row = document.createElement('tr');
-            const statusClass = `status-${claim.status.toLowerCase()}`;
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => monthNames[d.month - 1] + ' ' + d.year),
+                    datasets: [{
+                        label: 'Claims Count',
+                        data: data.map(d => d.count),
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
 
-            row.innerHTML = `
+        function createTopClaimsTable(data) {
+            const tbody = document.getElementById('topClaimsTable');
+            tbody.innerHTML = '';
+
+            data.forEach(claim => {
+                const row = document.createElement('tr');
+                const statusClass = `status-${claim.status.toLowerCase()}`;
+
+                row.innerHTML = `
                     <td>${claim.claimNumber}</td>
                     <td>${claim.policyNumber}</td>
                     <td><strong>$${claim.claimAmount.toFixed(2)}</strong></td>
                     <td><span class="status-badge ${statusClass}">${claim.status}</span></td>
                     <td>${new Date(claim.claimDate).toLocaleDateString()}</td>
                 `;
-            tbody.appendChild(row);
-        });
-    }
+                tbody.appendChild(row);
+            });
+        }
 
-    // Load dashboard on page load
-    loadDashboard();
+        // Load dashboard on page load
+        loadDashboard();
 
-    // Refresh every 30 seconds
-    setInterval(loadDashboard, 30000);
-</script>
+        // Refresh every 30 seconds
+        setInterval(loadDashboard, 30000);
+    </script>
 </body>
+
 </html>

@@ -40,5 +40,12 @@ export const frontOfficeRoutes: Routes = [
       import('./client-my-payments/client-my-payments.component').then(
         (m) => m.ClientMyPaymentsComponent,
       ),
+  },
+  {
+    path: 'file-claim/:policyId',
+    loadComponent: () =>
+      import('./client-claim-filing/client-claim-filing.component').then(
+        (m) => m.ClientClaimFilingComponent,
+      ),
   }
 ];

@@ -5,58 +5,23 @@
     </button>
     <h1>My Claims</h1>
     <p>Track your insurance claims and submit new incident reports.</p>
-    <button class="btn btn-primary mt-3" (click)="toggleForm()">
-      <i class="fe" [ngClass]="showForm ? 'fe-x' : 'fe-plus'"></i>
-      {{ showForm ? 'Cancel Claim Submission' : 'File New Claim' }}
-    </button>
+    <a routerLink="../my-policies" class="btn btn-primary mt-3">
+      <i class="fe fe-plus"></i> File New Claim
+    </a>
   </div>
 
-  <div *ngIf="showForm" class="claim-form-section glass-panel animation-fade-in mb-4">
-    <h2><i class="fe fe-file-text"></i> Submit a New Claim</h2>
-    <form [formGroup]="claimForm" (ngSubmit)="submitClaim()">
-      <div formGroupName="insurancePolicy">
-        <div class="form-group">
-          <label>Policy ID</label>
-          <input type="number" formControlName="id" class="form-control" placeholder="Enter the ID of the policy this claim applies to" />
-          <small class="text-muted">You can find this in the 'My Policies' tab.</small>
-        </div>
-      </div>
-      
-      <div class="form-row">
-        <div class="form-group">
-          <label>Date of Incident</label>
-          <input type="date" formControlName="incidentDate" class="form-control" />
-        </div>
-        <div class="form-group">
-          <label>Estimated Claim Amount ($)</label>
-          <input type="number" formControlName="claimAmount" class="form-control" placeholder="0.00" />
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label>Description of Incident</label>
-        <textarea formControlName="description" class="form-control" rows="4" placeholder="Detail what happened..."></textarea>
-      </div>
-
-      <button type="submit" class="btn btn-primary w-100 mt-2" [disabled]="claimForm.invalid || isSubmitting">
-        <span *ngIf="isSubmitting" class="spinner-sm"></span>
-        Submit Claim Request
-      </button>
-    </form>
-  </div>
-
-  <div *ngIf="isLoading && !showForm" class="loading-state">
+  <div *ngIf="isLoading" class="loading-state">
     <div class="spinner"></div>
     <p>Loading your claims...</p>
   </div>
 
-  <div *ngIf="!isLoading && claims.length === 0 && !showForm" class="empty-state glass-panel">
+  <div *ngIf="!isLoading && claims.length === 0" class="empty-state glass-panel">
     <i class="fe fe-folder"></i>
     <h3>No Claims Found</h3>
     <p>You haven't filed any claims yet.</p>
   </div>
 
-  <div *ngIf="!isLoading && claims.length > 0 && !showForm" class="claims-list">
+  <div *ngIf="!isLoading && claims.length > 0" class="claims-list">
     <div *ngFor="let c of claims" class="claim-card glass-panel flex-row justify-between align-center">
       
       <div class="claim-info">
@@ -64,6 +29,13 @@
         <p class="text-sm text-muted mb-2">Policy: {{ c.insurancePolicy?.policyNumber || c.insurancePolicy?.id }}</p>
         
         <p class="description">{{ c.description }}</p>
+
+        <div class="claim-extras mt-2" *ngIf="c.accidentType || c.attachmentUrl">
+          <span class="badge badge-accent" *ngIf="c.accidentType" style="background: rgba(99, 102, 241, 0.1); color: #6366f1; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; margin-right: 8px;">{{ c.accidentType }}</span>
+          <a *ngIf="c.attachmentUrl" [href]="'http://localhost:8080/api/insurance-claim/attachments/' + c.attachmentUrl" target="_blank" class="attachment-link" style="font-size: 0.8rem; color: #6366f1; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+            <i class="fe fe-file"></i> View Attachment
+          </a>
+        </div>
         
         <div class="claim-meta mt-3">
           <span><i class="fe fe-calendar"></i> Incident: {{ c.incidentDate | date:'mediumDate' }}</span>
@@ -74,13 +46,13 @@
       <div class="claim-status-block flex-column align-end">
         <span class="status-badge" [ngClass]="c.status | lowercase">{{ c.status }}</span>
         <div class="claim-amount mt-2">
-          Requested: <strong>${{ c.claimAmount | number:'1.2-2' }}</strong>
+          Requested: <strong>{{ c.claimAmount | number:'1.2-2' }} TND</strong>
         </div>
         <div class="approved-amount mt-1 text-success" *ngIf="c.approvedAmount">
-          Approved: <strong>${{ c.approvedAmount | number:'1.2-2' }}</strong>
+          Approved: <strong>{{ c.approvedAmount | number:'1.2-2' }} TND</strong>
         </div>
         <div class="paid-amount mt-1 text-primary" *ngIf="c.indemnificationPaid">
-          Paid: <strong>${{ c.indemnificationPaid | number:'1.2-2' }}</strong>
+          Paid: <strong>{{ c.indemnificationPaid | number:'1.2-2' }} TND</strong>
         </div>
       </div>
 
