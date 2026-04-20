@@ -4,13 +4,14 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.example.forsapidev.Repositories.UserRepository;
 import org.example.forsapidev.Services.Interfaces.IComplaintService;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Complaint;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Response;
+import org.example.forsapidev.entities.UserManagement.User;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,6 +26,7 @@ import java.util.Map;
 public class ComplaintController {
 
     private final IComplaintService complaintService;
+    private final UserRepository userRepository;
 
     // ========== CRUD de base ==========
 
@@ -42,14 +44,22 @@ public class ComplaintController {
 
     @PostMapping("/add-complaint")
     @PreAuthorize("hasAnyRole('CLIENT','ADMIN','AGENT')")
-    public Complaint addComplaint(@RequestBody Complaint c) {
+    public Complaint addComplaint(@RequestBody Complaint c, Authentication authentication) {
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username)
+                .or(() -> userRepository.findByEmail(username))
+                .orElse(null);
+        if (user != null) {
+            c.setUser(user);
+        }
         return complaintService.addComplaint(c);
     }
 
     @GetMapping("/my-complaints")
     @PreAuthorize("hasRole('CLIENT')")
-    public ResponseEntity<List<Complaint>> getMyComplaints(@AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(complaintService.getComplaintsByUsername(userDetails.getUsername()));
+    public ResponseEntity<List<Complaint>> getMyComplaints(Authentication authentication) {
+        String username = authentication.getName();
+        return ResponseEntity.ok(complaintService.getComplaintsByUsername(username));
     }
 
     @DeleteMapping("/remove-complaint/{complaint-id}")
@@ -68,7 +78,14 @@ public class ComplaintController {
 
     @PostMapping("/add-complaint-ai")
     @PreAuthorize("hasAnyRole('CLIENT','ADMIN','AGENT')")
-    public Complaint addComplaintWithAI(@RequestBody Complaint c) {
+    public Complaint addComplaintWithAI(@RequestBody Complaint c, Authentication authentication) {
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username)
+                .or(() -> userRepository.findByEmail(username))
+                .orElse(null);
+        if (user != null) {
+            c.setUser(user);
+        }
         return complaintService.addComplaintWithAI(c);  // inclut catégorie + priorité
     }
 

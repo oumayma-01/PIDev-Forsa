@@ -1,27 +1,184 @@
-<div class="page-toolbar">
-  <div class="page-head">
-    <h2>{{ isClient ? 'My Complaints & Feedbacks' : 'Feedback & Complaints' }}</h2>
-    <p>{{ isClient ? 'Track your submitted complaints and feedbacks' : pageDescription }}</p>
-  </div>
-  @if (isClient) {
+@if (isClient) {
+  <div class="page-toolbar">
+    <div class="page-head">
+      <h2>My Complaints & Feedbacks</h2>
+      <p>Track your submitted complaints and feedbacks</p>
+    </div>
     <div class="toolbar-actions">
-      <app-forsa-button (clicked)="goToAdd()">
+      <app-forsa-button (clicked)="router.navigate(['/dashboard/feedback/complaint/add'])">
         <app-forsa-icon name="plus" [size]="16" />
         New Complaint
       </app-forsa-button>
-      <app-forsa-button variant="outline" (clicked)="goToAddFeedbackDirect()">
-        <app-forsa-icon name="plus" [size]="16" />
+      <app-forsa-button variant="outline"
+        (clicked)="router.navigate(['/dashboard/feedback/feedback/add'])">
+        <app-forsa-icon name="star" [size]="16" />
         Add Feedback
       </app-forsa-button>
-      <app-forsa-button variant="outline" (clicked)="goToChatbot()">
-        <app-forsa-icon name="message-square" [size]="16" />
-        Open Chatbot
+      <app-forsa-button variant="ghost"
+        (clicked)="router.navigate(['/dashboard/feedback/chatbot'])">
+        <app-forsa-icon name="message-circle" [size]="16" />
+        Chatbot
       </app-forsa-button>
     </div>
-  }
-</div>
+  </div>
+
+  <div class="client-grid">
+    <app-forsa-card>
+      <div class="card-pad-lg">
+        <div class="section-header">
+          <h3>My Complaints</h3>
+          <app-forsa-badge tone="info">{{ clientComplaints.length }}</app-forsa-badge>
+        </div>
+
+        @if (clientComplaintsLoading) {
+          <div class="loading-state">
+            <app-forsa-icon name="loader" [size]="24" />
+            <p>Loading...</p>
+          </div>
+        }
+
+        @if (clientComplaintsError) {
+          <div class="error-state">{{ clientComplaintsError }}</div>
+        }
+
+        @if (!clientComplaintsLoading && clientComplaints.length === 0) {
+          <div class="empty-state">
+            <app-forsa-icon name="inbox" [size]="40" />
+            <p>No complaints yet.</p>
+            <app-forsa-button size="sm"
+              (clicked)="router.navigate(['/dashboard/feedback/complaint/add'])">
+              Submit your first complaint
+            </app-forsa-button>
+          </div>
+        }
+
+        @for (complaint of clientComplaints; track complaint.id) {
+          <div class="complaint-row">
+            <div class="complaint-info">
+              <div class="complaint-title">
+                <span class="subject">{{ complaint.subject }}</span>
+                <app-forsa-badge [tone]="getStatusTone(complaint.status ?? '')" size="xs">
+                  {{ complaint.status }}
+                </app-forsa-badge>
+                <app-forsa-badge [tone]="getPriorityTone(complaint.priority ?? '')" size="xs">
+                  {{ complaint.priority }}
+                </app-forsa-badge>
+              </div>
+              <p class="complaint-desc">
+                {{ (complaint.description ?? '').slice(0, 100) }}
+                {{ (complaint.description ?? '').length > 100 ? '...' : '' }}
+              </p>
+              <div class="complaint-meta">
+                <span>
+                  <app-forsa-icon name="clock" [size]="12" />
+                  {{ complaint.createdAt | date:'dd/MM/yyyy' }}
+                </span>
+                <span>
+                  <app-forsa-icon name="tag" [size]="12" />
+                  {{ complaint.category }}
+                </span>
+              </div>
+            </div>
+            <div class="complaint-actions">
+              <app-forsa-button size="sm" variant="outline"
+                (clicked)="goToComplaintDetail(complaint.id!)">
+                <app-forsa-icon name="eye" [size]="14" />
+                View
+              </app-forsa-button>
+              @if (!($any(complaint).feedback)) {
+                <app-forsa-button size="sm" variant="ghost"
+                  (clicked)="goToAddFeedback(complaint.id!)">
+                  <app-forsa-icon name="star" [size]="14" />
+                  Feedback
+                </app-forsa-button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </app-forsa-card>
+
+    <app-forsa-card>
+      <div class="card-pad-lg">
+        <div class="section-header">
+          <h3>My Recent Feedbacks</h3>
+          <app-forsa-badge tone="info">{{ clientFeedbacks.length }}</app-forsa-badge>
+        </div>
+
+        @if (clientFeedbacksLoading) {
+          <div class="loading-state">
+            <app-forsa-icon name="loader" [size]="24" />
+            <p>Loading...</p>
+          </div>
+        }
+
+        @if (clientFeedbacksError) {
+          <div class="error-state">{{ clientFeedbacksError }}</div>
+        }
+
+        @if (!clientFeedbacksLoading && clientFeedbacks.length === 0) {
+          <div class="empty-state">
+            <app-forsa-icon name="star" [size]="40" />
+            <p>No feedbacks yet.</p>
+            <app-forsa-button size="sm"
+              (clicked)="router.navigate(['/dashboard/feedback/feedback/add'])">
+              Rate your experience
+            </app-forsa-button>
+          </div>
+        }
+
+        @for (feedback of clientFeedbacks; track feedback.id) {
+          <div class="feedback-row">
+            <div class="feedback-info">
+              <div class="feedback-stars">
+                {{ getStars(feedback.rating ?? 0) }}
+                <span class="rating-num">{{ feedback.rating }}/5</span>
+              </div>
+              @if (feedback.comment) {
+                <p class="feedback-comment">
+                  {{ feedback.comment.slice(0, 80) }}
+                  {{ feedback.comment.length > 80 ? '...' : '' }}
+                </p>
+              }
+              <div class="feedback-meta">
+                @if (feedback.satisfactionLevel) {
+                  <span class="satisfaction-tag">{{ feedback.satisfactionLevel }}</span>
+                }
+                @if (feedback.isAnonymous) {
+                  <span class="anon-tag">Anonymous</span>
+                }
+                <span>
+                  <app-forsa-icon name="clock" [size]="12" />
+                  {{ feedback.createdAt | date:'dd/MM/yyyy' }}
+                </span>
+              </div>
+            </div>
+            <div class="feedback-actions">
+              <app-forsa-button size="sm" variant="outline"
+                (clicked)="router.navigate(['/dashboard/feedback/feedback', feedback.id])">
+                <app-forsa-icon name="edit" [size]="14" />
+                Edit
+              </app-forsa-button>
+              <app-forsa-button size="sm" variant="ghost"
+                (clicked)="deleteMyFeedback(feedback.id!)">
+                <app-forsa-icon name="trash" [size]="14" />
+              </app-forsa-button>
+            </div>
+          </div>
+        }
+      </div>
+    </app-forsa-card>
+  </div>
+}
 
 @if (!isClient) {
+  <div class="page-toolbar">
+    <div class="page-head">
+      <h2>Feedback & Complaints</h2>
+      <p>{{ pageDescription }}</p>
+    </div>
+  </div>
+
   <div class="role-grid">
     @for (card of roleCards; track card.title) {
       <app-forsa-card class="role-card" (click)="onRoleCardClick(card.action)">
@@ -35,82 +192,6 @@
         </div>
       </app-forsa-card>
     }
-  </div>
-}
-
-@if (isClient) {
-  <div class="client-sections">
-    <app-forsa-card class="section-card">
-      <div class="section-pad">
-        <div class="section-head">
-          <h3>My Complaints</h3>
-          <app-forsa-button size="sm" (clicked)="goToAdd()">
-            <app-forsa-icon name="plus" [size]="14" />
-            New Complaint
-          </app-forsa-button>
-        </div>
-        @if (loadingClientComplaints) {
-          <p class="muted">Loading complaints...</p>
-        }
-        @for (item of clientComplaints; track item.id) {
-          <div class="client-item">
-            <div class="client-line">
-              <strong>{{ item.subject }}</strong>
-              <app-forsa-badge [tone]="statusTone(item.status || 'OPEN')">{{ item.status || 'OPEN' }}</app-forsa-badge>
-            </div>
-            <p>{{ item.description }}</p>
-            <div class="client-meta">
-              <app-forsa-badge [tone]="priorityTone(item.priority || 'MEDIUM')">{{ item.priority || 'MEDIUM' }}</app-forsa-badge>
-              <span>{{ item.createdAt | date:'yyyy-MM-dd HH:mm' }}</span>
-            </div>
-            <div class="client-actions">
-              @if (canAddFeedback(item)) {
-                <app-forsa-button size="sm" variant="outline" (clicked)="goToAddFeedback(item.id!)">Add Feedback</app-forsa-button>
-              }
-            </div>
-          </div>
-        }
-        @if (!loadingClientComplaints && clientComplaints.length === 0) {
-          <p class="muted">No complaints yet.</p>
-        }
-      </div>
-    </app-forsa-card>
-
-    <app-forsa-card class="section-card">
-      <div class="section-pad">
-        <div class="section-head">
-          <h3>My Feedbacks</h3>
-          <app-forsa-button size="sm" (clicked)="onRoleCardClick('newFeedback')">
-            <app-forsa-icon name="plus" [size]="14" />
-            Add Feedback
-          </app-forsa-button>
-        </div>
-        @if (loadingClientFeedbacks) {
-          <p class="muted">Loading feedbacks...</p>
-        }
-        @for (item of clientFeedbacks; track item.id) {
-          <div class="client-item">
-            <div class="client-line">
-              <strong>{{ feedbackStars(item.rating) }}</strong>
-              <span>{{ item.rating | number:'1.1-1' }}/5</span>
-            </div>
-            <p>{{ item.comment || 'No comment' }}</p>
-            <div class="client-meta">
-              <span>{{ item.satisfactionLevel || 'NEUTRAL' }}</span>
-              <span>{{ item.isAnonymous ? 'Anonymous' : 'Public' }}</span>
-              <span>{{ item.createdAt | date:'yyyy-MM-dd HH:mm' }}</span>
-            </div>
-            <div class="client-actions">
-              <app-forsa-button size="sm" variant="ghost" (clicked)="goToEditFeedback(item.id!)">Edit</app-forsa-button>
-              <app-forsa-button size="sm" variant="outline" (clicked)="deleteFeedback(item.id!)">Delete</app-forsa-button>
-            </div>
-          </div>
-        }
-        @if (!loadingClientFeedbacks && clientFeedbacks.length === 0) {
-          <p class="muted">No feedbacks yet.</p>
-        }
-      </div>
-    </app-forsa-card>
   </div>
 }
 

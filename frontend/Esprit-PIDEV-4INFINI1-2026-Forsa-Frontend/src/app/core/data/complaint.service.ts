@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ComplaintBackend, Category, Priority, ComplaintStatus } from '../models/forsa.models';
@@ -14,7 +14,10 @@ export class ComplaintService {
   }
 
   getMyComplaints(): Observable<ComplaintBackend[]> {
-    return this.http.get<ComplaintBackend[]>(`${this.baseUrl}/my-complaints`);
+    console.log('=== CALLING /my-complaints ===');
+    console.log('URL:', `${this.baseUrl}/my-complaints`);
+    console.log('TOKEN:', (localStorage.getItem('forsa_access_token')?.substring(0, 20) ?? 'null') + '...');
+    return this.http.get<ComplaintBackend[]>(`${this.baseUrl}/my-complaints`, { headers: this.headers() });
   }
 
   getById(id: number): Observable<ComplaintBackend> {
@@ -75,5 +78,10 @@ export class ComplaintService {
 
   assignToUser(complaintId: number, userId: number): Observable<ComplaintBackend> {
     return this.http.post<ComplaintBackend>(`${this.baseUrl}/${complaintId}/assign/${userId}`, {});
+  }
+
+  private headers(): HttpHeaders {
+    const token = localStorage.getItem('forsa_access_token') ?? localStorage.getItem('token');
+    return token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : new HttpHeaders();
   }
 }

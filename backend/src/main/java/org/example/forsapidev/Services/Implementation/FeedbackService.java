@@ -2,8 +2,10 @@ package org.example.forsapidev.Services.Implementation;
 
 import lombok.RequiredArgsConstructor;
 import org.example.forsapidev.Repositories.FeedbackRepository;
+import org.example.forsapidev.Repositories.UserRepository;
 import org.example.forsapidev.Services.Interfaces.IFeedbackService;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Feedback;
+import org.example.forsapidev.entities.UserManagement.User;
 import org.example.forsapidev.openai.ComplaintAiAssistant;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +19,7 @@ public class FeedbackService implements IFeedbackService {
 
     private final FeedbackRepository feedbackRepository;
     private final ComplaintAiAssistant complaintAiAssistant;
+    private final UserRepository userRepository;
 
     @Override
     public List<Feedback> retrieveAllFeedbacks() {
@@ -32,7 +35,15 @@ public class FeedbackService implements IFeedbackService {
     @Override
     public List<Feedback> getFeedbacksByUsername(String username) {
         if (username == null || username.isBlank()) return Collections.emptyList();
-        return feedbackRepository.findByComplaintUserUsername(username);
+        List<Feedback> feedbacks = feedbackRepository.findByComplaintUserUsernameOrderByCreatedAtDesc(username);
+        if (!feedbacks.isEmpty()) {
+            return feedbacks;
+        }
+        User user = userRepository.findByEmail(username).orElse(null);
+        if (user == null) {
+            return Collections.emptyList();
+        }
+        return feedbackRepository.findByComplaintUserUsernameOrderByCreatedAtDesc(user.getUsername());
     }
 
     @Override

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { ComplaintService } from '../../../core/data/complaint.service';
 import { ResponseService } from '../../../core/data/response.service';
 import { ComplaintResponse, ResponseStatus } from '../../../core/models/forsa.models';
 import { ForsaButtonComponent } from '../../../shared/ui/forsa-button/forsa-button.component';
@@ -41,6 +42,7 @@ export class ResponseFormComponent implements OnInit {
 
   constructor(
     private responseService: ResponseService,
+    private complaintService: ComplaintService,
     private router: Router,
     private route: ActivatedRoute,
     private auth: AuthService
@@ -112,12 +114,19 @@ export class ResponseFormComponent implements OnInit {
         },
       });
     } else {
-      const payload: ComplaintResponse = {
-        ...this.response,
-        complaint: this.complaintId ? { id: this.complaintId, subject: '', description: '' } : this.response.complaint,
-      };
-      this.responseService.add(payload).subscribe({
-        next: () => this.router.navigate(['/dashboard/feedback']),
+      const complaintId = this.complaintId;
+      if (!complaintId) {
+        this.error = 'Complaint id is required.';
+        this.loading = false;
+        return;
+      }
+      this.complaintService.addResponse(
+        complaintId,
+        this.response.message,
+        this.response.responderRole,
+        this.response.responderName
+      ).subscribe({
+        next: () => this.router.navigate(['/dashboard/feedback/complaint', complaintId]),
         error: () => {
           this.error = 'Error creating response';
           this.loading = false;

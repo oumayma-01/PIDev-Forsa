@@ -8,8 +8,7 @@ import org.example.forsapidev.Services.Interfaces.IFeedbackService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
@@ -44,8 +43,9 @@ public class FeedbackController {
 
     @PreAuthorize("hasRole('CLIENT')")
     @GetMapping("/my-feedbacks")
-    public ResponseEntity<List<Feedback>> getMyFeedbacks(@AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(FeedbackService.getFeedbacksByUsername(userDetails.getUsername()));
+    public ResponseEntity<List<Feedback>> getMyFeedbacks(Authentication authentication) {
+        String username = authentication.getName();
+        return ResponseEntity.ok(FeedbackService.getFeedbacksByUsername(username));
     }
 
     @PreAuthorize("hasRole('CLIENT')")

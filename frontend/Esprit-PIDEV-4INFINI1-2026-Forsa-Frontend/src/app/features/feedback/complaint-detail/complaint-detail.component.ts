@@ -4,17 +4,18 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ComplaintService } from '../../../core/data/complaint.service';
 import { ResponseService } from '../../../core/data/response.service';
-import { ComplaintBackend, ComplaintResponse } from '../../../core/models/forsa.models';
+import { ComplaintBackend } from '../../../core/models/forsa.models';
 import { ForsaBadgeComponent } from '../../../shared/ui/forsa-badge/forsa-badge.component';
 import { ForsaButtonComponent } from '../../../shared/ui/forsa-button/forsa-button.component';
 import { ForsaCardComponent } from '../../../shared/ui/forsa-card/forsa-card.component';
+import { ForsaIconComponent } from '../../../shared/ui/forsa-icon/forsa-icon.component';
 
 type ComplaintView = ComplaintBackend & { feedback?: { id?: number } | null };
 
 @Component({
   selector: 'app-complaint-detail',
   standalone: true,
-  imports: [CommonModule, ForsaBadgeComponent, ForsaButtonComponent, ForsaCardComponent],
+  imports: [CommonModule, ForsaBadgeComponent, ForsaButtonComponent, ForsaCardComponent, ForsaIconComponent],
   templateUrl: './complaint-detail.component.html',
   styleUrl: './complaint-detail.component.css',
 })
@@ -26,20 +27,20 @@ export class ComplaintDetailComponent implements OnInit {
   private readonly auth = inject(AuthService);
 
   complaint: ComplaintView | null = null;
-  responses: ComplaintResponse[] = [];
-  aiResponse = '';
-  complaintId?: number;
+  responses: any[] = [];
+  aiResponse: string | null = null;
+  complaintId = 0;
   loading = false;
+  responsesLoading = false;
   error = '';
 
   ngOnInit(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    if (!id) {
-      this.error = 'Invalid complaint id.';
-      return;
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.complaintId = +id;
+      this.loadComplaint();
+      this.loadResponses();
     }
-    this.complaintId = id;
-    this.loadComplaint();
   }
 
   get isAdmin(): boolean {
@@ -56,38 +57,28 @@ export class ComplaintDetailComponent implements OnInit {
   }
 
   loadComplaint(): void {
-    if (!this.complaintId) {
-      return;
-    }
     this.loading = true;
-    this.error = '';
     this.complaintService.getById(this.complaintId).subscribe({
-      next: (data: any) => {
+      next: (data) => {
         this.complaint = data;
-        this.loadResponses();
-      },
-      error: () => {
-        this.error = this.isClient
-          ? 'Complaint detail is not available for CLIENT with current API permissions.'
-          : 'Unable to load complaint.';
         this.loading = false;
       },
+      error: () => {
+        this.loading = false;
+      }
     });
   }
 
   loadResponses(): void {
-    if (!this.complaintId) {
-      return;
-    }
+    this.responsesLoading = true;
     this.responseService.getAll().subscribe({
-      next: (all) => {
-        this.responses = (all ?? []).filter((r) => r.complaint?.id === this.complaintId);
-        this.loading = false;
+      next: (data: any[]) => {
+        this.responses = data.filter((r) => r.complaint?.id === this.complaintId);
+        this.responsesLoading = false;
       },
       error: () => {
-        this.error = 'Unable to load responses.';
-        this.loading = false;
-      },
+        this.responsesLoading = false;
+      }
     });
   }
 
@@ -101,15 +92,14 @@ export class ComplaintDetailComponent implements OnInit {
     });
   }
 
-  generateAiResponse(): void {
-    if (!this.complaintId) {
-      return;
-    }
+  generateAIResponse(): void {
     this.complaintService.getAIResponse(this.complaintId).subscribe({
-      next: (data: any) => {
-        this.aiResponse = data?.response ?? data?.answer ?? String(data ?? '');
+      next: (res: any) => {
+        this.aiResponse = res.response ?? res.answer ?? res.message ?? JSON.stringify(res);
       },
-      error: () => (this.error = 'Unable to generate AI response.'),
+      error: () => {
+        this.aiResponse = 'Could not generate AI response.';
+      }
     });
   }
 

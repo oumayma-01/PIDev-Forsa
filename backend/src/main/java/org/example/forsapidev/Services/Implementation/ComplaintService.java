@@ -51,7 +51,15 @@ public class ComplaintService implements IComplaintService {
         if (username == null || username.isBlank()) {
             return Collections.emptyList();
         }
-        return complaintRepository.findByUserUsername(username);
+        List<Complaint> complaints = complaintRepository.findByUserUsernameOrderByCreatedAtDesc(username);
+        if (!complaints.isEmpty()) {
+            return complaints;
+        }
+        User user = userRepository.findByEmail(username).orElse(null);
+        if (user == null) {
+            return Collections.emptyList();
+        }
+        return complaintRepository.findByUserUsernameOrderByCreatedAtDesc(user.getUsername());
     }
 
     @Override

@@ -22,8 +22,7 @@ type RoleCard = {
   action: 'newComplaint' | 'newFeedback' | 'openChatbot' | 'manageComplaints' | 'responses' | 'stats';
 };
 
-type ClientComplaint = ComplaintBackend & { feedback?: { id?: number } | null; user?: { id?: number } | null; clientId?: number };
-type ClientFeedback = Feedback & { user?: { id?: number } | null; clientId?: number; complaint?: { id?: number } };
+type ClientComplaint = ComplaintBackend & { feedback?: unknown };
 
 @Component({
   selector: 'app-feedback-list',
@@ -35,16 +34,18 @@ type ClientFeedback = Feedback & { user?: { id?: number } | null; clientId?: num
 export class FeedbackListComponent implements OnInit {
   private readonly complaintService = inject(ComplaintService);
   private readonly feedbackService = inject(FeedbackService);
-  private readonly router = inject(Router);
+  readonly router = inject(Router);
   private readonly auth = inject(AuthService);
 
-  items: ClientComplaint[] = [];
-  filteredItems: ClientComplaint[] = [];
-  clientComplaints: ClientComplaint[] = [];
-  clientFeedbacks: ClientFeedback[] = [];
+  items: ComplaintBackend[] = [];
+  filteredItems: ComplaintBackend[] = [];
+  clientComplaints: ComplaintBackend[] = [];
+  clientFeedbacks: Feedback[] = [];
+  clientComplaintsLoading = false;
+  clientFeedbacksLoading = false;
+  clientComplaintsError = '';
+  clientFeedbacksError = '';
   loading = false;
-  loadingClientComplaints = false;
-  loadingClientFeedbacks = false;
   error = '';
   statusFilter = '';
   categoryFilter = '';
@@ -60,11 +61,34 @@ export class FeedbackListComponent implements OnInit {
   readonly categories = ['', 'TECHNICAL', 'FINANCE', 'SUPPORT', 'FRAUD', 'ACCOUNT', 'CREDIT', 'OTHER'];
 
   ngOnInit(): void {
+    console.log('=== FEEDBACK LIST INIT ===');
+    console.log('currentUser:', this.auth.currentUser());
+    console.log('roles:', this.auth.currentUser()?.roles);
+
+    const user = this.auth.currentUser();
+    if (!user) {
+      const interval = setInterval(() => {
+        if (this.auth.currentUser()) {
+          clearInterval(interval);
+          this.initByRole();
+        }
+      }, 100);
+      return;
+    }
+    this.initByRole();
+  }
+
+  private initByRole(): void {
     const roles = this.auth.currentUser()?.roles ?? [];
-    this.isAdmin = roles.includes('ROLE_ADMIN');
-    this.isAgent = roles.includes('ROLE_AGENT');
-    this.isClient = roles.includes('ROLE_CLIENT');
+    this.isClient = roles.some((r) => r === 'ROLE_CLIENT' || r === 'CLIENT' || r.includes('CLIENT'));
+    this.isAdmin = roles.some((r) => r === 'ROLE_ADMIN' || r === 'ADMIN' || r.includes('ADMIN'));
+    this.isAgent = roles.some((r) => r === 'ROLE_AGENT' || r === 'AGENT' || r.includes('AGENT'));
     this.isAdminOrAgent = this.isAdmin || this.isAgent;
+
+    console.log('isClient:', this.isClient);
+    console.log('isAdmin:', this.isAdmin);
+    console.log('isAgent:', this.isAgent);
+
     this.pageDescription = this.isAdmin
       ? 'Full oversight of feedback and complaints'
       : this.isAgent
@@ -73,10 +97,15 @@ export class FeedbackListComponent implements OnInit {
     this.roleCards = this.buildRoleCards();
     this.showComplaintsSection = this.isAdminOrAgent;
 
-    if (this.isAdminOrAgent) {
+    console.log('INIT BY ROLE - isClient:', this.isClient);
+    if (this.isClient) {
+      this.loadClientComplaints();
+      this.loadClientFeedbacks();
+    } else if (this.isAdmin || this.isAgent) {
       this.loadComplaints();
     } else {
-      this.loadClientData();
+      this.loadClientComplaints();
+      this.loadClientFeedbacks();
     }
   }
 
@@ -107,7 +136,7 @@ export class FeedbackListComponent implements OnInit {
     this.loading = true;
     this.error = '';
     this.complaintService.getAll().subscribe({
-      next: (data: any[]) => {
+      next: (data: ComplaintBackend[]) => {
         this.items = data ?? [];
         this.applyFilters();
         this.loading = false;
@@ -119,36 +148,44 @@ export class FeedbackListComponent implements OnInit {
     });
   }
 
-  private loadClientData(): void {
-    this.loadClientComplaints();
-    this.loadClientFeedbacks();
-  }
-
-  private loadClientComplaints(): void {
-    this.loadingClientComplaints = true;
+  loadClientComplaints(): void {
+    console.log('=== LOADING CLIENT COMPLAINTS ===');
+    this.clientComplaintsLoading = true;
+    this.clientComplaintsError = '';
     this.complaintService.getMyComplaints().subscribe({
-      next: (data: any[]) => {
-        this.clientComplaints = data ?? [];
-        this.loadingClientComplaints = false;
+      next: (data: ComplaintBackend[]) => {
+        console.log('CLIENT COMPLAINTS RESPONSE:', data);
+        console.log('COUNT:', data.length);
+        this.clientComplaints = data;
+        this.clientComplaintsLoading = false;
       },
-      error: () => {
-        this.clientComplaints = [];
-        this.loadingClientComplaints = false;
-      },
+      error: (err) => {
+        console.error('CLIENT COMPLAINTS ERROR:', err);
+        console.error('STATUS:', err?.status);
+        console.error('MESSAGE:', err?.error);
+        this.clientComplaintsError = 'Could not load your complaints.';
+        this.clientComplaintsLoading = false;
+      }
     });
   }
 
-  private loadClientFeedbacks(): void {
-    this.loadingClientFeedbacks = true;
+  loadClientFeedbacks(): void {
+    console.log('=== LOADING CLIENT FEEDBACKS ===');
+    this.clientFeedbacksLoading = true;
+    this.clientFeedbacksError = '';
     this.feedbackService.getMyFeedbacks().subscribe({
-      next: (data: any[]) => {
-        this.clientFeedbacks = data ?? [];
-        this.loadingClientFeedbacks = false;
+      next: (data: Feedback[]) => {
+        console.log('CLIENT FEEDBACKS RESPONSE:', data);
+        console.log('COUNT:', data.length);
+        this.clientFeedbacks = data.slice(0, 5);
+        this.clientFeedbacksLoading = false;
       },
-      error: () => {
-        this.clientFeedbacks = [];
-        this.loadingClientFeedbacks = false;
-      },
+      error: (err) => {
+        console.error('CLIENT FEEDBACKS ERROR:', err);
+        console.error('STATUS:', err?.status);
+        this.clientFeedbacksError = 'Could not load your feedbacks.';
+        this.clientFeedbacksLoading = false;
+      }
     });
   }
 
@@ -165,6 +202,10 @@ export class FeedbackListComponent implements OnInit {
   }
 
   goToDetail(id: number): void {
+    this.router.navigate(['/dashboard/feedback/complaint', id]);
+  }
+
+  goToComplaintDetail(id: number): void {
     this.router.navigate(['/dashboard/feedback/complaint', id]);
   }
 
@@ -212,15 +253,7 @@ export class FeedbackListComponent implements OnInit {
   }
 
   deleteFeedback(id: number): void {
-    if (!confirm('Delete this feedback?')) return;
-    this.feedbackService.delete(id).subscribe({
-      next: () => {
-        this.clientFeedbacks = this.clientFeedbacks.filter((f) => f.id !== id);
-      },
-      error: () => {
-        // Keep local view unchanged when delete fails.
-      },
-    });
+    this.deleteMyFeedback(id);
   }
 
   statusIcon(status: string): ForsaIconName {
@@ -242,12 +275,47 @@ export class FeedbackListComponent implements OnInit {
     return 'info';
   }
 
-  canAddFeedback(item: { feedback?: { id?: number } | null }): boolean {
-    return !item.feedback?.id;
+  canAddFeedback(item: ClientComplaint): boolean {
+    return !item.feedback;
   }
 
   goToAddFeedback(complaintId: number): void {
     this.router.navigate(['/dashboard/feedback/feedback/add'], { queryParams: { complaintId } });
+  }
+
+  getStars(rating: number): string {
+    const r = Math.max(0, Math.min(5, Math.round(rating ?? 0)));
+    return '★'.repeat(r) + '☆'.repeat(5 - r);
+  }
+
+  getStatusTone(status: string): 'info' | 'warning' | 'success' | 'danger' {
+    switch (status) {
+      case 'OPEN': return 'info';
+      case 'IN_PROGRESS': return 'warning';
+      case 'RESOLVED': return 'success';
+      case 'CLOSED': return 'danger';
+      case 'REJECTED': return 'danger';
+      default: return 'info';
+    }
+  }
+
+  getPriorityTone(priority: string): 'info' | 'warning' | 'danger' {
+    switch (priority) {
+      case 'CRITICAL': return 'danger';
+      case 'HIGH': return 'danger';
+      case 'MEDIUM': return 'warning';
+      case 'LOW': return 'info';
+      default: return 'info';
+    }
+  }
+
+  deleteMyFeedback(id: number): void {
+    if (confirm('Delete this feedback?')) {
+      this.feedbackService.delete(id).subscribe({
+        next: () => this.loadClientFeedbacks(),
+        error: () => this.clientFeedbacksError = 'Delete failed.'
+      });
+    }
   }
 
   onRoleCardClick(action: RoleCard['action']): void {
@@ -260,10 +328,5 @@ export class FeedbackListComponent implements OnInit {
       this.showComplaintsSection = true;
       if (!this.loading && this.items.length === 0) this.loadComplaints();
     }
-  }
-
-  feedbackStars(rating: number): string {
-    const rounded = Math.max(0, Math.min(5, Math.round(rating || 0)));
-    return '★★★★★'.slice(0, rounded) + '☆☆☆☆☆'.slice(0, 5 - rounded);
   }
 }

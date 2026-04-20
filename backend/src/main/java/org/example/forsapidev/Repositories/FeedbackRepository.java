@@ -13,6 +13,7 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
     Optional<Feedback> findByComplaintId(Long complaintId);
     List<Feedback> findByComplaintUserUsername(String username);
+    List<Feedback> findByComplaintUserUsernameOrderByCreatedAtDesc(String username);
 
     @Query("select avg(f.rating) from Feedback f")
     Double avgRating();

@@ -48,7 +48,7 @@
 
 .toolbar-actions {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -64,6 +64,161 @@
   grid-template-columns: 1fr 1fr;
   gap: 16px;
   margin-bottom: 20px;
+}
+
+.client-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 16px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.section-header h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-foreground);
+  margin: 0;
+}
+
+.complaint-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+  gap: 12px;
+}
+
+.complaint-row:last-child {
+  border-bottom: none;
+}
+
+.complaint-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.subject {
+  font-weight: 600;
+  color: var(--color-foreground);
+  font-size: 14px;
+}
+
+.complaint-desc {
+  font-size: 13px;
+  color: var(--color-muted-foreground);
+  margin: 4px 0;
+}
+
+.complaint-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--color-muted-foreground);
+}
+
+.complaint-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 80px;
+}
+
+.feedback-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+  gap: 12px;
+}
+
+.feedback-row:last-child {
+  border-bottom: none;
+}
+
+.feedback-stars {
+  font-size: 18px;
+  color: #f59e0b;
+  margin-bottom: 4px;
+}
+
+.rating-num {
+  font-size: 13px;
+  color: var(--color-muted-foreground);
+  margin-left: 8px;
+}
+
+.feedback-comment {
+  font-size: 13px;
+  color: var(--color-muted-foreground);
+  margin: 4px 0;
+}
+
+.feedback-meta {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+
+.satisfaction-tag {
+  background: var(--color-accent);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.anon-tag {
+  background: #f1f5f9;
+  color: #64748b;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.feedback-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px;
+  color: var(--color-muted-foreground);
+  gap: 8px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px;
+  color: var(--color-muted-foreground);
+  gap: 12px;
+  text-align: center;
+}
+
+.error-state {
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 12px;
 }
 
 .section-card {
@@ -120,6 +275,86 @@
 
 .muted {
   color: var(--color-muted-foreground);
+}
+
+.client-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.status-open {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status-in-progress {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.status-resolved {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.status-closed {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.priority-critical {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.priority-high {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.priority-medium {
+  background: #fef9c3;
+  color: #a16207;
+}
+
+.priority-low {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.satisfaction-positive {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.satisfaction-neutral {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.satisfaction-negative {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.chip-category {
+  background: #eef2ff;
+  color: #4338ca;
+}
+
+.chip-anonymous {
+  background: #f3f4f6;
+  color: #4b5563;
 }
 
 .role-card {
@@ -293,6 +528,10 @@
   }
 
   .client-sections {
+    grid-template-columns: 1fr;
+  }
+
+  .client-grid {
     grid-template-columns: 1fr;
   }
 

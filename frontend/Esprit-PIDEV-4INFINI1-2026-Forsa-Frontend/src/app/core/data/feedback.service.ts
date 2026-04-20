@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Feedback } from '../models/forsa.models';
@@ -19,7 +19,9 @@ export class FeedbackService {
   }
 
   getMyFeedbacks(): Observable<Feedback[]> {
-    return this.http.get<Feedback[]>(`${this.baseUrl}/my-feedbacks`);
+    console.log('=== CALLING /my-feedbacks ===');
+    console.log('URL:', `${this.baseUrl}/my-feedbacks`);
+    return this.http.get<Feedback[]>(`${this.baseUrl}/my-feedbacks`, { headers: this.headers() });
   }
 
   getById(id: number): Observable<Feedback> {
@@ -61,5 +63,10 @@ export class FeedbackService {
 
   getTrendsReport(months: number = 6): Observable<any> {
     return this.getTrends(months);
+  }
+
+  private headers(): HttpHeaders {
+    const token = localStorage.getItem('forsa_access_token') ?? localStorage.getItem('token');
+    return token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : new HttpHeaders();
   }
 }
