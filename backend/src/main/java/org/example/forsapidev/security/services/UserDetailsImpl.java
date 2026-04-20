@@ -60,7 +60,7 @@ public class UserDetailsImpl implements UserDetails {
     return id;
   }
 
-  /** Rôle applicatif (CLIENT, AGENT, ADMIN), sans le préfixe {@code ROLE_}. */
+  /** Application role (CLIENT, AGENT, ADMIN) without the {@code ROLE_} prefix. */
   public ERole getAppRole() {
     return authorities.stream()
         .findFirst()

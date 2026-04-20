@@ -1,7 +1,10 @@
 <div class="page-toolbar">
   <div class="page-head">
     <h2>Role management</h2>
-    <p>System roles are fixed; here you can review each role and how many users are assigned.</p>
+    <p>
+      System roles are fixed; review user counts and use <strong>Edit access</strong> to choose which dashboard
+      areas each role can see in the sidebar.
+    </p>
   </div>
   <app-forsa-button type="button" variant="outline" (clicked)="refresh()" [disabled]="loading()">
     <app-forsa-icon name="sparkles" [size]="16" />
@@ -30,6 +33,7 @@
             <th>Label</th>
             <th>Description</th>
             <th class="right">Users</th>
+            <th class="rm-col-actions">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -42,6 +46,12 @@
               <td class="fw-semibold">{{ r.label }}</td>
               <td class="text-muted rm-desc">{{ r.description }}</td>
               <td class="right mono">{{ r.userCount }}</td>
+              <td class="rm-col-actions">
+                <app-forsa-button type="button" variant="outline" size="sm" (clicked)="openEditAccess(r)">
+                  <app-forsa-icon name="settings" [size]="14" />
+                  Edit access
+                </app-forsa-button>
+              </td>
             </tr>
           }
         </tbody>
@@ -50,92 +60,114 @@
   </div>
 </app-forsa-card>
 
-<section class="rm-access-section" aria-labelledby="rm-access-heading">
-  <div class="rm-access-head">
-    <h3 id="rm-access-heading">Accès par zone API</h3>
-    <p class="rm-access-lead">
-      Activez ou désactivez l’accès aux préfixes d’API pour chaque rôle (agents et clients sont appliqués par le
-      filtre serveur). Le rôle <strong>ADMIN</strong> n’est pas bloqué par ce filtre, mais les valeurs sont quand même
-      enregistrées en base.
-    </p>
-  </div>
+@if (editOpen()) {
+  <div class="rm-portal" role="presentation">
+    <div class="rm-overlay" (click)="closeEdit()"></div>
+    <div
+      class="rm-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="rm-dialog-title"
+      aria-describedby="rm-dialog-desc"
+    >
+      <header class="rm-modal__header">
+        <div class="rm-modal__header-text">
+          <span class="rm-modal__eyebrow">Role configuration</span>
+          <h3 id="rm-dialog-title" class="rm-modal__title">
+            {{ editingRole()?.label ?? editingRole()?.name }}
+          </h3>
+          <p id="rm-dialog-desc" class="rm-modal__subtitle">
+            Turn menus on or off for this role. The sidebar uses these settings (via
+            <span class="mono">allowedNavPaths</span> on login and when opening the dashboard). If you edit your own
+            role, menus refresh after save.
+          </p>
+        </div>
+        <button type="button" class="rm-modal__close" (click)="closeEdit()" aria-label="Close dialog">
+          <span class="rm-modal__close-icon" aria-hidden="true"></span>
+        </button>
+      </header>
 
-  @if (accessBanner()) {
-    <div class="rm-banner rm-banner-tight" [attr.data-tone]="accessBanner()!.tone" role="status">
-      {{ accessBanner()!.text }}
-    </div>
-  }
+      <div class="rm-modal__body">
+        @if (dialogBanner()) {
+          <div class="rm-modal__alert" [attr.data-tone]="dialogBanner()!.tone" role="status">
+            <app-forsa-icon
+              [name]="dialogBanner()!.tone === 'ok' ? 'check-circle-2' : 'alert-circle'"
+              [size]="18"
+            />
+            <span>{{ dialogBanner()!.text }}</span>
+          </div>
+        }
 
-  <app-forsa-card>
-    <div class="card-pad-lg rm-wrap">
-      <div class="rm-access-toolbar">
-        <label class="rm-access-label" for="rm-access-role">Rôle à configurer</label>
-        <select
-          id="rm-access-role"
-          class="rm-access-select"
-          [value]="accessRole()"
-          (change)="onAccessRoleChange($event)"
-          [disabled]="accessLoading() || accessSaving()"
-        >
-          @for (opt of accessRoleOptions; track opt) {
-            <option [value]="opt">{{ opt }}</option>
-          }
-        </select>
-        <app-forsa-button
-          type="button"
-          variant="default"
-          (clicked)="saveAccessMatrix()"
-          [disabled]="accessLoading() || accessSaving()"
-        >
-          <app-forsa-icon name="sparkles" [size]="16" />
-          {{ accessSaving() ? 'Enregistrement…' : 'Enregistrer les accès' }}
-        </app-forsa-button>
-        <app-forsa-button
-          type="button"
-          variant="outline"
-          (clicked)="loadAccessMatrix()"
-          [disabled]="accessLoading() || accessSaving()"
-        >
-          Recharger
-        </app-forsa-button>
+        @if (dialogLoading()) {
+          <div class="rm-modal__skeleton" aria-busy="true" aria-label="Loading">
+            @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+              <div class="rm-modal__skeleton-row">
+                <div class="rm-modal__skeleton-pill"></div>
+                <div class="rm-modal__skeleton-line"></div>
+                <div class="rm-modal__skeleton-line rm-modal__skeleton-line--short"></div>
+              </div>
+            }
+          </div>
+        } @else if (dialogRows().length === 0) {
+          <div class="rm-modal__empty">
+            <app-forsa-icon name="filter" [size]="40" />
+            <p>No dashboard areas to show right now.</p>
+          </div>
+        } @else {
+          <div class="rm-modal__table-scroll">
+            <table class="rm-table">
+              <thead>
+                <tr>
+                  <th class="rm-table__th-check" scope="col">Access</th>
+                  <th scope="col">Code</th>
+                  <th scope="col">Area</th>
+                  <th scope="col">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of dialogRows(); track row.resourceCode) {
+                  <tr class="rm-table__row" [class.rm-table__row--on]="row.permitted">
+                    <td class="rm-table__td-check">
+                      <label class="rm-switch">
+                        <input
+                          type="checkbox"
+                          [checked]="row.permitted"
+                          (change)="onToggleDialogRow(row, $event)"
+                          [disabled]="dialogSaving()"
+                        />
+                        <span class="rm-switch__track" aria-hidden="true"></span>
+                        <span class="rm-sr-only">Allow {{ row.title }}</span>
+                      </label>
+                    </td>
+                    <td>
+                      <span class="rm-pill mono">{{ row.resourceCode }}</span>
+                    </td>
+                    <td class="rm-table__label">{{ row.title }}</td>
+                    <td class="rm-table__desc">{{ row.description }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
       </div>
 
-      @if (accessLoading()) {
-        <p class="text-muted">Chargement des droits…</p>
-      } @else if (accessRows().length === 0) {
-        <p class="text-muted">Aucune zone d’accès renvoyée par l’API.</p>
-      } @else {
-        <table class="forsa-table rm-access-table">
-          <thead>
-            <tr>
-              <th class="rm-col-check">Autorisé</th>
-              <th>Code</th>
-              <th>Préfixe</th>
-              <th>Zone</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of accessRows(); track row.resourceCode) {
-              <tr>
-                <td class="rm-col-check">
-                  <input
-                    type="checkbox"
-                    [checked]="row.permitted"
-                    (change)="onToggleAccess(row, $event)"
-                    [disabled]="accessSaving()"
-                    [attr.aria-label]="'Autoriser ' + row.title"
-                  />
-                </td>
-                <td class="mono rm-code">{{ row.resourceCode }}</td>
-                <td class="mono rm-path">{{ row.pathPattern }}</td>
-                <td class="fw-semibold">{{ row.title }}</td>
-                <td class="text-muted rm-desc">{{ row.description }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      }
+      <footer class="rm-modal__footer">
+        <div class="rm-modal__footer-actions">
+          <app-forsa-button type="button" variant="outline" (clicked)="closeEdit()" [disabled]="dialogSaving()">
+            Cancel
+          </app-forsa-button>
+          <app-forsa-button
+            type="button"
+            variant="default"
+            (clicked)="saveDialogAccess()"
+            [disabled]="dialogSaving() || dialogLoading() || dialogRows().length === 0"
+          >
+            <app-forsa-icon name="check-circle-2" [size]="16" />
+            {{ dialogSaving() ? 'Saving…' : 'Save' }}
+          </app-forsa-button>
+        </div>
+      </footer>
     </div>
-  </app-forsa-card>
-</section>
+  </div>
+}

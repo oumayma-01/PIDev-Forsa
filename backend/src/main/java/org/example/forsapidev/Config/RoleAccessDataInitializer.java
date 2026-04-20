@@ -1,31 +1,30 @@
-package org.example.forsapidev.config;
+package org.example.forsapidev.Config;
 
 import lombok.RequiredArgsConstructor;
-import org.example.forsapidev.Repositories.RoleAccessSettingRepository;
+import org.example.forsapidev.Repositories.RoleNavAccessSettingRepository;
 import org.example.forsapidev.entities.UserManagement.ERole;
-import org.example.forsapidev.entities.UserManagement.RoleAccessSetting;
-import org.example.forsapidev.security.access.PlatformAccessResource;
+import org.example.forsapidev.entities.UserManagement.RoleNavAccessSetting;
+import org.example.forsapidev.security.nav.DashboardNavFeature;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
-/**
- * Initialise la table des droits d'accès au premier démarrage (valeurs par défaut alignées sur le catalogue).
- */
+/** Seeds default sidebar navigation access on first application startup. */
 @Component
 @RequiredArgsConstructor
 public class RoleAccessDataInitializer implements ApplicationRunner {
 
-  private final RoleAccessSettingRepository roleAccessSettingRepository;
+  private final RoleNavAccessSettingRepository roleNavAccessSettingRepository;
 
   @Override
   public void run(ApplicationArguments args) {
-    if (roleAccessSettingRepository.count() > 0) {
+    if (roleNavAccessSettingRepository.count() > 0) {
       return;
     }
     for (ERole role : ERole.values()) {
-      for (PlatformAccessResource res : PlatformAccessResource.values()) {
-        roleAccessSettingRepository.save(new RoleAccessSetting(role, res, res.defaultFor(role)));
+      for (DashboardNavFeature feature : DashboardNavFeature.values()) {
+        boolean permitted = feature.defaultPermittedFor(role);
+        roleNavAccessSettingRepository.save(new RoleNavAccessSetting(role, feature, permitted));
       }
     }
   }

@@ -15,5 +15,6 @@ public interface IRoleAccessService {
 
   List<RoleAccessGrantDTO> updateRoleAccess(ERole role, RoleAccessUpdateRequest request);
 
-  boolean isServletPathPermitted(ERole role, String servletPath);
+  /** Frontend paths ({@code /dashboard/...}) allowed for the role (profile / session). */
+  List<String> permittedNavPathsForRole(ERole role);
 }

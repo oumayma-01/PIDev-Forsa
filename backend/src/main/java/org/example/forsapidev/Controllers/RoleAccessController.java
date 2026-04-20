@@ -24,24 +24,22 @@ import java.util.List;
 @RequestMapping("/api/role/access")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "Bearer Authentication")
+@PreAuthorize("@navigationAccess.canAccessRoles(authentication)")
 public class RoleAccessController {
 
   private final IRoleAccessService roleAccessService;
 
   @GetMapping("/catalog")
-  @PreAuthorize("hasRole('ADMIN')")
   public List<RoleAccessCatalogEntryDTO> catalog() {
     return roleAccessService.catalog();
   }
 
   @GetMapping("/role/{role}")
-  @PreAuthorize("hasRole('ADMIN')")
   public List<RoleAccessGrantDTO> listForRole(@PathVariable("role") ERole role) {
     return roleAccessService.listForRole(role);
   }
 
   @PutMapping("/role/{role}")
-  @PreAuthorize("hasRole('ADMIN')")
   public List<RoleAccessGrantDTO> updateRoleAccess(
       @PathVariable("role") ERole role, @Valid @RequestBody RoleAccessUpdateRequest request) {
     return roleAccessService.updateRoleAccess(role, request);
