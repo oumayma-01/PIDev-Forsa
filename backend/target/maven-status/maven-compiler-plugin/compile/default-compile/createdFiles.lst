@@ -1,12 +1,3 @@
-<<<<<<< credit-frtend
-org\example\forsapidev\Mappers\CreditRequestMapper.class
-org\example\forsapidev\DTO\CreditRequestUpdateDTO.class
-org\example\forsapidev\Mappers\RepaymentScheduleMapper.class
-org\example\forsapidev\DTO\RepaymentScheduleDTO.class
-org\example\forsapidev\DTO\CreditRefDTO.class
-=======
-org\example\forsapidev\Services\Implementation\RoleService$1.class
->>>>>>> main
 org\example\forsapidev\Services\Implementation\RecommendationService$1.class
 org\example\forsapidev\DTO\CreditRequestDTO.class
 org\example\forsapidev\DTO\UserRefDTO.class
