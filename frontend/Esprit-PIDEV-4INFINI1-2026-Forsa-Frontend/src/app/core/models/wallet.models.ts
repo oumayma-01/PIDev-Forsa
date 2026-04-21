@@ -1,6 +1,6 @@
 // ── Enums ────────────────────────────────────────────────────────────────────
 
-export type TransactionType = 'deposit' | 'payment' | 'transfer' | 'withdrawal' | 'interest';
+export type TransactionType = 'DEPOSIT' | 'WITHDRAW' | 'TRANSFER_IN' | 'TRANSFER_OUT' | 'INTEREST';
 
 export type AccountStatus = 'ACTIVE' | 'BLOCKED';
 
