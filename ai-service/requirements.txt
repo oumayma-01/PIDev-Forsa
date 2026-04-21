@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+pandas
+numpy
+scikit-learn
+xgboost
+joblib
+mysql-connector-python
+chromadb
+sentence-transformers
+requests
+pydantic
+python-multipart
+pytesseract
+pillow

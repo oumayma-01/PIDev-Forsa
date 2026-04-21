@@ -3,6 +3,7 @@ package org.example.forsapidev.Services.Implementation;
 import org.example.forsapidev.Repositories.UserRepository;
 import org.example.forsapidev.Services.AgentRegistryService;
 import org.example.forsapidev.Services.Interfaces.IProfileService;
+import org.example.forsapidev.Services.Interfaces.IRoleAccessService;
 import org.example.forsapidev.entities.UserManagement.User;
 import org.example.forsapidev.payload.request.ChangeOwnPasswordRequest;
 import org.example.forsapidev.payload.request.ProfileUpdateRequest;
@@ -38,6 +39,7 @@ class ProfileService implements IProfileService {
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
   private final AgentRegistryService agentRegistryService;
+  private final IRoleAccessService roleAccessService;
 
   @Value("${app.profile.upload-dir:uploads/profile-images}")
   private String uploadDir;
@@ -47,10 +49,12 @@ class ProfileService implements IProfileService {
 
   ProfileService(UserRepository userRepository,
                    PasswordEncoder passwordEncoder,
-                   AgentRegistryService agentRegistryService) {
+                   AgentRegistryService agentRegistryService,
+                   IRoleAccessService roleAccessService) {
     this.userRepository = userRepository;
     this.passwordEncoder = passwordEncoder;
     this.agentRegistryService = agentRegistryService;
+    this.roleAccessService = roleAccessService;
   }
 
   @Override
@@ -184,7 +188,8 @@ class ProfileService implements IProfileService {
         user.getEmail(),
         roles,
         hasImage,
-        oauthAccount
+        oauthAccount,
+        roleAccessService.permittedNavPathsForRole(user.getRole().getName())
     );
   }
 

@@ -1,0 +1,96 @@
+.toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.sec-title {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.kv {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.kv--tight {
+  margin-bottom: 1rem;
+}
+
+.val {
+  margin: 0.25rem 0 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.notice {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-lg, 0.75rem);
+  border: 1px solid color-mix(in oklab, var(--color-border) 50%, transparent);
+  background: color-mix(in oklab, var(--color-muted) 50%, transparent);
+}
+
+.notice--err {
+  background: color-mix(in oklab, var(--color-destructive) 10%, transparent);
+}
+
+.agent-actions {
+  margin-top: 1.25rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.reject textarea {
+  width: 100%;
+}
+
+.reject app-forsa-button {
+  margin-top: 0.75rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.right {
+  text-align: right;
+}
+
+.mono {
+  font-variant-numeric: tabular-nums;
+}
+
+.fw {
+  font-weight: 600;
+}
+
+.block {
+  margin-top: 1rem;
+}
+
+.pre {
+  margin: 0.5rem 0 0;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid color-mix(in oklab, var(--color-border) 50%, transparent);
+  background: color-mix(in oklab, var(--color-muted) 55%, transparent);
+  white-space: pre-wrap;
+  word-break: break-word;
+}

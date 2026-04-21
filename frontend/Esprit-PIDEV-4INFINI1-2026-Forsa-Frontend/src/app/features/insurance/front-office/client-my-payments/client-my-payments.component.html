@@ -1,6 +1,6 @@
 <div class="portal-container">
   <div class="header-section">
-    <button routerLink="/dashboard/insurance/client" class="back-btn glass-btn">
+    <button routerLink="/dashboard/insurance" class="back-btn glass-btn">
       <i class="fe fe-arrow-left"></i> Back to Hub
     </button>
     <h1>Premium Payments</h1>
@@ -43,7 +43,7 @@
               Paid on {{ p.paidDate | date:'shortDate' }}
             </div>
           </td>
-          <td class="amount-cell">${{ p.amount | number:'1.2-2' }}</td>
+          <td class="amount-cell">{{ p.amount | number:'1.2-2' }} TND</td>
           <td>
             <span class="status-badge" [ngClass]="p.status | lowercase">{{ p.status }}</span>
           </td>

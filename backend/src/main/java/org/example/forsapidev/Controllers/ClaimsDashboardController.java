@@ -10,7 +10,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 @SecurityRequirement(name = "Bearer Authentication")
 @RequestMapping("/api/claims-dashboard")
-@CrossOrigin(origins = "*")  // Allow frontend to access
+@CrossOrigin(origins = "*") // Allow frontend to access
 public class ClaimsDashboardController {
 
     private final IClaimsDashboardService dashboardService;

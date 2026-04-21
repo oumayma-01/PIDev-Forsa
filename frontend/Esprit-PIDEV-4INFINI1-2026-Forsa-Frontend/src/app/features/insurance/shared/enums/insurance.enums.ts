@@ -17,6 +17,8 @@ export enum PolicyStatus {
 export enum PaymentStatus {
   PENDING = 'PENDING',
   PAID = 'PAID',
+  OVERDUE = 'OVERDUE',
+  CANCELLED = 'CANCELLED',
   LATE = 'LATE',
   FAILED = 'FAILED',
 }

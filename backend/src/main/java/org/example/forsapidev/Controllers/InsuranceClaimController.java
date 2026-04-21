@@ -13,8 +13,9 @@ import java.util.List;
 @RequestMapping("/api/insurance-claim")
 @CrossOrigin(origins = "*")
 public class InsuranceClaimController {
-
-    IInsuranceClaim insuranceClaimService;
+    
+    private final org.example.forsapidev.Repositories.InsurancePolicyRepository policyRepository;
+    private final IInsuranceClaim insuranceClaimService;
 
     @GetMapping("/retrieve-all-insurance-claims")
     public List<InsuranceClaim> retrieveAllInsuranceClaims() {
@@ -34,6 +35,10 @@ public class InsuranceClaimController {
 
     @PostMapping("/add-insurance-claim")
     public InsuranceClaim addInsuranceClaim(@RequestBody InsuranceClaim claim) {
+        System.out.println("Received Insurance Claim: " + claim.getClaimNumber());
+        if (claim.getInsurancePolicy() != null) {
+            System.out.println("For Policy ID: " + claim.getInsurancePolicy().getId());
+        }
         InsuranceClaim insuranceClaim = insuranceClaimService.addInsuranceClaim(claim);
         return insuranceClaim;
     }
@@ -53,5 +58,19 @@ public class InsuranceClaimController {
     public InsuranceClaim modifyInsuranceClaim(@RequestBody InsuranceClaim claim) {
         InsuranceClaim insuranceClaim = insuranceClaimService.modifyInsuranceClaim(claim);
         return insuranceClaim;
+    }
+
+    @PostMapping("/upload-attachment")
+    public String uploadAttachment(@RequestParam("file") org.springframework.web.multipart.MultipartFile file) throws java.io.IOException {
+        return insuranceClaimService.uploadAttachment(file);
+    }
+
+    @GetMapping("/attachments/{filename}")
+    @org.springframework.web.bind.annotation.ResponseBody
+    public org.springframework.http.ResponseEntity<org.springframework.core.io.Resource> getAttachment(@PathVariable String filename) {
+        org.springframework.core.io.Resource file = insuranceClaimService.getAttachment(filename);
+        return org.springframework.http.ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")
+                .body(file);
     }
 }

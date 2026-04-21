@@ -34,6 +34,13 @@ public class InsuranceClaim {
     private ClaimStatus status;
 
     private BigDecimal indemnificationPaid;
+    
+    private String accidentType;
+
+    @Column(columnDefinition = "TEXT")
+    private String damagedPoints;
+
+    private String attachmentUrl;
 
     // Relationship: Many Claims belong to One Policy
     @ManyToOne
@@ -72,4 +79,13 @@ public class InsuranceClaim {
 
     public InsurancePolicy getInsurancePolicy() { return insurancePolicy; }
     public void setInsurancePolicy(InsurancePolicy insurancePolicy) { this.insurancePolicy = insurancePolicy; }
+
+    public String getAccidentType() { return accidentType; }
+    public void setAccidentType(String accidentType) { this.accidentType = accidentType; }
+
+    public String getDamagedPoints() { return damagedPoints; }
+    public void setDamagedPoints(String damagedPoints) { this.damagedPoints = damagedPoints; }
+
+    public String getAttachmentUrl() { return attachmentUrl; }
+    public void setAttachmentUrl(String attachmentUrl) { this.attachmentUrl = attachmentUrl; }
 }
