@@ -1,27 +1,26 @@
 import { Component, computed, inject, type Signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { isNavPathAllowed } from '../../core/utils/nav-path-access';
-import { AuthService as AuthSvc } from '../../core/services/auth.service';
-import { ForsaLogoComponent as ForsaLogoCmp } from '../../shared/branding/forsa-logo.component';
-import { ForsaIconComponent as ForsaIconCmp } from '../../shared/ui/forsa-icon/forsa-icon.component';
-
-type NavIcon = import('../../shared/ui/forsa-icon/forsa-icon.types').ForsaIconName;
+import { AuthService as ForsaAuth } from '../../core/services/auth.service';
+import { ForsaLogoComponent as ForsaSidebarLogo } from '../../shared/branding/forsa-logo.component';
+import { ForsaIconComponent as ForsaSidebarIcon } from '../../shared/ui/forsa-icon/forsa-icon.component';
+import type { ForsaIconName as SidebarNavIcon } from '../../shared/ui/forsa-icon/forsa-icon.types';
 
 interface NavItem {
   label: string;
   href: string;
-  icon: NavIcon;
+icon: SidebarNavIcon;
 }
 
 @Component({
   selector: 'app-dashboard-sidebar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, ForsaLogoCmp, ForsaIconCmp],
+  imports: [RouterLink, RouterLinkActive, ForsaSidebarLogo, ForsaSidebarIcon],
   templateUrl: './dashboard-sidebar.component.html',
   styleUrl: './dashboard-sidebar.component.css',
 })
-export class DashboardSidebarComponent {
-  private readonly auth = inject(AuthSvc);
+export class DashboardSidebarCmp {
+  private readonly auth = inject(ForsaAuth);
 
   private readonly baseNav: NavItem[] = [
     { label: 'Dashboard', href: '/dashboard', icon: 'layout-dashboard' },
