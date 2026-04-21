@@ -44,7 +44,31 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/profile/profile-page/profile-page.component').then((m) => m.ProfilePageComponent),
       },
-      { path: 'credit', component: CreditListComponent },
+      {
+        path: 'credit',
+        children: [
+          { path: '', component: CreditListComponent },
+          {
+            path: 'simulate',
+            loadComponent: () =>
+              import('./features/credit/credit-simulate/credit-simulate.component').then(
+                (m) => m.CreditSimulateComponent,
+              ),
+          },
+          {
+            path: 'new',
+            loadComponent: () =>
+              import('./features/credit/credit-request-new/credit-request-new.component').then(
+                (m) => m.CreditRequestNewComponent,
+              ),
+          },
+          {
+            path: ':id',
+            loadComponent: () =>
+              import('./features/credit/credit-detail/credit-detail.component').then((m) => m.CreditDetailComponent),
+          },
+        ],
+      },
       { path: 'wallet', component: WalletOverviewComponent },
       { path: 'insurance', loadChildren: () => import('./features/insurance/insurance.routes').then(m => m.insuranceRoutes) },
       {

@@ -1,5 +1,7 @@
 package org.example.forsapidev.Services;
 
+import org.example.forsapidev.DTO.RepaymentScheduleDTO;
+import org.example.forsapidev.Mappers.RepaymentScheduleMapper;
 import org.example.forsapidev.entities.CreditManagement.RepaymentSchedule;
 import org.example.forsapidev.entities.CreditManagement.RepaymentStatus;
 import org.example.forsapidev.Repositories.RepaymentScheduleRepository;
@@ -10,17 +12,40 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class RepaymentScheduleService {
 
     private final RepaymentScheduleRepository repository;
     private final CreditRequestService creditRequestService;
+    private final RepaymentScheduleMapper repaymentScheduleMapper;
 
     @Autowired
-    public RepaymentScheduleService(RepaymentScheduleRepository repository, CreditRequestService creditRequestService) {
+    public RepaymentScheduleService(RepaymentScheduleRepository repository,
+                                   CreditRequestService creditRequestService,
+                                   RepaymentScheduleMapper repaymentScheduleMapper) {
         this.repository = repository;
         this.creditRequestService = creditRequestService;
+        this.repaymentScheduleMapper = repaymentScheduleMapper;
+    }
+
+    @Transactional(readOnly = true)
+    public List<RepaymentScheduleDTO> getSchedulesForCreditDtos(Long creditId) {
+        return repository.findByCreditRequestIdOrderByDueDateAsc(creditId)
+                .stream()
+                .map(repaymentScheduleMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<RepaymentScheduleDTO> findDtoById(Long id) {
+        return repository.findById(id).map(repaymentScheduleMapper::toDto);
+    }
+
+    @Transactional
+    public Optional<RepaymentScheduleDTO> markAsPaidDto(Long id, BigDecimal amountPaid) {
+        return markAsPaid(id, amountPaid).map(repaymentScheduleMapper::toDto);
     }
 
     public List<RepaymentSchedule> findAll() { return repository.findAll(); }
