@@ -3,8 +3,8 @@ import { Routes } from '@angular/router';
 export const frontOfficeRoutes: Routes = [
   {
     path: '',
-    loadComponent: () =>
-      import('./front-office-hub/front-office-hub.component').then((m) => m.FrontOfficeHubComponent),
+    redirectTo: '../', // Redirect to the parent insurance hub
+    pathMatch: 'full'
   },
   {
     path: 'catalog',
@@ -39,6 +39,13 @@ export const frontOfficeRoutes: Routes = [
     loadComponent: () =>
       import('./client-my-payments/client-my-payments.component').then(
         (m) => m.ClientMyPaymentsComponent,
+      ),
+  },
+  {
+    path: 'file-claim/:policyId',
+    loadComponent: () =>
+      import('./client-claim-filing/client-claim-filing.component').then(
+        (m) => m.ClientClaimFilingComponent,
       ),
   }
 ];

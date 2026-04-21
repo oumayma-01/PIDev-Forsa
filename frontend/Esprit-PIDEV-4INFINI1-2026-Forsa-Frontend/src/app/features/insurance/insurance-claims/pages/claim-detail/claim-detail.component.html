@@ -41,6 +41,18 @@
         <h4 class="section-title">Claim Data</h4>
         <div class="stat-grid">
           <div class="stat">
+            <span class="lbl">Accident Type</span>
+            <span class="val">{{ c.accidentType || '—' }}</span>
+          </div>
+          @if (c.attachmentUrl) {
+            <div class="stat">
+              <span class="lbl">Evidence</span>
+              <a [href]="'http://localhost:8080/api/insurance-claim/attachments/' + c.attachmentUrl" target="_blank" class="val text-primary d-flex align-center gap-1">
+                 <app-forsa-icon name="history" [size]="14" /> View
+              </a>
+            </div>
+          }
+          <div class="stat">
             <span class="lbl">Claim Date</span>
             <span class="val">{{ c.claimDate | date:'dd/MM/yyyy HH:mm' }}</span>
           </div>
@@ -63,6 +75,18 @@
         </div>
       </div>
     </app-forsa-card>
+
+    @if (c.damagedPoints) {
+      <app-forsa-card>
+         <div class="card-pad">
+           <h4 class="section-title">Visual Damage Assessment</h4>
+           <p class="text-sm text-muted mb-2">Customer pinpointed the following areas:</p>
+           <div class="points-list">
+             <p class="td-mono text-xs">{{ c.damagedPoints }}</p>
+           </div>
+         </div>
+      </app-forsa-card>
+    }
   </div>
 }
 }

@@ -1,44 +1,82 @@
-<div class="hub-container">
-  <div class="hub-header">
+<div class="forsa-client-dash">
+  <header class="dash-header">
     <h1>Your Insurance Portal</h1>
-    <p>Manage your coverage, apply for new policies, and track claims seamlessly.</p>
-  </div>
+    <p>Manage your coverage, track claims, and explore new protection plans seamlessly.</p>
+  </header>
 
   <div class="cards-grid">
-    <div class="hub-card" routerLink="./catalog">
-      <div class="icon-wrapper glass">
-        <i class="fe fe-shield"></i>
+    <!-- Catalog Card -->
+    <div class="premium-card" id="card-catalog" routerLink="./catalog">
+      <div class="card-bg-icon"><i class="fe fe-search"></i></div>
+      <div class="card-top">
+        <div class="card-icon teal-glow">
+          <i class="fe fe-package"></i>
+        </div>
+        <div class="card-tag">New</div>
       </div>
-      <h3>Insurance Catalog</h3>
-      <p>Compare our premium insurance products and find the right coverage.</p>
-      <span class="hub-action">Explore <i class="fe fe-arrow-right"></i></span>
+      <div class="card-body">
+        <h3>Insurance Catalog</h3>
+        <p>Explore our diverse range of insurance products tailored to your lifestyle.</p>
+      </div>
+      <div class="card-footer">
+        <span class="action-btn">Explore Products <i class="fe fe-arrow-right"></i></span>
+      </div>
     </div>
 
-    <div class="hub-card" routerLink="./my-policies">
-      <div class="icon-wrapper glass">
-        <i class="fe fe-file-text"></i>
+    <!-- My Policies Card -->
+    <div class="premium-card" id="card-policies" routerLink="./my-policies">
+      <div class="card-bg-icon"><i class="fe fe-file-text"></i></div>
+      <div class="card-top">
+        <div class="card-icon navy-glow">
+          <i class="fe fe-check-circle"></i>
+        </div>
       </div>
-      <h3>My Policies</h3>
-      <p>View your active insurance policies, schedules, and details.</p>
-      <span class="hub-action">Manage <i class="fe fe-arrow-right"></i></span>
+      <div class="card-body">
+        <h3>My Policies</h3>
+        <p>Review your active coverage details, policy documents, and renewal dates.</p>
+      </div>
+      <div class="card-footer">
+        <span class="action-btn">View My Policies <i class="fe fe-arrow-right"></i></span>
+      </div>
     </div>
 
-    <div class="hub-card" routerLink="./my-claims">
-      <div class="icon-wrapper glass">
-        <i class="fe fe-alert-triangle"></i>
+    <!-- Claims Card -->
+    <div class="premium-card" id="card-claims" routerLink="./my-claims">
+      <div class="card-bg-icon"><i class="fe fe-alert-circle"></i></div>
+      <div class="card-top">
+        <div class="card-icon gold-glow">
+          <i class="fe fe-activity"></i>
+        </div>
       </div>
-      <h3>My Claims</h3>
-      <p>File a new claim or track the status of an existing one.</p>
-      <span class="hub-action">View Claims <i class="fe fe-arrow-right"></i></span>
+      <div class="card-body">
+        <h3>Claims Center</h3>
+        <p>File a new claim or track the status of your reported incidents in real-time.</p>
+      </div>
+      <div class="card-footer">
+        <span class="action-btn">Manage Claims <i class="fe fe-arrow-right"></i></span>
+      </div>
     </div>
 
-    <div class="hub-card" routerLink="./my-payments">
-      <div class="icon-wrapper glass">
-        <i class="fe fe-credit-card"></i>
+    <!-- Payments Card -->
+    <div class="premium-card" id="card-payments" routerLink="./my-payments">
+      <div class="card-bg-icon"><i class="fe fe-credit-card"></i></div>
+      <div class="card-top">
+        <div class="card-icon lime-glow">
+          <i class="fe fe-dollar-sign"></i>
+        </div>
       </div>
-      <h3>My Payments</h3>
-      <p>Track your premium payments and manage your schedules.</p>
-      <span class="hub-action">Pay Premiums <i class="fe fe-arrow-right"></i></span>
+      <div class="card-body">
+        <h3>Premium Payments</h3>
+        <p>Securely pay your premiums and view your complete billing history.</p>
+      </div>
+      <div class="card-footer">
+        <span class="action-btn">Billing & Payments <i class="fe fe-arrow-right"></i></span>
+      </div>
     </div>
   </div>
+
+  <!-- Subtle Trust Mention -->
+  <footer class="dash-footer">
+    <p class="trust-slogan">"Your Trust, Our Commitment to Excellence"</p>
+  </footer>
 </div>

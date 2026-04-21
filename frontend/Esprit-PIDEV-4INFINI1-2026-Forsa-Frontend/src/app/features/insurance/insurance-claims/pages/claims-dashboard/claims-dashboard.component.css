@@ -1,0 +1,232 @@
+.page-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.page-head h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.page-head p {
+  margin: 0.25rem 0 0;
+  color: var(--color-text-secondary);
+  font-size: 0.94rem;
+}
+
+.head-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  padding: 1rem;
+}
+
+.stat-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.bg-indigo { background: rgba(99, 102, 241, 0.1); color: #6366f1; }
+.bg-emerald { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+.bg-amber { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+.bg-rose { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+
+.stat-data {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-data .label {
+  font-size: 0.81rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.stat-data .value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+/* Chart Layout */
+.chart-layout {
+  display: grid;
+  grid-template-columns: 2.5fr 1fr;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.chart-layout.second-row {
+  grid-template-columns: 1.5fr 1fr;
+}
+
+.card-head {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-head h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.chart-box {
+  padding: 1.25rem;
+  height: 320px;
+  position: relative;
+}
+
+/* Info Area */
+.info-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.info-hero {
+  padding: 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.info-hero h3 {
+  margin: 0.5rem 0 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.info-hero p {
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  max-width: 250px;
+}
+
+/* Table Section */
+.table-section {
+  margin-bottom: 2rem;
+}
+
+.table-head {
+  background: var(--color-card-head, transparent);
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  text-align: left;
+  padding: 0.875rem 1.25rem;
+  background: rgba(0,0,0,0.02);
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table td {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.9rem;
+}
+
+.td-mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem !important;
+  color: var(--color-primary);
+}
+
+.td-bold {
+  font-weight: 700;
+}
+
+.th-actions {
+  text-align: right !important;
+}
+
+/* Utils */
+.state-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 1rem;
+  color: var(--color-text-secondary);
+}
+
+.state-error {
+  color: var(--color-danger);
+}
+
+.spin {
+  animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 1200px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .chart-layout {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .page-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+}

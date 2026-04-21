@@ -121,8 +121,8 @@ public class InsurancePolicyImp implements IInsurancePolicy {    InsurancePolicy
         InsurancePolicy policy = insurancePolicyRepository.findById(policyId)
                 .orElseThrow(() -> new Exception("Policy not found"));
 
-        if (policy.getStatus() != PolicyStatus.PENDING) {
-            throw new Exception("Can only modify PENDING policies");
+        if (policy.getStatus() == PolicyStatus.CANCELLED || policy.getStatus() == PolicyStatus.EXPIRED) {
+            throw new Exception("Cannot modify policies that are already CANCELLED or EXPIRED");
         }
 
         // Update status

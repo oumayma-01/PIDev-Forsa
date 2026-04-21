@@ -140,6 +140,9 @@ export interface InsuranceClaim {
   description?: string;
   status?: ClaimStatus;
   indemnificationPaid?: number;
+  accidentType?: string;
+  damagedPoints?: string;
+  attachmentUrl?: string;
   insurancePolicy?: { id: number; policyNumber?: string };
 }
 

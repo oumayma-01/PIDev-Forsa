@@ -28,7 +28,7 @@
           <div class="form-group">
             <label>Coverage Limit</label>
             <div class="info-display">
-              <span class="info-value">${{ product.coverageLimit | number }}</span>
+              <span class="info-value">{{ product.coverageLimit | number }} TND</span>
               <span class="info-note">Fixed by plan</span>
             </div>
           </div>
@@ -70,7 +70,7 @@
               <input type="number" formControlName="age" class="form-control" />
             </div>
             <div class="form-group">
-              <label>Monthly Income ($)</label>
+              <label>Monthly Income (TND)</label>
               <input type="number" formControlName="monthlyIncome" class="form-control" />
             </div>
           </div>
@@ -144,13 +144,13 @@
         <div class="quote-card glass-panel premium-highlight">
           <h3>Your Premium Quote</h3>
           <div class="final-premium">
-            <span class="currency">$</span>
+            <span class="currency">TND</span>
             <span class="amount">{{ quote.premiumDetails?.periodicPayment | number:'1.2-2' }}</span>
             <span class="period">/ {{ quote.premiumDetails?.paymentFrequency | lowercase }}</span>
           </div>
           <div class="quote-details">
-            <p><span>Total Coverage:</span> <strong>${{ quote.premiumDetails?.coverageAmount | number }}</strong></p>
-            <p><span>Actuarial Pure Premium:</span> <strong>${{ quote.premiumDetails?.purePremium | number:'1.2-2' }}</strong></p>
+            <p><span>Total Coverage:</span> <strong>{{ quote.premiumDetails?.coverageAmount | number }} TND</strong></p>
+            <p><span>Actuarial Pure Premium:</span> <strong>{{ quote.premiumDetails?.purePremium | number:'1.2-2' }} TND</strong></p>
             <p><span>Risk Score:</span> <strong>{{ quote.premiumDetails?.riskScore }} / 100</strong></p>
             <p><span>Risk Category:</span> 
               <span class="badge {{ quote.premiumDetails?.riskCategory | lowercase }}">{{ quote.premiumDetails?.riskCategory }}</span>
@@ -176,8 +176,8 @@
               <tbody>
                 <tr *ngFor="let item of quote.amortizationSchedule?.schedule | slice:0:5">
                   <td>{{ item.period }}</td>
-                  <td>${{ item.payment | number:'1.2-2' }}</td>
-                  <td>${{ item.remainingBalance | number:'1.2-2' }}</td>
+                  <td>{{ item.payment | number:'1.2-2' }} TND</td>
+                  <td>{{ item.remainingBalance | number:'1.2-2' }} TND</td>
                 </tr>
               </tbody>
             </table>
