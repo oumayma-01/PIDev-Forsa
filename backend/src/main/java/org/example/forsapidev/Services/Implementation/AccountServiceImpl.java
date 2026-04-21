@@ -71,23 +71,24 @@ public class AccountServiceImpl implements AccountService {
     @Transactional
     @Override
     public Account createAccount(Long ownerId, String type, String holderName) {
+        var user = userRepo.findById(ownerId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + ownerId));
+
         Wallet wallet = new Wallet();
         wallet.setOwnerId(ownerId);
         wallet.setBalance(BigDecimal.ZERO);
-
         walletRepo.save(wallet);
+
+        String resolvedName = (holderName != null && !holderName.isBlank())
+                ? holderName
+                : user.getUsername() != null ? user.getUsername() : "User #" + ownerId;
 
         Account account = new Account();
         account.setWallet(wallet);
-        account.setAccountHolderName(holderName != null && !holderName.isBlank() ? holderName : "User #" + ownerId);
-
-        if (type.equalsIgnoreCase("INVESTMENT")) {
-            account.setType(AccountType.INVESTMENT);
-            account.setStatus(AccountStatus.ACTIVE);
-        } else {
-            account.setType(AccountType.SAVINGS);
-            account.setStatus(AccountStatus.ACTIVE);
-        }
+        account.setOwner(user);
+        account.setAccountHolderName(resolvedName);
+        account.setType(type.equalsIgnoreCase("INVESTMENT") ? AccountType.INVESTMENT : AccountType.SAVINGS);
+        account.setStatus(AccountStatus.ACTIVE);
 
         Account saved = accountRepo.save(account);
         logActivity(wallet, "Account created of type: " + type);

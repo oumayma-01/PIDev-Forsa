@@ -149,7 +149,7 @@ export class WalletOverviewComponent implements OnInit {
         this.showAdminCreateModal = false;
         this.loadingAdminOp = false;
       },
-      error: () => { this.operationError = 'Creation failed. Check the user ID.'; this.loadingAdminOp = false; },
+      error: (e) => { this.operationError = e?.error?.message || e?.error || 'Creation failed. User ID not found in the database.'; this.loadingAdminOp = false; },
     });
   }
 
