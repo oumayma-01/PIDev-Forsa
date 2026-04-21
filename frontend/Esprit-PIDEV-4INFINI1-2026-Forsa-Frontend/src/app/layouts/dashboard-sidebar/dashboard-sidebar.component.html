@@ -20,7 +20,7 @@
   </nav>
 
   <div class="sidebar__footer">
-    @if (showFooterProfile()) {
+    @if (footerProfileVisible()) {
       <a routerLink="/dashboard/profile" class="nav-item nav-item--btn">
         <app-forsa-icon name="settings" [size]="20" />
         <span>Profile & settings</span>
