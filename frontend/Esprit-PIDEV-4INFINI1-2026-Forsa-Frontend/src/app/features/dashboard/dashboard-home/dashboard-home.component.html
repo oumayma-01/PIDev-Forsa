@@ -1,76 +1,152 @@
 <div class="dashboard-container">
   @if (isAdminOrAgent) {
-    <!-- ADMIN DASHBOARD (RESTORED DEFAULT VIEW) -->
-    <header class="admin-header">
-      <div class="header-content">
-        <h1>Platform <span class="text-gradient">Overview</span></h1>
-        <p>Operational health and user engagement metrics across the Forsa ecosystem.</p>
+    <header class="ops-hero">
+      <div class="ops-hero__content">
+        <span class="ops-role-badge">{{ roleBadgeLabel }}</span>
+        <h1>{{ dashboardHeading }}</h1>
+        <p>{{ dashboardSubheading }}</p>
       </div>
-      <div class="header-actions">
-        <button class="btn-primary" routerLink="/dashboard/users">
-          <app-forsa-icon name="users" [size]="18" />
-          <span>Manage Users</span>
+      <div class="ops-hero__actions">
+        <button class="btn-primary" [routerLink]="isAdmin ? '/dashboard/users' : '/dashboard/credit'">
+          @if (isAdmin) {
+            <app-forsa-icon name="users" [size]="18" />
+            <span>User management</span>
+          } @else {
+            <app-forsa-icon name="users" [size]="18" />
+            <span>Open credit operations</span>
+          }
         </button>
+        @if (isAdmin) {
+          <button class="btn-outline" routerLink="/dashboard/feedback">
+            <app-forsa-icon name="message-square" [size]="18" />
+            <span>Feedback queue</span>
+          </button>
+        } @else {
+          <button class="btn-outline" routerLink="/dashboard/insurance">
+            <app-forsa-icon name="shield" [size]="18" />
+            <span>Insurance operations</span>
+          </button>
+        }
       </div>
     </header>
 
     @if (stats(); as s) {
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon blue"><app-forsa-icon name="users" [size]="24" /></div>
-          <div class="stat-info">
-            <span class="label">Total Users</span>
-            <span class="value">{{ s.totalUsers | number }}</span>
-          </div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-icon emerald"><app-forsa-icon name="shield-check" [size]="24" /></div>
-          <div class="stat-info">
-            <span class="label">Active Users</span>
-            <span class="value">{{ s.activeUsers | number }}</span>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon amber"><app-forsa-icon name="trending-up" [size]="24" /></div>
-          <div class="stat-info">
-            <span class="label">Activation Rate</span>
-            <span class="value">{{ s.activationRate | percent:'1.0-1' }}</span>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon violet"><app-forsa-icon name="sparkles" [size]="24" /></div>
-          <div class="stat-info">
-            <span class="label">New (30d)</span>
-            <span class="value">+{{ s.newUsersLast30Days | number }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="distribution-grid">
-        <app-forsa-card title="Segment Distribution" icon="pie-chart">
-          <div class="segment-list">
-            <div class="segment">
-              <span class="dot client"></span>
-              <span class="seg-label">Clients</span>
-              <span class="seg-val">{{ s.totalClients }}</span>
+      <section class="ops-kpi-grid">
+        <app-forsa-card>
+          <div class="kpi-card">
+            <div class="kpi-head">
+              <span class="kpi-label">Total users</span>
+              <span class="kpi-chip"><app-forsa-icon name="users" [size]="16" /></span>
             </div>
-            <div class="segment">
-              <span class="dot agent"></span>
-              <span class="seg-label">Agents</span>
-              <span class="seg-val">{{ s.totalAgents }}</span>
+            <p class="kpi-value">{{ s.totalUsers | number }}</p>
+            <p class="kpi-foot">All registered profiles on the platform</p>
+          </div>
+        </app-forsa-card>
+
+        <app-forsa-card>
+          <div class="kpi-card">
+            <div class="kpi-head">
+              <span class="kpi-label">Active users</span>
+              <span class="kpi-chip tone-success"><app-forsa-icon name="shield-check" [size]="16" /></span>
             </div>
-            <div class="segment">
-              <span class="dot admin"></span>
-              <span class="seg-label">Administrators</span>
-              <span class="seg-val">{{ s.totalAdmins }}</span>
+            <p class="kpi-value">{{ s.activeUsers | number }}</p>
+            <p class="kpi-foot">{{ s.inactiveUsers | number }} currently inactive</p>
+          </div>
+        </app-forsa-card>
+
+        <app-forsa-card>
+          <div class="kpi-card">
+            <div class="kpi-head">
+              <span class="kpi-label">Activation rate</span>
+              <span class="kpi-chip tone-warn"><app-forsa-icon name="trending-up" [size]="16" /></span>
+            </div>
+            <p class="kpi-value">{{ activationRatePercent(s) | number:'1.0-1' }}%</p>
+            <div class="kpi-progress">
+              <div class="kpi-progress__bar" [style.width.%]="activationRatePercent(s)"></div>
             </div>
           </div>
         </app-forsa-card>
 
-        <app-forsa-card title="System Health" icon="activity">
+        <app-forsa-card>
+          <div class="kpi-card">
+            <div class="kpi-head">
+              <span class="kpi-label">New users (30 days)</span>
+              <span class="kpi-chip tone-accent"><app-forsa-icon name="sparkles" [size]="16" /></span>
+            </div>
+            <p class="kpi-value">+{{ s.newUsersLast30Days | number }}</p>
+            <p class="kpi-foot">Recent onboarding trend</p>
+          </div>
+        </app-forsa-card>
+      </section>
+
+      <section class="ops-main-grid">
+        <app-forsa-card>
+          <div class="panel-head">
+            <h3>User distribution</h3>
+            <p>Role balance across the platform.</p>
+          </div>
+          <div class="mix-list">
+            <div class="mix-row">
+              <div class="mix-label">
+                <span class="dot client"></span>
+                <span>Clients</span>
+              </div>
+              <div class="mix-track">
+                <div class="mix-fill client" [style.width.%]="percentOf(s.totalClients, s.totalUsers)"></div>
+              </div>
+              <span class="mix-value">{{ s.totalClients }}</span>
+            </div>
+            <div class="mix-row">
+              <div class="mix-label">
+                <span class="dot agent"></span>
+                <span>Agents</span>
+              </div>
+              <div class="mix-track">
+                <div class="mix-fill agent" [style.width.%]="percentOf(s.totalAgents, s.totalUsers)"></div>
+              </div>
+              <span class="mix-value">{{ s.totalAgents }}</span>
+            </div>
+            <div class="mix-row">
+              <div class="mix-label">
+                <span class="dot admin"></span>
+                <span>Administrators</span>
+              </div>
+              <div class="mix-track">
+                <div class="mix-fill admin" [style.width.%]="percentOf(s.totalAdmins, s.totalUsers)"></div>
+              </div>
+              <span class="mix-value">{{ s.totalAdmins }}</span>
+            </div>
+          </div>
+        </app-forsa-card>
+
+        <app-forsa-card>
+          <div class="panel-head">
+            <h3>Quick actions</h3>
+            <p>Fast entry points for daily operations.</p>
+          </div>
+          <div class="quick-actions">
+            @for (action of quickActions(); track action.path) {
+              <a class="quick-action" [routerLink]="action.path">
+                <span class="quick-action__icon">
+                  <app-forsa-icon [name]="action.icon" [size]="17" />
+                </span>
+                <span class="quick-action__body">
+                  <span class="quick-action__title">{{ action.label }}</span>
+                  <span class="quick-action__desc">{{ action.description }}</span>
+                </span>
+                <app-forsa-icon name="arrow-right" [size]="16" />
+              </a>
+            }
+          </div>
+        </app-forsa-card>
+      </section>
+
+      <section class="ops-system">
+        <app-forsa-card>
+          <div class="panel-head">
+            <h3>System health</h3>
+            <p>Live status for critical platform services.</p>
+          </div>
           <div class="health-overview">
             <div class="health-item">
               <span>User API Status</span>
@@ -86,7 +162,7 @@
             </div>
           </div>
         </app-forsa-card>
-      </div>
+      </section>
     } @else {
       <div class="loading-stats">
         <div class="spinner"></div>
