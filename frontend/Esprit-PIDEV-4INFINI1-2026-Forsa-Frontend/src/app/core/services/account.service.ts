@@ -19,8 +19,9 @@ export class AccountService {
 
   // ── Account CRUD ─────────────────────────────────────────────────────────────
 
-  createAccount(ownerId: number, type: 'SAVINGS' | 'INVESTMENT'): Observable<Account> {
-    const params = new HttpParams().set('ownerId', ownerId.toString()).set('type', type);
+  createAccount(ownerId: number, type: 'SAVINGS' | 'INVESTMENT', holderName?: string): Observable<Account> {
+    let params = new HttpParams().set('ownerId', ownerId.toString()).set('type', type);
+    if (holderName) params = params.set('holderName', holderName);
     return this.http.post<Account>(`${this.base}/create`, null, { params });
   }
 
