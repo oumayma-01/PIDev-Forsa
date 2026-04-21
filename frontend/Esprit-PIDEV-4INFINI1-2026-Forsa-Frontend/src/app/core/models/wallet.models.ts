@@ -1,6 +1,6 @@
 // ── Enums ────────────────────────────────────────────────────────────────────
 
-export type TransactionType = 'deposit' | 'payment' | 'transfer' | 'withdrawal' | 'interest';
+export type TransactionType = 'DEPOSIT' | 'WITHDRAW' | 'TRANSFER_IN' | 'TRANSFER_OUT' | 'INTEREST';
 
 export type AccountStatus = 'ACTIVE' | 'BLOCKED';
 
@@ -61,4 +61,13 @@ export interface AccountTypeAdviceDTO {
   recommendedType: string;
   changeAdvised: boolean;
   reasoning: string;
+}
+
+export interface AdaptiveInterestResultDTO {
+  accountId: number;
+  previousBalance: number;
+  interestApplied: number;
+  newBalance: number;
+  rateUsed: number;
+  justification: string;
 }

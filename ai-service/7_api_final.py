@@ -18,8 +18,8 @@ from pydantic import BaseModel
 from typing import Dict, Optional
 import numpy as np
 import mysql.connector
-import chromadb
-from sentence_transformers import SentenceTransformer
+# import chromadb
+# from sentence_transformers import SentenceTransformer
 import requests
 import os
 import importlib.util
@@ -377,34 +377,36 @@ def generate_llm_explanation(score, salary, steg_ok, sonede_ok, cin_ok,
     threshold = salary * multiplier
 
     prompt = f"""
-Tu es un conseiller financier expert pour FORSA, plateforme de micro-finance tunisienne.
+You are a senior financial advisor at FORSA, a Tunisian micro-finance platform.
+Write a professional financial assessment report. Do not mention AI, algorithms, or automated systems.
+Write as if a human financial advisor is personally addressing the client.
 
-RÉSULTAT :
-- Score : {score}/1000 — Niveau : {label}
-- Salaire déclaré : {salary:.0f} TND/mois
-- Seuil de crédit calculé : {threshold:,.0f} TND
+ASSESSMENT DATA:
+- Score: {score}/1000 — Level: {label}
+- Declared salary: {salary:.0f} TND/month
+- Calculated credit threshold: {threshold:,.0f} TND
 
-DÉTAIL DU SCORE :
+SCORE BREAKDOWN:
 {chr(10).join([f"  • {v['comment']} : +{v['points']}/{v['max']} pts" for v in score_details.values()])}
 
-DONNÉES BANCAIRES : {"Disponibles" if has_db_data else "Pas encore de données (client nouveau)"}
+BANKING DATA: {"Available" if has_db_data else "Not yet available (new client)"}
 
-RÉFÉRENCES BCT :
+BCT REFERENCES:
 {rag_context.get('policies', '')[:400]}
 
-Génère en français (3-5 phrases max par section) :
+Generate in English (3-5 sentences max per section):
 
-**📊 VOTRE SCORE : {score}/1000 ({label})**
-[Explication personnalisée du score]
+**📊 YOUR SCORE: {score}/1000 ({label})**
+[Personalized explanation of the score]
 
-**💰 SEUIL DE CRÉDIT : {threshold:,.0f} TND**
-[Justification basée sur le salaire et le score]
+**💰 CREDIT THRESHOLD: {threshold:,.0f} TND**
+[Justification based on salary and score]
 
-**✅ POINTS FORTS :**
-[Liste des éléments positifs]
+**✅ STRENGTHS:**
+[List of positive elements]
 
-**📈 POUR AMÉLIORER VOTRE SCORE :**
-[Actions concrètes avec les points gagnables]
+**📈 HOW TO IMPROVE YOUR SCORE:**
+[Concrete actions with points to be gained]
 """
     try:
         r = requests.post(
@@ -417,25 +419,25 @@ Génère en français (3-5 phrases max par section) :
     except Exception as e:
         print(f"⚠️  LLM non disponible : {e}")
 
-    # ── Fallback texte si Mistral ne répond pas ──
+    # ── Fallback text if Mistral is unavailable ──
     positives = [v['comment'] for v in score_details.values() if v['points'] > 0]
     improvements = []
-    if not steg_ok:   improvements.append("Payez vos factures STEG à temps → +100 pts")
-    if not sonede_ok: improvements.append("Payez vos factures SONEDE à temps → +100 pts")
+    if not steg_ok:   improvements.append("Pay your STEG bills on time → +100 pts")
+    if not sonede_ok: improvements.append("Pay your SONEDE bills on time → +100 pts")
     if not has_db_data:
-        improvements.append("Utilisez votre wallet FORSA régulièrement → jusqu'à +300 pts")
+        improvements.append("Use your FORSA wallet regularly → up to +300 pts")
 
-    return f"""**📊 VOTRE SCORE : {score}/1000 ({label})**
-Votre score reflète votre profil financier actuel basé sur votre salaire, le paiement de vos factures et votre historique bancaire.
+    return f"""**📊 YOUR SCORE: {score}/1000 ({label})**
+Your score reflects your current financial profile based on your declared salary, utility bill payment history, and banking activity with FORSA.
 
-**💰 SEUIL DE CRÉDIT : {threshold:,.0f} TND**
-Ce montant est calculé selon votre score et votre salaire mensuel de {salary:.0f} TND, conformément aux politiques BCT.
+**💰 CREDIT THRESHOLD: {threshold:,.0f} TND**
+Based on your monthly salary of {salary:.0f} TND and your current score, you are eligible for financing up to this amount, in line with BCT guidelines.
 
-**✅ POINTS FORTS :**
-{chr(10).join(f"• {p}" for p in positives) if positives else "• Continuez à améliorer votre profil"}
+**✅ STRENGTHS:**
+{chr(10).join(f"• {p}" for p in positives) if positives else "• Keep building your financial profile"}
 
-**📈 POUR AMÉLIORER VOTRE SCORE :**
-{chr(10).join(f"• {i}" for i in improvements) if improvements else "• Maintenez vos bonnes habitudes financières"}"""
+**📈 HOW TO IMPROVE YOUR SCORE:**
+{chr(10).join(f"• {i}" for i in improvements) if improvements else "• Maintain your good financial habits"}"""
 
 
 # ==================== ENDPOINTS ====================

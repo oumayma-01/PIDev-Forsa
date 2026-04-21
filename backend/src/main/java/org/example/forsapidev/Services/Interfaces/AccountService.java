@@ -17,7 +17,7 @@ public interface AccountService {
 
 
     @Transactional
-    Account createAccount(Long ownerId, String type);
+    Account createAccount(Long ownerId, String type, String holderName);
 
     Account getAccount(Long accountId);
     List<Account> getAccountsByOwner(Long ownerId);
