@@ -144,9 +144,9 @@ export interface ScoringClientDemo {
   sampleLoanRisk: RiskMetrics;
 }
 
-// ── AI Scoring (agent Python sur port 5000, proxié via /api/ai-score/*) ───────
+// ── AI scoring (Python service, proxied via /api/ai-score/*) ─────────────────
 
-/** Corps de la requête envoyée à POST /api/ai-score/calculate/{clientId}. */
+/** Request body for POST /api/ai-score/calculate/{clientId}. */
 export interface AIScoreRequest {
   clientId: number;
   monthlySalary: number;
@@ -155,7 +155,7 @@ export interface AIScoreRequest {
   cinVerified: boolean;
 }
 
-/** Niveaux de score retournés par l'agent IA. */
+/** Score bands returned by the AI agent. */
 export type AIScoreLevel =
   | 'VERY_LOW'
   | 'LOW'
@@ -165,7 +165,7 @@ export type AIScoreLevel =
   | 'EXCELLENT'
   | 'PREMIUM';
 
-/** Features individuelles extraites par l'agent IA. */
+/** Individual feature vector from the AI agent. */
 export interface AIScoreFeatures {
   f1_salary: number;
   f2_income_stability: number;
@@ -179,7 +179,7 @@ export interface AIScoreFeatures {
   f10_cin_verified: number;
 }
 
-/** Détail d'un critère dans score_details (retourné par Python v3). */
+/** One criterion row inside score_details (Python v3). */
 export interface AIScoreDetailItem {
   points: number;
   max: number;
@@ -187,21 +187,21 @@ export interface AIScoreDetailItem {
   valeur?: number;
 }
 
-/** Réponse complète de l'agent IA (score + explication Mistral). */
+/** Full AI agent response (score + Mistral explanation). */
 export interface AIScoreResponse {
   clientId: number;
-  /** Score entre 0 et 1000. */
+  /** Score from 0 to 1000. */
   score: number;
   scoreLevel: AIScoreLevel;
-  /** Montant maximum de crédit autorisé en TND. */
+  /** Maximum authorized loan amount in TND. */
   creditThreshold: number;
   salaryVerified: number;
-  /** Explication en langage naturel générée par Mistral. */
+  /** Natural-language explanation from Mistral. */
   explanation: string;
   features: AIScoreFeatures;
-  /** Détail des critères (v3 scoring intelligent). */
+  /** Per-criterion breakdown (v3 scoring). */
   scoreDetails?: Record<string, AIScoreDetailItem>;
-  /** Indique si des données bancaires existent en DB. */
+  /** True when banking-derived features exist in DB. */
   hasDbData?: boolean;
 }
 
