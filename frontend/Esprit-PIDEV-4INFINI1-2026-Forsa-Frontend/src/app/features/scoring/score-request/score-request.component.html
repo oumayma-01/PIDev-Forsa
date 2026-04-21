@@ -1,0 +1,445 @@
+<div class="page-toolbar">
+  <div class="page-head page-head--inline">
+    <h2>Mon score IA</h2>
+    <p>Uploadez vos documents — notre IA les analyse automatiquement et calcule votre score de crédit.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     RÉSULTAT
+════════════════════════════════════════════════════════════ -->
+<ng-container *ngIf="result() as res">
+  <div class="result-layout">
+
+    <!-- Score principal -->
+    <app-forsa-card>
+      <div class="card-pad-lg result-hero">
+        <div class="result-hero__top">
+          <div>
+            <p class="result-label">Score de crédit</p>
+            <p class="result-score" [ngStyle]="{ color: levelColor() }">
+              {{ res.score }}<span class="result-score__max">/1000</span>
+            </p>
+          </div>
+          <app-forsa-badge [tone]="levelTone(res.scoreLevel)">
+            {{ levelLabel(res.scoreLevel) }}
+          </app-forsa-badge>
+        </div>
+
+        <div class="score-bar">
+          <div class="score-bar__fill"
+               [ngStyle]="{ width: scorePercent(res.score) + '%', background: levelColor() }">
+          </div>
+        </div>
+        <div class="score-bar__legend">
+          <span>0</span><span>250</span><span>500</span><span>750</span><span>1000</span>
+        </div>
+
+        <div class="result-credit">
+          <div class="result-credit__icon">
+            <app-forsa-icon name="trending-up" [size]="20"></app-forsa-icon>
+          </div>
+          <div>
+            <p class="result-credit__label">Montant de crédit autorisé</p>
+            <p class="result-credit__value">{{ res.creditThreshold | number: '1.0-0' }} TND</p>
+          </div>
+        </div>
+
+        <div class="result-actions">
+          <app-forsa-button (click)="goToCredit()">
+            <app-forsa-icon name="credit-card" [size]="16"></app-forsa-icon>
+            Demander un crédit
+          </app-forsa-button>
+          <app-forsa-button variant="outline" (click)="reset()">Recalculer</app-forsa-button>
+        </div>
+      </div>
+    </app-forsa-card>
+
+    <!-- Explication IA -->
+    <app-forsa-card>
+      <div class="card-pad-lg">
+        <header class="sec-head">
+          <h3><app-forsa-icon name="sparkles" [size]="16"></app-forsa-icon> Explication IA</h3>
+          <p>Analyse générée par notre modèle Mistral.</p>
+        </header>
+        <p class="explanation-body">{{ res.explanation }}</p>
+      </div>
+    </app-forsa-card>
+
+    <!-- Détail des critères -->
+    <app-forsa-card *ngIf="res.scoreDetails">
+      <div class="card-pad-lg">
+        <header class="sec-head">
+          <h3>Détail du calcul</h3>
+          <p>Contribution de chaque critère à votre score.</p>
+        </header>
+        <div class="criteria-list">
+          <div *ngFor="let entry of scoreDetailsEntries(res)" class="criteria-row">
+            <div class="criteria-row__head">
+              <span class="criteria-label">{{ entry.comment }}</span>
+              <span class="criteria-pts">
+                <span class="criteria-pts__val">+{{ entry.points }}</span>
+                <span class="criteria-pts__max"> / {{ entry.max }} pts</span>
+              </span>
+            </div>
+            <div class="criteria-bar">
+              <div class="criteria-bar__fill"
+                   [ngStyle]="{ width: (entry.points / entry.max * 100) + '%' }"
+                   [class.criteria-bar__fill--full]="entry.points === entry.max"
+                   [class.criteria-bar__fill--zero]="entry.points === 0">
+              </div>
+            </div>
+          </div>
+        </div>
+        <p *ngIf="!res.hasDbData" class="db-notice">
+          <app-forsa-icon name="alert-circle" [size]="13"></app-forsa-icon>
+          Pas encore de données bancaires — utilisez votre wallet FORSA pour gagner jusqu'à +300 pts !
+        </p>
+      </div>
+    </app-forsa-card>
+
+  </div>
+</ng-container>
+
+<!-- ═══════════════════════════════════════════════════════
+     FORMULAIRE STEPPER
+════════════════════════════════════════════════════════════ -->
+<ng-container *ngIf="!result()">
+
+  <!-- Stepper -->
+  <div class="stepper">
+    <div class="stepper__track">
+      <div *ngFor="let n of [1, 2, 3, 4]"
+           class="stepper__step"
+           [class.stepper__step--done]="step() > n"
+           [class.stepper__step--active]="step() === n">
+        <div class="stepper__circle">
+          <span *ngIf="step() <= n">{{ n }}</span>
+          <app-forsa-icon *ngIf="step() > n" name="check-circle-2" [size]="14"></app-forsa-icon>
+        </div>
+        <span class="stepper__label">
+          <ng-container [ngSwitch]="n">
+            <ng-container *ngSwitchCase="1">Salaire</ng-container>
+            <ng-container *ngSwitchCase="2">Factures</ng-container>
+            <ng-container *ngSwitchCase="3">Identité</ng-container>
+            <ng-container *ngSwitchCase="4">Résumé</ng-container>
+          </ng-container>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="error()" class="alert-banner">
+    <app-forsa-icon name="alert-circle" [size]="16"></app-forsa-icon>
+    {{ error() }}
+  </div>
+
+  <form [formGroup]="form">
+
+    <!-- ── ÉTAPE 1 : Salaire ─────────────────────────────── -->
+    <app-forsa-card *ngIf="step() === 1">
+      <div class="card-pad-lg step-card">
+        <div class="step-icon step-icon--salary">
+          <app-forsa-icon name="zap" [size]="24"></app-forsa-icon>
+        </div>
+        <h3>Votre salaire mensuel</h3>
+        <p class="step-desc">Indiquez votre revenu net mensuel en dinars tunisiens.</p>
+        <div class="field-group">
+          <label class="field-label" for="salary">Salaire mensuel net</label>
+          <div class="field-input-wrap">
+            <input id="salary" type="number" inputmode="numeric" class="forsa-input"
+                   placeholder="Ex : 1500" formControlName="monthlySalary" min="1" />
+            <span class="field-suffix">TND</span>
+          </div>
+          <p *ngIf="form.get('monthlySalary')?.invalid && form.get('monthlySalary')?.touched"
+             class="field-error">Veuillez saisir un salaire valide.</p>
+        </div>
+        <div class="step-actions">
+          <app-forsa-button type="button" [disabled]="!canGoNext()" (click)="next()">
+            Suivant <app-forsa-icon name="chevron-right" [size]="16"></app-forsa-icon>
+          </app-forsa-button>
+        </div>
+      </div>
+    </app-forsa-card>
+
+    <!-- ── ÉTAPE 2 : Factures OCR ─────────────────────────── -->
+    <app-forsa-card *ngIf="step() === 2">
+      <div class="card-pad-lg step-card">
+        <div class="step-icon step-icon--bills">
+          <app-forsa-icon name="clock" [size]="24"></app-forsa-icon>
+        </div>
+        <h3>Vos factures</h3>
+        <p class="step-desc">
+          Uploadez vos factures STEG et SONEDE. Notre IA détecte automatiquement si elles sont payées.
+        </p>
+
+        <!-- STEG -->
+        <div class="doc-section">
+          <p class="doc-section__title">
+            <app-forsa-icon name="zap" [size]="14"></app-forsa-icon>
+            Facture STEG (électricité &amp; gaz)
+          </p>
+
+          <div class="upload-zone"
+               [class.upload-zone--done]="stegDoc().result?.verified"
+               [class.upload-zone--error]="!!stegDoc().error"
+               (dragover)="onDragOver($event)"
+               (drop)="onFileDrop($event, 'STEG')"
+               (click)="stegInput.click()">
+            <input #stegInput type="file" accept="image/*,.pdf" hidden (change)="onFileSelected($event, 'STEG')" />
+
+            <ng-container *ngIf="!stegDoc().file && !stegDoc().uploading">
+              <app-forsa-icon name="trending-up" [size]="28"></app-forsa-icon>
+              <p class="upload-zone__text">Cliquez ou déposez votre facture STEG</p>
+              <p class="upload-zone__hint">JPG, PNG ou PDF</p>
+            </ng-container>
+
+            <div *ngIf="stegDoc().uploading" class="upload-loading">
+              <div class="mini-spinner"></div>
+              <span>Analyse OCR en cours…</span>
+            </div>
+
+            <div *ngIf="stegDoc().result && !stegDoc().uploading" class="ocr-result">
+              <div class="ocr-result__status" [class.ocr-result__status--ok]="stegDoc().result!.paid_on_time"
+                   [class.ocr-result__status--bad]="!stegDoc().result!.paid_on_time">
+                <app-forsa-icon [name]="stegDoc().result!.paid_on_time ? 'check-circle-2' : 'alert-circle'" [size]="18"></app-forsa-icon>
+                {{ stegDoc().result!.paid_on_time ? 'Payée à temps ✅' : 'Non payée ❌' }}
+              </div>
+              <p *ngIf="stegDoc().result!.amount" class="ocr-result__detail">
+                Montant : {{ stegDoc().result!.amount | number: '1.0-0' }} TND
+              </p>
+              <p class="ocr-result__file">{{ stegDoc().file?.name }}</p>
+            </div>
+
+            <p *ngIf="stegDoc().error && !stegDoc().uploading" class="upload-zone__err">{{ stegDoc().error }}</p>
+          </div>
+
+          <!-- Correction manuelle si OCR terminé -->
+          <div *ngIf="stegDoc().result || stegDoc().error" class="manual-override">
+            <label class="override-label">
+              <input type="checkbox" formControlName="stegPaidOnTime" />
+              <span class="override-box"></span>
+              <span>Confirmer : facture STEG payée à temps</span>
+            </label>
+            <span class="override-hint">(cochez pour corriger l'OCR)</span>
+          </div>
+        </div>
+
+        <!-- SONEDE -->
+        <div class="doc-section">
+          <p class="doc-section__title">
+            <app-forsa-icon name="home" [size]="14"></app-forsa-icon>
+            Facture SONEDE (eau)
+          </p>
+
+          <div class="upload-zone"
+               [class.upload-zone--done]="sonodeDoc().result?.verified"
+               [class.upload-zone--error]="!!sonodeDoc().error"
+               (dragover)="onDragOver($event)"
+               (drop)="onFileDrop($event, 'SONEDE')"
+               (click)="sonodeInput.click()">
+            <input #sonodeInput type="file" accept="image/*,.pdf" hidden (change)="onFileSelected($event, 'SONEDE')" />
+
+            <ng-container *ngIf="!sonodeDoc().file && !sonodeDoc().uploading">
+              <app-forsa-icon name="trending-up" [size]="28"></app-forsa-icon>
+              <p class="upload-zone__text">Cliquez ou déposez votre facture SONEDE</p>
+              <p class="upload-zone__hint">JPG, PNG ou PDF</p>
+            </ng-container>
+
+            <div *ngIf="sonodeDoc().uploading" class="upload-loading">
+              <div class="mini-spinner"></div>
+              <span>Analyse OCR en cours…</span>
+            </div>
+
+            <div *ngIf="sonodeDoc().result && !sonodeDoc().uploading" class="ocr-result">
+              <div class="ocr-result__status"
+                   [class.ocr-result__status--ok]="sonodeDoc().result!.paid_on_time"
+                   [class.ocr-result__status--bad]="!sonodeDoc().result!.paid_on_time">
+                <app-forsa-icon [name]="sonodeDoc().result!.paid_on_time ? 'check-circle-2' : 'alert-circle'" [size]="18"></app-forsa-icon>
+                {{ sonodeDoc().result!.paid_on_time ? 'Payée à temps ✅' : 'Non payée ❌' }}
+              </div>
+              <p *ngIf="sonodeDoc().result!.amount" class="ocr-result__detail">
+                Montant : {{ sonodeDoc().result!.amount | number: '1.0-0' }} TND
+              </p>
+              <p class="ocr-result__file">{{ sonodeDoc().file?.name }}</p>
+            </div>
+
+            <p *ngIf="sonodeDoc().error && !sonodeDoc().uploading" class="upload-zone__err">{{ sonodeDoc().error }}</p>
+          </div>
+
+          <div *ngIf="sonodeDoc().result || sonodeDoc().error" class="manual-override">
+            <label class="override-label">
+              <input type="checkbox" formControlName="sondePaidOnTime" />
+              <span class="override-box"></span>
+              <span>Confirmer : facture SONEDE payée à temps</span>
+            </label>
+            <span class="override-hint">(cochez pour corriger l'OCR)</span>
+          </div>
+        </div>
+
+        <p class="skip-hint">
+          <app-forsa-icon name="alert-circle" [size]="13"></app-forsa-icon>
+          Vous pouvez passer cette étape — les factures seront comptées comme non vérifiées.
+        </p>
+
+        <div class="step-actions step-actions--between">
+          <app-forsa-button variant="outline" type="button" (click)="back()">Retour</app-forsa-button>
+          <app-forsa-button type="button" (click)="next()">
+            Suivant <app-forsa-icon name="chevron-right" [size]="16"></app-forsa-icon>
+          </app-forsa-button>
+        </div>
+      </div>
+    </app-forsa-card>
+
+    <!-- ── ÉTAPE 3 : CIN OCR ──────────────────────────────── -->
+    <app-forsa-card *ngIf="step() === 3">
+      <div class="card-pad-lg step-card">
+        <div class="step-icon step-icon--identity">
+          <app-forsa-icon name="shield-check" [size]="24"></app-forsa-icon>
+        </div>
+        <h3>Vérification d'identité</h3>
+        <p class="step-desc">
+          Uploadez une photo de votre CIN. L'IA extrait et vérifie automatiquement votre numéro d'identité.
+        </p>
+
+        <div class="upload-zone upload-zone--cin"
+             [class.upload-zone--done]="cinDoc().result?.verified"
+             [class.upload-zone--error]="!!cinDoc().error"
+             (dragover)="onDragOver($event)"
+             (drop)="onFileDrop($event, 'CIN')"
+             (click)="cinInput.click()">
+          <input #cinInput type="file" accept="image/*" hidden (change)="onFileSelected($event, 'CIN')" />
+
+          <ng-container *ngIf="!cinDoc().file && !cinDoc().uploading">
+            <app-forsa-icon name="eye" [size]="32"></app-forsa-icon>
+            <p class="upload-zone__text">Cliquez ou déposez votre CIN (recto)</p>
+            <p class="upload-zone__hint">JPG ou PNG — recto uniquement</p>
+          </ng-container>
+
+          <div *ngIf="cinDoc().uploading" class="upload-loading">
+            <div class="mini-spinner"></div>
+            <span>Extraction OCR en cours…</span>
+          </div>
+
+          <div *ngIf="cinDoc().result && !cinDoc().uploading" class="ocr-result">
+            <div class="ocr-result__status"
+                 [class.ocr-result__status--ok]="cinDoc().result!.verified"
+                 [class.ocr-result__status--bad]="!cinDoc().result!.verified">
+              <app-forsa-icon [name]="cinDoc().result!.verified ? 'check-circle-2' : 'alert-circle'" [size]="18"></app-forsa-icon>
+              {{ cinDoc().result!.verified ? 'CIN valide détectée ✅' : 'CIN non reconnue ❌' }}
+            </div>
+            <p *ngIf="cinDoc().result!.cin_number" class="ocr-result__detail">
+              Numéro CIN : <strong>{{ cinDoc().result!.cin_number }}</strong>
+            </p>
+            <p *ngIf="cinDoc().result!.name" class="ocr-result__detail">
+              Nom détecté : <strong>{{ cinDoc().result!.name }}</strong>
+            </p>
+            <p class="ocr-result__file">{{ cinDoc().file?.name }}</p>
+          </div>
+
+          <p *ngIf="cinDoc().error && !cinDoc().uploading" class="upload-zone__err">{{ cinDoc().error }}</p>
+        </div>
+
+        <div *ngIf="cinDoc().result || cinDoc().error" class="manual-override">
+          <label class="override-label">
+            <input type="checkbox" formControlName="cinVerified" />
+            <span class="override-box"></span>
+            <span>Confirmer : ma CIN est vérifiée</span>
+          </label>
+          <span class="override-hint">(cochez pour corriger l'OCR)</span>
+        </div>
+
+        <p class="skip-hint">
+          <app-forsa-icon name="alert-circle" [size]="13"></app-forsa-icon>
+          Vous pouvez passer — la CIN sera comptée comme non vérifiée (−50 pts).
+        </p>
+
+        <div class="step-actions step-actions--between">
+          <app-forsa-button variant="outline" type="button" (click)="back()">Retour</app-forsa-button>
+          <app-forsa-button type="button" (click)="next()">
+            Suivant <app-forsa-icon name="chevron-right" [size]="16"></app-forsa-icon>
+          </app-forsa-button>
+        </div>
+      </div>
+    </app-forsa-card>
+
+    <!-- ── ÉTAPE 4 : Résumé ───────────────────────────────── -->
+    <app-forsa-card *ngIf="step() === 4 && !loading()">
+      <div class="card-pad-lg step-card">
+        <div class="step-icon step-icon--summary">
+          <app-forsa-icon name="check-circle-2" [size]="24"></app-forsa-icon>
+        </div>
+        <h3>Récapitulatif</h3>
+        <p class="step-desc">Vérifiez avant de lancer l'analyse IA.</p>
+
+        <ul class="summary-list">
+          <li class="summary-item">
+            <span class="summary-key">Salaire mensuel</span>
+            <span class="summary-val">{{ form.value.monthlySalary | number: '1.0-0' }} TND</span>
+          </li>
+          <li class="summary-item">
+            <span class="summary-key">
+              Facture STEG
+              <span class="summary-source">{{ stegDoc().result ? '(OCR)' : '(manuel)' }}</span>
+            </span>
+            <span class="summary-val"
+                  [class.summary-val--yes]="form.value.stegPaidOnTime"
+                  [class.summary-val--no]="!form.value.stegPaidOnTime">
+              {{ form.value.stegPaidOnTime ? 'Payée ✅' : 'Non payée ❌' }}
+            </span>
+          </li>
+          <li class="summary-item">
+            <span class="summary-key">
+              Facture SONEDE
+              <span class="summary-source">{{ sonodeDoc().result ? '(OCR)' : '(manuel)' }}</span>
+            </span>
+            <span class="summary-val"
+                  [class.summary-val--yes]="form.value.sondePaidOnTime"
+                  [class.summary-val--no]="!form.value.sondePaidOnTime">
+              {{ form.value.sondePaidOnTime ? 'Payée ✅' : 'Non payée ❌' }}
+            </span>
+          </li>
+          <li class="summary-item">
+            <span class="summary-key">
+              CIN
+              <span class="summary-source">{{ cinDoc().result ? '(OCR)' : '(manuel)' }}</span>
+            </span>
+            <span class="summary-val"
+                  [class.summary-val--yes]="form.value.cinVerified"
+                  [class.summary-val--no]="!form.value.cinVerified">
+              {{ form.value.cinVerified ? 'Vérifiée ✅' : 'Non vérifiée ❌' }}
+            </span>
+          </li>
+        </ul>
+
+        <p class="ai-notice">
+          <app-forsa-icon name="sparkles" [size]="14"></app-forsa-icon>
+          L'IA Mistral analyse votre profil. Cela peut prendre 30–60 secondes.
+        </p>
+
+        <div class="step-actions step-actions--between">
+          <app-forsa-button variant="outline" type="button" (click)="back()">Retour</app-forsa-button>
+          <app-forsa-button type="button" [disabled]="form.invalid" (click)="submit()">
+            <app-forsa-icon name="sparkles" [size]="16"></app-forsa-icon>
+            Calculer mon score
+          </app-forsa-button>
+        </div>
+      </div>
+    </app-forsa-card>
+
+  </form>
+
+  <!-- Chargement IA -->
+  <app-forsa-card *ngIf="loading()">
+    <div class="card-pad-lg loading-state">
+      <div class="loading-spinner">
+        <div class="spinner-ring"></div>
+        <app-forsa-icon name="brain" [size]="28" class="spinner-icon"></app-forsa-icon>
+      </div>
+      <h3>Analyse en cours…</h3>
+      <p class="loading-msg">Notre IA analyse votre profil financier</p>
+      <div class="loading-dots"><span></span><span></span><span></span></div>
+    </div>
+  </app-forsa-card>
+
+</ng-container>

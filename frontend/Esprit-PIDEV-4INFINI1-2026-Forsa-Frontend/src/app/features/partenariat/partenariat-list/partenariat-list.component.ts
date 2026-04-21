@@ -1,5 +1,6 @@
 import { DecimalPipe, NgFor, NgIf } from '@angular/common';
-import { Component, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { catchError, of } from 'rxjs';
 import { MOCK_PARTNERS } from '../../../core/data/mock-data';
 import type { Partner, PartnerStatus, PartnerType } from '../../../core/models/forsa.models';
 import { ForsaBadgeComponent } from '../../../shared/ui/forsa-badge/forsa-badge.component';
@@ -8,6 +9,7 @@ import { ForsaCardComponent } from '../../../shared/ui/forsa-card/forsa-card.com
 import { ForsaIconComponent } from '../../../shared/ui/forsa-icon/forsa-icon.component';
 import { ForsaInputDirective } from '../../../shared/directives/forsa-input.directive';
 import { PARTNER_TYPE_LABELS, PartnerTypeLabelPipe } from './partenariat-type-label-public';
+import { PartnerService } from '../services/partner.service';
 
 @Component({
   selector: 'app-partenariat-list',
@@ -26,8 +28,14 @@ import { PARTNER_TYPE_LABELS, PartnerTypeLabelPipe } from './partenariat-type-la
     PartnerTypeLabelPipe,
   ],
 })
-export class PartenariatListComponent {
-  readonly allPartners = MOCK_PARTNERS;
+export class PartenariatListComponent implements OnInit {
+  private readonly partnerService = inject(PartnerService);
+
+  /** Liste complète chargée depuis le backend (fallback sur mock si erreur). */
+  readonly partners = signal<Partner[]>([]);
+  readonly loading = signal(true);
+  readonly error = signal<string | null>(null);
+
   readonly searchQuery = signal('');
   readonly statusFilter = signal<PartnerStatus | 'ALL'>('ALL');
   readonly typeFilter = signal<PartnerType | 'ALL'>('ALL');
@@ -36,7 +44,7 @@ export class PartenariatListComponent {
     const q = this.searchQuery().toLowerCase().trim();
     const st = this.statusFilter();
     const ty = this.typeFilter();
-    return this.allPartners.filter((p) => {
+    return this.partners().filter((p) => {
       if (st !== 'ALL' && p.status !== st) return false;
       if (ty !== 'ALL' && p.partnerType !== ty) return false;
       if (!q) return true;
@@ -46,25 +54,18 @@ export class PartenariatListComponent {
   });
 
   readonly stats = computed(() => {
-    const list = this.allPartners;
+    const list = this.partners();
     const active = list.filter((p) => p.status === 'ACTIVE').length;
     const rated = list.filter((p) => p.averageRating != null && p.averageRating > 0);
     const avg =
       rated.length === 0 ? 0 : rated.reduce((s, p) => s + (p.averageRating ?? 0), 0) / rated.length;
     const volume = list.reduce((s, p) => s + (p.totalAmountProcessed ?? 0), 0);
-    return {
-      total: list.length,
-      active,
-      avgRating: avg,
-      volume,
-    };
+    return { total: list.length, active, avgRating: avg, volume };
   });
 
   readonly avgRatingParts = computed(() => {
     const a = this.stats().avgRating;
-    if (a > 0) {
-      return { text: a.toFixed(1), suffix: '/5' };
-    }
+    if (a > 0) return { text: a.toFixed(1), suffix: '/5' };
     return { text: '-', suffix: '' };
   });
 
@@ -85,6 +86,24 @@ export class PartenariatListComponent {
     })),
   ];
 
+  ngOnInit(): void {
+    /* Chargement depuis le backend — fallback sur les données mock si indisponible. */
+    this.partnerService
+      .getAllPartners()
+      .pipe(catchError(() => of(MOCK_PARTNERS)))
+      .subscribe({
+        next: (data) => {
+          this.partners.set(data);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.partners.set(MOCK_PARTNERS);
+          this.error.set('Backend unavailable — showing demo data.');
+          this.loading.set(false);
+        },
+      });
+  }
+
   onPartnerFilterValue(value: string): void {
     this.searchQuery.set(value);
   }
@@ -99,31 +118,21 @@ export class PartenariatListComponent {
 
   statusTone(status: PartnerStatus): 'success' | 'warning' | 'danger' | 'info' | 'muted' {
     switch (status) {
-      case 'ACTIVE':
-        return 'success';
-      case 'PENDING':
-        return 'warning';
-      case 'SUSPENDED':
-        return 'danger';
-      case 'REJECTED':
-        return 'danger';
-      case 'CLOSED':
-        return 'muted';
+      case 'ACTIVE': return 'success';
+      case 'PENDING': return 'warning';
+      case 'SUSPENDED': return 'danger';
+      case 'REJECTED': return 'danger';
+      case 'CLOSED': return 'muted';
     }
   }
 
   badgeTone(badge: Partner['badge']): 'default' | 'secondary' | 'warning' | 'info' | 'muted' {
     switch (badge) {
-      case 'DIAMOND':
-        return 'info';
-      case 'GOLD':
-        return 'warning';
-      case 'SILVER':
-        return 'secondary';
-      case 'BRONZE':
-        return 'default';
-      default:
-        return 'muted';
+      case 'DIAMOND': return 'info';
+      case 'GOLD': return 'warning';
+      case 'SILVER': return 'secondary';
+      case 'BRONZE': return 'default';
+      default: return 'muted';
     }
   }
 }

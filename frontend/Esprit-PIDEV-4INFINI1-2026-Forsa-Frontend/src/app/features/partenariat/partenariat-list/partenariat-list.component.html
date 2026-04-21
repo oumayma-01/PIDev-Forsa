@@ -1,3 +1,9 @@
+<!-- Bannière d'erreur (backend indisponible) -->
+<div *ngIf="error()" class="alert-banner">
+  <app-forsa-icon name="alert-circle" [size]="16"></app-forsa-icon>
+  {{ error() }}
+</div>
+
 <div class="page-toolbar">
   <div class="page-head page-head--inline">
     <h2>Partnerships</h2>
@@ -98,7 +104,15 @@
       </div>
     </div>
 
-    <table class="forsa-table">
+    <!-- Skeleton de chargement -->
+    <div *ngIf="loading()" class="loading-row">
+      <span class="loading-dot"></span>
+      <span class="loading-dot"></span>
+      <span class="loading-dot"></span>
+      Chargement des partenaires…
+    </div>
+
+    <table *ngIf="!loading()" class="forsa-table">
       <thead>
         <tr>
           <th>ID</th>
