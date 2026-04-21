@@ -1,6 +1,5 @@
 package org.example.forsapidev.security.jwt;
 
-
 import io.jsonwebtoken.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.example.forsapidev.Repositories.UserRepository;
@@ -31,73 +30,78 @@ public class JwtUtils {
   public Integer RESET_PWD_TOKEN_EXPIRATION = 1000 * 60 * 30;
   public Integer SET_PWD_TOKEN_EXPIRATION = 1000 * 3600 * 24 * 5;
 
-
   /**
-   * Public routes only. {@code /api/auth/current} is authenticated and must not be matched here.
+   * Public routes only. {@code /api/auth/current} is authenticated and must not
+   * be matched here.
    */
   public String[] AUTH_WHITELIST = {
-          "/api/auth/signin",
-          "/api/auth/signup",
-          "/api/auth/google-login-url",
-          "/api/auth/ForgottenPassword",
-          "/api/auth/resetpass",
-          "/api/auth/activate/**",
-          "/api/test/**",
-          "/v2/api-docs",
-          "/oauth2/**",
-          "/oauth2/**",
-          "/login/**",
-          "/error",
-          "/swagger-resources",
-          "*/swagger-resources/*",
-          "/configuration/ui",
-          "/configuration/**",
-          "*/swagger-ui.html/*",
-          "/swagger-ui.html",
-          "/v3/api-docs/**",
-          "*/swagger-ui/*",
-          "/swagger-ui/**",
-          "/v2/api-docs/**",
-          "/api-docs/**",
+      "/api/auth/signin",
+      "/api/auth/signup",
+      "/api/auth/google-login-url",
+      "/api/auth/ForgottenPassword",
+      "/api/auth/resetpass",
+      "/api/auth/activate/**",
+      "/api/test/**",
+      "/v2/api-docs",
+      "/oauth2/**",
+      "/oauth2/**",
+      "/login/**",
+      "/error",
+      "/swagger-resources",
+      "*/swagger-resources/*",
+      "/configuration/ui",
+      "/configuration/**",
+      "*/swagger-ui.html/*",
+      "/swagger-ui.html",
+      "/v3/api-docs/**",
+      "*/swagger-ui/*",
+      "/swagger-ui/**",
+      "/v2/api-docs/**",
+      "/api-docs/**",
   };
 
   public String generatePinPassword() {
     int m = (int) Math.pow(10, 4 - 1);
-    return ""+(m + new Random().nextInt(9 * m));
+    return "" + (m + new Random().nextInt(9 * m));
   }
 
   /**
-   * JWT subject is {@code uid:<userId>} so the token stays valid after username changes.
-   * Legacy tokens used the username as subject; see {@link org.example.forsapidev.security.services.UserDetailsServiceImpl#loadUserByJwtSubject}.
+   * JWT subject is {@code uid:<userId>} so the token stays valid after username
+   * changes.
+   * Legacy tokens used the username as subject; see
+   * {@link org.example.forsapidev.security.services.UserDetailsServiceImpl#loadUserByJwtSubject}.
    */
   public String generateJwtToken(Authentication authentication) {
     UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
     return Jwts.builder()
-            .setSubject(jwtSubjectForUserId(userPrincipal.getId()))
-            .claim("role", userPrincipal.getAuthorities()
-                    .stream()
-                    .findFirst()
-                    .get()
-                    .getAuthority())
-            .setIssuedAt(new Date())
-            .setExpiration(new Date((new Date()).getTime() + SESSION_EXPIRATION))
-            .signWith(SignatureAlgorithm.HS512, SECRET)
-            .compact();
+        .setSubject(jwtSubjectForUserId(userPrincipal.getId()))
+        .claim("role", userPrincipal.getAuthorities()
+            .stream()
+            .findFirst()
+            .get()
+            .getAuthority())
+        .setIssuedAt(new Date())
+        .setExpiration(new Date((new Date()).getTime() + SESSION_EXPIRATION))
+        .signWith(SignatureAlgorithm.HS512, SECRET)
+        .compact();
   }
 
   public String generateJwtForUserId(long userId) {
     return Jwts.builder()
-            .setSubject(jwtSubjectForUserId(userId))
-            .setIssuedAt(new Date())
-            .setExpiration(new Date((new Date()).getTime() + SESSION_EXPIRATION))
-            .signWith(SignatureAlgorithm.HS512, SECRET)
-            .compact();
+        .setSubject(jwtSubjectForUserId(userId))
+        .setIssuedAt(new Date())
+        .setExpiration(new Date((new Date()).getTime() + SESSION_EXPIRATION))
+        .signWith(SignatureAlgorithm.HS512, SECRET)
+        .compact();
   }
 
-  /** Resolves username to id then issues a uid-subject token (same format as login). */
+  /**
+   * Resolves username to id then issues a uid-subject token (same format as
+   * login).
+   */
   public String generateJwtFromUsername(String username) {
     User user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
+        .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
     return generateJwtForUserId(user.getId());
   }
 
@@ -145,10 +149,12 @@ public class JwtUtils {
   }
 
   public Long getAgencyIdFromJwtToken(String token) {
-    return Long.valueOf(Jwts.parser().setSigningKey(SECRET).parseClaimsJws(token).getBody().get("agency_id").toString());
+    return Long
+        .valueOf(Jwts.parser().setSigningKey(SECRET).parseClaimsJws(token).getBody().get("agency_id").toString());
   }
 
   public Long getEntrepriseIdFromJwtToken(String token) {
-    return Long.valueOf(Jwts.parser().setSigningKey(SECRET).parseClaimsJws(token).getBody().get("entreprise_id").toString());
+    return Long
+        .valueOf(Jwts.parser().setSigningKey(SECRET).parseClaimsJws(token).getBody().get("entreprise_id").toString());
   }
 }

@@ -32,4 +32,14 @@ export class InsuranceClaimService {
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/remove-insurance-claim/${id}`);
   }
+
+  uploadAttachment(file: File): Observable<string> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post(`${this.base}/upload-attachment`, formData, { responseType: 'text' });
+  }
+
+  getAttachmentUrl(fileName: string): string {
+    return `${this.base}/attachments/${fileName}`;
+  }
 }
