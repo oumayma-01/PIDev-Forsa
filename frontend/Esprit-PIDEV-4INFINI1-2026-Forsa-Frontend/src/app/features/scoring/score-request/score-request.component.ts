@@ -10,7 +10,7 @@ import { ForsaCardComponent } from '../../../shared/ui/forsa-card/forsa-card.com
 import { ForsaIconComponent } from '../../../shared/ui/forsa-icon/forsa-icon.component';
 import { AiScoreService, type OcrResult } from '../services/ai-score.service';
 
-/** Couleur CSS par niveau. */
+/** CSS color per score level. */
 const LEVEL_COLORS: Record<AIScoreLevel, string> = {
   VERY_LOW:  'var(--color-destructive)',
   LOW:       '#f97316',
@@ -21,13 +21,13 @@ const LEVEL_COLORS: Record<AIScoreLevel, string> = {
   PREMIUM:   'var(--color-primary)',
 };
 
-/** Libellé français du niveau. */
+/** Human-readable score level labels. */
 const LEVEL_LABELS: Record<AIScoreLevel, string> = {
-  VERY_LOW:  'Très faible',
-  LOW:       'Faible',
-  MEDIUM:    'Moyen',
-  GOOD:      'Bon',
-  VERY_GOOD: 'Très bon',
+  VERY_LOW:  'Very low',
+  LOW:       'Low',
+  MEDIUM:    'Medium',
+  GOOD:      'Good',
+  VERY_GOOD: 'Very good',
   EXCELLENT: 'Excellent',
   PREMIUM:   'Premium',
 };
@@ -134,7 +134,7 @@ export class ScoreRequestComponent {
         if (docType === 'CIN')    this.form.patchValue({ cinVerified:     ocr.verified ?? false });
       },
       error: (err) => {
-        const msg = err?.error?.detail ?? 'Erreur OCR — vérifiez que Python tourne.';
+        const msg = err?.error?.detail ?? 'OCR error — check that the Python service is running.';
         this._patchDoc(docType, { uploading: false, error: msg });
       },
     });
@@ -184,7 +184,7 @@ export class ScoreRequestComponent {
     }).subscribe({
       next:  (res) => { this.result.set(res); this.loading.set(false); },
       error: ()    => {
-        this.error.set('Erreur lors du calcul. Vérifiez que Spring Boot et Python sont démarrés.');
+        this.error.set('Could not calculate the score. Ensure Spring Boot and the Python service are running.');
         this.loading.set(false);
       },
     });
