@@ -70,19 +70,20 @@ public class AccountServiceImpl implements AccountService {
 
     @Transactional
     @Override
-    public Account createAccount(Long ownerId, String type) {
+    public Account createAccount(Long ownerId, String type, String holderName) {
         Wallet wallet = new Wallet();
         wallet.setOwnerId(ownerId);
         wallet.setBalance(BigDecimal.ZERO);
 
-        Wallet savedWallet = walletRepo.save(wallet);
+        walletRepo.save(wallet);
 
         Account account = new Account();
         account.setWallet(wallet);
+        account.setAccountHolderName(holderName != null && !holderName.isBlank() ? holderName : "User #" + ownerId);
 
         if (type.equalsIgnoreCase("INVESTMENT")) {
             account.setType(AccountType.INVESTMENT);
-            account.setStatus(AccountStatus.BLOCKED);
+            account.setStatus(AccountStatus.ACTIVE);
         } else {
             account.setType(AccountType.SAVINGS);
             account.setStatus(AccountStatus.ACTIVE);

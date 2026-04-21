@@ -32,8 +32,9 @@ public class AccountController {
     @SecurityRequirement(name = "Bearer Authentication")
     @PostMapping("/create")
     public Account createAccount(@RequestParam Long ownerId,
-                                 @RequestParam String type) {
-        return accountService.createAccount(ownerId, type);
+                                 @RequestParam String type,
+                                 @RequestParam(required = false) String holderName) {
+        return accountService.createAccount(ownerId, type, holderName);
     }
 
     // Get all accounts - ADMIN ONLY
