@@ -1,212 +1,382 @@
 <div class="page-head">
   <h2>Digital Wallet</h2>
-  <p>Manage your funds, transfers, and transaction history.</p>
+  <p>Manage funds, transfers, and transaction history.</p>
 </div>
 
 @if (operationMessage) {
-  <div class="op-banner op-banner--ok">{{ operationMessage }}</div>
+  <div class="op-banner op-banner--ok" (click)="clearMessage()">{{ operationMessage }} ✕</div>
+}
+@if (operationError) {
+  <div class="op-banner op-banner--err" (click)="clearMessage()">{{ operationError }} ✕</div>
 }
 
-<div class="wallet-grid">
-  <app-forsa-card class="hero-card" [noBorder]="true">
-    <div class="hero-inner card-pad-lg">
-      <div class="hero-bg-ico" aria-hidden="true">
-        <app-forsa-icon name="wallet" [size]="180" />
-      </div>
-      <div class="hero-top">
-        <div>
-          <p class="muted">Available Balance</p>
-          @if (loading) {
-            <h3 class="balance">—</h3>
-          } @else {
-            <h3 class="balance">${{ balance | number : '1.2-2' }}</h3>
-          }
-          @if (account) {
-            <p class="muted acct-meta">{{ account.type }} · {{ account.status }}</p>
-          }
-        </div>
-        <div class="ico-wrap">
-          <app-forsa-icon name="credit-card" [size]="28" />
-        </div>
-      </div>
-      <div class="hero-actions">
-        <app-forsa-button extraClass="forsa-hero-wallet-solid" (click)="openDepositModal()">
-          <app-forsa-icon name="plus" [size]="20" />
-          Add Funds
-        </app-forsa-button>
-        <app-forsa-button variant="secondary" extraClass="forsa-hero-wallet-ghost" (click)="openTransferModal()">
-          <app-forsa-icon name="send" [size]="20" />
-          Send Money
-        </app-forsa-button>
-      </div>
-    </div>
-  </app-forsa-card>
-
-  <app-forsa-card>
-    <div class="card-pad-lg">
-      <h3 class="side-title">Quick Stats</h3>
-      @if (stats) {
-        <div class="stats-grid">
-          <div class="stat-item">
-            <p class="stat-label">Total Deposits</p>
-            <p class="stat-val dep">${{ stats.totalDeposits | number : '1.2-2' }}</p>
-          </div>
-          <div class="stat-item">
-            <p class="stat-label">Total Withdrawals</p>
-            <p class="stat-val wd">${{ stats.totalWithdrawals | number : '1.2-2' }}</p>
-          </div>
-          <div class="stat-item">
-            <p class="stat-label">Transactions</p>
-            <p class="stat-val">{{ stats.numberOfTransactions }}</p>
-          </div>
-        </div>
-      } @else {
-        <p class="muted">—</p>
-      }
-
-      <h3 class="side-title" style="margin-top:1.5rem">Quick Actions</h3>
-      <div class="qa-list">
-        <app-forsa-button variant="outline" [widthFull]="true" [justifyStart]="true" extraClass="qa-row" (click)="loadForecast()">
-          <span class="qa-ico qa-ico--blue"><app-forsa-icon name="history" [size]="16" /></span>
-          <span class="qa-txt">AI Balance Forecast</span>
-        </app-forsa-button>
-        <app-forsa-button variant="outline" [widthFull]="true" [justifyStart]="true" extraClass="qa-row" (click)="loadAdvice()">
-          <span class="qa-ico qa-ico--purple"><app-forsa-icon name="credit-card" [size]="16" /></span>
-          <span class="qa-txt">AI Account Advice</span>
-        </app-forsa-button>
-        <app-forsa-button variant="outline" [widthFull]="true" [justifyStart]="true" extraClass="qa-row" (click)="openTransferModal()">
-          <span class="qa-ico qa-ico--orange"><app-forsa-icon name="plus" [size]="16" /></span>
-          <span class="qa-txt">Transfer Funds</span>
-        </app-forsa-button>
-      </div>
-    </div>
-  </app-forsa-card>
-</div>
-
-@if (loadingForecast) {
-  <app-forsa-card>
-    <div class="card-pad-lg ai-loading">
-      <app-forsa-icon name="history" [size]="24" />
-      <p>Generating AI forecast…</p>
-    </div>
-  </app-forsa-card>
+@if (loading) {
+  <div class="loading-state">Loading wallet data…</div>
 }
 
-@if (forecast) {
-  <app-forsa-card>
-    <div class="card-pad-lg">
-      <div class="act-head">
-        <div>
-          <h3>AI Balance Forecast — {{ forecast.forecastDays }} days</h3>
-          <p class="text-muted sm">Predicted balance based on your transaction history.</p>
-        </div>
-        <app-forsa-badge [tone]="forecast.trend === 'increasing' ? 'success' : forecast.trend === 'decreasing' ? 'danger' : 'muted'">
-          {{ forecast.trend }}
-        </app-forsa-badge>
-      </div>
-      <div class="forecast-row">
-        <div class="forecast-col">
-          <p class="stat-label">Current Balance</p>
-          <p class="stat-val">${{ forecast.currentBalance | number : '1.2-2' }}</p>
-        </div>
-        <div class="forecast-arrow">→</div>
-        <div class="forecast-col">
-          <p class="stat-label">Predicted Balance</p>
-          <p class="stat-val" [class.dep]="forecast.predictedBalance >= forecast.currentBalance">
-            ${{ forecast.predictedBalance | number : '1.2-2' }}
-          </p>
-        </div>
-      </div>
-      <p class="forecast-expl">{{ forecast.explanation }}</p>
-    </div>
-  </app-forsa-card>
-}
-
-@if (loadingAdvice) {
-  <app-forsa-card>
-    <div class="card-pad-lg ai-loading">
-      <app-forsa-icon name="credit-card" [size]="24" />
-      <p>Generating AI advice…</p>
-    </div>
-  </app-forsa-card>
-}
-
-@if (advice) {
-  <app-forsa-card>
-    <div class="card-pad-lg">
-      <div class="act-head">
-        <div>
-          <h3>AI Account Type Advice</h3>
-          <p class="text-muted sm">Personalized recommendation based on your usage.</p>
-        </div>
-        <app-forsa-badge [tone]="advice.changeAdvised ? 'warning' : 'success'">
-          {{ advice.changeAdvised ? 'Change advised' : 'Current type OK' }}
-        </app-forsa-badge>
-      </div>
-      <div class="forecast-row">
-        <div class="forecast-col">
-          <p class="stat-label">Current Type</p>
-          <p class="stat-val">{{ advice.currentType }}</p>
-        </div>
-        <div class="forecast-arrow">→</div>
-        <div class="forecast-col">
-          <p class="stat-label">Recommended</p>
-          <p class="stat-val dep">{{ advice.recommendedType }}</p>
-        </div>
-      </div>
-      <p class="forecast-expl">{{ advice.reasoning }}</p>
-    </div>
-  </app-forsa-card>
-}
-
-<app-forsa-card>
-  <div class="card-pad-lg">
-    <div class="act-head">
-      <div>
-        <h3>Recent Activity</h3>
-        <p class="text-muted sm">Your latest financial movements.</p>
-      </div>
-    </div>
-    <div class="act-list">
-      @if (transactions.length === 0 && !loading) {
-        <p class="muted">No transactions yet.</p>
-      }
-      @for (tx of transactions; track tx.id) {
-        <div class="act-row">
-          <div class="act-left">
-            <span class="act-ico" [class.dep]="isIncoming(tx)">
-              @if (isIncoming(tx)) {
-                <app-forsa-icon name="arrow-up-right" [size]="22" />
-              } @else {
-                <app-forsa-icon name="arrow-down-right" [size]="22" />
-              }
-            </span>
-            <div>
-              <p class="act-title">{{ txLabel(tx) }}</p>
-              <p class="act-meta">{{ formatDate(tx.date) }} · {{ txLabel(tx) }}</p>
-            </div>
-          </div>
-          <div class="act-right">
-            <p class="act-amt" [class.dep]="isIncoming(tx)">
-              {{ isIncoming(tx) ? '+' : '-' }}${{ tx.amount | number : '1.2-2' }}
-            </p>
-          </div>
-        </div>
-      }
+<!-- ══════════════════════════════════════════════════════════════════════════════
+     ADMIN VIEW
+     ══════════════════════════════════════════════════════════════════════════════ -->
+@if (!loading && isAdmin) {
+  <div class="admin-toolbar">
+    <h3 class="section-title">All Accounts</h3>
+    <div class="toolbar-actions">
+      <app-forsa-button variant="outline" (click)="loadAllAccounts()">
+        <app-forsa-icon name="history" [size]="16" /> Refresh
+      </app-forsa-button>
+      <app-forsa-button (click)="applyMonthlyInterest()">
+        Apply Monthly Interest
+      </app-forsa-button>
     </div>
   </div>
-</app-forsa-card>
+
+  <app-forsa-card>
+    <div class="table-wrap">
+      <table class="acct-table">
+        <thead>
+          <tr>
+            <th>#ID</th>
+            <th>Holder</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Balance</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (allAccounts.length === 0) {
+            <tr><td colspan="6" class="empty-cell">No accounts found.</td></tr>
+          }
+          @for (acc of allAccounts; track acc.id) {
+            <tr [class.selected-row]="adminSelectedAccount?.id === acc.id" (click)="selectAdminAccount(acc)">
+              <td class="id-cell">{{ acc.id }}</td>
+              <td>{{ acc.accountHolderName || '—' }}</td>
+              <td><span class="type-badge" [class.type-badge--savings]="acc.type === 'SAVINGS'" [class.type-badge--investment]="acc.type === 'INVESTMENT'">{{ acc.type }}</span></td>
+              <td>
+                <app-forsa-badge [tone]="acc.status === 'ACTIVE' ? 'success' : 'danger'">
+                  {{ acc.status }}
+                </app-forsa-badge>
+              </td>
+              <td class="amount-cell">${{ acc.wallet?.balance | number : '1.2-2' }}</td>
+              <td class="actions-cell" (click)="$event.stopPropagation()">
+                <app-forsa-button variant="outline" extraClass="btn-sm" (click)="selectAdminAccount(acc); showAdminDepositModal = true; adminDepositAmount = null; operationError = ''">
+                  Deposit
+                </app-forsa-button>
+                <app-forsa-button variant="outline" extraClass="btn-sm" (click)="selectAdminAccount(acc); showAdminWithdrawModal = true; adminWithdrawAmount = null; operationError = ''">
+                  Withdraw
+                </app-forsa-button>
+                <app-forsa-button variant="outline" extraClass="btn-sm" (click)="toggleStatus(acc)">
+                  {{ acc.status === 'ACTIVE' ? 'Block' : 'Unblock' }}
+                </app-forsa-button>
+                <app-forsa-button variant="destructive" extraClass="btn-sm" (click)="deleteAccount(acc)">
+                  Delete
+                </app-forsa-button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </app-forsa-card>
+
+  @if (adminSelectedAccount) {
+    <div class="detail-grid">
+      <app-forsa-card>
+        <div class="card-pad-lg">
+          <h3 class="side-title">Account #{{ adminSelectedAccount.id }} — Details</h3>
+          <div class="detail-row"><span class="detail-label">Type</span><span>{{ adminSelectedAccount.type }}</span></div>
+          <div class="detail-row"><span class="detail-label">Status</span>
+            <app-forsa-badge [tone]="adminSelectedAccount.status === 'ACTIVE' ? 'success' : 'danger'">{{ adminSelectedAccount.status }}</app-forsa-badge>
+          </div>
+          <div class="detail-row"><span class="detail-label">Balance</span><span class="stat-val">${{ adminSelectedAccount.wallet?.balance | number : '1.2-2' }}</span></div>
+          @if (adminStats) {
+            <div class="detail-row"><span class="detail-label">Total Deposits</span><span>${{ adminStats.totalDeposits | number : '1.2-2' }}</span></div>
+            <div class="detail-row"><span class="detail-label">Total Withdrawals</span><span>${{ adminStats.totalWithdrawals | number : '1.2-2' }}</span></div>
+            <div class="detail-row"><span class="detail-label">Transactions</span><span>{{ adminStats.numberOfTransactions }}</span></div>
+          }
+        </div>
+      </app-forsa-card>
+
+      <app-forsa-card>
+        <div class="card-pad-lg">
+          <h3 class="side-title">Recent Transactions</h3>
+          <div class="act-list">
+            @if (!adminSelectedAccount.wallet?.transactions?.length) {
+              <p class="muted">No transactions.</p>
+            }
+            @for (tx of (adminSelectedAccount.wallet?.transactions ?? []); track tx.id) {
+              <div class="act-row">
+                <div class="act-left">
+                  <span class="act-ico" [class.dep]="isIncoming(tx)">
+                    @if (isIncoming(tx)) { <app-forsa-icon name="arrow-up-right" [size]="18" /> }
+                    @else { <app-forsa-icon name="arrow-down-right" [size]="18" /> }
+                  </span>
+                  <div>
+                    <p class="act-title">{{ txLabel(tx) }}</p>
+                    <p class="act-meta">{{ formatDate(tx.date) }}</p>
+                  </div>
+                </div>
+                <p class="act-amt" [class.dep]="isIncoming(tx)">
+                  {{ isIncoming(tx) ? '+' : '-' }}${{ tx.amount | number : '1.2-2' }}
+                </p>
+              </div>
+            }
+          </div>
+        </div>
+      </app-forsa-card>
+    </div>
+  }
+}
+
+<!-- ══════════════════════════════════════════════════════════════════════════════
+     CLIENT VIEW — No account yet
+     ══════════════════════════════════════════════════════════════════════════════ -->
+@if (!loading && isClient && !account) {
+  <div class="no-account-wrap">
+    <app-forsa-card>
+      <div class="card-pad-lg no-account-inner">
+        <div class="no-acct-ico">
+          <app-forsa-icon name="wallet" [size]="56" />
+        </div>
+        <h3>You don't have a wallet account yet</h3>
+        <p class="muted">Create your account to start managing your funds, transfers, and more.</p>
+        <app-forsa-button (click)="openCreateModal()">
+          <app-forsa-icon name="plus" [size]="18" /> Create My Account
+        </app-forsa-button>
+      </div>
+    </app-forsa-card>
+  </div>
+}
+
+<!-- ══════════════════════════════════════════════════════════════════════════════
+     CLIENT VIEW — Has account
+     ══════════════════════════════════════════════════════════════════════════════ -->
+@if (!loading && isClient && account) {
+  <div class="wallet-grid">
+    <!-- Hero balance card -->
+    <app-forsa-card class="hero-card" [noBorder]="true">
+      <div class="hero-inner card-pad-lg">
+        <div class="hero-bg-ico" aria-hidden="true">
+          <app-forsa-icon name="wallet" [size]="180" />
+        </div>
+        <div class="hero-top">
+          <div>
+            <p class="muted">Available Balance</p>
+            <h3 class="balance">${{ balance | number : '1.2-2' }}</h3>
+            <p class="muted acct-meta">{{ account.type }} · {{ account.status }}</p>
+          </div>
+          <div class="ico-wrap">
+            <app-forsa-icon name="credit-card" [size]="28" />
+          </div>
+        </div>
+        <div class="hero-actions">
+          <app-forsa-button extraClass="forsa-hero-wallet-solid" (click)="openDepositModal()">
+            <app-forsa-icon name="plus" [size]="20" /> Add Funds
+          </app-forsa-button>
+          <app-forsa-button variant="secondary" extraClass="forsa-hero-wallet-ghost" (click)="openWithdrawModal()">
+            <app-forsa-icon name="arrow-down-right" [size]="20" /> Withdraw
+          </app-forsa-button>
+          <app-forsa-button variant="secondary" extraClass="forsa-hero-wallet-ghost" (click)="openTransferModal()">
+            <app-forsa-icon name="send" [size]="20" /> Send Money
+          </app-forsa-button>
+        </div>
+      </div>
+    </app-forsa-card>
+
+    <!-- Quick stats + actions -->
+    <app-forsa-card>
+      <div class="card-pad-lg">
+        <h3 class="side-title">Quick Stats</h3>
+        @if (stats) {
+          <div class="stats-grid">
+            <div class="stat-item">
+              <p class="stat-label">Deposits</p>
+              <p class="stat-val dep">${{ stats.totalDeposits | number : '1.2-2' }}</p>
+            </div>
+            <div class="stat-item">
+              <p class="stat-label">Withdrawals</p>
+              <p class="stat-val wd">${{ stats.totalWithdrawals | number : '1.2-2' }}</p>
+            </div>
+            <div class="stat-item">
+              <p class="stat-label">Transactions</p>
+              <p class="stat-val">{{ stats.numberOfTransactions }}</p>
+            </div>
+          </div>
+        } @else {
+          <p class="muted" style="margin-bottom:1rem">—</p>
+        }
+
+        <h3 class="side-title">AI Tools</h3>
+        <div class="qa-list">
+          <app-forsa-button variant="outline" [widthFull]="true" [justifyStart]="true" extraClass="qa-row" (click)="loadForecast()">
+            <span class="qa-ico qa-ico--blue"><app-forsa-icon name="history" [size]="16" /></span>
+            <span class="qa-txt">30-Day Forecast</span>
+          </app-forsa-button>
+          <app-forsa-button variant="outline" [widthFull]="true" [justifyStart]="true" extraClass="qa-row" (click)="loadAdvice()">
+            <span class="qa-ico qa-ico--purple"><app-forsa-icon name="credit-card" [size]="16" /></span>
+            <span class="qa-txt">Account Type Advice</span>
+          </app-forsa-button>
+          <app-forsa-button variant="outline" [widthFull]="true" [justifyStart]="true" extraClass="qa-row" (click)="applyAdaptiveInterest()">
+            <span class="qa-ico qa-ico--orange"><app-forsa-icon name="plus" [size]="16" /></span>
+            <span class="qa-txt">Apply Smart Interest</span>
+          </app-forsa-button>
+          <app-forsa-button variant="outline" [widthFull]="true" [justifyStart]="true" extraClass="qa-row" (click)="openActivities()">
+            <span class="qa-ico qa-ico--blue"><app-forsa-icon name="history" [size]="16" /></span>
+            <span class="qa-txt">Activity Log</span>
+          </app-forsa-button>
+        </div>
+      </div>
+    </app-forsa-card>
+  </div>
+
+  <!-- AI loading indicators -->
+  @if (loadingForecast) {
+    <app-forsa-card><div class="card-pad-lg ai-loading"><app-forsa-icon name="history" [size]="22" /><p>Generating 30-day forecast…</p></div></app-forsa-card>
+  }
+  @if (loadingAdvice) {
+    <app-forsa-card><div class="card-pad-lg ai-loading"><app-forsa-icon name="credit-card" [size]="22" /><p>Analysing account type…</p></div></app-forsa-card>
+  }
+  @if (loadingAdaptive) {
+    <app-forsa-card><div class="card-pad-lg ai-loading"><app-forsa-icon name="plus" [size]="22" /><p>Computing smart interest rate…</p></div></app-forsa-card>
+  }
+
+  <!-- AI Forecast card -->
+  @if (forecast) {
+    <app-forsa-card>
+      <div class="card-pad-lg">
+        <div class="act-head">
+          <div>
+            <h3>AI Balance Forecast — {{ forecast.forecastDays }} days</h3>
+            <p class="text-muted sm">Predicted balance based on your transaction history.</p>
+          </div>
+          <app-forsa-badge [tone]="forecast.trend === 'increasing' ? 'success' : forecast.trend === 'decreasing' ? 'danger' : 'muted'">
+            {{ forecast.trend }}
+          </app-forsa-badge>
+        </div>
+        <div class="forecast-row">
+          <div class="forecast-col"><p class="stat-label">Current</p><p class="stat-val">${{ forecast.currentBalance | number : '1.2-2' }}</p></div>
+          <div class="forecast-arrow">→</div>
+          <div class="forecast-col"><p class="stat-label">Predicted</p>
+            <p class="stat-val" [class.dep]="forecast.predictedBalance >= forecast.currentBalance">${{ forecast.predictedBalance | number : '1.2-2' }}</p>
+          </div>
+        </div>
+        <p class="forecast-expl">{{ forecast.explanation }}</p>
+      </div>
+    </app-forsa-card>
+  }
+
+  <!-- AI Account Advice card -->
+  @if (advice) {
+    <app-forsa-card>
+      <div class="card-pad-lg">
+        <div class="act-head">
+          <div>
+            <h3>AI Account Type Advice</h3>
+            <p class="text-muted sm">Personalized recommendation based on your usage.</p>
+          </div>
+          <app-forsa-badge [tone]="advice.changeAdvised ? 'warning' : 'success'">
+            {{ advice.changeAdvised ? 'Change advised' : 'Current type OK' }}
+          </app-forsa-badge>
+        </div>
+        <div class="forecast-row">
+          <div class="forecast-col"><p class="stat-label">Current</p><p class="stat-val">{{ advice.currentType }}</p></div>
+          <div class="forecast-arrow">→</div>
+          <div class="forecast-col"><p class="stat-label">Recommended</p><p class="stat-val dep">{{ advice.recommendedType }}</p></div>
+        </div>
+        <p class="forecast-expl">{{ advice.reasoning }}</p>
+      </div>
+    </app-forsa-card>
+  }
+
+  <!-- Adaptive interest result card -->
+  @if (adaptiveResult) {
+    <app-forsa-card>
+      <div class="card-pad-lg">
+        <div class="act-head">
+          <div><h3>Smart Interest Applied</h3><p class="text-muted sm">AI-determined monthly rate.</p></div>
+          <app-forsa-badge tone="success">+{{ adaptiveResult.rateUsed | number : '1.2-2' }}%</app-forsa-badge>
+        </div>
+        <div class="forecast-row">
+          <div class="forecast-col"><p class="stat-label">Previous Balance</p><p class="stat-val">${{ adaptiveResult.previousBalance | number : '1.2-2' }}</p></div>
+          <div class="forecast-arrow">+</div>
+          <div class="forecast-col"><p class="stat-label">Interest Added</p><p class="stat-val dep">${{ adaptiveResult.interestApplied | number : '1.2-2' }}</p></div>
+          <div class="forecast-arrow">=</div>
+          <div class="forecast-col"><p class="stat-label">New Balance</p><p class="stat-val">${{ adaptiveResult.newBalance | number : '1.2-2' }}</p></div>
+        </div>
+        <p class="forecast-expl">{{ adaptiveResult.justification }}</p>
+      </div>
+    </app-forsa-card>
+  }
+
+  <!-- Recent transactions -->
+  <app-forsa-card>
+    <div class="card-pad-lg">
+      <div class="act-head">
+        <div><h3>Recent Activity</h3><p class="text-muted sm">Your latest financial movements.</p></div>
+      </div>
+      <div class="act-list">
+        @if (transactions.length === 0) {
+          <p class="muted">No transactions yet.</p>
+        }
+        @for (tx of transactions; track tx.id) {
+          <div class="act-row">
+            <div class="act-left">
+              <span class="act-ico" [class.dep]="isIncoming(tx)">
+                @if (isIncoming(tx)) { <app-forsa-icon name="arrow-up-right" [size]="22" /> }
+                @else { <app-forsa-icon name="arrow-down-right" [size]="22" /> }
+              </span>
+              <div>
+                <p class="act-title">{{ txLabel(tx) }}</p>
+                <p class="act-meta">{{ formatDate(tx.date) }}</p>
+              </div>
+            </div>
+            <div class="act-right">
+              <p class="act-amt" [class.dep]="isIncoming(tx)">
+                {{ isIncoming(tx) ? '+' : '-' }}${{ tx.amount | number : '1.2-2' }}
+              </p>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </app-forsa-card>
+}
+
+<!-- ══════════════════════════════════════════════════════════════════════════════
+     MODALS — CLIENT
+     ══════════════════════════════════════════════════════════════════════════════ -->
+
+@if (showCreateModal) {
+  <div class="modal-backdrop" (click)="closeCreateModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-head"><h3>Create Your Wallet Account</h3><button class="modal-close" (click)="closeCreateModal()">✕</button></div>
+      @if (operationError) { <p class="op-err">{{ operationError }}</p> }
+      <label class="modal-label">Account Type</label>
+      <div class="type-selector">
+        <label class="type-opt" [class.selected]="createType === 'SAVINGS'">
+          <input type="radio" name="createType" value="SAVINGS" [(ngModel)]="createType" />
+          <strong>SAVINGS</strong>
+          <span>Standard account for everyday use</span>
+        </label>
+        <label class="type-opt" [class.selected]="createType === 'INVESTMENT'">
+          <input type="radio" name="createType" value="INVESTMENT" [(ngModel)]="createType" />
+          <strong>INVESTMENT</strong>
+          <span>Earns monthly interest (AI adaptive rate)</span>
+        </label>
+      </div>
+      <div class="modal-actions">
+        <app-forsa-button variant="outline" (click)="closeCreateModal()">Cancel</app-forsa-button>
+        <app-forsa-button (click)="submitCreate()">Create Account</app-forsa-button>
+      </div>
+    </div>
+  </div>
+}
 
 @if (showDepositModal) {
   <div class="modal-backdrop" (click)="closeDepositModal()">
     <div class="modal" (click)="$event.stopPropagation()">
-      <div class="modal-head">
-        <h3>Add Funds</h3>
-        <button class="modal-close" (click)="closeDepositModal()">✕</button>
-      </div>
-      @if (operationError) {
-        <p class="op-err">{{ operationError }}</p>
-      }
+      <div class="modal-head"><h3>Add Funds</h3><button class="modal-close" (click)="closeDepositModal()">✕</button></div>
+      @if (operationError) { <p class="op-err">{{ operationError }}</p> }
       <label class="modal-label">Amount ($)</label>
       <input class="modal-input" type="number" min="0.01" step="0.01" placeholder="0.00" [(ngModel)]="depositAmount" />
       <div class="modal-actions">
@@ -217,23 +387,89 @@
   </div>
 }
 
+@if (showWithdrawModal) {
+  <div class="modal-backdrop" (click)="closeWithdrawModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-head"><h3>Withdraw Funds</h3><button class="modal-close" (click)="closeWithdrawModal()">✕</button></div>
+      @if (operationError) { <p class="op-err">{{ operationError }}</p> }
+      <p class="modal-balance-hint">Available: <strong>${{ balance | number : '1.2-2' }}</strong></p>
+      <label class="modal-label">Amount ($)</label>
+      <input class="modal-input" type="number" min="0.01" step="0.01" [max]="balance" placeholder="0.00" [(ngModel)]="withdrawAmount" />
+      <div class="modal-actions">
+        <app-forsa-button variant="outline" (click)="closeWithdrawModal()">Cancel</app-forsa-button>
+        <app-forsa-button (click)="submitWithdraw()" [disabled]="!withdrawAmount || withdrawAmount <= 0">Withdraw</app-forsa-button>
+      </div>
+    </div>
+  </div>
+}
+
 @if (showTransferModal) {
   <div class="modal-backdrop" (click)="closeTransferModal()">
     <div class="modal" (click)="$event.stopPropagation()">
-      <div class="modal-head">
-        <h3>Send Money</h3>
-        <button class="modal-close" (click)="closeTransferModal()">✕</button>
-      </div>
-      @if (operationError) {
-        <p class="op-err">{{ operationError }}</p>
-      }
+      <div class="modal-head"><h3>Send Money</h3><button class="modal-close" (click)="closeTransferModal()">✕</button></div>
+      @if (operationError) { <p class="op-err">{{ operationError }}</p> }
       <label class="modal-label">Recipient Account ID</label>
       <input class="modal-input" type="number" min="1" placeholder="Account ID" [(ngModel)]="transferToAccountId" />
       <label class="modal-label">Amount ($)</label>
-      <input class="modal-input" type="number" min="0.01" step="0.01" placeholder="0.00" [(ngModel)]="transferAmount" />
+      <input class="modal-input" type="number" min="0.01" step="0.01" [max]="balance" placeholder="0.00" [(ngModel)]="transferAmount" />
       <div class="modal-actions">
         <app-forsa-button variant="outline" (click)="closeTransferModal()">Cancel</app-forsa-button>
         <app-forsa-button (click)="submitTransfer()" [disabled]="!transferToAccountId || !transferAmount || transferAmount <= 0">Send</app-forsa-button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showActivitiesModal) {
+  <div class="modal-backdrop" (click)="closeActivities()">
+    <div class="modal modal--wide" (click)="$event.stopPropagation()">
+      <div class="modal-head"><h3>Activity Log</h3><button class="modal-close" (click)="closeActivities()">✕</button></div>
+      @if (loadingActivities) { <p class="muted">Loading…</p> }
+      <div class="act-list">
+        @if (!loadingActivities && activities.length === 0) { <p class="muted">No activity recorded.</p> }
+        @for (act of activities; track act.id) {
+          <div class="act-row">
+            <div class="act-left">
+              <span class="act-ico"><app-forsa-icon name="history" [size]="18" /></span>
+              <div><p class="act-title">{{ act.action }}</p><p class="act-meta">{{ formatDate(act.timestamp) }}</p></div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ══════════════════════════════════════════════════════════════════════════════
+     MODALS — ADMIN
+     ══════════════════════════════════════════════════════════════════════════════ -->
+
+@if (showAdminDepositModal && adminSelectedAccount) {
+  <div class="modal-backdrop" (click)="showAdminDepositModal = false">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-head"><h3>Deposit — Account #{{ adminSelectedAccount.id }}</h3><button class="modal-close" (click)="showAdminDepositModal = false">✕</button></div>
+      @if (operationError) { <p class="op-err">{{ operationError }}</p> }
+      <label class="modal-label">Amount ($)</label>
+      <input class="modal-input" type="number" min="0.01" step="0.01" placeholder="0.00" [(ngModel)]="adminDepositAmount" />
+      <div class="modal-actions">
+        <app-forsa-button variant="outline" (click)="showAdminDepositModal = false">Cancel</app-forsa-button>
+        <app-forsa-button (click)="adminDeposit()" [disabled]="!adminDepositAmount || adminDepositAmount <= 0">Deposit</app-forsa-button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showAdminWithdrawModal && adminSelectedAccount) {
+  <div class="modal-backdrop" (click)="showAdminWithdrawModal = false">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-head"><h3>Withdraw — Account #{{ adminSelectedAccount.id }}</h3><button class="modal-close" (click)="showAdminWithdrawModal = false">✕</button></div>
+      @if (operationError) { <p class="op-err">{{ operationError }}</p> }
+      <p class="modal-balance-hint">Balance: <strong>${{ adminSelectedAccount.wallet?.balance | number : '1.2-2' }}</strong></p>
+      <label class="modal-label">Amount ($)</label>
+      <input class="modal-input" type="number" min="0.01" step="0.01" placeholder="0.00" [(ngModel)]="adminWithdrawAmount" />
+      <div class="modal-actions">
+        <app-forsa-button variant="outline" (click)="showAdminWithdrawModal = false">Cancel</app-forsa-button>
+        <app-forsa-button (click)="adminWithdraw()" [disabled]="!adminWithdrawAmount || adminWithdrawAmount <= 0">Withdraw</app-forsa-button>
       </div>
     </div>
   </div>

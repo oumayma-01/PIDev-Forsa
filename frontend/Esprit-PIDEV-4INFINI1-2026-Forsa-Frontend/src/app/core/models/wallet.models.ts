@@ -62,3 +62,12 @@ export interface AccountTypeAdviceDTO {
   changeAdvised: boolean;
   reasoning: string;
 }
+
+export interface AdaptiveInterestResultDTO {
+  accountId: number;
+  previousBalance: number;
+  interestApplied: number;
+  newBalance: number;
+  rateUsed: number;
+  justification: string;
+}
