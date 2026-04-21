@@ -1,0 +1,59 @@
+<div class="head">
+  <h2>Complaint Detail</h2>
+  <app-forsa-button variant="outline" (clicked)="goBack()">Back</app-forsa-button>
+</div>
+
+@if (error) {
+  <div class="error">{{ error }}</div>
+}
+
+@if (loading) {
+  <div class="state">Loading complaint...</div>
+}
+
+@if (!loading && complaint) {
+  <app-forsa-card>
+    <div class="pad">
+      <h3>{{ complaint.subject }}</h3>
+      <p>{{ complaint.description }}</p>
+      <div class="meta">
+        <app-forsa-badge [tone]="statusTone(complaint.status)">{{ complaint.status || 'OPEN' }}</app-forsa-badge>
+        <app-forsa-badge [tone]="priorityTone(complaint.priority)">{{ complaint.priority || 'MEDIUM' }}</app-forsa-badge>
+        <span>{{ complaint.category || 'OTHER' }}</span>
+        <span>{{ complaint.createdAt | date: 'yyyy-MM-dd HH:mm' }}</span>
+      </div>
+      <div class="actions">
+        @if (isAdminOrAgent) {
+          <app-forsa-button (clicked)="goToAddResponse()">Add Response</app-forsa-button>
+          <app-forsa-button variant="outline" (clicked)="closeComplaint()">Close Complaint</app-forsa-button>
+          <app-forsa-button variant="outline" (clicked)="generateAiResponse()">Generate AI Response</app-forsa-button>
+        }
+        @if (canAddFeedback()) {
+          <app-forsa-button (clicked)="goToAddFeedback()">Add Feedback</app-forsa-button>
+        }
+      </div>
+      @if (aiResponse) {
+        <div class="ai-box">{{ aiResponse }}</div>
+      }
+    </div>
+  </app-forsa-card>
+
+  <app-forsa-card class="responses">
+    <div class="pad">
+      <h3>Responses</h3>
+      @if (responses.length === 0) {
+        <div class="state">No responses yet.</div>
+      }
+      @for (response of responses; track response.id) {
+        <div class="response">
+          <div class="row">
+            <strong>{{ response.responderName }}</strong>
+            <app-forsa-badge tone="info">{{ response.responseStatus || 'PENDING' }}</app-forsa-badge>
+          </div>
+          <p>{{ response.message }}</p>
+          <small>{{ response.responseDate | date: 'yyyy-MM-dd HH:mm' }}</small>
+        </div>
+      }
+    </div>
+  </app-forsa-card>
+}

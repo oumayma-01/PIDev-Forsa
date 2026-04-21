@@ -1,0 +1,143 @@
+.forsa-client-dash {
+  padding: 3rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: var(--font-sans);
+}
+
+.dash-header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.dash-header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--forsa-navy-deep);
+  margin-bottom: 0.5rem;
+}
+
+.dash-header p {
+  color: var(--color-muted-foreground);
+  font-size: 1.125rem;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-bottom: 5rem;
+}
+
+.premium-card {
+  position: relative;
+  background: var(--color-card);
+  padding: 2.5rem 2rem;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.premium-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+  border-color: var(--forsa-teal);
+}
+
+.card-bg-icon {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  font-size: 6rem;
+  opacity: 0.03;
+  z-index: 1;
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  z-index: 2;
+}
+
+.card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.teal-glow { background: rgba(42, 157, 143, 0.1); color: var(--forsa-teal); }
+.navy-glow { background: rgba(26, 74, 141, 0.1); color: var(--forsa-navy); }
+.gold-glow { background: rgba(233, 213, 161, 0.2); color: #b8860b; }
+.lime-glow { background: rgba(168, 209, 141, 0.2); color: #558b2f; }
+
+.card-tag {
+  background: var(--color-accent-gradient);
+  color: var(--forsa-navy-deep);
+  padding: 0.25rem 0.6rem;
+  border-radius: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.card-body {
+  z-index: 2;
+}
+
+.card-body h3 {
+  font-size: 1.35rem;
+  margin-bottom: 0.75rem;
+  color: var(--color-card-foreground);
+}
+
+.card-body p {
+  color: var(--color-muted-foreground);
+  line-height: 1.5;
+  font-size: 0.9375rem;
+  margin-bottom: 1.5rem;
+}
+
+.card-footer {
+  margin-top: auto;
+  z-index: 2;
+}
+
+.action-btn {
+  font-weight: 600;
+  color: var(--forsa-navy);
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.premium-card:hover .action-btn {
+  color: var(--forsa-teal);
+}
+
+.dash-footer {
+  text-align: center;
+  padding: 2rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.trust-slogan {
+  font-style: italic;
+  color: var(--color-muted-foreground);
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+  .forsa-client-dash { padding: 2rem 1rem; }
+  .dash-header h1 { font-size: 2rem; }
+}

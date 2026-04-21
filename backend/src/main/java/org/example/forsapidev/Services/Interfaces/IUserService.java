@@ -17,5 +17,10 @@ public interface IUserService {
     ResponseEntity<?> updatePassword(Long id, String password);
 
     public ResponseEntity<?> UpdateUser(SignupRequest signUpRequest, long id);
+
+    ResponseEntity<?> setUserActive(long id, boolean active);
+
+    ResponseEntity<?> createAgent(SignupRequest signUpRequest);
+
     void delete (Long id );
 }

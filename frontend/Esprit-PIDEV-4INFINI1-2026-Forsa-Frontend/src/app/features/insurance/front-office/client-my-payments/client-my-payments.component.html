@@ -1,0 +1,62 @@
+<div class="portal-container">
+  <div class="header-section">
+    <button routerLink="/dashboard/insurance" class="back-btn glass-btn">
+      <i class="fe fe-arrow-left"></i> Back to Hub
+    </button>
+    <h1>Premium Payments</h1>
+    <p>Manage your upcoming and past insurance premium payments securely.</p>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading your payments...</p>
+  </div>
+
+  <div *ngIf="!isLoading && payments.length === 0" class="empty-state glass-panel">
+    <i class="fe fe-check-circle"></i>
+    <h3>All Caught Up!</h3>
+    <p>You don't have any premium payments scheduled right now.</p>
+  </div>
+
+  <div *ngIf="!isLoading && payments.length > 0" class="payments-table-container glass-panel">
+    <table class="payments-table">
+      <thead>
+        <tr>
+          <th>Policy Ref</th>
+          <th>Due Date</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of payments" [ngClass]="{'row-paid': p.status === 'PAID'}">
+          <td>
+            <strong>{{ p.insurancePolicy?.policyNumber || p.insurancePolicy?.id }}</strong>
+          </td>
+          <td>
+            <div class="date-cell">
+              <i class="fe fe-calendar"></i>
+              {{ p.dueDate | date:'mediumDate' }}
+            </div>
+            <div class="paid-date text-success text-sm" *ngIf="p.paidDate">
+              Paid on {{ p.paidDate | date:'shortDate' }}
+            </div>
+          </td>
+          <td class="amount-cell">{{ p.amount | number:'1.2-2' }} TND</td>
+          <td>
+            <span class="status-badge" [ngClass]="p.status | lowercase">{{ p.status }}</span>
+          </td>
+          <td>
+            <button *ngIf="p.status !== 'PAID'" class="btn btn-primary btn-sm pay-btn pulse" (click)="payNow(p)">
+              <i class="fe fe-credit-card"></i> Pay Now
+            </button>
+            <span *ngIf="p.status === 'PAID'" class="text-success fw-bold">
+              <i class="fe fe-check"></i> TX: {{ p.transactionId }}
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

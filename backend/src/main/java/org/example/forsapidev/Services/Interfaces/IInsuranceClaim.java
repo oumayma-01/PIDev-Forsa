@@ -9,4 +9,7 @@ public interface IInsuranceClaim {
     public InsuranceClaim addInsuranceClaim(InsuranceClaim claim);
     public void removeInsuranceClaim(Long claimId);
     public InsuranceClaim modifyInsuranceClaim(InsuranceClaim claim);
+    public List<InsuranceClaim> retrieveMyClaims(Long userId);
+    public String uploadAttachment(org.springframework.web.multipart.MultipartFile file) throws java.io.IOException;
+    public org.springframework.core.io.Resource getAttachment(String fileName);
 }

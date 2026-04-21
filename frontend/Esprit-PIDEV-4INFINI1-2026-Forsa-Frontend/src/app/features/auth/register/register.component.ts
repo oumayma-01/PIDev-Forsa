@@ -38,9 +38,23 @@ export class RegisterComponent {
   termsAccepted = false;
 
   readonly busy = signal(false);
+  readonly googleBusy = signal(false);
   readonly error = signal<string | null>(null);
   readonly success = signal<string | null>(null);
 
+  signUpWithGoogle(): void {
+    this.googleBusy.set(true);
+    this.error.set(null);
+    this.auth.getGoogleLoginUrl().subscribe({
+      next: (res) => {
+        window.location.href = res.message;
+      },
+      error: (e) => {
+        this.error.set(e.error?.message ?? 'Could not start Google sign-up.');
+        this.googleBusy.set(false);
+      },
+    });
+  }
   submit(): void {
     if (!this.termsAccepted) {
       this.error.set('Please accept the terms to continue.');

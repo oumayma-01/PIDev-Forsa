@@ -29,4 +29,22 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     return UserDetailsImpl.build(user);
   }
+
+  /**
+   * Resolves JWT subject: {@code uid:<id>} (current) or legacy plain username.
+   */
+  @Transactional
+  public UserDetails loadUserByJwtSubject(String subject) throws UsernameNotFoundException {
+    if (subject != null && subject.startsWith("uid:")) {
+      try {
+        long id = Long.parseLong(subject.substring(4));
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new UsernameNotFoundException("User Not Found with id: " + id));
+        return UserDetailsImpl.build(user);
+      } catch (NumberFormatException e) {
+        throw new UsernameNotFoundException("Invalid JWT subject: " + subject);
+      }
+    }
+    return loadUserByUsername(subject);
+  }
 }

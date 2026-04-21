@@ -5,6 +5,11 @@ export interface JwtResponse {
   username: string;
   email: string;
   roles: string[];
+  hasProfileImage?: boolean;
+  /** Google-created account: user has no known password until they set one in profile. */
+  oauthAccount?: boolean;
+  /** Allowed Angular routes for the sidebar, derived from the user's role. */
+  allowedNavPaths?: string[];
 }
 
 export interface CurrentUser {
@@ -12,6 +17,10 @@ export interface CurrentUser {
   username: string;
   email: string;
   roles: string[];
+  hasProfileImage?: boolean;
+  oauthAccount?: boolean;
+  /** Allowed Angular routes for the sidebar, derived from the user's role. */
+  allowedNavPaths?: string[];
 }
 
 export interface MessageResponse {

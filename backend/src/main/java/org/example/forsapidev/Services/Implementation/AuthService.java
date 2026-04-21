@@ -5,7 +5,9 @@ import org.example.forsapidev.Repositories.RoleRepository;
 import org.example.forsapidev.Repositories.UserRepository;
 import org.example.forsapidev.Services.AgentRegistryService;
 import org.example.forsapidev.Services.Interfaces.IAuthService;
+import org.example.forsapidev.Services.Interfaces.IRoleAccessService;
 import org.example.forsapidev.Utils.EmailEncryptionUtil;
+import org.example.forsapidev.entities.UserManagement.ERole;
 import org.example.forsapidev.entities.UserManagement.Role;
 import org.example.forsapidev.entities.UserManagement.User;
 import org.example.forsapidev.payload.request.ForgottenPasswordRequest;
@@ -53,6 +55,8 @@ class AuthService implements IAuthService {
     PasswordEncoder encoder;
     @Autowired
     AgentRegistryService agentRegistryService;
+    @Autowired
+    IRoleAccessService roleAccessService;
 
     @Value("${app.frontend.base-url:http://localhost:4200}")
     private String frontendBaseUrl;
@@ -77,11 +81,17 @@ class AuthService implements IAuthService {
                         .map(GrantedAuthority::getAuthority)
                         .collect(Collectors.toList());
 
-                return ResponseEntity.ok(new JwtResponse(jwt,
+                JwtResponse jwtResponse = new JwtResponse(jwt,
                         userDetails.getId(),
                         userDetails.getUsername(),
                         userDetails.getEmail(),
-                        roles));
+                        roles);
+                jwtResponse.setHasProfileImage(
+                        user.getProfileImageKey() != null && !user.getProfileImageKey().isBlank());
+                jwtResponse.setOauthAccount(isGoogleOnly(user));
+                jwtResponse.setAllowedNavPaths(
+                    roleAccessService.permittedNavPathsForRole(user.getRole().getName()));
+                return ResponseEntity.ok(jwtResponse);
             } catch (Exception e) {
                 return ResponseEntity
                         .badRequest()
@@ -114,6 +124,7 @@ class AuthService implements IAuthService {
         Role role = roleRepository.findById(signUpRequest.getIdrole())
                 .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
         user.setRole(role);
+        user.setAuthProvider("LOCAL");
         userRepository.save(user);
 
         // Synchronisation AGENT (si le rôle choisi est AGENT)
@@ -407,11 +418,27 @@ String email = EmailEncryptionUtil.decryptEmail(restRequest.getEmail());
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
+        User user = userRepository.findById(userDetails.getId()).orElse(null);
+        boolean hasImage = user != null
+                && user.getProfileImageKey() != null
+                && !user.getProfileImageKey().isBlank();
+        String email = user != null ? user.getEmail() : userDetails.getEmail();
+        String username = user != null ? user.getUsername() : userDetails.getUsername();
+        boolean oauthAccount = user != null && isGoogleOnly(user);
+        ERole appRole =
+            user != null ? user.getRole().getName() : userDetails.getAppRole();
         return ResponseEntity.ok(new CurrentUserResponse(
                 userDetails.getId(),
-                userDetails.getUsername(),
-                userDetails.getEmail(),
-                roles));
+                username,
+                email,
+                roles,
+                hasImage,
+                oauthAccount,
+                roleAccessService.permittedNavPathsForRole(appRole)));
+    }
+
+    private static boolean isGoogleOnly(User user) {
+        return user != null && "GOOGLE".equalsIgnoreCase(user.getAuthProvider());
     }
 
     private static String trimTrailingSlash(String url) {

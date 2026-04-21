@@ -1,0 +1,53 @@
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.head h2 {
+  margin: 0;
+}
+.pad {
+  padding: 16px;
+}
+.meta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  color: var(--color-muted-foreground);
+  margin: 12px 0;
+}
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.responses {
+  margin-top: 16px;
+}
+.response {
+  padding: 12px;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  margin-top: 10px;
+}
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.state {
+  color: var(--color-muted-foreground);
+}
+.error {
+  color: #dc2626;
+  margin-bottom: 12px;
+}
+.ai-box {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-accent);
+}

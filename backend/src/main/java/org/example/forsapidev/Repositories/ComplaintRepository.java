@@ -13,6 +13,7 @@ import java.util.List;
 public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
 
     List<Complaint> findByUserId(Long userId);
+    List<Complaint> findByUserUsername(String username);
 
     List<Complaint> findByStatus(String status);
 

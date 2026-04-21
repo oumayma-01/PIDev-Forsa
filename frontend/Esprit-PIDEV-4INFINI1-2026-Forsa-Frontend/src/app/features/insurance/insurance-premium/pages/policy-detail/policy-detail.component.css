@@ -1,0 +1,19 @@
+.page-head { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:2rem; flex-wrap:wrap; }
+.head-actions { display:flex; gap:.5rem; }
+.head-actions a { text-decoration:none; }
+.detail-layout { display:flex; flex-direction:column; gap:1.5rem; }
+.card-pad { padding:1.75rem; }
+.overview-header { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:1.5rem; }
+.policy-num { margin:0 0 .25rem; font-size:1.2rem; font-family:monospace; }
+.section-title { display:flex; align-items:center; gap:.5rem; margin:0 0 1rem; font-size:1rem; font-weight:700; }
+.stat-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1rem; }
+@media(min-width:640px){.stat-grid{grid-template-columns:repeat(4,1fr);}}
+.stat { display:flex; flex-direction:column; gap:.25rem; }
+.lbl { font-size:.65rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--color-muted-foreground); }
+.val { font-weight:600; font-size:.95rem; }
+.notes-box { margin-top:1.25rem; background:var(--color-muted); border-radius:.75rem; padding:1rem; }
+.notes-text { margin:.5rem 0 0; font-size:.875rem; line-height:1.6; white-space:pre-wrap; }
+.state-box { display:flex; flex-direction:column; align-items:center; gap:1rem; padding:5rem 1rem; color:var(--color-muted-foreground); }
+.state-error { color:var(--color-destructive); }
+.spin { animation:spin 1s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg);} }

@@ -1,0 +1,207 @@
+<div class="application-container">
+  
+  <div class="header-section">
+    <button routerLink="/dashboard/insurance/client/catalog" class="back-btn glass-btn">
+      <i class="fe fe-arrow-left"></i> Back to Catalog
+    </button>
+    <h1>Apply for Coverage</h1>
+    <p *ngIf="product">You are applying for <strong>{{ product.productName }}</strong></p>
+  </div>
+
+  <div *ngIf="applicationSuccess" class="success-state glass-panel">
+    <div class="success-icon"><i class="fe fe-check-circle"></i></div>
+    <h2>Application Submitted!</h2>
+    <p>Your insurance application has been submitted successfully and is pending agent review.</p>
+    <p>You can track the status in your policy dashboard.</p>
+    <button class="btn btn-primary" (click)="goToMyPolicies()">Go to My Policies</button>
+  </div>
+
+  <div *ngIf="!applicationSuccess" class="application-grid">
+    
+    <!-- Left Column: Form -->
+    <div class="form-column">
+      <form [formGroup]="applicationForm" class="glass-panel form-panel">
+        <h3 class="panel-title"><i class="fe fe-file-text"></i> Coverage Details</h3>
+
+        <!-- Coverage & Duration sourced from product — not editable by client -->
+        <div class="form-row" *ngIf="product">
+          <div class="form-group">
+            <label>Coverage Limit</label>
+            <div class="info-display">
+              <span class="info-value">{{ product.coverageLimit | number }} TND</span>
+              <span class="info-note">Fixed by plan</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Duration</label>
+            <div class="info-display">
+              <span class="info-value">{{ product.durationMonths }} months</span>
+              <span class="info-note">Fixed by plan</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-row" *ngIf="!product">
+          <div class="form-group"><div class="info-display loading-placeholder">Loading product details...</div></div>
+        </div>
+
+        <!-- Hidden inputs to stay bound to the Reactive Form -->
+        <input type="hidden" formControlName="desiredCoverage">
+        <input type="hidden" formControlName="durationMonths">
+        <input type="hidden" formControlName="productId">
+
+        
+        <div class="form-group">
+          <label>Payment Frequency</label>
+          <select formControlName="paymentFrequency" class="form-control">
+            <option value="MONTHLY">Monthly</option>
+            <option value="QUARTERLY">Quarterly</option>
+            <option value="SEMI_ANNUAL">Semi-Annually</option>
+            <option value="ANNUAL">Annually</option>
+          </select>
+        </div>
+
+        <h3 class="panel-title mt-4"><i class="fe fe-user"></i> Risk Assessment Profile</h3>
+        <p class="text-muted text-sm">Please provide accurate information for an accurate quote.</p>
+        
+        <div formGroupName="riskProfile">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Age</label>
+              <input type="number" formControlName="age" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label>Monthly Income (TND)</label>
+              <input type="number" formControlName="monthlyIncome" class="form-control" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Health Status</label>
+              <select formControlName="healthStatus" class="form-control">
+                <option value="EXCELLENT">Excellent</option>
+                <option value="GOOD">Good</option>
+                <option value="FAIR">Fair</option>
+                <option value="POOR">Poor</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Occupation Risk</label>
+              <select formControlName="occupationType" class="form-control">
+                <option value="OFFICE">Safe / Office</option>
+                <option value="SHOP">Standard / Shop</option>
+                <option value="CONSTRUCTION">Dangerous / Construction</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Location Risk</label>
+              <select formControlName="locationRiskLevel" class="form-control">
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Number of Dependents</label>
+              <input type="number" formControlName="dependents" class="form-control" />
+            </div>
+          </div>
+
+          <div class="checkbox-group">
+            <label class="checkbox-container">
+              <input type="checkbox" formControlName="hasChronicIllness" />
+              <span class="checkmark"></span>
+              I have a chronic illness
+            </label>
+            <label class="checkbox-container">
+              <input type="checkbox" formControlName="isSmoker" />
+              <span class="checkmark"></span>
+              I am a smoker
+            </label>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-primary w-100 mt-4" (click)="calculateQuote()" [disabled]="isCalculating">
+          <span *ngIf="isCalculating" class="spinner-sm"></span>
+          {{ isCalculating ? 'Calculating...' : 'Generate Quote' }}
+        </button>
+      </form>
+    </div>
+
+    <!-- Right Column: Quote Results -->
+    <div class="quote-column" id="quoteSection">
+      <div *ngIf="!quote" class="empty-quote glass-panel">
+        <i class="fe fe-calculator empty-icon"></i>
+        <h3>Awaiting Quote</h3>
+        <p>Fill out the form and click "Generate Quote" to see your personalized actuarial assessment and premium schedule.</p>
+      </div>
+
+      <div *ngIf="quote" class="quote-results animation-fade-in">
+        
+        <div class="quote-card glass-panel premium-highlight">
+          <h3>Your Premium Quote</h3>
+          <div class="final-premium">
+            <span class="currency">TND</span>
+            <span class="amount">{{ quote.premiumDetails?.periodicPayment | number:'1.2-2' }}</span>
+            <span class="period">/ {{ quote.premiumDetails?.paymentFrequency | lowercase }}</span>
+          </div>
+          <div class="quote-details">
+            <p><span>Total Coverage:</span> <strong>{{ quote.premiumDetails?.coverageAmount | number }} TND</strong></p>
+            <p><span>Actuarial Pure Premium:</span> <strong>{{ quote.premiumDetails?.purePremium | number:'1.2-2' }} TND</strong></p>
+            <p><span>Risk Score:</span> <strong>{{ quote.premiumDetails?.riskScore }} / 100</strong></p>
+            <p><span>Risk Category:</span> 
+              <span class="badge {{ quote.premiumDetails?.riskCategory | lowercase }}">{{ quote.premiumDetails?.riskCategory }}</span>
+            </p>
+          </div>
+        </div>
+
+        <div class="quote-card glass-panel">
+          <div class="d-flex justify-between align-center mb-3">
+            <h3 class="m-0">Amortization Schedule</h3>
+            <span class="badge gray">{{ quote.amortizationSchedule?.numberOfPayments }} Payments</span>
+          </div>
+          
+          <div class="schedule-table-wrapper">
+            <table class="schedule-table">
+              <thead>
+                <tr>
+                  <th>Period</th>
+                  <th>Payment</th>
+                  <th>Remaining</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of quote.amortizationSchedule?.schedule | slice:0:5">
+                  <td>{{ item.period }}</td>
+                  <td>{{ item.payment | number:'1.2-2' }} TND</td>
+                  <td>{{ item.remainingBalance | number:'1.2-2' }} TND</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="text-muted text-sm text-center mt-2" *ngIf="(quote.amortizationSchedule?.schedule?.length || 0) > 5">
+            Showing first 5 payments out of {{ quote.amortizationSchedule?.schedule?.length }}
+          </p>
+        </div>
+
+        <div class="action-buttons-group">
+          <button class="btn btn-primary btn-lg w-100 mb-2" (click)="payNowWithStripe()" [disabled]="isPaying || isSubmitting">
+            <i class="fe fe-credit-card"></i>
+            <span *ngIf="isPaying" class="spinner-sm ml-2"></span>
+            {{ isPaying ? 'Redirecting to Stripe...' : 'Pay First Premium Now' }}
+          </button>
+
+          <button class="btn btn-outline-success w-100 btn-lg pulse" (click)="submitApplication()" [disabled]="isSubmitting || isPaying">
+            <span *ngIf="isSubmitting" class="spinner-sm"></span>
+            {{ isSubmitting ? 'Submitting...' : 'Confirm & Submit Only' }}
+          </button>
+        </div>
+
+      </div>
+    </div>
+    
+  </div>
+</div>

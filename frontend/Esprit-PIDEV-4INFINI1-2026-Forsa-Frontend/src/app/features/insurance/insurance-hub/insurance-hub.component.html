@@ -1,0 +1,146 @@
+<div class="forsa-insurance-portal">
+  <!-- Top Navigation Bar -->
+  <nav class="portal-nav">
+    <button class="back-link" routerLink="/dashboard">
+      <app-forsa-icon name="chevron-left" [size]="18" />
+      <span>Back to Main Hub</span>
+    </button>
+    <div class="portal-badge">
+      <app-forsa-icon name="shield-check" [size]="16" />
+      <span>Insurance Services Active</span>
+    </div>
+  </nav>
+
+  <!-- Payment Reminder "Pushup" Notification -->
+  @if (upcomingReminder(); as reminder) {
+    <div class="reminder-banner" [class.overdue]="reminder.status === PaymentStatus.OVERDUE">
+      <div class="reminder-icon">
+        <app-forsa-icon [name]="reminder.status === PaymentStatus.OVERDUE ? 'shield-alert' : 'clock'" [size]="24" />
+      </div>
+      <div class="reminder-text">
+        <span class="reminder-title">
+          {{ reminder.status === PaymentStatus.OVERDUE ? 'Urgent: Overdue Payment' : 'Upcoming Premium Payment' }}
+        </span>
+        <p>A payment of <strong>{{ reminder.amount | number:'1.2-2' }} TND</strong> is due on <strong>{{ reminder.dueDate | date:'mediumDate' }}</strong> for Policy #{{ reminder.insurancePolicy?.policyNumber || reminder.id }}.</p>
+      </div>
+      <div class="reminder-actions">
+        <button class="btn-pay" routerLink="./client/my-payments">Secure Payment</button>
+        <button class="btn-close" (click)="closeReminder()">
+          <app-forsa-icon name="plus" [size]="16" style="transform: rotate(45deg);" />
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Core Actions Grid -->
+  @if (!isAdminOrAgent) {
+    <section class="portal-grid">
+      <div class="cards-wrapper">
+        <!-- Catalog -->
+        <div class="p-card" routerLink="./client/catalog">
+          <div class="p-card__icon teal"><app-forsa-icon name="sparkles" [size]="28" /></div>
+          <div class="p-card__body">
+            <h3>Insurance Catalog</h3>
+            <p>Browse tailored plans for your business and family.</p>
+          </div>
+          <div class="p-card__footer">
+            <span>Explore Plans</span>
+            <app-forsa-icon name="chevron-right" [size]="14" />
+          </div>
+        </div>
+
+        <!-- Policies -->
+        <div class="p-card" routerLink="./client/my-policies">
+          <div class="p-card__icon navy"><app-forsa-icon name="shield-check" [size]="28" /></div>
+          <div class="p-card__body">
+            <h3>My Policies</h3>
+            <p>Manage your active coverage and renewals.</p>
+          </div>
+          <div class="p-card__footer">
+            <span>View Details</span>
+            <app-forsa-icon name="chevron-right" [size]="14" />
+          </div>
+        </div>
+
+        <!-- Claims -->
+        <div class="p-card" routerLink="./client/my-claims">
+          <div class="p-card__icon gold"><app-forsa-icon name="alert-circle" [size]="28" /></div>
+          <div class="p-card__body">
+            <h3>Claims Center</h3>
+            <p>Report incidents and track claims in real-time.</p>
+          </div>
+          <div class="p-card__footer">
+            <span>Track Claims</span>
+            <app-forsa-icon name="chevron-right" [size]="14" />
+          </div>
+        </div>
+
+        <!-- Payments -->
+        <div class="p-card" routerLink="./client/my-payments">
+          <div class="p-card__icon lime"><app-forsa-icon name="credit-card" [size]="28" /></div>
+          <div class="p-card__body">
+            <h3>Premium Payments</h3>
+            <p>Securely manage your billing and history.</p>
+          </div>
+          <div class="p-card__footer">
+            <span>Pay Premiums</span>
+            <app-forsa-icon name="chevron-right" [size]="14" />
+          </div>
+        </div>
+      </div>
+    </section>
+  }
+
+  <!-- Guided Process Section -->
+  @if (!isAdminOrAgent) {
+    <section class="portal-process">
+      <div class="process-header">
+        <h2>Getting Protected is Simple</h2>
+        <p>Three easy steps to financial peace of mind.</p>
+      </div>
+      <div class="process-steps">
+        <div class="p-step">
+          <div class="step-num">01</div>
+          <h4>Select a Plan</h4>
+          <p>Choose the coverage that fits your needs.</p>
+        </div>
+        <div class="step-arrow"><app-forsa-icon name="arrow-right" [size]="20" /></div>
+        <div class="p-step">
+          <div class="step-num">02</div>
+          <h4>Instant Quote</h4>
+          <p>Get a fair premium calculation immediately.</p>
+        </div>
+        <div class="step-arrow"><app-forsa-icon name="arrow-right" [size]="20" /></div>
+        <div class="p-step">
+          <div class="step-num">03</div>
+          <h4>Stay Protected</h4>
+          <p>Your policy is active and secure with Forsa.</p>
+        </div>
+      </div>
+    </section>
+  }
+
+  <!-- Admin / Agent Console (Condensed) -->
+  @if (isAdminOrAgent) {
+    <section class="portal-admin">
+      <div class="admin-divider"><span>Administrative Access</span></div>
+      <div class="admin-grid">
+        @for (mod of modules; track mod.route) {
+          <a [routerLink]="mod.route" class="admin-btn">
+            <div class="a-btn-ico" [attr.data-tone]="mod.tone">
+              <app-forsa-icon [name]="$any(mod.icon)" [size]="20" />
+            </div>
+            <div class="a-btn-text">
+              <span class="a-title">{{ mod.title }}</span>
+              <p class="a-description">{{ mod.description }}</p>
+              <div class="a-footer">
+                 <span class="a-stats">{{ mod.stats }}</span>
+                 <app-forsa-icon name="arrow-right" [size]="14" />
+              </div>
+            </div>
+          </a>
+        }
+      </div>
+    </section>
+  }
+</div>

@@ -1,0 +1,132 @@
+<div class="profile">
+  <div class="page-head">
+    <h2>My profile</h2>
+    <p>Update your account details, password, and profile photo.</p>
+  </div>
+
+  @if (message()) {
+    <p class="alert alert--ok" role="status">{{ message() }}</p>
+  }
+  @if (error()) {
+    <p class="alert alert--err" role="alert">{{ error() }}</p>
+  }
+
+  <div class="profile-grid">
+    <app-forsa-card class="profile-card">
+      <div class="card-pad-lg">
+        <header class="sec-head">
+          <h3>Photo</h3>
+          <p>JPEG, PNG, WebP, or GIF — up to 2 MB.</p>
+        </header>
+        <div class="avatar-row">
+          <div class="avatar" [class.avatar--empty]="!avatarPreviewUrl()">
+            @if (avatarPreviewUrl()) {
+              <img [src]="avatarPreviewUrl()!" alt="" width="120" height="120" />
+            } @else {
+              <app-forsa-icon name="user-circle" [size]="48" />
+            }
+          </div>
+          <div class="avatar-actions">
+            <label for="profile-photo-input" class="sr-only">Choose profile photo</label>
+            <input
+              id="profile-photo-input"
+              #fileInput
+              type="file"
+              class="sr-only"
+              title="Choose profile photo"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              (change)="onAvatarSelected($event)"
+            />
+            <app-forsa-button type="button" variant="secondary" [disabled]="busy()" (clicked)="fileInput.click()">
+              Upload photo
+            </app-forsa-button>
+            @if (hasProfileImage()) {
+              <app-forsa-button type="button" variant="ghost" [disabled]="busy()" (clicked)="removeAvatar()">
+                Remove photo
+              </app-forsa-button>
+            }
+          </div>
+        </div>
+      </div>
+    </app-forsa-card>
+
+    <app-forsa-card class="profile-card">
+      <div class="card-pad-lg">
+        <header class="sec-head">
+          <h3>Account</h3>
+          <p>Your sign-in name and email.</p>
+        </header>
+        <form class="stack" (ngSubmit)="saveProfile()">
+          <div>
+            <label class="forsa-label" for="pf-user">Username</label>
+            <input id="pf-user" forsaInput name="username" [(ngModel)]="username" class="input-h-12" required />
+          </div>
+          <div>
+            <label class="forsa-label" for="pf-mail">Email</label>
+            <input
+              id="pf-mail"
+              forsaInput
+              type="email"
+              name="email"
+              [(ngModel)]="email"
+              class="input-h-12"
+              required
+            />
+          </div>
+          <app-forsa-button type="submit" [disabled]="busy()">Save changes</app-forsa-button>
+        </form>
+      </div>
+    </app-forsa-card>
+
+    <app-forsa-card class="profile-card profile-card--wide">
+      <div class="card-pad-lg">
+        <header class="sec-head">
+          <h3>Password</h3>
+          @if (oauthGoogleOnlyUi()) {
+            <p>
+              You signed in with Google and do not have a password yet. Set one below to also sign in with email and
+              password.
+            </p>
+            <p class="oauth-note-fr">
+              Connexion Google : vous n’avez pas de mot de passe. Définissez-en un ci-dessous pour pouvoir aussi vous
+              connecter avec votre e-mail.
+            </p>
+          } @else {
+            <p>Enter your current password, then choose a new one.</p>
+          }
+        </header>
+        <form class="stack" (ngSubmit)="savePassword()">
+          @if (!oauthGoogleOnlyUi()) {
+            <app-forsa-password-field
+              inputId="pf-cur"
+              name="cur"
+              labelText="Current password"
+              autocomplete="current-password"
+              [(ngModel)]="currentPassword"
+              [required]="true"
+            />
+          }
+          <app-forsa-password-field
+            inputId="pf-new"
+            name="newp"
+            labelText="New password"
+            autocomplete="new-password"
+            [(ngModel)]="newPassword"
+            [required]="true"
+          />
+          <app-forsa-password-field
+            inputId="pf-conf"
+            name="conf"
+            labelText="Confirm new password"
+            autocomplete="new-password"
+            [(ngModel)]="confirmPassword"
+            [required]="true"
+          />
+          <app-forsa-button type="submit" variant="secondary" [disabled]="busy()">
+            {{ oauthGoogleOnlyUi() ? 'Set password' : 'Update password' }}
+          </app-forsa-button>
+        </form>
+      </div>
+    </app-forsa-card>
+  </div>
+</div>

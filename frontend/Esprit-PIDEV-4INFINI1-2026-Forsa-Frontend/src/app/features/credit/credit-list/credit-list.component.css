@@ -1,3 +1,9 @@
+.toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
 .table-wrap {
   overflow-x: auto;
 }
@@ -16,30 +22,21 @@
   font-size: 1.1rem;
 }
 
-.table-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
+.sec-title {
+  margin: 0;
+  font-size: 1.1rem;
 }
 
-.search {
-  position: relative;
-  display: flex;
-  align-items: center;
-  color: var(--color-muted-foreground);
+.notice {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-lg, 0.75rem);
+  border: 1px solid color-mix(in oklab, var(--color-border) 50%, transparent);
+  background: color-mix(in oklab, var(--color-muted) 50%, transparent);
 }
 
-.search app-forsa-icon {
-  position: absolute;
-  left: 0.65rem;
-  pointer-events: none;
-}
-
-.search__input {
-  padding-left: 2.25rem !important;
-  height: 2.25rem;
-  min-width: 200px;
+.notice--err {
+  background: color-mix(in oklab, var(--color-destructive) 10%, transparent);
 }
 
 .mono {
@@ -56,40 +53,4 @@
 
 .right {
   text-align: right;
-}
-
-.risk {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.risk-bar {
-  width: 3rem;
-  height: 0.35rem;
-  border-radius: 9999px;
-  background: var(--color-muted);
-  overflow: hidden;
-}
-
-.risk-bar__fill {
-  height: 100%;
-  border-radius: 9999px;
-}
-
-.risk-bar__fill--ok {
-  background: var(--color-emerald-500);
-}
-
-.risk-bar__fill--mid {
-  background: #f59e0b;
-}
-
-.risk-bar__fill--bad {
-  background: var(--color-destructive);
-}
-
-.risk__val {
-  font-size: 0.7rem;
-  font-weight: 600;
 }

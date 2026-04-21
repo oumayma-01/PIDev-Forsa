@@ -33,8 +33,22 @@ export class LoginComponent {
   password = '';
 
   readonly busy = signal(false);
+  readonly googleBusy = signal(false);
   readonly error = signal<string | null>(null);
 
+  signInWithGoogle(): void {
+    this.googleBusy.set(true);
+    this.error.set(null);
+    this.auth.getGoogleLoginUrl().subscribe({
+      next: (res) => {
+        window.location.href = res.message;
+      },
+      error: (e) => {
+        this.error.set(e.error?.message ?? 'Could not start Google sign-in.');
+        this.googleBusy.set(false);
+      },
+    });
+  }
   submit(): void {
     if (!this.username.trim() || !this.password) {
       this.error.set('Please enter your username and password.');
@@ -43,7 +57,7 @@ export class LoginComponent {
     this.busy.set(true);
     this.error.set(null);
     this.auth.login(this.username.trim(), this.password).subscribe({
-      next: () => {
+      next: (res) => {
         void this.router.navigateByUrl('/dashboard');
         this.busy.set(false);
       },

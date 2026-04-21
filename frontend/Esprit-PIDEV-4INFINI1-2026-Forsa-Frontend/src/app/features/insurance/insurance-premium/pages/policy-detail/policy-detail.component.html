@@ -1,0 +1,83 @@
+<div class="page-head">
+  <div><h2>Policy Detail</h2><p>Complete information for this insurance policy.</p></div>
+  <div class="head-actions">
+    <a routerLink="/dashboard/insurance/policies">
+      <app-forsa-button variant="outline">Back</app-forsa-button>
+    </a>
+    @if (policy()) {
+      <app-forsa-button variant="outline" [disabled]="downloadingPdf()" (click)="downloadPdf()">
+        @if (downloadingPdf()) { <app-forsa-icon name="history" [size]="16" class="spin" /> } @else { <app-forsa-icon name="arrow-down-right" [size]="16" /> }
+        Amortization PDF
+      </app-forsa-button>
+    }
+  </div>
+</div>
+
+@if (loading()) {
+  <div class="state-box"><app-forsa-icon name="history" [size]="32" class="spin" /></div>
+} @else if (error()) {
+  <div class="state-box state-error"><app-forsa-icon name="alert-circle" [size]="28" /><p>{{ error() }}</p></div>
+} @else { @if (policy(); as p) {
+  <div class="detail-layout">
+
+    <!-- Overview card -->
+    <app-forsa-card>
+      <div class="card-pad">
+        <div class="overview-header">
+          <div>
+            <h3 class="policy-num">{{ p.policyNumber ?? 'N/A' }}</h3>
+            <p class="text-muted">{{ p.insuranceProduct?.productName ?? 'Unknown product' }} · {{ p.insuranceProduct?.policyType }}</p>
+          </div>
+          <app-forsa-badge [tone]="statusTone(p.status)" size="sm">{{ p.status }}</app-forsa-badge>
+        </div>
+        <div class="stat-grid">
+          <div class="stat"><span class="lbl">Final Premium</span><span class="val">{{ (p.finalPremium ?? p.premiumAmount) | number:'1.2-2' }} TND</span></div>
+          <div class="stat"><span class="lbl">Coverage</span><span class="val">{{ p.coverageLimit | number:'1.0-0' }} TND</span></div>
+          <div class="stat"><span class="lbl">Start</span><span class="val">{{ p.startDate | date:'dd/MM/yyyy' }}</span></div>
+          <div class="stat"><span class="lbl">End</span><span class="val">{{ p.endDate | date:'dd/MM/yyyy' }}</span></div>
+          <div class="stat"><span class="lbl">Next Due</span><span class="val">{{ p.nextPremiumDueDate | date:'dd/MM/yyyy' }}</span></div>
+          <div class="stat"><span class="lbl">Frequency</span><span class="val">{{ p.paymentFrequency ?? '—' }}</span></div>
+          <div class="stat"><span class="lbl">Periodic Payment</span><span class="val">{{ (p.periodicPaymentAmount ?? 0) | number:'1.2-2' }} TND</span></div>
+          <div class="stat"><span class="lbl">Payments #</span><span class="val">{{ p.numberOfPayments ?? '—' }}</span></div>
+        </div>
+      </div>
+    </app-forsa-card>
+
+    <!-- Actuarial card -->
+    <app-forsa-card>
+      <div class="card-pad">
+        <h4 class="section-title"><app-forsa-icon name="bar-chart-3" [size]="16" /> Actuarial Calculation</h4>
+        <div class="stat-grid">
+          <div class="stat"><span class="lbl">Pure Premium</span><span class="val">{{ (p.purePremium ?? 0) | number:'1.2-2' }}</span></div>
+          <div class="stat"><span class="lbl">Inventory Premium</span><span class="val">{{ (p.inventoryPremium ?? 0) | number:'1.2-2' }}</span></div>
+          <div class="stat"><span class="lbl">Commercial Premium</span><span class="val">{{ (p.commercialPremium ?? 0) | number:'1.2-2' }}</span></div>
+          <div class="stat"><span class="lbl">Effective Rate</span><span class="val">{{ ((p.effectiveAnnualRate ?? 0) * 100) | number:'1.2-2' }}%</span></div>
+        </div>
+        @if (p.calculationNotes) {
+          <div class="notes-box">
+            <p class="lbl">Calculation Notes</p>
+            <p class="notes-text">{{ p.calculationNotes }}</p>
+          </div>
+        }
+      </div>
+    </app-forsa-card>
+
+    <!-- Risk card -->
+    <app-forsa-card>
+      <div class="card-pad">
+        <h4 class="section-title"><app-forsa-icon name="shield-alert" [size]="16" /> Risk Assessment</h4>
+        <div class="stat-grid">
+          <div class="stat"><span class="lbl">Risk Score</span><span class="val">{{ ((p.riskScore ?? 0) * 100) | number:'1.1-1' }}</span></div>
+          <div class="stat"><span class="lbl">Risk Category</span>
+            @if (p.riskCategory) {
+              <app-forsa-badge [tone]="p.riskCategory === 'LOW_RISK' ? 'success' : p.riskCategory === 'HIGH_RISK' ? 'danger' : 'warning'">{{ p.riskCategory }}</app-forsa-badge>
+            } @else { <span class="val">—</span> }
+          </div>
+          <div class="stat"><span class="lbl">Risk Coefficient</span><span class="val">{{ p.riskCoefficient | number:'1.2-2' }}</span></div>
+        </div>
+      </div>
+    </app-forsa-card>
+
+  </div>
+}
+}

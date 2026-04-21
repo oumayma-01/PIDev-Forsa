@@ -12,6 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 @SecurityRequirement(name = "Bearer Authentication")
 @RequestMapping("/api/insurance-product")
+@CrossOrigin(origins = "*")
 public class InsuranceProductController {
 
     IInsuranceProduct insuranceProductService;
@@ -31,7 +32,7 @@ public class InsuranceProductController {
     }
 
     @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
-    @GetMapping("/retrieve-insurance-product/{id}")
+    @GetMapping("/retrieve-insurance-product/{product-id}")
     public InsuranceProduct retrieveInsuranceProduct(@PathVariable("product-id") Long productId) {
         InsuranceProduct product = insuranceProductService.retrieveInsuranceProduct(productId);
         return product;

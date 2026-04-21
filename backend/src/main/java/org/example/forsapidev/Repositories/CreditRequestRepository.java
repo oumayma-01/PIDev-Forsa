@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Repository
 public interface CreditRequestRepository extends JpaRepository<CreditRequest, Long> {
@@ -17,5 +18,9 @@ public interface CreditRequestRepository extends JpaRepository<CreditRequest, Lo
      */
     @Query("SELECT COUNT(c) FROM CreditRequest c WHERE c.user.id = :userId AND c.requestDate >= :sinceDate")
     long countRecentCreditRequestsByUserId(@Param("userId") Long userId, @Param("sinceDate") LocalDateTime sinceDate);
+
+    List<CreditRequest> findByUserIdOrderByRequestDateDesc(Long userId);
+
+    List<CreditRequest> findByUserUsernameOrderByRequestDateDesc(String username);
 }
 

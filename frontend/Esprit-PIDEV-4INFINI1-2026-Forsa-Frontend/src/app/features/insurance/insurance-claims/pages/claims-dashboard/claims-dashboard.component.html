@@ -1,0 +1,152 @@
+<div class="page-head">
+  <div>
+    <h2>Insurance Claims Analytics</h2>
+    <p>Real-time insights and distribution analysis for claims management.</p>
+  </div>
+  <div class="head-actions">
+    <app-forsa-button variant="outline" (click)="loadData()">
+      <app-forsa-icon name="history" [size]="14" [class.spin]="loading()" /> Refresh
+    </app-forsa-button>
+    <a routerLink="/dashboard/insurance/claims-analytics">
+      <app-forsa-button variant="outline"><app-forsa-icon name="layout-dashboard" [size]="16" /> Analytics</app-forsa-button>
+    </a>
+    <a routerLink="/dashboard/insurance/claims/new">
+      <app-forsa-button>Manage All Claims</app-forsa-button>
+    </a>
+  </div>
+</div>
+
+@if (loading() && !data()) {
+  <div class="state-box">
+    <app-forsa-icon name="history" [size]="48" class="spin" />
+    <p>Calculating analytics...</p>
+  </div>
+} @else if (error()) {
+  <div class="state-box state-error">
+    <app-forsa-icon name="alert-circle" [size]="48" />
+    <p>{{ error() }}</p>
+    <app-forsa-button (click)="loadData()">Retry</app-forsa-button>
+  </div>
+} @else if (data()) {
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <app-forsa-card class="stat-card">
+      <div class="stat-content">
+        <div class="stat-icon bg-indigo"><app-forsa-icon name="bar-chart-3" [size]="20" /></div>
+        <div class="stat-data">
+          <span class="label">Total Claims</span>
+          <span class="value">{{ data()?.totalClaims | number }}</span>
+        </div>
+      </div>
+    </app-forsa-card>
+
+    <app-forsa-card class="stat-card">
+      <div class="stat-content">
+        <div class="stat-icon bg-emerald"><app-forsa-icon name="shield-check" [size]="20" /></div>
+        <div class="stat-data">
+          <span class="label">Total Claim Value</span>
+          <span class="value">{{ data()?.totalClaimAmount | number:'1.2-2' }} TND</span>
+        </div>
+      </div>
+    </app-forsa-card>
+
+    <app-forsa-card class="stat-card">
+      <div class="stat-content">
+        <div class="stat-icon bg-amber"><app-forsa-icon name="settings" [size]="20" /></div>
+        <div class="stat-data">
+          <span class="label">Avg. Claim Cost</span>
+          <span class="value">{{ data()?.averageClaimAmount | number:'1.2-2' }} TND</span>
+        </div>
+      </div>
+    </app-forsa-card>
+
+    <app-forsa-card class="stat-card">
+      <div class="stat-content">
+        <div class="stat-icon bg-rose"><app-forsa-icon name="heart" [size]="20" /></div>
+        <div class="stat-data">
+          <span class="label">Approval Rate</span>
+          <span class="value">{{ data()?.approvalRate | number:'1.1-1' }}%</span>
+        </div>
+      </div>
+    </app-forsa-card>
+  </div>
+
+  <!-- Charts Grid -->
+  <div class="chart-layout">
+    <app-forsa-card class="line-chart-area">
+      <div class="card-head"><h4>Monthly Claims Trend</h4></div>
+      <div class="chart-box">
+        <canvas #trendChart></canvas>
+      </div>
+    </app-forsa-card>
+
+    <app-forsa-card class="pie-chart-area">
+      <div class="card-head"><h4>Claims by Status</h4></div>
+      <div class="chart-box">
+        <canvas #statusChart></canvas>
+      </div>
+    </app-forsa-card>
+  </div>
+
+  <div class="chart-layout second-row">
+    <app-forsa-card class="bar-chart-area">
+      <div class="card-head"><h4>Volume by Insurance Type</h4></div>
+      <div class="chart-box">
+        <canvas #typeChart></canvas>
+      </div>
+    </app-forsa-card>
+
+    <app-forsa-card class="info-area">
+      <div class="info-hero">
+        <app-forsa-icon name="shield-check" [size]="48" />
+        <h3>System Integrity</h3>
+        <p>Managed insurance claims are analyzed using Forsa AI models to ensure risk compliance and fraud prevention.</p>
+        <app-forsa-badge tone="success">Active Protection</app-forsa-badge>
+      </div>
+    </app-forsa-card>
+  </div>
+
+  <!-- Top Claims Table -->
+  <div class="table-section">
+    <app-forsa-card [overflowHidden]="true">
+      <div class="card-head table-head">
+        <h4>Top 10 Highest Value Claims</h4>
+        <app-forsa-badge tone="info">{{ data()?.topClaims?.length }} Entry</app-forsa-badge>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Claim #</th>
+              <th>Policy</th>
+              <th>Incident Date</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th class="th-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of data()?.topClaims; track c.claimNumber) {
+              <tr>
+                <td class="td-mono">{{ c.claimNumber }}</td>
+                <td class="td-mono">{{ c.policyNumber }}</td>
+                <td>{{ c.claimDate | date:'dd MMM yyyy' }}</td>
+                <td class="td-bold">{{ c.claimAmount | number:'1.2-2' }} TND</td>
+                <td>
+                  <app-forsa-badge [tone]="statusTone(c.status)">
+                    {{ c.status }}
+                  </app-forsa-badge>
+                </td>
+                <td>
+                   <app-forsa-button variant="ghost" size="sm">
+                     <app-forsa-icon name="eye" [size]="14" />
+                   </app-forsa-button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </app-forsa-card>
+  </div>
+}

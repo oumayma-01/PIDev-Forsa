@@ -1,0 +1,92 @@
+<div class="page-toolbar">
+  <div class="page-head">
+    <h2>{{ isEditMode ? 'Edit Feedback' : 'New Feedback' }}</h2>
+    <p>{{ isEditMode ? 'Update your feedback' : 'Share your experience with us' }}</p>
+  </div>
+</div>
+
+@if (error) {
+  <div class="form-error">{{ error }}</div>
+}
+
+<app-forsa-card>
+  <div class="card-pad-lg">
+
+    <!-- Rating -->
+    <div class="form-group">
+      <label class="forsa-label">Rating *</label>
+      <div class="star-group">
+        @for (star of ratings; track star) {
+          <button
+            type="button"
+            class="star-btn"
+            [class.active]="star <= feedback.rating"
+            (click)="setRating(star)"
+          >★</button>
+        }
+        <span class="rating-label">{{ feedback.rating }}/5</span>
+      </div>
+    </div>
+
+    <!-- Comment -->
+    <div class="form-group">
+      <label class="forsa-label">Comment</label>
+      <textarea
+        forsaInput
+        [(ngModel)]="feedback.comment"
+        placeholder="Share your experience... (max 500 characters)"
+        rows="5"
+        maxlength="500"
+      ></textarea>
+      <span class="char-count">{{ feedback.comment?.length ?? 0 }}/500</span>
+    </div>
+
+    <!-- Satisfaction Level — edit mode seulement ou si pas useAI -->
+    @if (isEditMode || !useAI) {
+      <div class="form-group">
+        <label class="forsa-label">Satisfaction Level</label>
+        <select forsaInput [(ngModel)]="feedback.satisfactionLevel">
+          @for (level of satisfactionLevels; track level) {
+            <option [value]="level">{{ level }}</option>
+          }
+        </select>
+      </div>
+    }
+
+    <!-- Anonymous -->
+    <div class="form-group">
+      <label class="anon-label">
+        <input type="checkbox" [(ngModel)]="feedback.isAnonymous" />
+        <span>Submit anonymously</span>
+      </label>
+    </div>
+
+    <!-- Use AI toggle — ajout seulement -->
+    @if (!isEditMode) {
+      <div class="form-ai-toggle">
+        <label class="ai-label">
+          <input type="checkbox" [(ngModel)]="useAI" />
+          <app-forsa-icon name="sparkles" [size]="16" />
+          <span>Use AI to auto-detect satisfaction level from rating</span>
+        </label>
+      </div>
+    }
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <app-forsa-button variant="outline" (clicked)="cancel()">
+        Cancel
+      </app-forsa-button>
+      <app-forsa-button (clicked)="save()" [disabled]="loading">
+        @if (loading) {
+          <app-forsa-icon name="zap" [size]="16" />
+          Saving...
+        } @else {
+          <app-forsa-icon name="check-circle-2" [size]="16" />
+          {{ isEditMode ? 'Update' : (useAI ? 'Submit with AI' : 'Submit') }}
+        }
+      </app-forsa-button>
+    </div>
+
+  </div>
+</app-forsa-card>

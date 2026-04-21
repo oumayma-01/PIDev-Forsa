@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.example.forsapidev.Services.Interfaces.IRoleService;
 import org.example.forsapidev.entities.UserManagement.ERole;
 import org.example.forsapidev.entities.UserManagement.Role;
-import org.example.forsapidev.entities.UserManagement.User;
+import org.example.forsapidev.payload.response.RoleWithStatsDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +24,14 @@ public class RoleController {
   public List<Role> all() {
     return iRoleService.findAll();
   }
+
+  @SecurityRequirement(name = "Bearer Authentication")
+  @PreAuthorize("hasRole('ADMIN')")
+  @GetMapping("/with-stats")
+  public List<RoleWithStatsDTO> listWithStats() {
+    return iRoleService.listRolesWithUserCounts();
+  }
+
   @SecurityRequirement(name = "Bearer Authentication")
   @PreAuthorize("hasRole('ADMIN')")
   @GetMapping("/find/{id}")

@@ -1,0 +1,73 @@
+<div class="portal-container">
+  <div class="header-section">
+    <button routerLink="/dashboard/insurance" class="back-btn glass-btn">
+      <i class="fe fe-arrow-left"></i> Back to Hub
+    </button>
+    <h1>My Policies</h1>
+    <p>Manage your active insurance policies, review coverage, and download schedules.</p>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading your policies...</p>
+  </div>
+
+  <div *ngIf="!isLoading && policies.length === 0" class="empty-state glass-panel">
+    <i class="fe fe-folder"></i>
+    <h3>No Policies Found</h3>
+    <p>You don't have any active policies yet.</p>
+    <button class="btn btn-primary" routerLink="/dashboard/insurance/client/catalog">Browse Catalog</button>
+  </div>
+
+  <div *ngIf="!isLoading && policies.length > 0" class="policy-grid">
+    <div *ngFor="let p of policies" class="policy-card glass-panel flex-column">
+      
+      <div class="card-header d-flex justify-between align-center border-bottom pb-3 mb-3">
+        <div>
+          <h3 class="m-0 text-xl font-bold">{{ p.insuranceProduct?.productName || 'Custom Policy' }}</h3>
+          <span class="text-sm text-muted">Policy #: {{ p.policyNumber || 'Pending' }}</span>
+        </div>
+        <span class="status-badge" [ngClass]="p.status | lowercase">{{ p.status }}</span>
+      </div>
+
+      <div class="card-body flex-grow-1">
+        <div class="metric-grid">
+          <div class="metric">
+            <span class="label">Coverage Limit</span>
+            <span class="value">{{ p.coverageLimit | number }} TND</span>
+          </div>
+          <div class="metric">
+            <span class="label">Payment</span>
+            <span class="value text-primary">{{ p.periodicPaymentAmount | number:'1.2-2' }} TND</span>
+            <span class="period">/ {{ p.paymentFrequency | lowercase }}</span>
+          </div>
+        </div>
+
+        <div class="detail-list mt-4">
+          <div class="detail-item">
+            <i class="fe fe-calendar text-muted"></i>
+            <span><strong>Start Date:</strong> {{ p.startDate | date:'mediumDate' || 'TBD' }}</span>
+          </div>
+          <div class="detail-item">
+            <i class="fe fe-calendar text-muted"></i>
+            <span><strong>End Date:</strong> {{ p.endDate | date:'mediumDate' || 'TBD' }}</span>
+          </div>
+          <div class="detail-item" *ngIf="p.nextPremiumDueDate">
+            <i class="fe fe-clock text-warning"></i>
+            <span><strong>Next Due:</strong> <span class="text-warning">{{ p.nextPremiumDueDate | date:'mediumDate' }}</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer d-flex gap-2 mt-4 pt-3 border-top">
+        <button class="btn btn-outline flex-1" (click)="downloadAmortization(p)" [disabled]="!p.id || p.status === 'PENDING'">
+          <i class="fe fe-download"></i> Amortization
+        </button>
+        <button class="btn btn-primary flex-1" [routerLink]="['/dashboard/insurance/client/file-claim', p.id]">
+          <i class="fe fe-alert-circle"></i> File Claim
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>

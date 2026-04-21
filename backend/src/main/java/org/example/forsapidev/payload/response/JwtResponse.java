@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
+
 @Getter
 @Setter
 public class JwtResponse {
@@ -13,6 +14,11 @@ public class JwtResponse {
   private String username;
   private String email;
   private List<String> roles;
+  private Boolean hasProfileImage;
+  /** True when the user must set a password in profile (Google-created account, no known password yet). */
+  private Boolean oauthAccount;
+  /** Angular routes allowed for the sidebar for this user's role. */
+  private List<String> allowedNavPaths;
 
   public JwtResponse(String accessToken, Long id, String username, String email,List<String> roles) {
     this.token = accessToken;
