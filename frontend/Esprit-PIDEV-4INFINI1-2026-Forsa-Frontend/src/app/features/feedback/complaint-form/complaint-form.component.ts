@@ -163,9 +163,8 @@ export class ComplaintFormComponent implements OnInit {
 
     if (this.isEditMode) {
       if (this.isClient && this.isEditMode) {
-        const idToUse = Number(this.route.snapshot.paramMap.get('id'));
         const clientEditPayload: any = {
-          id: idToUse,
+          id: this.complaintId ?? this.complaint.id,
           subject: this.complaint.subject?.trim(),
           description: this.complaint.description?.trim(),
           category: this.complaint.category ?? 'OTHER',

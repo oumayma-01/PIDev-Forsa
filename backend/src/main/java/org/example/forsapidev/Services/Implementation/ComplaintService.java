@@ -1,21 +1,29 @@
 package org.example.forsapidev.Services.Implementation;
 
 import lombok.RequiredArgsConstructor;
+import org.example.forsapidev.DTO.ComplaintCreditEligibilityDTO;
+import org.example.forsapidev.DTO.ComplaintFinancialImpactDTO;
 import org.example.forsapidev.Repositories.ComplaintRepository;
 import org.example.forsapidev.Repositories.FeedbackRepository;
 import org.example.forsapidev.Repositories.ResponseRepository;
 import org.example.forsapidev.Repositories.UserRepository;
 import org.example.forsapidev.Services.Interfaces.IComplaintService;
+import org.example.forsapidev.Services.Interfaces.IScoringAggregationService;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Category;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Complaint;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Priority;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Response;
+import org.example.forsapidev.entities.ScoringManagement.ScoreResult;
 import org.example.forsapidev.entities.UserManagement.User;
 import org.example.forsapidev.openai.ComplaintAiAssistant;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,6 +35,7 @@ public class ComplaintService implements IComplaintService {
     private final UserRepository userRepository;
     private final ResponseRepository responseRepository;
     private final FeedbackRepository feedbackRepository;
+    private final IScoringAggregationService scoringAggregationService;
 
     @Override
     public List<Complaint> retrieveAllComplaints() {
@@ -216,6 +225,82 @@ public class ComplaintService implements IComplaintService {
         complaintRepository.save(complaint);
     }
 
+    @Override
+    public ComplaintCreditEligibilityDTO getCreditEligibilityByComplaint(Long complaintId, Double requiredScore) {
+        Complaint complaint = complaintRepository.findById(complaintId)
+                .orElseThrow(() -> new IllegalArgumentException("Complaint not found"));
+
+        double required = (requiredScore == null || requiredScore <= 0) ? 70.0 : requiredScore;
+        Long clientId = complaint.getUser() != null ? complaint.getUser().getId() : null;
+
+        double currentScore;
+        boolean fallbackUsed = false;
+
+        if (clientId == null) {
+            currentScore = 50.0;
+            fallbackUsed = true;
+        } else {
+            try {
+                ScoreResult scoreResult = scoringAggregationService.getOrCalculateScore(clientId);
+                currentScore = scoreResult.getFinalScore() != null ? scoreResult.getFinalScore() : 50.0;
+                if (scoreResult.getFinalScore() == null) {
+                    fallbackUsed = true;
+                }
+            } catch (Exception e) {
+                currentScore = 50.0;
+                fallbackUsed = true;
+            }
+        }
+
+        double gap = Math.max(0.0, required - currentScore);
+        boolean eligible = currentScore >= required;
+
+        return new ComplaintCreditEligibilityDTO(
+                complaintId,
+                clientId,
+                round2(currentScore),
+                round2(required),
+                round2(gap),
+                eligible,
+                fallbackUsed
+        );
+    }
+
+    @Override
+    public ComplaintFinancialImpactDTO getFinancialImpactByComplaint(Long complaintId) {
+        Complaint complaint = complaintRepository.findById(complaintId)
+                .orElseThrow(() -> new IllegalArgumentException("Complaint not found"));
+
+        double amount = extractAmountFromDescription(complaint.getDescription());
+        String amountSource = "SIMULATED";
+        if (amount > 0) {
+            amountSource = "DESCRIPTION";
+        } else {
+            amount = simulatedAmountByPriority(complaint.getPriority());
+        }
+
+        long daysSinceCreation = 0L;
+        if (complaint.getCreatedAt() != null) {
+            daysSinceCreation = Math.max(0L,
+                    ChronoUnit.DAYS.between(complaint.getCreatedAt().toInstant(), Instant.now()));
+        }
+
+        double amountScore = Math.min(100.0, amount / 100.0);
+        double priorityScore = priorityScore(complaint.getPriority());
+        double ageScore = Math.min(100.0, daysSinceCreation * 3.33);
+
+        double impactScore = round2((amountScore * 0.50) + (priorityScore * 0.30) + (ageScore * 0.20));
+
+        return new ComplaintFinancialImpactDTO(
+                complaintId,
+                round2(amount),
+                amountSource,
+                complaint.getPriority() != null ? complaint.getPriority().name() : Priority.MEDIUM.name(),
+                daysSinceCreation,
+                impactScore
+        );
+    }
+
     private List<Map<String, Object>> trendsByMonth(List<Date> dates, int months) {
         SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM");
         Calendar cal = Calendar.getInstance();
@@ -236,5 +321,49 @@ public class ComplaintService implements IComplaintService {
         List<Map<String, Object>> res = new ArrayList<>();
         counts.forEach((k, v) -> res.add(new LinkedHashMap<>(Map.of("period", k, "count", v))));
         return res;
+    }
+
+    private double extractAmountFromDescription(String description) {
+        if (description == null || description.isBlank()) {
+            return -1.0;
+        }
+
+        Pattern pattern = Pattern.compile("(\\d+(?:[\\.,]\\d{1,2})?)");
+        Matcher matcher = pattern.matcher(description);
+        while (matcher.find()) {
+            try {
+                String raw = matcher.group(1).replace(",", ".");
+                double parsed = Double.parseDouble(raw);
+                if (parsed > 0) {
+                    return parsed;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return -1.0;
+    }
+
+    private double simulatedAmountByPriority(Priority priority) {
+        if (priority == null) return 1000.0;
+        return switch (priority) {
+            case LOW -> 300.0;
+            case MEDIUM -> 1000.0;
+            case HIGH -> 2500.0;
+            case CRITICAL -> 5000.0;
+        };
+    }
+
+    private double priorityScore(Priority priority) {
+        if (priority == null) return 50.0;
+        return switch (priority) {
+            case LOW -> 25.0;
+            case MEDIUM -> 50.0;
+            case HIGH -> 75.0;
+            case CRITICAL -> 100.0;
+        };
+    }
+
+    private double round2(double value) {
+        return Math.round(value * 100.0) / 100.0;
     }
 }

@@ -28,10 +28,12 @@ export class FeedbackFormComponent implements OnInit {
   feedback: Feedback = {
     rating: 3,
     comment: '',
+    satisfactionLevel: 'NEUTRAL',
     isAnonymous: false,
   };
 
   isEditMode = false;
+  ratings = [1, 2, 3, 4, 5];
   useAI = false;
   loading = false;
   error = '';
@@ -115,7 +117,13 @@ export class FeedbackFormComponent implements OnInit {
     console.log('[FeedbackForm] submit payload:', payload);
 
     if (this.isEditMode) {
-      this.feedbackService.update(payload).subscribe({
+      const updatePayload: any = {
+        ...this.feedback,
+        id: this.feedback.id,
+        complaint: this.feedback.complaint ??
+          (this.complaintId ? { id: this.complaintId, subject: '', description: '' } : undefined),
+      };
+      this.feedbackService.update(updatePayload).subscribe({
         next: () => this.router.navigate(['/dashboard/feedback']),
         error: () => {
           this.error = 'Error updating feedback';
