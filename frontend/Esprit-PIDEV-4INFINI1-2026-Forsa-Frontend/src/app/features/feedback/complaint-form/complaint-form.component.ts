@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { catchError, of } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { ComplaintService } from '../../../core/data/complaint.service';
 import { ComplaintBackend, Category, Priority, ComplaintStatus } from '../../../core/models/forsa.models';
@@ -52,30 +53,72 @@ export class ComplaintFormComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id');
+    const id: string | null = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.isEditMode = true;
-      this.complaintId = +id;
-      this.loading = true;
-      this.complaintService.getById(+id).subscribe({
-        next: (data: ComplaintBackend) => {
-          this.complaint = data;
-          this.loading = false;
-        },
-        error: () => {
-          this.error = 'Error loading complaint';
-          this.loading = false;
-        },
-      });
+      const roles = this.auth.currentUser()?.roles ?? [];
+      const isClient = roles.some(r => r === 'ROLE_CLIENT' || r === 'CLIENT');
+
+      if (isClient) {
+        // CLIENT: use getMyComplaints() and find by id
+        this.complaintService.getMyComplaints().subscribe({
+          next: (data: any) => {
+            const payload = data?.data ?? data?.result ?? data?.content ?? data;
+            const list = Array.isArray(payload) ? payload : [];
+            const found = list.find((c: any) => Number(c.id) === +id!);
+            if (found) {
+              this.complaint = {
+                id: found.id,
+                subject: found.subject ?? '',
+                description: found.description ?? '',
+                category: found.category ?? 'OTHER',
+                priority: found.priority ?? 'MEDIUM',
+                status: found.status ?? 'OPEN',
+              };
+              this.complaintId = found.id;
+              this.complaintService.getById(+id).pipe(
+                catchError(() => of(this.complaint))
+              ).subscribe((detail: any) => {
+                const detailPayload = detail?.data ?? detail?.result ?? detail;
+                this.complaint = {
+                  id: detailPayload?.id ?? this.complaint.id,
+                  subject: detailPayload?.subject ?? this.complaint.subject ?? '',
+                  description: detailPayload?.description ?? this.complaint.description ?? '',
+                  category: detailPayload?.category ?? this.complaint.category ?? 'OTHER',
+                  priority: detailPayload?.priority ?? this.complaint.priority ?? 'MEDIUM',
+                  status: detailPayload?.status ?? this.complaint.status ?? 'OPEN',
+                };
+                this.complaintId = this.complaint.id;
+              });
+            } else {
+              this.error = 'Complaint not found.';
+            }
+          },
+          error: () => {
+            this.error = 'Error loading complaint';
+          }
+        });
+      } else {
+        // ADMIN/AGENT: use getById()
+        this.complaintService.getById(+id).subscribe({
+          next: (data: any) => {
+            const payload = data?.data ?? data?.result ?? data;
+            this.complaint = payload;
+          },
+          error: () => this.error = 'Error loading complaint'
+        });
+      }
     }
   }
 
   get isAdmin(): boolean {
-    return this.auth.currentUser()?.roles?.includes('ROLE_ADMIN') ?? false;
+    const roles = this.auth.currentUser()?.roles ?? [];
+    return roles.includes('ROLE_ADMIN') || roles.includes('ADMIN');
   }
 
   get isAgent(): boolean {
-    return this.auth.currentUser()?.roles?.includes('ROLE_AGENT') ?? false;
+    const roles = this.auth.currentUser()?.roles ?? [];
+    return roles.includes('ROLE_AGENT') || roles.includes('AGENT');
   }
 
   get isAdminOrAgent(): boolean {
@@ -83,7 +126,8 @@ export class ComplaintFormComponent implements OnInit {
   }
 
   get isClient(): boolean {
-    return this.auth.currentUser()?.roles?.includes('ROLE_CLIENT') ?? false;
+    const roles = this.auth.currentUser()?.roles ?? [];
+    return roles.some(r => r === 'ROLE_CLIENT' || r === 'CLIENT');
   }
 
   private validate(): boolean {
@@ -105,17 +149,41 @@ export class ComplaintFormComponent implements OnInit {
     }
     this.loading = true;
     this.error = '';
-    const payload: ComplaintBackend = this.isClient && !this.isEditMode
+    const currentUser = this.auth.currentUser();
+    const payload: any = this.isClient && !this.isEditMode
       ? {
           subject: this.complaint.subject,
           description: this.complaint.description,
           category: 'OTHER',
           priority: 'MEDIUM',
           status: 'OPEN',
+          user: currentUser?.id ? { id: currentUser.id } : undefined,
         }
       : this.complaint;
 
     if (this.isEditMode) {
+      if (this.isClient && this.isEditMode) {
+        const idToUse = Number(this.route.snapshot.paramMap.get('id'));
+        const clientEditPayload: any = {
+          id: idToUse,
+          subject: this.complaint.subject?.trim(),
+          description: this.complaint.description?.trim(),
+          category: this.complaint.category ?? 'OTHER',
+          priority: this.complaint.priority ?? 'MEDIUM',
+          status: this.complaint.status ?? 'OPEN',
+        };
+        console.log('[ComplaintForm] client update payload:', clientEditPayload);
+        this.complaintService.update(clientEditPayload).subscribe({
+          next: () => this.router.navigate(['/dashboard/feedback']),
+          error: (err) => {
+            console.error('[ComplaintForm] update error:', err);
+            this.error = 'Error updating complaint (status: ' + (err?.status ?? 'unknown') + ')';
+            this.loading = false;
+          },
+        });
+        return;
+      }
+
       this.complaintService.update({ ...payload, id: this.complaintId }).subscribe({
         next: () => this.router.navigate(['/dashboard/feedback']),
         error: () => {
@@ -127,6 +195,7 @@ export class ComplaintFormComponent implements OnInit {
       const action = this.useAI
         ? this.complaintService.addWithAI(payload)
         : this.complaintService.add(payload);
+      console.log('[ComplaintForm] submit payload:', payload);
 
       action.subscribe({
         next: () => this.router.navigate(['/dashboard/feedback']),

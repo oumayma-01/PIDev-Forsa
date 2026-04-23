@@ -64,9 +64,38 @@
               <span>{{ item.createdAt | date:'yyyy-MM-dd HH:mm' }}</span>
             </div>
             <div class="client-actions">
-              @if (canAddFeedback(item)) {
-                <app-forsa-button size="sm" variant="outline" (clicked)="goToAddFeedback(item.id!)">Add Feedback</app-forsa-button>
+              @if (item.status === 'OPEN' && !item.responses?.length) {
+                <app-forsa-button size="sm" variant="ghost"
+                  (clicked)="goToEditComplaint(item.id!)">
+                  Edit
+                </app-forsa-button>
               }
+              @if (item.status === 'OPEN') {
+                <app-forsa-button size="sm" variant="outline"
+                  (clicked)="deleteComplaint(item.id!)">
+                  Cancel Complaint
+                </app-forsa-button>
+              }
+              @if (canAddFeedback(item)) {
+                <app-forsa-button size="sm" variant="outline"
+                  (clicked)="goToAddFeedback(item.id!)">
+                  Add Feedback
+                </app-forsa-button>
+              }
+              @if (item.status !== 'OPEN') {
+                <span class="muted">Read only</span>
+              }
+            </div>
+            <div class="client-responses">
+              <div *ngIf="item.responses?.length">
+                <div class="client-response" *ngFor="let resp of item.responses">
+                  <p>{{ resp.message }}</p>
+                  <small>{{ resp.responseDate | date:'yyyy-MM-dd HH:mm' }}</small>
+                </div>
+              </div>
+              <div *ngIf="!item.responses?.length">
+                <p class="muted">No response yet.</p>
+              </div>
             </div>
           </div>
         }

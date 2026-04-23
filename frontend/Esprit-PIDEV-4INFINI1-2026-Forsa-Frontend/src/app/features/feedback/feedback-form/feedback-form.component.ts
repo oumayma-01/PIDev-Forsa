@@ -57,10 +57,10 @@ export class FeedbackFormComponent implements OnInit {
       this.router.navigate(['/dashboard/feedback']);
       return;
     }
-    const queryComplaintId = Number(this.route.snapshot.queryParamMap.get('complaintId'));
-    if (queryComplaintId) {
-      this.complaintId = queryComplaintId;
-      this.feedback.complaint = { id: queryComplaintId, subject: '', description: '' };
+    const complaintId = this.route.snapshot.queryParamMap.get('complaintId');
+    if (complaintId) {
+      this.complaintId = +complaintId;
+      this.feedback.complaint = { id: +complaintId, subject: '', description: '' };
     }
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
@@ -80,7 +80,8 @@ export class FeedbackFormComponent implements OnInit {
   }
 
   get isClient(): boolean {
-    return this.auth.currentUser()?.roles?.includes('ROLE_CLIENT') ?? false;
+    const roles = this.auth.currentUser()?.roles ?? [];
+    return roles.includes('ROLE_CLIENT') || roles.includes('CLIENT');
   }
 
   setRating(rating: number): void {
@@ -107,10 +108,11 @@ export class FeedbackFormComponent implements OnInit {
     }
     this.loading = true;
     this.error = '';
-    const payload: Feedback = {
+    const payload: any = {
       ...this.feedback,
       complaint: this.feedback.complaint ?? (this.complaintId ? { id: this.complaintId, subject: '', description: '' } : undefined),
     };
+    console.log('[FeedbackForm] submit payload:', payload);
 
     if (this.isEditMode) {
       this.feedbackService.update(payload).subscribe({

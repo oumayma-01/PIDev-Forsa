@@ -35,6 +35,50 @@
       @if (aiResponse) {
         <div class="ai-box">{{ aiResponse }}</div>
       }
+
+      <div class="finance-box">
+        <h4>Credit Eligibility</h4>
+        <div class="finance-actions">
+          <input #requiredScoreInput type="number" min="1" [value]="requiredScore" />
+          <app-forsa-button variant="outline" (clicked)="checkCreditEligibility(requiredScoreInput.value)">
+            Check Eligibility
+          </app-forsa-button>
+        </div>
+
+        @if (creditEligibility) {
+          <div class="finance-result">
+            <div>Current score: <strong>{{ creditEligibility.currentScore }}</strong></div>
+            <div>Required score: <strong>{{ creditEligibility.requiredScore }}</strong></div>
+            <div>Gap: <strong>{{ creditEligibility.gap }}</strong></div>
+            <div>
+              Result:
+              <strong>
+                {{ creditEligibility.eligible ? 'Eligible' : 'Needs +' + creditEligibility.gap + ' points' }}
+              </strong>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="finance-box">
+        <h4>Financial Impact Score</h4>
+        <div class="finance-actions">
+          <app-forsa-button variant="outline" (clicked)="loadFinancialImpact()">Compute Impact</app-forsa-button>
+        </div>
+
+        @if (financialImpact) {
+          <div class="finance-result">
+            <div>Impact score: <strong>{{ financialImpact.financialImpactScore }}</strong></div>
+            <div>Label: <strong>{{ impactLabel(financialImpact.financialImpactScore) }} impact</strong></div>
+            <div>Amount: <strong>{{ financialImpact.complaintAmount }}</strong> ({{ financialImpact.amountSource }})</div>
+            <div>Days since creation: <strong>{{ financialImpact.daysSinceCreation }}</strong></div>
+          </div>
+        }
+      </div>
+
+      @if (financialError) {
+        <div class="error">{{ financialError }}</div>
+      }
     </div>
   </app-forsa-card>
 

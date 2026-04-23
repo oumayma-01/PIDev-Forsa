@@ -13,7 +13,7 @@
   <div class="chat-error">{{ error }}</div>
 }
 
-<app-forsa-card class="chat-container">
+<div class="chat-container">
   <div class="chat-messages" #messagesContainer>
     @for (message of messages; track $index) {
       <div [class]="'chat-message ' + message.role">
@@ -38,7 +38,7 @@
       </div>
     }
   </div>
-</app-forsa-card>
+</div>
 
 <div class="chat-input-area">
   <app-forsa-card class="input-card">

@@ -39,6 +39,7 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
       content: 'Hello! I am your Forsa virtual assistant. How can I help you?',
       timestamp: new Date(),
     });
+    this.shouldScroll = true;
   }
 
   ngAfterViewChecked(): void {

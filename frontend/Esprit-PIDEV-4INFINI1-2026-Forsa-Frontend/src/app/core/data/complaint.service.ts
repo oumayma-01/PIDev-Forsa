@@ -4,6 +4,25 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ComplaintBackend, Category, Priority, ComplaintStatus } from '../models/forsa.models';
 
+export interface ComplaintCreditEligibility {
+  complaintId: number;
+  clientId: number | null;
+  currentScore: number;
+  requiredScore: number;
+  gap: number;
+  eligible: boolean;
+  fallbackUsed: boolean;
+}
+
+export interface ComplaintFinancialImpact {
+  complaintId: number;
+  complaintAmount: number;
+  amountSource: string;
+  priority: string;
+  daysSinceCreation: number;
+  financialImpactScore: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ComplaintService {
   private readonly http = inject(HttpClient);
@@ -75,5 +94,15 @@ export class ComplaintService {
 
   assignToUser(complaintId: number, userId: number): Observable<ComplaintBackend> {
     return this.http.post<ComplaintBackend>(`${this.baseUrl}/${complaintId}/assign/${userId}`, {});
+  }
+
+  getCreditEligibility(complaintId: number, requiredScore: number = 70): Observable<ComplaintCreditEligibility> {
+    return this.http.get<ComplaintCreditEligibility>(
+      `${this.baseUrl}/${complaintId}/financial/credit-eligibility?requiredScore=${requiredScore}`
+    );
+  }
+
+  getFinancialImpactScore(complaintId: number): Observable<ComplaintFinancialImpact> {
+    return this.http.get<ComplaintFinancialImpact>(`${this.baseUrl}/${complaintId}/financial/impact-score`);
   }
 }

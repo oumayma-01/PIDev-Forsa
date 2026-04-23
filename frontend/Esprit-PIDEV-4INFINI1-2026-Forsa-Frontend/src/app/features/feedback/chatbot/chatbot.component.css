@@ -28,19 +28,28 @@
 }
 
 .chat-container {
-  margin-bottom: 16px;
-  height: 500px;
   display: flex;
   flex-direction: column;
+  height: calc(100vh - 260px);
+  min-height: 400px;
+  max-height: 680px;
+  overflow: hidden;
+  margin-bottom: 16px;
+  background: var(--color-card, #fff);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
 }
 
 .chat-messages {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  scroll-behavior: smooth;
+  min-height: 0;
 }
 
 .chat-message {

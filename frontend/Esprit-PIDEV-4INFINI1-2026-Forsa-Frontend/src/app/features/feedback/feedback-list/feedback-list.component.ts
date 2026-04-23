@@ -1,11 +1,13 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnDestroy, OnInit, effect, inject } from '@angular/core';
+import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth.service';
 import { ComplaintService } from '../../../core/data/complaint.service';
 import { FeedbackService } from '../../../core/data/feedback.service';
-import { ComplaintBackend, Feedback } from '../../../core/models/forsa.models';
+import { ComplaintBackend, ComplaintResponse, Feedback } from '../../../core/models/forsa.models';
 import { ForsaBadgeComponent } from '../../../shared/ui/forsa-badge/forsa-badge.component';
 import { ForsaButtonComponent } from '../../../shared/ui/forsa-button/forsa-button.component';
 import { ForsaCardComponent } from '../../../shared/ui/forsa-card/forsa-card.component';
@@ -22,17 +24,22 @@ type RoleCard = {
   action: 'newComplaint' | 'newFeedback' | 'openChatbot' | 'manageComplaints' | 'responses' | 'stats';
 };
 
-type ClientComplaint = ComplaintBackend & { feedback?: { id?: number } | null; user?: { id?: number } | null; clientId?: number };
+type ClientComplaint = ComplaintBackend & {
+  feedback?: { id?: number } | null;
+  user?: { id?: number } | null;
+  clientId?: number;
+  responses?: ComplaintResponse[];
+};
 type ClientFeedback = Feedback & { user?: { id?: number } | null; clientId?: number; complaint?: { id?: number } };
 
 @Component({
   selector: 'app-feedback-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, ForsaBadgeComponent, ForsaButtonComponent, ForsaCardComponent, ForsaIconComponent, ForsaInputDirective],
+  imports: [CommonModule, FormsModule, DatePipe, DecimalPipe, ForsaBadgeComponent, ForsaButtonComponent, ForsaCardComponent, ForsaIconComponent, ForsaInputDirective],
   templateUrl: './feedback-list.component.html',
   styleUrl: './feedback-list.component.css',
 })
-export class FeedbackListComponent implements OnInit {
+export class FeedbackListComponent implements OnInit, OnDestroy {
   private readonly complaintService = inject(ComplaintService);
   private readonly feedbackService = inject(FeedbackService);
   private readonly router = inject(Router);
@@ -40,6 +47,7 @@ export class FeedbackListComponent implements OnInit {
 
   items: ClientComplaint[] = [];
   filteredItems: ClientComplaint[] = [];
+  complaints: ClientComplaint[] = [];
   clientComplaints: ClientComplaint[] = [];
   clientFeedbacks: ClientFeedback[] = [];
   loading = false;
@@ -58,12 +66,37 @@ export class FeedbackListComponent implements OnInit {
 
   readonly statuses = ['', 'OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'REJECTED'];
   readonly categories = ['', 'TECHNICAL', 'FINANCE', 'SUPPORT', 'FRAUD', 'ACCOUNT', 'CREDIT', 'OTHER'];
+  private lastRoleSignature = '__init__';
+  private clientPollId: ReturnType<typeof setInterval> | null = null;
+
+  private readonly roleSync = effect(() => {
+    const roles = this.auth.currentUser()?.roles ?? [];
+    this.applyRoleContext(roles);
+  });
 
   ngOnInit(): void {
     const roles = this.auth.currentUser()?.roles ?? [];
-    this.isAdmin = roles.includes('ROLE_ADMIN');
-    this.isAgent = roles.includes('ROLE_AGENT');
-    this.isClient = roles.includes('ROLE_CLIENT');
+    console.log('[DEBUG] roles:', this.auth.currentUser()?.roles);
+    this.applyRoleContext(roles);
+    console.log('[DEBUG] isClient:', this.isClient);
+    // Always load client data on init as fallback
+    this.loadClientData();
+  }
+
+  private applyRoleContext(roles: string[]): void {
+    const signature = [...roles].sort().join('|');
+    if (signature === this.lastRoleSignature) return;
+    this.lastRoleSignature = signature;
+
+    const hasRole = (r: string) =>
+      roles.some((role) =>
+        role === r ||
+        role === `ROLE_${r}` ||
+        role.replace('ROLE_', '') === r
+      );
+    this.isAdmin = hasRole('ADMIN');
+    this.isAgent = hasRole('AGENT');
+    this.isClient = hasRole('CLIENT') || (!this.isAdmin && !this.isAgent);
     this.isAdminOrAgent = this.isAdmin || this.isAgent;
     this.pageDescription = this.isAdmin
       ? 'Full oversight of feedback and complaints'
@@ -75,9 +108,26 @@ export class FeedbackListComponent implements OnInit {
 
     if (this.isAdminOrAgent) {
       this.loadComplaints();
-    } else {
+    } else if (this.isClient) {
       this.loadClientData();
+      this.startClientPolling();
     }
+  }
+
+  ngOnDestroy(): void {
+    if (this.clientPollId) {
+      clearInterval(this.clientPollId);
+      this.clientPollId = null;
+    }
+  }
+
+  private startClientPolling(): void {
+    if (this.clientPollId) return;
+    this.clientPollId = setInterval(() => {
+      if (this.isClient) {
+        this.loadClientComplaints();
+      }
+    }, 10000);
   }
 
   private buildRoleCards(): RoleCard[] {
@@ -120,6 +170,7 @@ export class FeedbackListComponent implements OnInit {
   }
 
   private loadClientData(): void {
+    console.log('[DEBUG] loadClientData called');
     this.loadClientComplaints();
     this.loadClientFeedbacks();
   }
@@ -127,12 +178,45 @@ export class FeedbackListComponent implements OnInit {
   private loadClientComplaints(): void {
     this.loadingClientComplaints = true;
     this.complaintService.getMyComplaints().subscribe({
-      next: (data: any[]) => {
-        this.clientComplaints = data ?? [];
-        this.loadingClientComplaints = false;
+      next: (data: any) => {
+        console.log('[DEBUG] raw complaints response:', data);
+        const payload = data?.data ?? data?.result ?? data?.content ?? data;
+        const baseList = Array.isArray(payload) ? payload : [];
+        console.log('[DEBUG] parsed complaints:', baseList);
+        if (!baseList.length) {
+          this.clientComplaints = [];
+          this.complaints = [];
+          this.loadingClientComplaints = false;
+          // do not return — allow UI to update
+        } else {
+          forkJoin(
+            baseList.map((c: any) =>
+              this.complaintService.getById(c.id).pipe(
+                map((full: any) => {
+                  const fullPayload = full?.data ?? full?.result ?? full;
+                  return { ...c, responses: fullPayload?.responses ?? c?.responses ?? [] } as ClientComplaint;
+                }),
+                catchError(() => of({ ...c, responses: c?.responses ?? [] } as ClientComplaint)),
+              ),
+            ),
+          ).subscribe({
+            next: (fullList) => {
+              this.clientComplaints = fullList;
+              this.complaints = fullList;
+              this.loadingClientComplaints = false;
+            },
+            error: () => {
+              this.clientComplaints = baseList;
+              this.complaints = baseList;
+              this.loadingClientComplaints = false;
+            },
+          });
+        }
       },
-      error: () => {
+      error: (err) => {
+        console.error('[FeedbackList] my complaints error:', err);
         this.clientComplaints = [];
+        this.error = `My complaints request failed (${err?.status ?? 'no-status'}).`;
         this.loadingClientComplaints = false;
       },
     });
@@ -141,11 +225,27 @@ export class FeedbackListComponent implements OnInit {
   private loadClientFeedbacks(): void {
     this.loadingClientFeedbacks = true;
     this.feedbackService.getMyFeedbacks().subscribe({
-      next: (data: any[]) => {
-        this.clientFeedbacks = data ?? [];
+      next: (data: any) => {
+        console.log('[DEBUG] raw feedbacks response:', data);
+        let result: any[] = [];
+        if (Array.isArray(data)) {
+          result = data;
+        } else if (Array.isArray(data?.data)) {
+          result = data.data;
+        } else if (Array.isArray(data?.result)) {
+          result = data.result;
+        } else if (Array.isArray(data?.content)) {
+          result = data.content;
+        } else if (data && typeof data === 'object') {
+          const firstArray = Object.values(data).find(v => Array.isArray(v));
+          result = (firstArray as any[]) ?? [];
+        }
+        console.log('[DEBUG] parsed feedbacks count:', result.length);
+        this.clientFeedbacks = result;
         this.loadingClientFeedbacks = false;
       },
-      error: () => {
+      error: (err) => {
+        console.error('[DEBUG] feedbacks error status:', err?.status);
         this.clientFeedbacks = [];
         this.loadingClientFeedbacks = false;
       },
@@ -201,6 +301,19 @@ export class FeedbackListComponent implements OnInit {
     this.complaintService.delete(id).subscribe({
       next: () => this.loadComplaints(),
       error: () => (this.error = 'Unable to delete complaint.'),
+    });
+  }
+
+  deleteComplaint(id: number): void {
+    if (!confirm('Are you sure you want to cancel this complaint?')) return;
+    this.complaintService.delete(id).subscribe({
+      next: () => {
+        this.clientComplaints = this.clientComplaints.filter(c => c.id !== id);
+        this.complaints = this.complaints.filter(c => c.id !== id);
+      },
+      error: () => {
+        this.error = 'Unable to cancel complaint.';
+      },
     });
   }
 

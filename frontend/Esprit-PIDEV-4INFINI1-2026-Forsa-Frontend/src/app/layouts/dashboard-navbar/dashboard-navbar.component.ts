@@ -1,8 +1,9 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { of } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
+import { ComplaintService } from '../../core/data/complaint.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ProfileService } from '../../core/services/profile.service';
 import { ForsaLogoComponent } from '../../shared/branding/forsa-logo.component';
@@ -25,6 +26,8 @@ function formatSpringAuthority(authority: string): string {
 export class DashboardNavbarComponent {
   readonly auth = inject(AuthService);
   private readonly profileApi = inject(ProfileService);
+  private readonly complaintApi = inject(ComplaintService);
+  private readonly destroyRef = inject(DestroyRef);
 
   /** Blob URL for uploaded profile photo; revoked on change or destroy. */
   private customAvatarRevoke: string | null = null;
@@ -49,9 +52,18 @@ export class DashboardNavbarComponent {
     const seed = (u?.username ?? u?.email ?? 'user').trim() || 'user';
     return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`;
   });
+  readonly responseNotification = signal('');
+  readonly responseNotificationCount = signal(0);
+  private readonly previousResponseCounts = new Map<number, number>();
+  private pollId: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
-    inject(DestroyRef).onDestroy(() => this.revokeCustomAvatar());
+    this.destroyRef.onDestroy(() => {
+      this.revokeCustomAvatar();
+      if (this.pollId) {
+        clearInterval(this.pollId);
+      }
+    });
 
     toObservable(this.auth.currentUser)
       .pipe(
@@ -73,6 +85,8 @@ export class DashboardNavbarComponent {
           this.customAvatarUrl.set(url);
         }
       });
+
+    this.startResponsePolling();
   }
 
   private revokeCustomAvatar(): void {
@@ -88,5 +102,59 @@ export class DashboardNavbarComponent {
   toggleDark(): void {
     this.isDark = !this.isDark;
     document.documentElement.classList.toggle('dark', this.isDark);
+  }
+
+  private isClient(): boolean {
+    const roles = this.auth.currentUser()?.roles ?? [];
+    return roles.includes('CLIENT') || roles.includes('ROLE_CLIENT');
+  }
+
+  private startResponsePolling(): void {
+    this.pollResponses();
+    this.pollId = setInterval(() => this.pollResponses(), 10000);
+  }
+
+  private pollResponses(): void {
+    if (!this.isClient()) return;
+    this.complaintApi
+      .getMyComplaints()
+      .pipe(
+        switchMap((data: any) => {
+          const payload = data?.data ?? data?.result ?? data?.content ?? data;
+          const baseList = Array.isArray(payload) ? payload : [];
+          if (!baseList.length) return of([]);
+          return forkJoin(
+            baseList.map((c: any) =>
+              this.complaintApi.getById(c.id).pipe(
+                map((full: any) => full?.data ?? full?.result ?? full),
+                catchError(() => of(c)),
+              ),
+            ),
+          );
+        }),
+        catchError((err) => {
+          console.error('[Navbar] response polling error:', err);
+          return of([]);
+        }),
+      )
+      .subscribe((complaints: any[]) => {
+        let hasNewResponse = false;
+        for (const c of complaints) {
+          const id = Number(c?.id);
+          if (!id) continue;
+          const currentCount = Array.isArray(c?.responses) ? c.responses.length : 0;
+          const prevCount = this.previousResponseCounts.get(id);
+          if (prevCount !== undefined && currentCount > prevCount) {
+            hasNewResponse = true;
+          }
+          this.previousResponseCounts.set(id, currentCount);
+        }
+        if (hasNewResponse) {
+          const msg = 'You received a new response to your complaint';
+          this.responseNotification.set(msg);
+          this.responseNotificationCount.update((n) => n + 1);
+          alert(msg);
+        }
+      });
   }
 }

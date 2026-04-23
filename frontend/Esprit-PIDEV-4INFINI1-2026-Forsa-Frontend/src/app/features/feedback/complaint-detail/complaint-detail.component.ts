@@ -2,7 +2,11 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
-import { ComplaintService } from '../../../core/data/complaint.service';
+import {
+  ComplaintService,
+  ComplaintCreditEligibility,
+  ComplaintFinancialImpact,
+} from '../../../core/data/complaint.service';
 import { ResponseService } from '../../../core/data/response.service';
 import { ComplaintBackend, ComplaintResponse } from '../../../core/models/forsa.models';
 import { ForsaBadgeComponent } from '../../../shared/ui/forsa-badge/forsa-badge.component';
@@ -31,6 +35,10 @@ export class ComplaintDetailComponent implements OnInit {
   complaintId?: number;
   loading = false;
   error = '';
+  requiredScore = 70;
+  creditEligibility: ComplaintCreditEligibility | null = null;
+  financialImpact: ComplaintFinancialImpact | null = null;
+  financialError = '';
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -43,13 +51,16 @@ export class ComplaintDetailComponent implements OnInit {
   }
 
   get isAdmin(): boolean {
-    return this.auth.currentUser()?.roles?.includes('ROLE_ADMIN') ?? false;
+    const roles = this.auth.currentUser()?.roles ?? [];
+    return roles.includes('ROLE_ADMIN') || roles.includes('ADMIN');
   }
   get isAgent(): boolean {
-    return this.auth.currentUser()?.roles?.includes('ROLE_AGENT') ?? false;
+    const roles = this.auth.currentUser()?.roles ?? [];
+    return roles.includes('ROLE_AGENT') || roles.includes('AGENT');
   }
   get isClient(): boolean {
-    return this.auth.currentUser()?.roles?.includes('ROLE_CLIENT') ?? false;
+    const roles = this.auth.currentUser()?.roles ?? [];
+    return roles.includes('ROLE_CLIENT') || roles.includes('CLIENT');
   }
   get isAdminOrAgent(): boolean {
     return this.isAdmin || this.isAgent;
@@ -61,10 +72,39 @@ export class ComplaintDetailComponent implements OnInit {
     }
     this.loading = true;
     this.error = '';
+    if (this.isClient) {
+      this.complaintService.getMyComplaints().subscribe({
+        next: (data: any) => {
+          const payload = data?.data ?? data?.result ?? data?.content ?? data;
+          const list = Array.isArray(payload) ? payload : [];
+          const found = list.find((c: any) => Number(c?.id) === this.complaintId) ?? null;
+          this.complaint = found;
+          this.responses = Array.isArray(found?.responses) ? found.responses : [];
+          console.log('[ComplaintDetail] client complaint from my-complaints:', found);
+          if (!found) {
+            this.error = 'Complaint not found for current client.';
+          }
+          this.loading = false;
+        },
+        error: (err) => {
+          console.error('[ComplaintDetail] client complaint load error:', err);
+          this.error = 'Unable to load complaint.';
+          this.loading = false;
+        },
+      });
+      return;
+    }
     this.complaintService.getById(this.complaintId).subscribe({
       next: (data: any) => {
-        this.complaint = data;
-        this.loadResponses();
+        const payload = data?.data ?? data?.result ?? data;
+        this.complaint = payload;
+        const embeddedResponses = Array.isArray(payload?.responses) ? payload.responses : [];
+        if (embeddedResponses.length > 0) {
+          this.responses = embeddedResponses;
+          this.loading = false;
+        } else {
+          this.loadResponses();
+        }
       },
       error: () => {
         this.error = this.isClient
@@ -79,12 +119,20 @@ export class ComplaintDetailComponent implements OnInit {
     if (!this.complaintId) {
       return;
     }
+    if (this.isClient) {
+      this.responses = Array.isArray((this.complaint as any)?.responses) ? (this.complaint as any).responses : [];
+      this.loading = false;
+      return;
+    }
     this.responseService.getAll().subscribe({
       next: (all) => {
-        this.responses = (all ?? []).filter((r) => r.complaint?.id === this.complaintId);
+        const list = Array.isArray((all as any)?.data) ? (all as any).data : all;
+        this.responses = (list ?? []).filter((r: any) => r.complaint?.id === this.complaintId);
+        console.log('[ComplaintDetail] responses response:', all);
         this.loading = false;
       },
-      error: () => {
+      error: (err) => {
+        console.error('[ComplaintDetail] responses error:', err);
         this.error = 'Unable to load responses.';
         this.loading = false;
       },
@@ -111,6 +159,56 @@ export class ComplaintDetailComponent implements OnInit {
       },
       error: () => (this.error = 'Unable to generate AI response.'),
     });
+  }
+
+  checkCreditEligibility(requiredScoreRaw?: string | number): void {
+    if (!this.complaintId) {
+      return;
+    }
+
+    const parsed = Number(requiredScoreRaw);
+    const requiredScore = Number.isFinite(parsed) && parsed > 0 ? parsed : this.requiredScore;
+    this.requiredScore = requiredScore;
+    this.financialError = '';
+    this.creditEligibility = null;
+
+    this.complaintService.getCreditEligibility(this.complaintId, requiredScore).subscribe({
+      next: (data: any) => {
+        const payload = data?.data ?? data?.result ?? data;
+        this.creditEligibility = payload ?? null;
+        console.log('[ComplaintDetail] credit eligibility response:', data);
+      },
+      error: (err) => {
+        console.error('[ComplaintDetail] credit eligibility error:', err);
+        this.financialError = 'Unable to fetch credit eligibility.';
+      },
+    });
+  }
+
+  loadFinancialImpact(): void {
+    if (!this.complaintId) {
+      return;
+    }
+
+    this.financialError = '';
+    this.financialImpact = null;
+    this.complaintService.getFinancialImpactScore(this.complaintId).subscribe({
+      next: (data: any) => {
+        const payload = data?.data ?? data?.result ?? data;
+        this.financialImpact = payload ?? null;
+        console.log('[ComplaintDetail] financial impact response:', data);
+      },
+      error: (err) => {
+        console.error('[ComplaintDetail] financial impact error:', err);
+        this.financialError = 'Unable to fetch financial impact score.';
+      },
+    });
+  }
+
+  impactLabel(score?: number): 'Low' | 'Medium' | 'High' {
+    if (!score || score < 35) return 'Low';
+    if (score < 70) return 'Medium';
+    return 'High';
   }
 
   goBack(): void {
