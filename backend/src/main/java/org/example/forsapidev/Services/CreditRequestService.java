@@ -44,6 +44,7 @@ public class CreditRequestService {
     private final CreditScoringService creditScoringService;
     private final UnifiedCreditAnalysisService unifiedCreditAnalysisService;
     private final AgentAssignmentService agentAssignmentService;
+    private final GiftService giftService;
     private final CreditRequestMapper creditRequestMapper;
 
     public CreditRequestService(CreditRequestRepository creditRequestRepository,
@@ -53,6 +54,7 @@ public class CreditRequestService {
                                 CreditScoringService creditScoringService,
                                 UnifiedCreditAnalysisService unifiedCreditAnalysisService,
                                 AgentAssignmentService agentAssignmentService,
+                                GiftService giftService,
                                 CreditRequestMapper creditRequestMapper) {
         this.creditRequestRepository = creditRequestRepository;
         this.repaymentScheduleRepository = repaymentScheduleRepository;
@@ -61,6 +63,7 @@ public class CreditRequestService {
         this.creditScoringService = creditScoringService;
         this.unifiedCreditAnalysisService = unifiedCreditAnalysisService;
         this.agentAssignmentService = agentAssignmentService;
+        this.giftService = giftService;
         this.creditRequestMapper = creditRequestMapper;
     }
 
@@ -318,6 +321,9 @@ public class CreditRequestService {
 
         // Génération du tableau d'amortissement selon le type choisi
         generateRepaymentSchedule(saved);
+
+        // Gift accumulation rule: for every approved credit, accumulate 1.5% and award automatically at threshold.
+        giftService.accumulateForCredit(saved);
 
         logger.info("Crédit ID={} validé avec succès", id);
         return saved;

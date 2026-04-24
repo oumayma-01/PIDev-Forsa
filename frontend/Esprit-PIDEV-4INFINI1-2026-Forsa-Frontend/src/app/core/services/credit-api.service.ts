@@ -99,4 +99,9 @@ export class CreditApiService {
     }
     return this.http.patch<RepaymentScheduleApi>(`${environment.apiBaseUrl}/repayments/${repaymentId}/pay`, null, { params });
   }
+
+  /** Any authenticated role: `GET /api/gifts/me/award-notification` */
+  consumeMyGiftAwardNotification(): Observable<{ show: boolean; amount?: number }> {
+    return this.http.get<{ show: boolean; amount?: number }>(`${environment.apiBaseUrl}/gifts/me/award-notification`);
+  }
 }

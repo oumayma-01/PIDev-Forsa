@@ -53,6 +53,13 @@ public class Gift {
     @Column(name = "awarded_amount", precision = 18, scale = 2)
     private BigDecimal awardedAmount;
 
+    /**
+     * True when the client should be shown the one-time "gift won" notification.
+     * This is consumed by the frontend and then reset to false.
+     */
+    @Column(name = "notification_pending", nullable = false)
+    private Boolean notificationPending = false;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -128,6 +135,15 @@ public class Gift {
 
     public void setAwardedAmount(BigDecimal awardedAmount) {
         this.awardedAmount = awardedAmount;
+    }
+
+    public Boolean getNotificationPending() {
+        return notificationPending;
+    }
+
+    public void setNotificationPending(Boolean notificationPending) {
+        this.notificationPending = notificationPending;
+        this.updatedAt = LocalDateTime.now();
     }
 
     public LocalDateTime getCreatedAt() {
