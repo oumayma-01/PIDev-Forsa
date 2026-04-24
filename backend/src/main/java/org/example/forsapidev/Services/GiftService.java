@@ -62,8 +62,8 @@ public class GiftService {
         logger.info("Accumulation gift pour client {} : capital={}, increment={}",
                 clientId, capital, giftIncrement);
 
-        // Récupérer ou créer le gift du client
-        Gift gift = giftRepository.findByClientId(clientId)
+        // Récupérer ou créer le gift ACTIF du client
+        Gift gift = giftRepository.findFirstByClientIdAndAwardedFalse(clientId)
                 .orElseGet(() -> {
                     Gift newGift = new Gift(clientId);
                     newGift.setThreshold(DEFAULT_THRESHOLD);
@@ -83,7 +83,7 @@ public class GiftService {
         if (gift.isThresholdReached()) {
             logger.info("✅ Seuil atteint pour client {} ! Montant accumulé : {}",
                     clientId, gift.getAccumulatedAmount());
-            awardGift(gift);
+            gift = awardGift(gift);
         }
 
         return gift;
@@ -106,27 +106,18 @@ public class GiftService {
             return gift;
         }
 
-        // Montant à attribuer (peut être le montant accumulé ou un montant fixe 500)
+        // Amount to award: by default we award the whole accumulated amount.
+        // (The threshold only decides *when* to award.)
         BigDecimal awardAmount = gift.getAccumulatedAmount();
 
-        // Option 1: donner tout le montant accumulé
-        // Option 2: donner exactement 500 DT et garder le surplus
-        // Ici on va donner le montant accumulé et réinitialiser
-
         gift.markAsAwarded(awardAmount);
+    gift.setNotificationPending(true);
 
         // TODO: Créer une opération de paiement/transaction pour créditer le client
         // Exemple : paymentService.creditClientAccount(gift.getClientId(), awardAmount, "GIFT");
 
-        logger.info("🎁 Gift attribué au client {} : montant={} DT",
-                gift.getClientId(), awardAmount);
-
-        // Après attribution, réinitialiser pour permettre une nouvelle accumulation
-        // OU créer un nouveau Gift record (selon business)
-        // Ici on réinitialise :
-        gift.setAccumulatedAmount(BigDecimal.ZERO);
-        gift.setAwarded(false);  // Permettre une nouvelle accumulation
-        gift.setUpdatedAt(LocalDateTime.now());
+        logger.info("🎁 Gift awarded to client {} : amount={} DT",
+            gift.getClientId(), awardAmount);
 
         return giftRepository.save(gift);
     }
@@ -135,7 +126,7 @@ public class GiftService {
      * Récupère le gift d'un client
      */
     public Gift getGiftByClientId(Long clientId) {
-        return giftRepository.findByClientId(clientId).orElse(null);
+        return giftRepository.findFirstByClientIdOrderByCreatedAtDesc(clientId).orElse(null);
     }
 
     /**
@@ -162,7 +153,7 @@ public class GiftService {
      * Obtient le montant actuel accumulé pour un client
      */
     public BigDecimal getAccumulatedAmount(Long clientId) {
-        return giftRepository.findByClientId(clientId)
+        return giftRepository.findFirstByClientIdAndAwardedFalse(clientId)
                 .map(Gift::getAccumulatedAmount)
                 .orElse(BigDecimal.ZERO);
     }
@@ -173,6 +164,29 @@ public class GiftService {
     @Transactional
     public Gift saveGift(Gift gift) {
         return giftRepository.save(gift);
+    }
+
+    /**
+     * Returns true if a "gift won" notification is pending for this client and consumes it.
+     */
+    @Transactional
+    public Gift consumeAwardNotification(Long clientId) {
+        if (clientId == null) {
+            return null;
+        }
+
+        Gift gift = giftRepository.findFirstByClientIdAndNotificationPendingTrue(clientId).orElse(null);
+        if (gift == null) {
+            return null;
+        }
+
+        if (Boolean.TRUE.equals(gift.getNotificationPending())) {
+            gift.setNotificationPending(false);
+            giftRepository.save(gift);
+            return gift;
+        }
+
+        return null;
     }
 }
 

@@ -1,77 +1,53 @@
 <div class="page-head">
-  <h2>Nouvelle demande de crédit</h2>
-  <p>Soumettez une demande avec rapport médical (PDF ou image).</p>
+  <h2>New Credit Request</h2>
+  <p>Submit a request with a medical report (PDF or image).</p>
 </div>
 
 <app-forsa-card>
   <div class="card-pad-lg">
     @if (message()) {
-      <p class="notice" role="status">{{ message() }}</p>
+    <p class="notice" role="status">{{ message() }}</p>
     }
     @if (error()) {
-      <p class="notice notice--err" role="alert">{{ error() }}</p>
+    <p class="notice notice--err" role="alert">{{ error() }}</p>
     }
 
     <form class="stack" (ngSubmit)="submit()">
       <div class="grid">
         <div>
-          <label class="forsa-label" for="cr-amount">Montant demandé</label>
-          <input
-            id="cr-amount"
-            forsaInput
-            class="input-h-12"
-            type="number"
-            name="amountRequested"
-            [(ngModel)]="amountRequested"
-            min="0"
-            step="0.01"
-            required
-          />
+          <label class="forsa-label" for="cr-amount">Requested amount DT</label>
+          <input id="cr-amount" forsaInput class="input-h-12" type="number" name="amountRequested"
+            [(ngModel)]="amountRequested" min="0" step="0.01" required />
         </div>
         <div>
-          <label class="forsa-label" for="cr-duration">Durée (mois)</label>
-          <input
-            id="cr-duration"
-            forsaInput
-            class="input-h-12"
-            type="number"
-            name="durationMonths"
-            [(ngModel)]="durationMonths"
-            min="1"
-            step="1"
-            required
-          />
+          <label class="forsa-label" for="cr-duration">Duration (months)</label>
+          <input id="cr-duration" forsaInput class="input-h-12" type="number" name="durationMonths"
+            [(ngModel)]="durationMonths" min="1" step="1" required />
         </div>
         <div>
-          <label class="forsa-label" for="cr-type">Type de calcul</label>
+          <label class="forsa-label" for="cr-type">Calculation type</label>
           <select id="cr-type" class="forsa-input input-h-12" name="typeCalcul" [(ngModel)]="typeCalcul" required>
             <option value="AMORTISSEMENT_CONSTANT">AMORTISSEMENT_CONSTANT</option>
             <option value="ANNUITE_CONSTANTE">ANNUITE_CONSTANTE</option>
           </select>
         </div>
         <div>
-          <label class="forsa-label">Rapport médical</label>
+          <label class="forsa-label">Medical report</label>
           <div class="file-row">
-            <input
-              #fileInput
-              type="file"
-              class="visually-hidden"
-              title="Choisir un rapport médical"
-              accept="application/pdf,image/*"
-              (change)="onHealthReportSelected($event)"
-            />
+            <input #fileInput type="file" class="visually-hidden" title="Choose a medical report"
+              accept="application/pdf,image/*" (change)="onHealthReportSelected($event)" />
             <app-forsa-button type="button" variant="secondary" [disabled]="busy()" (clicked)="fileInput.click()">
               <app-forsa-icon name="send" [size]="16" />
-              Choisir fichier
+              Choose file
             </app-forsa-button>
-            <span class="text-muted file-name">{{ healthReportName() || 'Aucun fichier choisi' }}</span>
+            <span class="text-muted file-name">{{ healthReportName() || 'No file chosen' }}</span>
           </div>
         </div>
       </div>
 
       <div class="actions">
-        <app-forsa-button type="submit" [disabled]="busy()">{{ busy() ? 'Envoi...' : 'Soumettre' }}</app-forsa-button>
-        <app-forsa-button variant="outline" link="/dashboard/credit">Annuler</app-forsa-button>
+        <app-forsa-button type="submit" [disabled]="busy()">{{ busy() ? 'Sending...' : 'Submit' }}</app-forsa-button>
+        <app-forsa-button variant="outline" link="/dashboard/credit">Cancel</app-forsa-button>
       </div>
     </form>
   </div>

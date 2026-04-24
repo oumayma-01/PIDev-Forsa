@@ -140,7 +140,7 @@ export class CreditDetailComponent {
     this.api.approveCredit(c.id).subscribe({
       next: (updated) => {
         this.actionBusy.set(false);
-        this.actionMessage.set('Crédit approuvé.');
+        this.actionMessage.set('Credit approved.');
         this.credit.set(updated);
         this.loadScheduleIfAllowed(updated);
         if (this.isRepaymentScheduleAvailable(updated.status)) {
@@ -167,7 +167,7 @@ export class CreditDetailComponent {
 
     const reason = this.rejectReason.trim();
     if (!reason) {
-      this.actionError.set('Veuillez saisir une raison de rejet.');
+      this.actionError.set('Please enter a rejection reason.');
       return;
     }
 
@@ -175,7 +175,7 @@ export class CreditDetailComponent {
     this.api.rejectCredit(c.id, { reason }).subscribe({
       next: (updated) => {
         this.actionBusy.set(false);
-        this.actionMessage.set('Crédit rejeté.');
+        this.actionMessage.set('Credit rejected.');
         this.credit.set(updated);
       },
       error: (err) => {
@@ -195,7 +195,7 @@ export class CreditDetailComponent {
     this.api.payRepayment(r.id).subscribe({
       next: (updated) => {
         this.payBusyId.set(null);
-        this.actionMessage.set('Paiement enregistré.');
+        this.actionMessage.set('Payment recorded.');
         this.repayments.update((list) => list.map((x) => (x.id === updated.id ? updated : x)));
         // refresh credit status (ACTIVE/REPAID)
         const creditId = this.credit()?.id;
