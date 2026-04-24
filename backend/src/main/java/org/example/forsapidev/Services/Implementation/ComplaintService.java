@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ComplaintService implements IComplaintService {
+    private static final double MICRO_CREDIT_MAX_AMOUNT = 5000.0;
 
     private final ComplaintRepository complaintRepository;
     private final ComplaintAiAssistant complaintAiAssistant;
@@ -70,7 +71,19 @@ public class ComplaintService implements IComplaintService {
 
     @Override
     public Complaint modifyComplaint(Complaint complaint) {
-        return complaintRepository.save(complaint);
+        if (complaint == null || complaint.getId() == null) return null;
+        Complaint existing = complaintRepository.findById(complaint.getId()).orElse(null);
+        if (existing == null) return null;
+
+        existing.setSubject(complaint.getSubject());
+        existing.setDescription(complaint.getDescription());
+        existing.setCategory(complaint.getCategory());
+        existing.setPriority(complaint.getPriority());
+        if (complaint.getStatus() != null) {
+            existing.setStatus(complaint.getStatus());
+        }
+
+        return complaintRepository.save(existing);
     }
 
     @Override
@@ -285,7 +298,7 @@ public class ComplaintService implements IComplaintService {
                     ChronoUnit.DAYS.between(complaint.getCreatedAt().toInstant(), Instant.now()));
         }
 
-        double amountScore = Math.min(100.0, amount / 100.0);
+        double amountScore = amountScore(amount);
         double priorityScore = priorityScore(complaint.getPriority());
         double ageScore = Math.min(100.0, daysSinceCreation * 3.33);
 
@@ -361,6 +374,15 @@ public class ComplaintService implements IComplaintService {
             case HIGH -> 75.0;
             case CRITICAL -> 100.0;
         };
+    }
+
+    private double amountScore(double amount) {
+        if (amount <= 0) {
+            return 0.0;
+        }
+        double clampedAmount = Math.min(amount, MICRO_CREDIT_MAX_AMOUNT);
+        double normalized = Math.log(clampedAmount + 1.0) / Math.log(MICRO_CREDIT_MAX_AMOUNT + 1.0);
+        return Math.max(0.0, Math.min(100.0, normalized * 100.0));
     }
 
     private double round2(double value) {
