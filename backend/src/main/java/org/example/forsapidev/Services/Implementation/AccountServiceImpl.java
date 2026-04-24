@@ -1,5 +1,6 @@
 package org.example.forsapidev.Services.Implementation;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.forsapidev.DTO.AccountTypeAdviceDTO;
 import org.example.forsapidev.DTO.AdaptiveInterestResultDTO;
@@ -69,23 +70,25 @@ public class AccountServiceImpl implements AccountService {
 
     @Transactional
     @Override
-    public Account createAccount(Long ownerId, String type) {
+    public Account createAccount(Long ownerId, String type, String holderName) {
+        var user = userRepo.findById(ownerId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + ownerId));
+
         Wallet wallet = new Wallet();
         wallet.setOwnerId(ownerId);
         wallet.setBalance(BigDecimal.ZERO);
+        walletRepo.save(wallet);
 
-        Wallet savedWallet = walletRepo.save(wallet);
+        String resolvedName = (holderName != null && !holderName.isBlank())
+                ? holderName
+                : user.getUsername() != null ? user.getUsername() : "User #" + ownerId;
 
         Account account = new Account();
         account.setWallet(wallet);
-
-        if (type.equalsIgnoreCase("INVESTMENT")) {
-            account.setType(AccountType.INVESTMENT);
-            account.setStatus(AccountStatus.BLOCKED);
-        } else {
-            account.setType(AccountType.SAVINGS);
-            account.setStatus(AccountStatus.ACTIVE);
-        }
+        account.setOwner(user);
+        account.setAccountHolderName(resolvedName);
+        account.setType(type.equalsIgnoreCase("INVESTMENT") ? AccountType.INVESTMENT : AccountType.SAVINGS);
+        account.setStatus(AccountStatus.ACTIVE);
 
         Account saved = accountRepo.save(account);
         logActivity(wallet, "Account created of type: " + type);
@@ -240,16 +243,110 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public WalletForecastDTO forecastBalance(Long accountId, int days) {
-        return null;
+        Wallet wallet = findWallet(accountId);
+        BigDecimal currentBalance = wallet.getBalance();
+        WalletStatisticsDTO stats = getStatistics(accountId);
+
+        String systemPrompt = "You are a financial AI assistant. Predict the wallet balance. Return ONLY valid JSON, no markdown: {\"predictedBalance\": 1234.56, \"trend\": \"increasing\", \"explanation\": \"...\"}. trend must be one of: increasing, stable, decreasing.";
+        String userMessage = String.format(
+                "Current balance: %s. Total deposits: %s. Total withdrawals: %s. Transactions count: %d. Forecast for %d days.",
+                currentBalance.toPlainString(),
+                stats.getTotalDeposits() != null ? stats.getTotalDeposits().toPlainString() : "0",
+                stats.getTotalWithdrawals() != null ? stats.getTotalWithdrawals().toPlainString() : "0",
+                stats.getNumberOfTransactions(),
+                days
+        );
+
+        try {
+            String raw = walletAiService.askAI(systemPrompt, userMessage)
+                    .trim().replaceAll("(?s)```json|```", "").trim();
+            JsonNode node = mapper.readTree(raw);
+            BigDecimal predicted = new BigDecimal(node.path("predictedBalance").asText("0"))
+                    .setScale(2, RoundingMode.HALF_UP);
+            String trend = node.path("trend").asText("stable");
+            String explanation = node.path("explanation").asText("");
+            return new WalletForecastDTO(currentBalance, predicted, days, trend, explanation);
+        } catch (Exception e) {
+            BigDecimal net = (stats.getTotalDeposits() != null ? stats.getTotalDeposits() : BigDecimal.ZERO)
+                    .subtract(stats.getTotalWithdrawals() != null ? stats.getTotalWithdrawals() : BigDecimal.ZERO);
+            BigDecimal txCount = new BigDecimal(Math.max(stats.getNumberOfTransactions(), 1));
+            BigDecimal dailyNet = net.divide(txCount, 2, RoundingMode.HALF_UP);
+            BigDecimal predicted = currentBalance.add(dailyNet.multiply(new BigDecimal(days))).setScale(2, RoundingMode.HALF_UP);
+            String trend = dailyNet.compareTo(BigDecimal.ZERO) > 0 ? "increasing"
+                    : dailyNet.compareTo(BigDecimal.ZERO) < 0 ? "decreasing" : "stable";
+            return new WalletForecastDTO(currentBalance, predicted, days, trend, "Projection based on average transaction pattern.");
+        }
     }
 
     @Override
+    @Transactional
     public AdaptiveInterestResultDTO applyAdaptiveInterest(Long accountId) {
-        return null;
+        Account account = findAccount(accountId);
+        if (account.getType() != AccountType.INVESTMENT)
+            throw new RuntimeException("Adaptive interest only applies to INVESTMENT accounts");
+
+        Wallet wallet = account.getWallet();
+        BigDecimal previousBalance = wallet.getBalance();
+        WalletStatisticsDTO stats = getStatistics(accountId);
+
+        String systemPrompt = "You are a financial AI system. Recommend an adaptive monthly interest rate between 0.5 and 3.0 percent. Return ONLY valid JSON: {\"ratePercent\": 1.5, \"justification\": \"...\"}. ratePercent must be a number between 0.5 and 3.0.";
+        String userMessage = String.format(
+                "INVESTMENT account. Balance: %s. Total deposits: %s. Total withdrawals: %s. Transactions: %d.",
+                previousBalance.toPlainString(),
+                stats.getTotalDeposits() != null ? stats.getTotalDeposits().toPlainString() : "0",
+                stats.getTotalWithdrawals() != null ? stats.getTotalWithdrawals().toPlainString() : "0",
+                stats.getNumberOfTransactions()
+        );
+
+        double ratePercent = 1.0;
+        String justification = "Standard monthly interest rate applied.";
+        try {
+            String raw = walletAiService.askAI(systemPrompt, userMessage)
+                    .trim().replaceAll("(?s)```json|```", "").trim();
+            JsonNode node = mapper.readTree(raw);
+            ratePercent = Math.max(0.5, Math.min(3.0, node.path("ratePercent").asDouble(1.0)));
+            justification = node.path("justification").asText(justification);
+        } catch (Exception ignored) {}
+
+        BigDecimal rate = BigDecimal.valueOf(ratePercent / 100.0).setScale(6, RoundingMode.HALF_UP);
+        BigDecimal interest = previousBalance.multiply(rate).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal newBalance = previousBalance.add(interest);
+
+        wallet.setBalance(newBalance);
+        walletRepo.save(wallet);
+        saveTransaction(wallet, interest, TransactionType.INTEREST);
+        logActivity(wallet, String.format("Adaptive interest %.2f%% applied: +%s", ratePercent, interest));
+
+        return new AdaptiveInterestResultDTO(accountId, previousBalance, interest, newBalance, ratePercent, justification);
     }
 
     @Override
     public AccountTypeAdviceDTO adviseAccountType(Long accountId) {
-        return null;
+        Account account = findAccount(accountId);
+        Wallet wallet = account.getWallet();
+        WalletStatisticsDTO stats = getStatistics(accountId);
+
+        String systemPrompt = "You are a financial AI advisor. Recommend SAVINGS or INVESTMENT account type. Return ONLY valid JSON: {\"recommendedType\": \"SAVINGS\", \"changeAdvised\": false, \"reasoning\": \"...\"}. recommendedType must be SAVINGS or INVESTMENT.";
+        String userMessage = String.format(
+                "Account type: %s. Balance: %s. Total deposits: %s. Total withdrawals: %s. Transactions: %d.",
+                account.getType().name(),
+                wallet.getBalance().toPlainString(),
+                stats.getTotalDeposits() != null ? stats.getTotalDeposits().toPlainString() : "0",
+                stats.getTotalWithdrawals() != null ? stats.getTotalWithdrawals().toPlainString() : "0",
+                stats.getNumberOfTransactions()
+        );
+
+        try {
+            String raw = walletAiService.askAI(systemPrompt, userMessage)
+                    .trim().replaceAll("(?s)```json|```", "").trim();
+            JsonNode node = mapper.readTree(raw);
+            String recommended = node.path("recommendedType").asText(account.getType().name());
+            boolean changeAdvised = node.path("changeAdvised").asBoolean(false);
+            String reasoning = node.path("reasoning").asText("");
+            return new AccountTypeAdviceDTO(accountId, account.getType().name(), recommended, changeAdvised, reasoning);
+        } catch (Exception e) {
+            return new AccountTypeAdviceDTO(accountId, account.getType().name(), account.getType().name(), false,
+                    "Continue with your current account type.");
+        }
     }
 }

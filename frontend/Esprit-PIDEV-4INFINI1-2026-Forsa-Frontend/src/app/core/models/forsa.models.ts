@@ -143,6 +143,68 @@ export interface ScoringClientDemo {
   latestScore: ScoreResult;
   sampleLoanRisk: RiskMetrics;
 }
+
+// ── AI scoring (Python service, proxied via /api/ai-score/*) ─────────────────
+
+/** Request body for POST /api/ai-score/calculate/{clientId}. */
+export interface AIScoreRequest {
+  clientId: number;
+  monthlySalary: number;
+  stegPaidOnTime: boolean;
+  sondePaidOnTime: boolean;
+  cinVerified: boolean;
+}
+
+/** Score bands returned by the AI agent. */
+export type AIScoreLevel =
+  | 'VERY_LOW'
+  | 'LOW'
+  | 'MEDIUM'
+  | 'GOOD'
+  | 'VERY_GOOD'
+  | 'EXCELLENT'
+  | 'PREMIUM';
+
+/** Individual feature vector from the AI agent. */
+export interface AIScoreFeatures {
+  f1_salary: number;
+  f2_income_stability: number;
+  f3_savings_rate: number;
+  f4_account_age: number;
+  f5_current_balance: number;
+  f6_activity: number;
+  f7_avg_income: number;
+  f8_steg_on_time: number;
+  f9_sonede_on_time: number;
+  f10_cin_verified: number;
+}
+
+/** One criterion row inside score_details (Python v3). */
+export interface AIScoreDetailItem {
+  points: number;
+  max: number;
+  comment: string;
+  valeur?: number;
+}
+
+/** Full AI agent response (score + Mistral explanation). */
+export interface AIScoreResponse {
+  clientId: number;
+  /** Score from 0 to 1000. */
+  score: number;
+  scoreLevel: AIScoreLevel;
+  /** Maximum authorized loan amount in TND. */
+  creditThreshold: number;
+  salaryVerified: number;
+  /** Natural-language explanation from Mistral. */
+  explanation: string;
+  features: AIScoreFeatures;
+  /** Per-criterion breakdown (v3 scoring). */
+  scoreDetails?: Record<string, AIScoreDetailItem>;
+  /** True when banking-derived features exist in DB. */
+  hasDbData?: boolean;
+}
+
 // ===== ENUMS =====
 export type Category = 'TECHNICAL' | 'FINANCE' | 'SUPPORT' | 'FRAUD' | 'ACCOUNT' | 'CREDIT' | 'OTHER';
 export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
