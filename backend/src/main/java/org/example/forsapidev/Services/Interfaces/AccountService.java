@@ -8,12 +8,15 @@ import org.example.forsapidev.entities.WalletManagement.Account;
 import org.example.forsapidev.entities.WalletManagement.Activity;
 import org.example.forsapidev.entities.WalletManagement.Transaction;
 import org.example.forsapidev.entities.WalletManagement.TransactionType;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 public interface AccountService {
 
+
+    @Transactional
     Account createAccount(Long ownerId, String type);
 
     Account getAccount(Long accountId);
@@ -22,17 +25,19 @@ public interface AccountService {
     Account updateAccountStatus(Long accountId, String status);
     void deleteAccount(Long accountId);
 
-    // now carry requestingUserId for ownership verification
-    void deposit(Long accountId, BigDecimal amount, Long requestingUserId);
-    void withdraw(Long accountId, BigDecimal amount, Long requestingUserId);
-    void transfer(Long fromAccountId, Long toAccountId, BigDecimal amount, Long requestingUserId);
+    // ── OPERATIONS ───────────────────────────────────────────────────────────
+    void deposit(Long accountId, BigDecimal amount);
+    void withdraw(Long accountId, BigDecimal amount);
+    void transfer(Long fromAccountId, Long toAccountId, BigDecimal amount);
     void applyMonthlyInterest();
 
+    // ── QUERIES ──────────────────────────────────────────────────────────────
     BigDecimal getBalance(Long accountId);
     WalletStatisticsDTO getStatistics(Long accountId);
     List<Transaction> filterTransactions(Long accountId, TransactionType type);
     List<Activity> getActivities(Long accountId);
 
+    // ── IA ───────────────────────────────────────────────────────────────────
     WalletForecastDTO forecastBalance(Long accountId, int days);
     AdaptiveInterestResultDTO applyAdaptiveInterest(Long accountId);
     AccountTypeAdviceDTO adviseAccountType(Long accountId);

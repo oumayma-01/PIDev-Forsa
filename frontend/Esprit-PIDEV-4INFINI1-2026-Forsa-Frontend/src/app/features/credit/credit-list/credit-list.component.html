@@ -1,71 +1,159 @@
 <div class="page-toolbar">
   <div class="page-head">
-    <h2>Credit Management</h2>
-    <p>Manage and track all credit requests and disbursements.</p>
+    <h2>Crédit</h2>
+    @if (isAdmin()) {
+      <p>Vue globale de tous les crédits.</p>
+    } @else if (isAgent()) {
+      <p>Crédits en attente de traitement.</p>
+    } @else {
+      <p>Simulation et création de demande.</p>
+    }
   </div>
-  <app-forsa-button>
-    <app-forsa-icon name="plus" [size]="16" />
-    New Request
-  </app-forsa-button>
+  <div class="toolbar-actions">
+    <app-forsa-button variant="outline" link="/dashboard/credit/simulate">Simuler</app-forsa-button>
+    @if (isClient()) {
+      <app-forsa-button link="/dashboard/credit/new">
+        <app-forsa-icon name="plus" [size]="16" />
+        Nouvelle demande
+      </app-forsa-button>
+    }
+  </div>
 </div>
 
-<app-forsa-card>
-  <div class="card-pad-lg table-wrap">
-    <div class="table-head">
-      <h3>Credit Requests</h3>
-      <div class="table-actions">
-        <div class="search">
-          <app-forsa-icon name="search" [size]="16" />
-          <input forsaInput type="search" placeholder="Search clients..." class="search__input" />
-        </div>
-        <app-forsa-button variant="outline" size="sm">
-          <app-forsa-icon name="filter" [size]="16" />
-          Filter
+@if (error()) {
+  <p class="notice notice--err" role="alert">{{ error() }}</p>
+}
+
+@if (isClient()) {
+  <app-forsa-card>
+    <div class="card-pad-lg">
+      <h3 class="sec-title">Espace client</h3>
+      <p class="text-muted">
+        Vous pouvez simuler un crédit et créer une demande. Après création, vous serez redirigé vers le détail du
+        crédit.
+      </p>
+    </div>
+  </app-forsa-card>
+
+  <app-forsa-card>
+    <div class="card-pad-lg table-wrap">
+      <div class="table-head">
+        <h3 class="sec-title">Échéancier de remboursement</h3>
+        <app-forsa-button variant="ghost" size="sm" [disabled]="loading()" (clicked)="load()">
+          <app-forsa-icon name="history" [size]="16" />
+          Rafraîchir
         </app-forsa-button>
       </div>
-    </div>
 
-    <table class="forsa-table">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Client</th>
-          <th>Amount</th>
-          <th>Purpose</th>
-          <th>Risk Score</th>
-          <th>Status</th>
-          <th>Date</th>
-          <th class="right">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (c of credits; track c.id) {
-          <tr>
-            <td class="mono">{{ c.id }}</td>
-            <td>{{ c.clientName }}</td>
-            <td class="fw-semibold">${{ c.amount | number }}</td>
-            <td class="text-muted">{{ c.purpose }}</td>
-            <td>
-              <div class="risk">
-                <div class="risk-bar">
-                  <div class="risk-bar__fill" [class]="riskClass(c.riskScore)" [style.width.%]="c.riskScore"></div>
-                </div>
-                <span class="risk__val">{{ c.riskScore }}</span>
-              </div>
-            </td>
-            <td>
-              <app-forsa-badge [tone]="statusTone(c.status)">{{ c.status }}</app-forsa-badge>
-            </td>
-            <td class="text-muted sm">{{ c.date }}</td>
-            <td class="right">
-              <app-forsa-button variant="ghost" size="sm">
-                <app-forsa-icon name="more-vertical" [size]="16" />
-                More
-              </app-forsa-button>
-            </td>
-          </tr>
+      @if (loading()) {
+        <p class="text-muted">Chargement...</p>
+      }
+
+      @if (!loading() && !activeCredit()) {
+        <p class="text-muted">Aucun crédit approuvé/actif trouvé pour afficher l’échéancier.</p>
+      }
+
+      @if (activeCredit(); as c) {
+        @if (repaymentsError()) {
+          <p class="notice notice--err" role="alert">{{ repaymentsError() }}</p>
         }
-      </tbody>
-    </table>
-  </div>
-</app-forsa-card>
+
+        @if (repaymentsLoading()) {
+          <p class="text-muted">Chargement des échéances...</p>
+        }
+
+        @if (!repaymentsLoading() && repayments().length === 0) {
+          <p class="text-muted">
+            Aucune échéance pour ce crédit.
+            @if (!c.status || c.status === 'SUBMITTED' || c.status === 'UNDER_REVIEW') {
+              <span> Elles sont générées après approbation/validation (statut actuel: {{ c.status ?? '-' }}).</span>
+            }
+          </p>
+        }
+
+        @if (repayments().length > 0) {
+          <table class="forsa-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Échéance</th>
+                <th>Montant</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of repayments(); track r.id) {
+                <tr>
+                  <td class="mono">{{ r.id }}</td>
+                  <td>{{ r.dueDate }}</td>
+                  <td class="fw-semibold">{{ r.totalAmount | number: '1.2-2' }}</td>
+                  <td>
+                    <app-forsa-badge [tone]="repaymentTone(r.status)">{{ r.status }}</app-forsa-badge>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      }
+    </div>
+  </app-forsa-card>
+} @else {
+  <app-forsa-card>
+    <div class="card-pad-lg table-wrap">
+      <div class="table-head">
+        <h3 class="sec-title">Crédits</h3>
+        <app-forsa-button variant="ghost" size="sm" [disabled]="loading()" (clicked)="load()">
+          <app-forsa-icon name="history" [size]="16" />
+          Rafraîchir
+        </app-forsa-button>
+      </div>
+
+      @if (loading()) {
+        <p class="text-muted">Chargement...</p>
+      }
+
+      @if (!loading() && credits().length === 0) {
+        <p class="text-muted">Aucun crédit à afficher.</p>
+      }
+
+      @if (credits().length > 0) {
+        <table class="forsa-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Client</th>
+              <th>Montant</th>
+              <th>Durée</th>
+              <th>Statut</th>
+              <th>Date</th>
+              <th>Agent</th>
+              <th class="right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of credits(); track c.id) {
+              <tr>
+                <td class="mono">{{ c.id }}</td>
+                <td>{{ c.user?.username || ('#' + (c.user?.id ?? '—')) }}</td>
+                <td class="fw-semibold">{{ c.amountRequested | number: '1.2-2' }}</td>
+                <td class="text-muted">{{ c.durationMonths ?? '-' }}</td>
+                <td>
+                  <app-forsa-badge [tone]="statusTone(c.status)">{{ c.status ?? '—' }}</app-forsa-badge>
+                </td>
+                <td class="text-muted sm">{{ c.requestDate ?? '-' }}</td>
+                <td class="text-muted">{{ c.agentId ?? '-' }}</td>
+                <td class="right">
+                  <app-forsa-button variant="ghost" size="sm" [link]="'/dashboard/credit/' + c.id">
+                    <app-forsa-icon name="eye" [size]="16" />
+                    Détail
+                  </app-forsa-button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  </app-forsa-card>
+}

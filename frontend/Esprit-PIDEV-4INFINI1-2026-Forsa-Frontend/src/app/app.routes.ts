@@ -14,6 +14,7 @@ import { LandingPageComponent } from './features/landing/landing-page.component'
 import { WalletOverviewComponent } from './features/wallet/wallet-overview/wallet-overview.component';
 import { PartenariatListComponent } from './features/partenariat/partenariat-list/partenariat-list.component';
 import { ScoringWorkbenchComponent } from './features/scoring/scoring-workbench/scoring-workbench.component';
+import { ScoreRequestComponent } from './features/scoring/score-request/score-request.component';
 import { DashboardLayoutComponent } from './layouts/dashboard-layout/dashboard-layout.component';
 
 export const routes: Routes = [
@@ -44,7 +45,31 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/profile/profile-page/profile-page.component').then((m) => m.ProfilePageComponent),
       },
-      { path: 'credit', component: CreditListComponent },
+      {
+        path: 'credit',
+        children: [
+          { path: '', component: CreditListComponent },
+          {
+            path: 'simulate',
+            loadComponent: () =>
+              import('./features/credit/credit-simulate/credit-simulate.component').then(
+                (m) => m.CreditSimulateComponent,
+              ),
+          },
+          {
+            path: 'new',
+            loadComponent: () =>
+              import('./features/credit/credit-request-new/credit-request-new.component').then(
+                (m) => m.CreditRequestNewComponent,
+              ),
+          },
+          {
+            path: ':id',
+            loadComponent: () =>
+              import('./features/credit/credit-detail/credit-detail.component').then((m) => m.CreditDetailComponent),
+          },
+        ],
+      },
       { path: 'wallet', component: WalletOverviewComponent },
       { path: 'insurance', loadChildren: () => import('./features/insurance/insurance.routes').then(m => m.insuranceRoutes) },
       {
@@ -110,12 +135,19 @@ export const routes: Routes = [
       },
       { path: 'partenariat', component: PartenariatListComponent },
       { path: 'scoring', component: ScoringWorkbenchComponent },
+      { path: 'ai-score', component: ScoreRequestComponent },
       { path: 'ai', component: RiskAnalysisComponent },
       {
         path: 'users',
         canMatch: [adminGuard],
         loadComponent: () =>
           import('./features/admin/user-management/user-management.component').then((m) => m.UserManagementComponent),
+      },
+      {
+        path: 'roles',
+        canMatch: [adminGuard],
+        loadComponent: () =>
+          import('./features/admin/role-management/role-management.component').then((m) => m.RoleManagementComponent),
       },
     ],
   },

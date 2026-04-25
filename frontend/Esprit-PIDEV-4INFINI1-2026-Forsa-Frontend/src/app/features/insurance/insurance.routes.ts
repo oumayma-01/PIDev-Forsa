@@ -75,6 +75,14 @@ export const insuranceRoutes: Routes = [
       ),
   },
   {
+    path: 'claims-analytics',
+    canMatch: [backOfficeGuard],
+    loadComponent: () =>
+      import('./insurance-claims/pages/claims-dashboard/claims-dashboard.component').then(
+        (m) => m.ClaimsDashboardComponent,
+      ),
+  },
+  {
     path: 'claims/new',
     canMatch: [backOfficeGuard],
     loadComponent: () =>

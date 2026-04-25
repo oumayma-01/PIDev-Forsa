@@ -1,0 +1,40 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.notice {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-lg, 0.75rem);
+  border: 1px solid color-mix(in oklab, var(--color-border) 50%, transparent);
+  background: color-mix(in oklab, var(--color-muted) 50%, transparent);
+}
+
+.notice--err {
+  background: color-mix(in oklab, var(--color-destructive) 10%, transparent);
+}
+
+.file-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.file-name {
+  font-size: 0.875rem;
+}

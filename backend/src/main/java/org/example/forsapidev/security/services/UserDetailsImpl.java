@@ -1,6 +1,7 @@
 package org.example.forsapidev.security.services;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.example.forsapidev.entities.UserManagement.ERole;
 import org.example.forsapidev.entities.UserManagement.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -57,6 +58,14 @@ public class UserDetailsImpl implements UserDetails {
 
   public Long getId() {
     return id;
+  }
+
+  /** Application role (CLIENT, AGENT, ADMIN) without the {@code ROLE_} prefix. */
+  public ERole getAppRole() {
+    return authorities.stream()
+        .findFirst()
+        .map(a -> ERole.valueOf(a.getAuthority().replace("ROLE_", "")))
+        .orElseThrow(() -> new IllegalStateException("Missing role authority"));
   }
 
   public String getEmail() {

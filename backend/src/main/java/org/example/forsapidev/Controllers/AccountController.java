@@ -10,10 +10,8 @@ import org.example.forsapidev.entities.WalletManagement.Account;
 import org.example.forsapidev.entities.WalletManagement.Activity;
 import org.example.forsapidev.entities.WalletManagement.Transaction;
 import org.example.forsapidev.entities.WalletManagement.TransactionType;
-import org.example.forsapidev.security.services.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -30,24 +28,15 @@ public class AccountController {
         this.accountService = accountService;
     }
 
-    // CLIENT creates their own account — ownerId from JWT, not from request
+    // Create account - accessible to all authenticated users
     @SecurityRequirement(name = "Bearer Authentication")
-    @PreAuthorize("hasRole('CLIENT')")
     @PostMapping("/create")
-    public Account createAccount(@AuthenticationPrincipal UserDetailsImpl currentUser,
+    public Account createAccount(@RequestParam Long ownerId,
                                  @RequestParam String type) {
-        return accountService.createAccount(currentUser.getId(), type);
+        return accountService.createAccount(ownerId, type);
     }
 
-    // CLIENT sees their own accounts — this solves the "forgotten account ID" problem
-    @SecurityRequirement(name = "Bearer Authentication")
-    @PreAuthorize("hasRole('CLIENT')")
-    @GetMapping("/my-accounts")
-    public List<Account> getMyAccounts(@AuthenticationPrincipal UserDetailsImpl currentUser) {
-        return accountService.getAccountsByOwner(currentUser.getId());
-    }
-
-    // ADMIN sees all accounts
+    // Get all accounts - ADMIN ONLY
     @SecurityRequirement(name = "Bearer Authentication")
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/all")
@@ -55,14 +44,14 @@ public class AccountController {
         return accountService.getAllAccounts();
     }
 
-    // Get single account — any authenticated user (service handles access)
+    // Get single account
     @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping("/{id}")
     public Account getAccount(@PathVariable Long id) {
         return accountService.getAccount(id);
     }
 
-    // ADMIN only
+    // Delete account - ADMIN ONLY
     @SecurityRequirement(name = "Bearer Authentication")
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
@@ -71,7 +60,7 @@ public class AccountController {
         return "Account deleted successfully";
     }
 
-    // ADMIN only — block or activate an account
+    // Update account status - ADMIN ONLY
     @SecurityRequirement(name = "Bearer Authentication")
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}/status")
@@ -80,49 +69,37 @@ public class AccountController {
         return accountService.updateAccountStatus(id, status);
     }
 
-    // ADMIN only — look up accounts by any user ID
+    // Get accounts by owner
     @SecurityRequirement(name = "Bearer Authentication")
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/owner/{ownerId}")
     public List<Account> getAccountsByOwner(@PathVariable Long ownerId) {
         return accountService.getAccountsByOwner(ownerId);
     }
-
-    // CLIENT only — deposit into their own account
     @SecurityRequirement(name = "Bearer Authentication")
-    @PreAuthorize("hasRole('CLIENT')")
     @PostMapping("/{id}/deposit")
     public String deposit(@PathVariable Long id,
-                          @RequestParam BigDecimal amount,
-                          @AuthenticationPrincipal UserDetailsImpl currentUser) {
-        accountService.deposit(id, amount, currentUser.getId());
+                          @RequestParam BigDecimal amount) {
+        accountService.deposit(id, amount);
         return "Deposit successful";
     }
 
-    // CLIENT only — withdraw from their own account
     @SecurityRequirement(name = "Bearer Authentication")
-    @PreAuthorize("hasRole('CLIENT')")
     @PostMapping("/{id}/withdraw")
     public String withdraw(@PathVariable Long id,
-                           @RequestParam BigDecimal amount,
-                           @AuthenticationPrincipal UserDetailsImpl currentUser) {
-        accountService.withdraw(id, amount, currentUser.getId());
+                           @RequestParam BigDecimal amount) {
+        accountService.withdraw(id, amount);
         return "Withdrawal successful";
     }
 
-    // CLIENT only — transfer from their own account to any other account
     @SecurityRequirement(name = "Bearer Authentication")
-    @PreAuthorize("hasRole('CLIENT')")
     @PostMapping("/transfer")
     public String transfer(@RequestParam Long fromAccountId,
                            @RequestParam Long toAccountId,
-                           @RequestParam BigDecimal amount,
-                           @AuthenticationPrincipal UserDetailsImpl currentUser) {
-        accountService.transfer(fromAccountId, toAccountId, amount, currentUser.getId());
+                           @RequestParam BigDecimal amount) {
+        accountService.transfer(fromAccountId, toAccountId, amount);
         return "Transfer successful";
     }
 
-    // ADMIN only — manual fixed interest override
     @SecurityRequirement(name = "Bearer Authentication")
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/apply-interest")
@@ -131,6 +108,7 @@ public class AccountController {
         return "Monthly interest applied";
     }
 
+    // Statistics
     @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping("/{id}/statistics")
     public WalletStatisticsDTO getStatistics(@PathVariable Long id) {
@@ -139,8 +117,9 @@ public class AccountController {
 
     @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping("/{id}/transactions/filter")
-    public List<Transaction> filterTransactions(@PathVariable Long id,
-                                                @RequestParam TransactionType type) {
+    public List<Transaction> filterTransactions(
+            @PathVariable Long id,
+            @RequestParam TransactionType type) {
         return accountService.filterTransactions(id, type);
     }
 
@@ -150,24 +129,24 @@ public class AccountController {
         return accountService.getActivities(id);
     }
 
-    // AI endpoints — CLIENT only
+    // ── IA ───────────────────────────────────────────────────────────────────
+
     @SecurityRequirement(name = "Bearer Authentication")
-    @PreAuthorize("hasRole('CLIENT')")
     @GetMapping("/{id}/forecast")
-    public WalletForecastDTO forecastBalance(@PathVariable Long id,
-                                             @RequestParam(defaultValue = "30") int days) {
+    public WalletForecastDTO forecastBalance(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "30") int days) {
         return accountService.forecastBalance(id, days);
     }
 
     @SecurityRequirement(name = "Bearer Authentication")
-    @PreAuthorize("hasRole('CLIENT')")
     @PostMapping("/{id}/adaptive-interest")
-    public AdaptiveInterestResultDTO applyAdaptiveInterest(@PathVariable Long id) {
+    public AdaptiveInterestResultDTO applyAdaptiveInterest(
+            @PathVariable Long id) {
         return accountService.applyAdaptiveInterest(id);
     }
 
     @SecurityRequirement(name = "Bearer Authentication")
-    @PreAuthorize("hasRole('CLIENT')")
     @GetMapping("/{id}/account-type-advice")
     public AccountTypeAdviceDTO adviseAccountType(@PathVariable Long id) {
         return accountService.adviseAccountType(id);

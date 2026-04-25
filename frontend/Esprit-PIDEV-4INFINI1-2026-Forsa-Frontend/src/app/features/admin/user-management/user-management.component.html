@@ -11,31 +11,6 @@
   </div>
 }
 
-<section class="um-dash" aria-label="User statistics">
-  <h3 class="um-dash__title">Overview</h3>
-  @if (overviewLoading()) {
-    <p class="text-muted um-dash__loading">Loading statistics…</p>
-  } @else if (!overview()) {
-    <p class="text-muted um-dash__loading">Statistics could not be loaded.</p>
-  } @else {
-    <div class="um-stat-grid">
-      @for (s of dashboardStats(); track s.label) {
-        <app-forsa-card>
-          <div class="um-stat card-pad-md">
-            <div class="um-stat__top">
-              <div class="um-stat__icon">
-                <app-forsa-icon [name]="s.icon" [size]="22" />
-              </div>
-            </div>
-            <p class="um-stat__label">{{ s.label }}</p>
-            <p class="um-stat__value">{{ s.value }}</p>
-          </div>
-        </app-forsa-card>
-      }
-    </div>
-  }
-</section>
-
 <div class="um-actions-top">
   <app-forsa-button type="button" (clicked)="openAddAgent()" [disabled]="loading()">
     <app-forsa-icon name="plus" [size]="16" />

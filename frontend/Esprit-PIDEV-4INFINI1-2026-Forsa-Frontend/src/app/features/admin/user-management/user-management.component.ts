@@ -9,15 +9,11 @@ import {
   untracked,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import type {
   ManagedUser,
   ForsaRoleName,
-  UserDashboardOverview,
 } from '../../../core/models/user-admin.model';
-import type { ForsaIconName } from '../../../shared/ui/forsa-icon/forsa-icon.types';
 import { UserAdminService } from '../../../core/services/user-admin.service';
 import { ForsaBadgeComponent } from '../../../shared/ui/forsa-badge/forsa-badge.component';
 import { ForsaButtonComponent } from '../../../shared/ui/forsa-button/forsa-button.component';
@@ -50,8 +46,6 @@ export class UserManagementComponent implements OnInit {
 
   readonly users = signal<ManagedUser[]>([]);
   readonly loading = signal(false);
-  readonly overview = signal<UserDashboardOverview | null>(null);
-  readonly overviewLoading = signal(false);
   readonly busyId = signal<number | null>(null);
   readonly dialogSaving = signal(false);
   readonly deleteConfirmUser = signal<ManagedUser | null>(null);
@@ -140,24 +134,6 @@ export class UserManagementComponent implements OnInit {
 
   readonly pageSizeOptions: readonly number[] = [5, 10, 25, 50];
 
-  readonly dashboardStats = computed(() => {
-    const o = this.overview();
-    if (!o) {
-      return [] as { label: string; value: string; icon: ForsaIconName }[];
-    }
-    const rate = Number.isFinite(o.activationRate) ? o.activationRate : 0;
-    return [
-      { label: 'Total users', value: String(o.totalUsers), icon: 'users' as ForsaIconName },
-      { label: 'Active', value: String(o.activeUsers), icon: 'check-circle-2' as ForsaIconName },
-      { label: 'Inactive', value: String(o.inactiveUsers), icon: 'alert-circle' as ForsaIconName },
-      { label: 'New (30 days)', value: String(o.newUsersLast30Days), icon: 'clock' as ForsaIconName },
-      { label: 'Activation rate', value: `${rate.toFixed(1)}%`, icon: 'trending-up' as ForsaIconName },
-      { label: 'Clients', value: String(o.totalClients), icon: 'credit-card' as ForsaIconName },
-      { label: 'Agents', value: String(o.totalAgents), icon: 'sparkles' as ForsaIconName },
-      { label: 'Admins', value: String(o.totalAdmins), icon: 'shield-check' as ForsaIconName },
-    ];
-  });
-
   constructor() {
     effect(() => {
       this.searchText();
@@ -194,15 +170,7 @@ export class UserManagementComponent implements OnInit {
 
   refresh(): void {
     this.loading.set(true);
-    this.overviewLoading.set(true);
     this.banner.set(null);
-    this.usersApi
-      .getDashboardOverview()
-      .pipe(catchError(() => of(null)))
-      .subscribe((dash) => {
-        this.overview.set(dash);
-        this.overviewLoading.set(false);
-      });
     this.usersApi.listUsers().subscribe({
       next: (rows) => {
         this.users.set(rows);

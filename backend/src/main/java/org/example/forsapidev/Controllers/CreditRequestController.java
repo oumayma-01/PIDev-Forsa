@@ -5,6 +5,9 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.example.forsapidev.DTO.CreditRequestDTO;
+import org.example.forsapidev.DTO.CreditRequestUpdateDTO;
+import org.example.forsapidev.Mappers.CreditRequestMapper;
 import org.example.forsapidev.Repositories.UserRepository;
 import org.example.forsapidev.entities.CreditManagement.CreditRequest;
 import org.example.forsapidev.entities.UserManagement.User;
@@ -13,6 +16,7 @@ import org.example.forsapidev.Services.amortization.AmortizationCalculatorServic
 import org.example.forsapidev.Services.amortization.AmortizationResult;
 import org.example.forsapidev.payload.request.CreditRequestMultipart;
 import org.example.forsapidev.payload.response.AmortizationScheduleResponse;
+import org.example.forsapidev.security.services.UserDetailsImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -42,11 +46,16 @@ public class CreditRequestController {
     private final CreditRequestService service;
     private final AmortizationCalculatorService amortizationService;
     private final UserRepository userRepository;
+    private final CreditRequestMapper creditRequestMapper;
 
-    public CreditRequestController(CreditRequestService service, AmortizationCalculatorService amortizationService, UserRepository userRepository) {
+    public CreditRequestController(CreditRequestService service,
+                                   AmortizationCalculatorService amortizationService,
+                                   UserRepository userRepository,
+                                   CreditRequestMapper creditRequestMapper) {
         this.service = service;
         this.amortizationService = amortizationService;
         this.userRepository = userRepository;
+        this.creditRequestMapper = creditRequestMapper;
     }
 
     /**
@@ -112,7 +121,7 @@ public class CreditRequestController {
             logger.info("   🏥 Assurance: {}", created.getInsuranceIsReject() ? "REJETÉE" : "Taux " + created.getInsuranceRate() + "%");
             logger.info("   🎯 Décision globale: {}", created.getGlobalDecision());
 
-            return ResponseEntity.ok(created);
+            return ResponseEntity.ok(creditRequestMapper.toDto(created));
 
         } catch (IllegalStateException e) {
             logger.warn("Bad request while creating credit: {}", e.getMessage(), e);
@@ -132,21 +141,59 @@ public class CreditRequestController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public ResponseEntity<List<CreditRequest>> list() {
-        return ResponseEntity.ok(service.getAll());
+    public ResponseEntity<List<CreditRequestDTO>> list() {
+        return ResponseEntity.ok(service.getAllDtos());
+    }
+
+    /**
+     * Retourne les crédits de l'utilisateur authentifié
+     * GET /api/credits/me
+     */
+    @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
+    @GetMapping("/me")
+    public ResponseEntity<?> listMine() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Unauthorized"));
+        }
+
+        Long userId = null;
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof UserDetailsImpl u) {
+            userId = u.getId();
+        }
+
+        if (userId == null) {
+            // Fallback: some flows may expose the user id via the name: "id:<userId>"
+            String name = authentication.getName();
+            if (name != null && name.startsWith("id:")) {
+                try {
+                    userId = Long.parseLong(name.substring(3));
+                } catch (NumberFormatException ignored) {
+                    userId = null;
+                }
+            }
+        }
+
+        if (userId != null) {
+            return ResponseEntity.ok(service.getCreditsForUserIdDtos(userId));
+        }
+
+        // Last resort: treat authentication name as username
+        return ResponseEntity.ok(service.getCreditsForUsernameDtos(authentication.getName()));
     }
 
     @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
-    @GetMapping("/{id}")
-    public ResponseEntity<CreditRequest> getById(@PathVariable Long id) {
-        return ResponseEntity.of(service.getById(id));
+    @GetMapping("/{id:\\d+}")
+    public ResponseEntity<CreditRequestDTO> getById(@PathVariable Long id) {
+        return ResponseEntity.of(service.getByIdDto(id));
     }
 
     @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
-    @PutMapping("/{id}")
-    public ResponseEntity<CreditRequest> update(@PathVariable Long id, @RequestBody CreditRequest update) {
+    @PutMapping("/{id:\\d+}")
+    public ResponseEntity<CreditRequestDTO> update(@PathVariable Long id, @RequestBody CreditRequestUpdateDTO update) {
         try {
-            CreditRequest saved = service.updateCredit(id, update);
+            CreditRequestDTO saved = service.updateCreditDto(id, update);
             return ResponseEntity.ok(saved);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -154,17 +201,17 @@ public class CreditRequestController {
     }
 
     @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id:\\d+}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.deleteCredit(id);
         return ResponseEntity.noContent().build();
     }
 
     @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
-    @RequestMapping(value = "/{id}/validate", method = {RequestMethod.POST, RequestMethod.GET})
+    @RequestMapping(value = "/{id:\\d+}/validate", method = {RequestMethod.POST, RequestMethod.GET})
     public ResponseEntity<?> validateCredit(@PathVariable Long id) {
         try {
-            CreditRequest validated = service.validateCredit(id);
+            CreditRequestDTO validated = service.validateCreditDto(id);
             return ResponseEntity.ok(validated);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
@@ -182,10 +229,10 @@ public class CreditRequestController {
      */
 
     @PreAuthorize("hasRole('AGENT')")
-    @PostMapping("/{id}/approve")
+    @PostMapping("/{id:\\d+}/approve")
     public ResponseEntity<?> approveCredit(@PathVariable Long id) {
         try {
-            CreditRequest approved = service.approveCredit(id);
+            CreditRequestDTO approved = service.approveCreditDto(id);
             logger.info("Crédit ID={} approuvé avec succès", id);
             return ResponseEntity.ok(approved);
         } catch (IllegalArgumentException e) {
@@ -208,12 +255,12 @@ public class CreditRequestController {
      * POST /api/credits/{id}/reject
      */
     @PreAuthorize("hasRole('AGENT')")
-    @PostMapping("/{id}/reject")
+    @PostMapping("/{id:\\d+}/reject")
     public ResponseEntity<?> rejectCredit(@PathVariable Long id, @RequestBody(required = false) Map<String, String> body) {
         String reason = body != null ? body.getOrDefault("reason", "Non spécifié") : "Non spécifié";
 
         try {
-            CreditRequest rejected = service.rejectCredit(id, reason);
+            CreditRequestDTO rejected = service.rejectCreditDto(id, reason);
             logger.info("Crédit ID={} rejeté avec succès - Raison: {}", id, reason);
             return ResponseEntity.ok(rejected);
         } catch (IllegalArgumentException e) {
@@ -237,13 +284,8 @@ public class CreditRequestController {
      */
     @PreAuthorize("hasRole('AGENT')")
     @GetMapping("/pending")
-    public ResponseEntity<List<CreditRequest>> getPendingCredits() {
-        List<CreditRequest> allCredits = service.getAll();
-        List<CreditRequest> pending = allCredits.stream()
-                .filter(c -> c.getStatus() == org.example.forsapidev.entities.CreditManagement.CreditStatus.UNDER_REVIEW
-                        || c.getStatus() == org.example.forsapidev.entities.CreditManagement.CreditStatus.SUBMITTED)
-                .collect(Collectors.toList());
-
+    public ResponseEntity<List<CreditRequestDTO>> getPendingCredits() {
+        List<CreditRequestDTO> pending = service.getPendingCreditsDtos();
         logger.info("Récupération de {} crédits en attente de revue", pending.size());
         return ResponseEntity.ok(pending);
     }
@@ -294,7 +336,7 @@ public class CreditRequestController {
      * GET /api/credits/{id}/schedule
      */
     @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
-    @GetMapping("/{id}/schedule")
+    @GetMapping("/{id:\\d+}/schedule")
     public ResponseEntity<?> getAmortizationSchedule(@PathVariable Long id) {
         try {
             CreditRequest credit = service.getById(id)

@@ -1,6 +1,6 @@
 <div class="portal-container">
   <div class="header-section">
-    <button routerLink="/dashboard/insurance/client" class="back-btn glass-btn">
+    <button routerLink="/dashboard/insurance" class="back-btn glass-btn">
       <i class="fe fe-arrow-left"></i> Back to Hub
     </button>
     <h1>My Policies</h1>
@@ -34,11 +34,11 @@
         <div class="metric-grid">
           <div class="metric">
             <span class="label">Coverage Limit</span>
-            <span class="value">${{ p.coverageLimit | number }}</span>
+            <span class="value">{{ p.coverageLimit | number }} TND</span>
           </div>
           <div class="metric">
             <span class="label">Payment</span>
-            <span class="value text-primary">${{ p.periodicPaymentAmount | number:'1.2-2' }}</span>
+            <span class="value text-primary">{{ p.periodicPaymentAmount | number:'1.2-2' }} TND</span>
             <span class="period">/ {{ p.paymentFrequency | lowercase }}</span>
           </div>
         </div>
@@ -63,7 +63,7 @@
         <button class="btn btn-outline flex-1" (click)="downloadAmortization(p)" [disabled]="!p.id || p.status === 'PENDING'">
           <i class="fe fe-download"></i> Amortization
         </button>
-        <button class="btn btn-primary flex-1" routerLink="/dashboard/insurance/client/my-claims" [queryParams]="{policyId: p.id}">
+        <button class="btn btn-primary flex-1" [routerLink]="['/dashboard/insurance/client/file-claim', p.id]">
           <i class="fe fe-alert-circle"></i> File Claim
         </button>
       </div>
