@@ -1,11 +1,8 @@
 package org.example.forsapidev.entities.WalletManagement;
 
-import org.example.forsapidev.entities.WalletManagement.TransactionType;
-import org.example.forsapidev.entities.WalletManagement.Wallet;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Entity
 public class Transaction {
@@ -21,55 +18,29 @@ public class Transaction {
     @Enumerated(EnumType.STRING)
     private TransactionType type;
 
+    // ADD THIS — was missing entirely
+    @Enumerated(EnumType.STRING)
+    private TransactionStatus status;
+
     @ManyToOne
     @JoinColumn(name = "wallet_id")
     private Wallet wallet;
 
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public BigDecimal getAmount() { return amount; }
+    public void setAmount(BigDecimal amount) { this.amount = amount; }
 
-    public BigDecimal getAmount() {
-        return amount;
-    }
+    public LocalDateTime getDate() { return date; }
+    public void setDate(LocalDateTime date) { this.date = date; }
 
-    public void setAmount(BigDecimal amount) {
-        this.amount = amount;
-    }
+    public TransactionType getType() { return type; }
+    public void setType(TransactionType type) { this.type = type; }
 
-    public LocalDateTime getDate() {
-        return date;
-    }
+    public TransactionStatus getStatus() { return status; }
+    public void setStatus(TransactionStatus status) { this.status = status; }
 
-    public void setDate(LocalDateTime date) {
-        this.date = date;
-    }
-
-    public TransactionType getType() {
-        return type;
-    }
-
-    public void setType(TransactionType type) {
-        this.type = type;
-    }
-
-    public Wallet getWallet() {
-        return wallet;
-    }
-
-    public void setWallet(Wallet wallet) {
-        this.wallet = wallet;
-    }
+    public Wallet getWallet() { return wallet; }
+    public void setWallet(Wallet wallet) { this.wallet = wallet; }
 }
-
-
-
-
-
-
-
-
