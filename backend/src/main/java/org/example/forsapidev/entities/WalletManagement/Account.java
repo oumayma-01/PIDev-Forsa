@@ -10,9 +10,10 @@ import jakarta.persistence.*;
 @Entity
 public class Account {
 
-    @JsonIgnore
+
     @ManyToOne
     @JoinColumn(name = "owner_id")
+    @JsonIgnore
     private User owner;
 
     @Id
