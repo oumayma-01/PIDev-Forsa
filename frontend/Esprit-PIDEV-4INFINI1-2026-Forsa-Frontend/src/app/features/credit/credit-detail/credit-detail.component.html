@@ -1,238 +1,235 @@
 <div class="page-toolbar">
   <div class="page-head page-head--inline">
-    <h2>Détail crédit</h2>
-    <p class="text-muted">Consultez le statut, le rapport de risque, et les échéances.</p>
+    <h2>Credit Detail</h2>
+    <p class="text-muted">View the status, risk report, and repayments.</p>
   </div>
 
   <div class="toolbar-actions">
-    <app-forsa-button variant="outline" link="/dashboard/credit">Retour</app-forsa-button>
-    <app-forsa-button variant="ghost" [disabled]="loading()" (clicked)="refresh()">Rafraîchir</app-forsa-button>
+    <app-forsa-button variant="outline" link="/dashboard/credit">Back</app-forsa-button>
+    <app-forsa-button variant="ghost" [disabled]="loading()" (clicked)="refresh()">Refresh</app-forsa-button>
   </div>
 </div>
 
 @if (error()) {
-  <p class="notice notice--err" role="alert">{{ error() }}</p>
+<p class="notice notice--err" role="alert">{{ error() }}</p>
 }
 
 @if (loading()) {
-  <p class="text-muted">Chargement...</p>
+<p class="text-muted">Loading...</p>
 }
 
 @if (credit(); as c) {
-  <div class="grid">
-    <app-forsa-card>
-      <div class="card-pad-lg">
-        <div class="row">
-          <div>
-            <h3 class="sec-title">Crédit #{{ c.id }}</h3>
-            <p class="text-muted">Montant demandé, durée, taux, statut.</p>
-          </div>
-          @if (c.status) {
-            <app-forsa-badge [tone]="statusTone(c.status)">{{ c.status }}</app-forsa-badge>
-          }
+<div class="grid">
+  <app-forsa-card>
+    <div class="card-pad-lg">
+      <div class="row">
+        <div>
+          <h3 class="sec-title">Credit #{{ c.id }}</h3>
+          <p class="text-muted">Requested amount, duration, rate, status.</p>
         </div>
-
-        @if (actionMessage()) {
-          <p class="notice" role="status">{{ actionMessage() }}</p>
+        @if (c.status) {
+        <app-forsa-badge [tone]="statusTone(c.status)">{{ c.status }}</app-forsa-badge>
         }
-        @if (actionError()) {
-          <p class="notice notice--err" role="alert">{{ actionError() }}</p>
-        }
+      </div>
 
-        <div class="kv">
-          <div>
-            <p class="text-muted">Montant</p>
-            <p class="val">{{ c.amountRequested | number: '1.2-2' }}</p>
-          </div>
-          <div>
-            <p class="text-muted">Durée (mois)</p>
-            <p class="val">{{ c.durationMonths ?? '-' }}</p>
-          </div>
-          <div>
-            <p class="text-muted">Taux (%)</p>
-            <p class="val">{{ c.interestRate ?? '-' }}</p>
-          </div>
-          <div>
-            <p class="text-muted">Type calcul</p>
-            <p class="val">{{ c.typeCalcul ?? '-' }}</p>
-          </div>
-          <div>
-            <p class="text-muted">Agent assigné</p>
-            <p class="val">{{ c.agentId ?? '-' }}</p>
-          </div>
+      @if (actionMessage()) {
+      <p class="notice" role="status">{{ actionMessage() }}</p>
+      }
+      @if (actionError()) {
+      <p class="notice notice--err" role="alert">{{ actionError() }}</p>
+      }
+
+      <div class="kv">
+        <div>
+          <p class="text-muted">Amount</p>
+          <p class="val">{{ c.amountRequested | number: '1.2-2' }}</p>
         </div>
-
-        @if (isAgent()) {
-          <div class="agent-actions">
-            <app-forsa-button variant="secondary" [disabled]="actionBusy()" (clicked)="approve()">Approuver</app-forsa-button>
-
-            <div class="reject">
-              <label class="forsa-label" for="rej">Raison du rejet</label>
-              <textarea id="rej" forsaInput rows="3" [(ngModel)]="rejectReason" name="rejectReason"></textarea>
-              <app-forsa-button variant="destructive" [disabled]="actionBusy()" (clicked)="reject()">Rejeter</app-forsa-button>
-            </div>
-          </div>
-        }
+        <div>
+          <p class="text-muted">Duration (months)</p>
+          <p class="val">{{ c.durationMonths ?? '-' }}</p>
+        </div>
+        <div>
+          <p class="text-muted">Rate (%)</p>
+          <p class="val">{{ c.interestRate ?? '-' }}</p>
+        </div>
+        <div>
+          <p class="text-muted">Calculation type</p>
+          <p class="val">{{ c.typeCalcul ?? '-' }}</p>
+        </div>
+        <div>
+          <p class="text-muted">Assigned agent</p>
+          <p class="val">{{ c.agentId ?? '-' }}</p>
+        </div>
       </div>
-    </app-forsa-card>
 
-    <app-forsa-card>
-      <div class="card-pad-lg">
-        <h3 class="sec-title">Rapport de risque</h3>
+      @if (isAgent()) {
+      <div class="agent-actions">
+        <app-forsa-button variant="secondary" [disabled]="actionBusy()" (clicked)="approve()">Approve</app-forsa-button>
 
-        @if (!canSeeRiskReport()) {
-          <p class="text-muted">Cette section est réservée aux agents/admin.</p>
-        } @else if (!c.agentId) {
-          <p class="text-muted">
-            Ce crédit n’a pas encore d’agent assigné. Le rapport reste stocké et sera accessible à l’agent dédié dès
-            l’assignation.
-          </p>
-        } @else {
-          <div class="kv">
-            <div>
-              <p class="text-muted">Risque (isRisky)</p>
-              <p class="val">{{ c.isRisky === null || c.isRisky === undefined ? '-' : (c.isRisky ? 'RISKY' : 'SAFE') }}</p>
-            </div>
-            <div>
-              <p class="text-muted">Niveau</p>
-              <p class="val">{{ c.riskLevel ?? '-' }}</p>
-            </div>
-            <div>
-              <p class="text-muted">Décision globale</p>
-              <p class="val">{{ c.globalDecision ?? '-' }}</p>
-            </div>
-            <div>
-              <p class="text-muted">Assurance rejetée</p>
-              <p class="val">{{ c.insuranceIsReject === null || c.insuranceIsReject === undefined ? '-' : (c.insuranceIsReject ? 'YES' : 'NO') }}</p>
-            </div>
-            <div>
-              <p class="text-muted">Taux assurance</p>
-              <p class="val">{{ c.insuranceRate ?? '-' }}</p>
-            </div>
-          </div>
+        <div class="reject">
+          <label class="forsa-label" for="rej">Reason for rejection</label>
+          <textarea id="rej" forsaInput rows="3" [(ngModel)]="rejectReason" name="rejectReason"></textarea>
+          <app-forsa-button variant="destructive" [disabled]="actionBusy()"
+            (clicked)="reject()">Reject</app-forsa-button>
+        </div>
+      </div>
+      }
+    </div>
+  </app-forsa-card>
 
-          @if (c.insuranceScoringReport) {
-            <div class="block">
-              <p class="text-muted">Rapport assurance</p>
-              <pre class="pre">{{ c.insuranceScoringReport }}</pre>
-            </div>
+  <app-forsa-card>
+    <div class="card-pad-lg">
+      <h3 class="sec-title">Risk Report</h3>
+
+      @if (!canSeeRiskReport()) {
+      <p class="text-muted">This section is reserved for agents/admin.</p>
+      } @else if (!c.agentId) {
+      <p class="text-muted">
+        This credit does not have an assigned agent yet. The report is stored and will be accessible to the dedicated
+        agent once assigned.
+      </p>
+      } @else {
+      <div class="kv">
+        <div>
+          <p class="text-muted">Risk (isRisky)</p>
+          <p class="val">{{ c.isRisky === null || c.isRisky === undefined ? '-' : (c.isRisky ? 'RISKY' : 'SAFE') }}</p>
+        </div>
+        <div>
+          <p class="text-muted">Level</p>
+          <p class="val">{{ c.riskLevel ?? '-' }}</p>
+        </div>
+        <div>
+          <p class="text-muted">Global decision</p>
+          <p class="val">{{ c.globalDecision ?? '-' }}</p>
+        </div>
+        <div>
+          <p class="text-muted">Insurance rejected</p>
+          <p class="val">{{ c.insuranceIsReject === null || c.insuranceIsReject === undefined ? '-' :
+            (c.insuranceIsReject ? 'YES' : 'NO') }}</p>
+        </div>
+        <div>
+          <p class="text-muted">Insurance rate</p>
+          <p class="val">{{ c.insuranceRate ?? '-' }}</p>
+        </div>
+      </div>
+
+      @if (c.insuranceScoringReport) {
+      <div class="block">
+        <p class="text-muted">Insurance report</p>
+        <pre class="pre">{{ c.insuranceScoringReport }}</pre>
+      </div>
+      }
+      }
+    </div>
+  </app-forsa-card>
+
+  <app-forsa-card>
+    <div class="card-pad-lg table-wrap">
+      <h3 class="sec-title">Repayments (repayment_schedule)</h3>
+
+      @if (repaymentsError()) {
+      <p class="notice notice--err" role="alert">{{ repaymentsError() }}</p>
+      }
+      @if (repaymentsLoading()) {
+      <p class="text-muted">Loading repayments...</p>
+      }
+
+      @if (!repaymentsLoading() && repayments().length === 0) {
+      <p class="text-muted">
+        No repayment for this credit.
+        @if (!c.status || c.status === 'SUBMITTED' || c.status === 'UNDER_REVIEW') {
+        <span> They are generated after approval/validation (current status: {{ c.status ?? '-' }}).</span>
+        }
+      </p>
+      }
+
+      @if (repayments().length > 0) {
+      <table class="forsa-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Due date</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th class="right">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of repayments(); track r.id) {
+          <tr>
+            <td class="mono">{{ r.id }}</td>
+            <td>{{ r.dueDate }}</td>
+            <td class="fw">{{ r.totalAmount | number: '1.2-2' }}</td>
+            <td>
+              <app-forsa-badge [tone]="repaymentTone(r.status)">{{ r.status }}</app-forsa-badge>
+            </td>
+            <td class="right">
+              @if (isClient() && r.status !== 'PAID') {
+              <app-forsa-button size="sm" variant="secondary" [disabled]="payBusyId() === r.id" (clicked)="pay(r)">
+                {{ payBusyId() === r.id ? 'Paying...' : 'Pay' }}
+              </app-forsa-button>
+              } @else {
+              <span class="text-muted">—</span>
+              }
+            </td>
+          </tr>
           }
-        }
+        </tbody>
+      </table>
+      }
+    </div>
+  </app-forsa-card>
+
+  <app-forsa-card>
+    <div class="card-pad-lg table-wrap">
+      <h3 class="sec-title">Amortization schedule (calculation)</h3>
+
+      @if (scheduleLoading()) {
+      <p class="text-muted">Calculating...</p>
+      }
+      @if (scheduleError()) {
+      <p class="notice notice--err" role="alert">{{ scheduleError() }}</p>
+      }
+      @if (!scheduleLoading() && !schedule() && !scheduleError()) {
+      <p class="text-muted">The amortization schedule is available once the credit is validated.</p>
+      }
+
+      @if (schedule(); as s) {
+      <div class="kv kv--tight">
+        <div>
+          <p class="text-muted">Total interest</p>
+          <p class="val">{{ s.totalInterest | number: '1.2-2' }}</p>
+        </div>
+        <div>
+          <p class="text-muted">Total</p>
+          <p class="val">{{ s.totalAmount | number: '1.2-2' }}</p>
+        </div>
       </div>
-    </app-forsa-card>
 
-    <app-forsa-card>
-      <div class="card-pad-lg table-wrap">
-        <h3 class="sec-title">Échéances (repayment_schedule)</h3>
-
-        @if (repaymentsError()) {
-          <p class="notice notice--err" role="alert">{{ repaymentsError() }}</p>
-        }
-        @if (repaymentsLoading()) {
-          <p class="text-muted">Chargement des échéances...</p>
-        }
-
-        @if (!repaymentsLoading() && repayments().length === 0) {
-          <p class="text-muted">
-            Aucune échéance pour ce crédit.
-            @if (!c.status || c.status === 'SUBMITTED' || c.status === 'UNDER_REVIEW') {
-              <span> Elles sont générées après approbation/validation (statut actuel: {{ c.status ?? '-' }}).</span>
-            }
-          </p>
-        }
-
-        @if (repayments().length > 0) {
-          <table class="forsa-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Échéance</th>
-                <th>Montant</th>
-                <th>Statut</th>
-                <th class="right">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (r of repayments(); track r.id) {
-                <tr>
-                  <td class="mono">{{ r.id }}</td>
-                  <td>{{ r.dueDate }}</td>
-                  <td class="fw">{{ r.totalAmount | number: '1.2-2' }}</td>
-                  <td>
-                    <app-forsa-badge [tone]="repaymentTone(r.status)">{{ r.status }}</app-forsa-badge>
-                  </td>
-                  <td class="right">
-                    @if (isClient() && r.status !== 'PAID') {
-                      <app-forsa-button
-                        size="sm"
-                        variant="secondary"
-                        [disabled]="payBusyId() === r.id"
-                        (clicked)="pay(r)"
-                      >
-                        {{ payBusyId() === r.id ? 'Paiement...' : 'Payer' }}
-                      </app-forsa-button>
-                    } @else {
-                      <span class="text-muted">—</span>
-                    }
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        }
-      </div>
-    </app-forsa-card>
-
-    <app-forsa-card>
-      <div class="card-pad-lg table-wrap">
-        <h3 class="sec-title">Tableau d’amortissement (calcul)</h3>
-
-        @if (scheduleLoading()) {
-          <p class="text-muted">Calcul en cours...</p>
-        }
-        @if (scheduleError()) {
-          <p class="notice notice--err" role="alert">{{ scheduleError() }}</p>
-        }
-        @if (!scheduleLoading() && !schedule() && !scheduleError()) {
-          <p class="text-muted">Le tableau d’amortissement est disponible une fois le crédit validé.</p>
-        }
-
-        @if (schedule(); as s) {
-          <div class="kv kv--tight">
-            <div>
-              <p class="text-muted">Total intérêts</p>
-              <p class="val">{{ s.totalInterest | number: '1.2-2' }}</p>
-            </div>
-            <div>
-              <p class="text-muted">Total</p>
-              <p class="val">{{ s.totalAmount | number: '1.2-2' }}</p>
-            </div>
-          </div>
-
-          <table class="forsa-table">
-            <thead>
-              <tr>
-                <th>Mois</th>
-                <th>Principal</th>
-                <th>Intérêt</th>
-                <th>Mensualité</th>
-                <th>Restant</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (p of s.periods; track p.monthNumber) {
-                <tr>
-                  <td class="mono">{{ p.monthNumber }}</td>
-                  <td>{{ p.principalPayment | number: '1.2-2' }}</td>
-                  <td>{{ p.interestPayment | number: '1.2-2' }}</td>
-                  <td class="fw">{{ p.totalPayment | number: '1.2-2' }}</td>
-                  <td class="text-muted">{{ p.remainingBalance | number: '1.2-2' }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        }
-      </div>
-    </app-forsa-card>
-  </div>
+      <table class="forsa-table">
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th>Principal</th>
+            <th>Interest</th>
+            <th>Monthly payment</th>
+            <th>Remaining</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of s.periods; track p.monthNumber) {
+          <tr>
+            <td class="mono">{{ p.monthNumber }}</td>
+            <td>{{ p.principalPayment | number: '1.2-2' }}</td>
+            <td>{{ p.interestPayment | number: '1.2-2' }}</td>
+            <td class="fw">{{ p.totalPayment | number: '1.2-2' }}</td>
+            <td class="text-muted">{{ p.remainingBalance | number: '1.2-2' }}</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+      }
+    </div>
+  </app-forsa-card>
+</div>
 }
