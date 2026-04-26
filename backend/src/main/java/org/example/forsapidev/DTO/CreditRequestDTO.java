@@ -47,6 +47,12 @@ public class CreditRequestDTO {
     private String globalPdfPath;
     private String fraudReportPath;
 
+    // Guarantor
+    private String guarantorName;
+    private String guarantorCin;
+    private String guarantorBankAccount;
+    private boolean hasGuarantorPhoto;
+
     public CreditRequestDTO() {
     }
 
@@ -249,4 +255,16 @@ public class CreditRequestDTO {
     public void setFraudReportPath(String fraudReportPath) {
         this.fraudReportPath = fraudReportPath;
     }
+
+    public String getGuarantorName() { return guarantorName; }
+    public void setGuarantorName(String guarantorName) { this.guarantorName = guarantorName; }
+
+    public String getGuarantorCin() { return guarantorCin; }
+    public void setGuarantorCin(String guarantorCin) { this.guarantorCin = guarantorCin; }
+
+    public String getGuarantorBankAccount() { return guarantorBankAccount; }
+    public void setGuarantorBankAccount(String guarantorBankAccount) { this.guarantorBankAccount = guarantorBankAccount; }
+
+    public boolean isHasGuarantorPhoto() { return hasGuarantorPhoto; }
+    public void setHasGuarantorPhoto(boolean hasGuarantorPhoto) { this.hasGuarantorPhoto = hasGuarantorPhoto; }
 }

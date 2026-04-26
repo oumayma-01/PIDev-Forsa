@@ -52,6 +52,11 @@ export class CreditDetailComponent {
   readonly actionBusy = signal(false);
   readonly payBusyId = signal<number | null>(null);
 
+  // Guarantor photo (loaded lazily for agents/admins)
+  readonly guarantorPhotoUrl = signal<string | null>(null);
+  readonly guarantorPhotoLoading = signal(false);
+  private guarantorObjectUrl: string | null = null;
+
   rejectReason = '';
 
   readonly roles = computed(() => this.auth.currentUser()?.roles ?? []);
@@ -92,6 +97,7 @@ export class CreditDetailComponent {
             this.repaymentsError.set(null);
             this.repayments.set([]);
           }
+          if (c.hasGuarantorPhoto) this.loadGuarantorPhoto(c.id);
         },
         error: (err) => {
           this.loading.set(false);
@@ -121,6 +127,7 @@ export class CreditDetailComponent {
           this.repaymentsError.set(null);
           this.repayments.set([]);
         }
+        if (c.hasGuarantorPhoto) this.loadGuarantorPhoto(c.id);
       },
       error: (err) => {
         this.loading.set(false);
@@ -292,5 +299,28 @@ export class CreditDetailComponent {
       return body.error;
     }
     return 'Something went wrong. Please try again.';
+  }
+
+  /** Fetches the guarantor photo as a Blob and creates an object URL for display. */
+  private loadGuarantorPhoto(creditId: number): void {
+    if (!this.isAgent() && !this.isAdmin()) return;
+    // Revoke previous object URL to avoid memory leak
+    if (this.guarantorObjectUrl) {
+      URL.revokeObjectURL(this.guarantorObjectUrl);
+      this.guarantorObjectUrl = null;
+    }
+    this.guarantorPhotoLoading.set(true);
+    this.api.getGuarantorPhoto(creditId).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        this.guarantorObjectUrl = url;
+        this.guarantorPhotoUrl.set(url);
+        this.guarantorPhotoLoading.set(false);
+      },
+      error: () => {
+        this.guarantorPhotoLoading.set(false);
+        this.guarantorPhotoUrl.set(null);
+      },
+    });
   }
 }

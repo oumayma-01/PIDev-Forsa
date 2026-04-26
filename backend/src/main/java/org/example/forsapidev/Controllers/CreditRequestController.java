@@ -19,6 +19,7 @@ import org.example.forsapidev.payload.response.AmortizationScheduleResponse;
 import org.example.forsapidev.security.services.UserDetailsImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -108,13 +109,23 @@ public class CreditRequestController {
                     authenticatedUser.getRole() != null ? authenticatedUser.getRole().getName() : "NO_ROLE");
 
             // Créer la demande de crédit avec analyse unifiée (fraude + assurance)
-            CreditRequest created = service.createCreditRequestWithHealthReport(
-                    dto.getAmountRequested(),
-                    dto.getDurationMonths(),
-                    dto.getTypeCalcul(),
-                    healthReport,
-                    authenticatedUser
-            );
+            CreditRequest created;
+            try {
+                created = service.createCreditRequestWithHealthReport(
+                        dto.getAmountRequested(),
+                        dto.getDurationMonths(),
+                        dto.getTypeCalcul(),
+                        healthReport,
+                        dto.getGuarantorName(),
+                        dto.getGuarantorCin(),
+                        dto.getGuarantorBankAccount(),
+                        dto.getGuarantorPhoto(),
+                        authenticatedUser
+                );
+            } catch (Exception e) {
+                logger.error("CRITICAL ERROR in CreditRequestService: ", e);
+                throw e; // Rethrow to let the global catch handle it, but now we have the logs
+            }
 
             logger.info("✅ Demande de crédit créée avec succès - ID={}", created.getId());
             logger.info("   📊 Risque fraude: {} ({})", created.getRiskLevel(), created.getIsRisky() ? "RISKY" : "SAFE");
@@ -139,10 +150,55 @@ public class CreditRequestController {
         }
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    /**
+     * Endpoint réservé aux agents/admins : retourne la photo du garant déchiffrée.
+     * GET /api/credits/{id}/guarantor-photo
+     */
+    @PreAuthorize("hasAnyRole('AGENT','ADMIN')")
+    @GetMapping("/{id:\\d+}/guarantor-photo")
+    public ResponseEntity<?> getGuarantorPhoto(@PathVariable Long id) {
+        try {
+            CreditRequest credit = service.getById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Crédit introuvable"));
+
+            byte[] photoBytes = credit.getGuarantorCinPhoto();
+            if (photoBytes == null || photoBytes.length == 0) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "Aucune photo de garant disponible"));
+            }
+
+            String contentType = credit.getGuarantorCinPhotoContentType();
+            if (contentType == null || contentType.isBlank()) {
+                contentType = "image/jpeg";
+            }
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_TYPE, contentType)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"guarantor-photo\"")
+                    .body(photoBytes);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            logger.error("Erreur lors du déchiffrement de la photo du garant pour le crédit ID={}", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Impossible de récupérer la photo"));
+        }
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @GetMapping
-    public ResponseEntity<List<CreditRequestDTO>> list() {
-        return ResponseEntity.ok(service.getAllDtos());
+    public ResponseEntity<?> list() {
+        try {
+            logger.info("Fetching all credits for agent/admin...");
+            List<CreditRequestDTO> list = service.getAllDtos();
+            logger.info("Successfully fetched {} credits.", list.size());
+            return ResponseEntity.ok(list);
+        } catch (Exception e) {
+            logger.error("CRITICAL ERROR in list(): Failed to fetch credits", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to fetch credits: " + e.getMessage()));
+        }
     }
 
     /**
