@@ -1,15 +1,23 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, HostListener, computed, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { ComplaintService } from '../../core/data/complaint.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ProfileService } from '../../core/services/profile.service';
+import { isNavPathAllowed } from '../../core/utils/nav-path-access';
 import { ForsaLogoComponent } from '../../shared/branding/forsa-logo.component';
 import { ForsaInputDirective } from '../../shared/directives/forsa-input.directive';
 import { ForsaBadgeComponent } from '../../shared/ui/forsa-badge/forsa-badge.component';
 import { ForsaIconComponent } from '../../shared/ui/forsa-icon/forsa-icon.component';
+import type { ForsaIconName } from '../../shared/ui/forsa-icon/forsa-icon.types';
+
+interface NavItem {
+  label: string;
+  href: string;
+  icon: ForsaIconName;
+}
 
 function formatSpringAuthority(authority: string): string {
   const raw = authority.replace(/^ROLE_/i, '').toLowerCase();
@@ -19,15 +27,17 @@ function formatSpringAuthority(authority: string): string {
 @Component({
   selector: 'app-dashboard-navbar',
   standalone: true,
-  imports: [RouterLink, ForsaLogoComponent, ForsaInputDirective, ForsaBadgeComponent, ForsaIconComponent],
+  imports: [RouterLink, RouterLinkActive, ForsaLogoComponent, ForsaInputDirective, ForsaBadgeComponent, ForsaIconComponent],
   templateUrl: './dashboard-navbar.component.html',
   styleUrl: './dashboard-navbar.component.css',
 })
 export class DashboardNavbarComponent {
+  readonly showSidebarItems = input<boolean>(false);
   readonly auth = inject(AuthService);
   private readonly profileApi = inject(ProfileService);
   private readonly complaintApi = inject(ComplaintService);
   private readonly destroyRef = inject(DestroyRef);
+  readonly profileMenuOpen = signal(false);
 
   /** Blob URL for uploaded profile photo; revoked on change or destroy. */
   private customAvatarRevoke: string | null = null;
@@ -56,6 +66,46 @@ export class DashboardNavbarComponent {
   readonly responseNotificationCount = signal(0);
   private readonly previousResponseCounts = new Map<number, number>();
   private pollId: ReturnType<typeof setInterval> | null = null;
+
+  private readonly baseNav: NavItem[] = [
+    { label: 'Home', href: '/dashboard', icon: 'layout-dashboard' },
+    { label: 'My profile', href: '/dashboard/profile', icon: 'user-circle' },
+    { label: 'Credit Management', href: '/dashboard/credit', icon: 'credit-card' },
+    { label: 'Digital Wallet', href: '/dashboard/wallet', icon: 'wallet' },
+    { label: 'Insurance', href: '/dashboard/insurance', icon: 'shield-check' },
+    { label: 'Partnerships', href: '/dashboard/partenariat', icon: 'users' },
+    { label: 'Credit scoring', href: '/dashboard/scoring', icon: 'sparkles' },
+    { label: 'My AI score', href: '/dashboard/ai-score', icon: 'brain' },
+    { label: 'Feedback', href: '/dashboard/feedback', icon: 'message-square' },
+    { label: 'AI Risk Analysis', href: '/dashboard/ai', icon: 'bar-chart-3' },
+  ];
+
+  readonly clientNavItems = computed(() => {
+    const paths = this.auth.currentUser()?.allowedNavPaths;
+    const allow = (href: string) => isNavPathAllowed(href, paths);
+    const core = this.baseNav.filter((item) => allow(item.href) && item.href !== '/dashboard/profile');
+
+    const extras: NavItem[] = [];
+    if (allow('/dashboard/users')) {
+      extras.push({ label: 'User management', href: '/dashboard/users', icon: 'settings' });
+    }
+    if (allow('/dashboard/roles')) {
+      extras.push({ label: 'Role management', href: '/dashboard/roles', icon: 'shield' });
+    }
+
+    const dash = core.find((i) => i.href === '/dashboard');
+    const withoutDashboard = core.filter((i) => i.href !== '/dashboard');
+
+    const leading: NavItem[] = [];
+    if (dash !== undefined) {
+      leading.push(dash);
+    }
+    return [...leading, ...extras, ...withoutDashboard];
+  });
+
+  readonly profileLinkVisible = computed(() => {
+    return isNavPathAllowed('/dashboard/profile', this.auth.currentUser()?.allowedNavPaths);
+  });
 
   constructor() {
     this.destroyRef.onDestroy(() => {
@@ -156,5 +206,27 @@ export class DashboardNavbarComponent {
           alert(msg);
         }
       });
+  }
+
+  toggleProfileMenu(event: MouseEvent): void {
+    event.stopPropagation();
+    this.profileMenuOpen.update((open) => !open);
+  }
+
+  closeProfileMenu(): void {
+    this.profileMenuOpen.set(false);
+  }
+
+  logout(): void {
+    this.closeProfileMenu();
+    this.auth.logout();
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement | null;
+    if (!target?.closest('.profile-menu')) {
+      this.closeProfileMenu();
+    }
   }
 }

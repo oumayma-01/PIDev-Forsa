@@ -41,19 +41,77 @@
 
     <div class="divider"></div>
 
-    <div class="profile">
-      <div class="profile__text">
-        <p class="profile__name">{{ displayName() }}</p>
-        <p class="profile__role">{{ rolesLabel() }}</p>
+    @if (showSidebarItems()) {
+      <div class="profile-menu">
+        <button
+          type="button"
+          class="profile-trigger"
+          aria-haspopup="menu"
+          [attr.aria-expanded]="profileMenuOpen()"
+          (click)="toggleProfileMenu($event)"
+        >
+          <div class="profile">
+            <div class="profile__text">
+              <p class="profile__name">{{ displayName() }}</p>
+              <p class="profile__role">{{ rolesLabel() }}</p>
+            </div>
+            <img
+              class="avatar"
+              [src]="avatarSrc()"
+              width="36"
+              height="36"
+              alt="Profile photo of {{ displayName() }}"
+              title="Profile photo of {{ displayName() }}"
+            />
+          </div>
+        </button>
+
+        @if (profileMenuOpen()) {
+          <div class="profile-dropdown" role="menu">
+            @if (profileLinkVisible()) {
+              <a routerLink="/dashboard/profile" class="profile-dropdown__item" role="menuitem" (click)="closeProfileMenu()">
+                <app-forsa-icon name="user-circle" [size]="16" />
+                My profile
+              </a>
+            }
+            <button type="button" class="profile-dropdown__item profile-dropdown__item--danger" role="menuitem" (click)="logout()">
+              <app-forsa-icon name="log-out" [size]="16" />
+              Logout
+            </button>
+          </div>
+        }
       </div>
-      <img
-        class="avatar"
-        [src]="avatarSrc()"
-        width="36"
-        height="36"
-        alt="Profile photo of {{ displayName() }}"
-        title="Profile photo of {{ displayName() }}"
-      />
-    </div>
+    } @else {
+        <div class="profile">
+        <div class="profile__text">
+          <p class="profile__name">{{ displayName() }}</p>
+          <p class="profile__role">{{ rolesLabel() }}</p>
+        </div>
+        <img
+          class="avatar"
+          [src]="avatarSrc()"
+          width="36"
+          height="36"
+          alt="Profile photo of {{ displayName() }}"
+          title="Profile photo of {{ displayName() }}"
+        />
+      </div>
+    }
   </div>
 </header>
+
+@if (showSidebarItems()) {
+  <nav class="client-nav" aria-label="Client navigation menu">
+    @for (item of clientNavItems(); track item.href) {
+      <a
+        [routerLink]="item.href"
+        routerLinkActive="is-active"
+        [routerLinkActiveOptions]="{ exact: item.href === '/dashboard' }"
+        class="client-nav__item"
+      >
+        <app-forsa-icon [name]="item.icon" [size]="16" />
+        <span>{{ item.label }}</span>
+      </a>
+    }
+  </nav>
+}
