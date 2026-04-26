@@ -63,6 +63,9 @@
         <button class="btn btn-outline flex-1" (click)="downloadAmortization(p)" [disabled]="!p.id || p.status === 'PENDING'">
           <i class="fe fe-download"></i> Amortization
         </button>
+        <button class="btn btn-outline flex-1" (click)="openChat(p.id!)" *ngIf="p.id">
+          <i class="fe fe-message-circle"></i> AI Chat
+        </button>
         <button class="btn btn-primary flex-1" [routerLink]="['/dashboard/insurance/client/file-claim', p.id]">
           <i class="fe fe-alert-circle"></i> File Claim
         </button>
@@ -70,4 +73,7 @@
 
     </div>
   </div>
+
+  <!-- Global Chatbot Instance -->
+  <app-policy-chat *ngIf="selectedPolicyIdForChat" [policyId]="selectedPolicyIdForChat"></app-policy-chat>
 </div>

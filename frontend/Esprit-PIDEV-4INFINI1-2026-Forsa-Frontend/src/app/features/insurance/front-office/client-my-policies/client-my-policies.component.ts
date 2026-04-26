@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { InsurancePolicyService } from '../../shared/services/insurance-policy.service';
 import { InsurancePolicy } from '../../shared/models/insurance.models';
+import { PolicyChatComponent } from './policy-chat/policy-chat.component';
 
 @Component({
   selector: 'app-client-my-policies',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, PolicyChatComponent],
   templateUrl: './client-my-policies.component.html',
   styleUrls: ['./client-my-policies.component.css']
 })
@@ -16,6 +17,7 @@ export class ClientMyPoliciesComponent implements OnInit {
 
   policies: InsurancePolicy[] = [];
   isLoading = true;
+  selectedPolicyIdForChat: number | null = null;
 
   ngOnInit() {
     this.policyService.getMyPolicies().subscribe({
@@ -41,5 +43,9 @@ export class ClientMyPoliciesComponent implements OnInit {
       a.click();
       window.URL.revokeObjectURL(url);
     });
+  }
+
+  openChat(policyId: number) {
+    this.selectedPolicyIdForChat = policyId;
   }
 }
