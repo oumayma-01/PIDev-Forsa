@@ -71,12 +71,12 @@
   <div class="admin-toolbar">
     <div class="toolbar-left">
       <input class="search-input" type="text" placeholder="Search by ID or holder…" [(ngModel)]="adminSearchTerm" />
-      <select class="filter-select" [(ngModel)]="adminTypeFilter">
+      <select class="filter-select" [(ngModel)]="adminTypeFilter" aria-label="Filter accounts by type">
         <option value="">All Types</option>
         <option value="SAVINGS">Savings</option>
         <option value="INVESTMENT">Investment</option>
       </select>
-      <select class="filter-select" [(ngModel)]="adminStatusFilter">
+      <select class="filter-select" [(ngModel)]="adminStatusFilter" aria-label="Filter accounts by status">
         <option value="">All Status</option>
         <option value="ACTIVE">Active</option>
         <option value="BLOCKED">Blocked</option>
@@ -142,7 +142,7 @@
                       {{ acc.status }}
                     </app-forsa-badge>
                   </td>
-                  <td class="amount-cell">${{ acc.wallet?.balance | number : '1.2-2' }}</td>
+                  <td class="amount-cell">${{ acc.wallet.balance | number : '1.2-2' }}</td>
                   <td class="actions-cell" (click)="$event.stopPropagation()">
                     <button class="icon-btn icon-btn--green" title="Deposit"
                       (click)="selectAdminAccount(acc); adminDepositAmount = null; operationError = ''; showAdminDepositModal = true">
@@ -185,7 +185,7 @@
 
             <div class="detail-balance-card">
               <p class="detail-balance-label">Current Balance</p>
-              <p class="detail-balance">${{ adminSelectedAccount.wallet?.balance | number : '1.2-2' }}</p>
+              <p class="detail-balance">${{ adminSelectedAccount.wallet.balance | number : '1.2-2' }}</p>
             </div>
 
             @if (adminStats) {
@@ -224,12 +224,12 @@
           </div>
         </app-forsa-card>
 
-        @if (adminSelectedAccount.wallet?.transactions?.length) {
+        @if (adminSelectedAccount.wallet.transactions.length) {
           <app-forsa-card>
             <div class="card-pad-lg">
               <h3 class="side-title">Recent Transactions</h3>
               <div class="act-list">
-                @for (tx of (adminSelectedAccount.wallet?.transactions ?? []); track tx.id) {
+                @for (tx of adminSelectedAccount.wallet.transactions; track tx.id) {
                   <div class="act-row">
                     <div class="act-left">
                       <span class="act-ico" [class.dep]="isIncoming(tx)">
@@ -626,7 +626,7 @@
     <div class="modal" (click)="$event.stopPropagation()">
       <div class="modal-head"><h3>↑ Withdraw — Account #{{ adminSelectedAccount.id }}</h3><button class="modal-close" (click)="showAdminWithdrawModal = false">✕</button></div>
       @if (operationError) { <p class="op-err">{{ operationError }}</p> }
-      <p class="modal-hint">Balance: <strong>${{ adminSelectedAccount.wallet?.balance | number : '1.2-2' }}</strong></p>
+      <p class="modal-hint">Balance: <strong>${{ adminSelectedAccount.wallet.balance | number : '1.2-2' }}</strong></p>
       <label class="modal-label">Amount ($)</label>
       <input class="modal-input" type="number" min="0.01" step="0.01" placeholder="0.00" [(ngModel)]="adminWithdrawAmount" (keyup.enter)="adminWithdraw()" />
       <div class="modal-actions">

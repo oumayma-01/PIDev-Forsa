@@ -7,7 +7,7 @@ import {
   Transaction,
   Activity,
 } from '../models/wallet.models';
-import { environment } from 'src/environments/environment';
+import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class WalletService {
