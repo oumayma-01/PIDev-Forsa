@@ -163,6 +163,8 @@
               <span>Risk Category:</span> 
               <span class="badge {{ quote.premiumDetails?.riskCategory | lowercase }}">{{ quote.premiumDetails?.riskCategory }}</span>
             </p>
+
+            <p><span>Risk Coefficient:</span> <strong>{{ quote.premiumDetails?.riskCoefficient | number:'1.2-2' }}</strong></p>
           </div>
         </div>
 

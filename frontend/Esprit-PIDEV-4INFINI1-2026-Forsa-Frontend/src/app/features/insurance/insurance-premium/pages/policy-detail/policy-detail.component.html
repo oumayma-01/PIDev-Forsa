@@ -5,9 +5,12 @@
       <app-forsa-button variant="outline">Back</app-forsa-button>
     </a>
     @if (policy()) {
+      <app-forsa-button variant="outline" (click)="viewPdf()">
+        <app-forsa-icon name="eye" [size]="16" /> View Schedule
+      </app-forsa-button>
       <app-forsa-button variant="outline" [disabled]="downloadingPdf()" (click)="downloadPdf()">
-        @if (downloadingPdf()) { <app-forsa-icon name="history" [size]="16" class="spin" /> } @else { <app-forsa-icon name="arrow-down-right" [size]="16" /> }
-        Amortization PDF
+        @if (downloadingPdf()) { <app-forsa-icon name="history" [size]="16" class="spin" /> } @else { <app-forsa-icon name="download" [size]="16" /> }
+        Download
       </app-forsa-button>
     }
   </div>
@@ -49,10 +52,11 @@
         <div class="card-pad">
           <h4 class="section-title"><app-forsa-icon name="bar-chart-3" [size]="16" /> Actuarial Calculation</h4>
           <div class="stat-grid">
-            <div class="stat"><span class="lbl">Pure Premium</span><span class="val">{{ (p.purePremium ?? 0) | number:'1.2-2' }}</span></div>
-            <div class="stat"><span class="lbl">Inventory Premium</span><span class="val">{{ (p.inventoryPremium ?? 0) | number:'1.2-2' }}</span></div>
-            <div class="stat"><span class="lbl">Commercial Premium</span><span class="val">{{ (p.commercialPremium ?? 0) | number:'1.2-2' }}</span></div>
+            <div class="stat"><span class="lbl">Pure Premium</span><span class="val">{{ (p.purePremium ?? 0) | number:'1.2-2' }} TND</span></div>
+            <div class="stat"><span class="lbl">Inventory Premium</span><span class="val">{{ (p.inventoryPremium ?? 0) | number:'1.2-2' }} TND</span></div>
+            <div class="stat"><span class="lbl">Commercial Premium</span><span class="val">{{ (p.commercialPremium ?? 0) | number:'1.2-2' }} TND</span></div>
             <div class="stat"><span class="lbl">Effective Rate</span><span class="val">{{ ((p.effectiveAnnualRate ?? 0) * 100) | number:'1.2-2' }}%</span></div>
+            <div class="stat"><span class="lbl">Risk Coefficient</span><span class="val">{{ p.riskCoefficient | number:'1.2-2' }}</span></div>
           </div>
           @if (p.calculationNotes) {
             <div class="notes-box">

@@ -48,6 +48,14 @@ export class ClientMyPoliciesComponent implements OnInit {
     });
   }
 
+  viewAmortization(policy: InsurancePolicy) {
+    if (!policy.id) return;
+    this.policyService.viewAmortizationPdf(policy.id).subscribe((blob) => {
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    });
+  }
+
   downloadContract(policyId: number) {
     this.policyService.downloadPolicyContract(policyId).subscribe((blob) => {
       const url = window.URL.createObjectURL(blob);

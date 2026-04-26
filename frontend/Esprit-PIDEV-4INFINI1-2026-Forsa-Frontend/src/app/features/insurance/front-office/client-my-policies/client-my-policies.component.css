@@ -132,6 +132,25 @@
 .btn-outline:hover { background: #f1f5f9; color: #0f172a; }
 .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
+.btn-group {
+  display: flex;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  border: 1px solid #cbd5e1;
+}
+.btn-group .btn {
+  border: none;
+  border-radius: 0;
+  flex: 1;
+}
+.btn-group .btn-icon {
+  flex: 0 0 45px;
+  border-left: 1px solid #cbd5e1;
+  padding: 0;
+}
+.btn-group .btn-icon i { margin: 0; }
+.btn-group .btn:hover { background: #f1f5f9; }
+
 /* Utilities */
 .flex-column { display: flex; flex-direction: column; }
 .flex-grow-1 { flex-grow: 1; }

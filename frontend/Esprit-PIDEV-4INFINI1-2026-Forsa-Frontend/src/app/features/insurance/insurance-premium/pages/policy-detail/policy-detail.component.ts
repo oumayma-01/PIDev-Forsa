@@ -60,6 +60,18 @@ export class PolicyDetailComponent implements OnInit {
     });
   }
 
+  viewPdf(): void {
+    const p = this.policy();
+    if (!p?.id) return;
+    this.svc.viewAmortizationPdf(p.id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+      },
+      error: () => { alert('PDF view failed.'); },
+    });
+  }
+
   statusTone(s?: PolicyStatus): 'success' | 'warning' | 'danger' | 'info' | 'muted' {
     switch (s) {
       case PolicyStatus.ACTIVE: return 'success';
