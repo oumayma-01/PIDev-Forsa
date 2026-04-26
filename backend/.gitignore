@@ -44,3 +44,5 @@ build/
 ### Environment secrets ###
 .env
 src/main/resources/application-local.properties
+
+.ai/

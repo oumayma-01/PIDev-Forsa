@@ -1,32 +1,45 @@
 package org.example.forsapidev.Services.Implementation;
 
 import lombok.RequiredArgsConstructor;
+import org.example.forsapidev.DTO.ComplaintCreditEligibilityDTO;
+import org.example.forsapidev.DTO.ComplaintFinancialImpactDTO;
 import org.example.forsapidev.Repositories.ComplaintRepository;
 import org.example.forsapidev.Repositories.FeedbackRepository;
 import org.example.forsapidev.Repositories.ResponseRepository;
 import org.example.forsapidev.Repositories.UserRepository;
 import org.example.forsapidev.Services.Interfaces.IComplaintService;
+import org.example.forsapidev.Services.Interfaces.IComplaintNotificationService;
+import org.example.forsapidev.Services.Interfaces.IScoringAggregationService;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Category;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Complaint;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Priority;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Response;
+import org.example.forsapidev.entities.ScoringManagement.ScoreResult;
 import org.example.forsapidev.entities.UserManagement.User;
 import org.example.forsapidev.openai.ComplaintAiAssistant;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ComplaintService implements IComplaintService {
+    private static final double MICRO_CREDIT_MAX_AMOUNT = 5000.0;
+    private static final double MICRO_CREDIT_MIN_AMOUNT = 100.0;
 
     private final ComplaintRepository complaintRepository;
     private final ComplaintAiAssistant complaintAiAssistant;
     private final UserRepository userRepository;
     private final ResponseRepository responseRepository;
     private final FeedbackRepository feedbackRepository;
+    private final IScoringAggregationService scoringAggregationService;
+    private final IComplaintNotificationService notificationService;
 
     @Override
     public List<Complaint> retrieveAllComplaints() {
@@ -61,7 +74,24 @@ public class ComplaintService implements IComplaintService {
 
     @Override
     public Complaint modifyComplaint(Complaint complaint) {
-        return complaintRepository.save(complaint);
+        if (complaint == null || complaint.getId() == null) return null;
+        Complaint existing = complaintRepository.findById(complaint.getId()).orElse(null);
+        if (existing == null) return null;
+        String oldStatus = existing.getStatus();
+
+        existing.setSubject(complaint.getSubject());
+        existing.setDescription(complaint.getDescription());
+        existing.setCategory(complaint.getCategory());
+        existing.setPriority(complaint.getPriority());
+        if (complaint.getStatus() != null) {
+            existing.setStatus(complaint.getStatus());
+        }
+
+        Complaint updated = complaintRepository.save(existing);
+        if (complaint.getStatus() != null && !Objects.equals(oldStatus, complaint.getStatus())) {
+            notificationService.notifyClientStatusChanged(updated.getId(), complaint.getStatus());
+        }
+        return updated;
     }
 
     @Override
@@ -205,6 +235,7 @@ public class ComplaintService implements IComplaintService {
         if ("SENT".equals(saved.getResponseStatus())) complaint.setStatus("RESOLVED");
 
         complaintRepository.save(complaint);
+        notificationService.notifyClientResponseAdded(complaintId, r.getMessage());
         return saved;
     }
 
@@ -214,6 +245,144 @@ public class ComplaintService implements IComplaintService {
                 .orElseThrow(() -> new IllegalArgumentException("Complaint not found"));
         complaint.setStatus("CLOSED");
         complaintRepository.save(complaint);
+        notificationService.notifyClientComplaintClosed(complaintId);
+    }
+
+    @Override
+    public ComplaintCreditEligibilityDTO getCreditEligibilityByComplaint(Long complaintId, Double requiredScore) {
+        Complaint complaint = complaintRepository.findById(complaintId)
+                .orElseThrow(() -> new IllegalArgumentException("Complaint not found"));
+
+        double amount = extractAmountFromDescription(complaint.getDescription());
+        if (amount <= 0) {
+            amount = simulatedAmountByPriority(complaint.getPriority());
+        }
+
+        double required = (requiredScore != null && requiredScore > 0)
+                ? requiredScore
+                : computeRequiredScore(amount);
+        Long clientId = complaint.getUser() != null ? complaint.getUser().getId() : null;
+
+        double currentScore;
+        boolean fallbackUsed = false;
+
+        if (clientId == null) {
+            currentScore = 50.0;
+            fallbackUsed = true;
+        } else {
+            try {
+                ScoreResult scoreResult = scoringAggregationService.getOrCalculateScore(clientId);
+                currentScore = scoreResult.getFinalScore() != null ? scoreResult.getFinalScore() : 50.0;
+                if (scoreResult.getFinalScore() == null) {
+                    fallbackUsed = true;
+                }
+            } catch (Exception e) {
+                currentScore = 50.0;
+                fallbackUsed = true;
+            }
+        }
+
+        double gap = Math.max(0.0, required - currentScore);
+        boolean eligible = currentScore >= required;
+        String recommendation;
+        if (eligible) {
+            recommendation = "Profile eligible. Current score: " + round2(currentScore)
+                    + " >= Required: " + round2(required)
+                    + ". Amount: " + round2(amount) + " DT.";
+        } else {
+            recommendation = "Score insufficient. Need " + round2(gap)
+                    + " more points. Current: " + round2(currentScore)
+                    + ", Required: " + round2(required)
+                    + " for amount " + round2(amount) + " DT.";
+        }
+
+        return new ComplaintCreditEligibilityDTO(
+                complaintId,
+                clientId,
+                round2(currentScore),
+                round2(required),
+                round2(gap),
+                eligible,
+                fallbackUsed,
+                round2(amount),
+                recommendation
+        );
+    }
+
+    @Override
+    public ComplaintFinancialImpactDTO getFinancialImpactByComplaint(Long complaintId) {
+        Complaint complaint = complaintRepository.findById(complaintId)
+                .orElseThrow(() -> new IllegalArgumentException("Complaint not found"));
+
+        double amount = extractAmountFromDescription(complaint.getDescription());
+        String amountSource = "DESCRIPTION";
+        if (amount <= 0) {
+            amount = simulatedAmountByPriority(complaint.getPriority());
+            amountSource = "SIMULATED";
+        }
+
+        long daysSinceCreation = 0L;
+        if (complaint.getCreatedAt() != null) {
+            daysSinceCreation = Math.max(0L,
+                    ChronoUnit.DAYS.between(complaint.getCreatedAt().toInstant(), Instant.now()));
+        }
+
+        double clientScore = 50.0;
+        if (complaint.getUser() != null) {
+            try {
+                ScoreResult score = scoringAggregationService.getOrCalculateScore(complaint.getUser().getId());
+                if (score.getFinalScore() != null) {
+                    clientScore = score.getFinalScore();
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        double amountScore = amountScore(amount);
+        double priorityScore = priorityScore(complaint.getPriority());
+        double ageScore = Math.min(100.0, daysSinceCreation * 1.67);
+        double clientRiskScore = Math.max(0.0, 100.0 - clientScore);
+
+        double impactScore = round2(
+                (amountScore * 0.40) +
+                (priorityScore * 0.25) +
+                (clientRiskScore * 0.20) +
+                (ageScore * 0.15)
+        );
+
+        String riskLevel;
+        if (impactScore >= 75) riskLevel = "CRITICAL";
+        else if (impactScore >= 50) riskLevel = "HIGH";
+        else if (impactScore >= 25) riskLevel = "MEDIUM";
+        else riskLevel = "LOW";
+
+        String creditCategory;
+        if (amount <= 300) creditCategory = "MICRO_SMALL";
+        else if (amount <= 1000) creditCategory = "MICRO_STANDARD";
+        else if (amount <= 3000) creditCategory = "MICRO_MEDIUM";
+        else creditCategory = "MICRO_LARGE";
+
+        return new ComplaintFinancialImpactDTO(
+                complaintId,
+                round2(amount),
+                amountSource,
+                complaint.getPriority() != null ? complaint.getPriority().name() : Priority.MEDIUM.name(),
+                daysSinceCreation,
+                impactScore,
+                riskLevel,
+                creditCategory
+        );
+    }
+
+    private double computeRequiredScore(double amount) {
+        if (amount <= 0) return 40.0;
+        else if (amount <= 300) return 35.0;
+        else if (amount <= 500) return 40.0;
+        else if (amount <= 1000) return 50.0;
+        else if (amount <= 2000) return 60.0;
+        else if (amount <= 3500) return 70.0;
+        else if (amount <= 5000) return 80.0;
+        else return 85.0;
     }
 
     private List<Map<String, Object>> trendsByMonth(List<Date> dates, int months) {
@@ -236,5 +405,59 @@ public class ComplaintService implements IComplaintService {
         List<Map<String, Object>> res = new ArrayList<>();
         counts.forEach((k, v) -> res.add(new LinkedHashMap<>(Map.of("period", k, "count", v))));
         return res;
+    }
+
+    private double extractAmountFromDescription(String description) {
+        if (description == null || description.isBlank()) {
+            return -1.0;
+        }
+
+        Pattern pattern = Pattern.compile("(\\d+(?:[\\.,]\\d{1,2})?)");
+        Matcher matcher = pattern.matcher(description);
+        while (matcher.find()) {
+            try {
+                String raw = matcher.group(1).replace(",", ".");
+                double parsed = Double.parseDouble(raw);
+                if (parsed > 0) {
+                    return parsed;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return -1.0;
+    }
+
+    private double simulatedAmountByPriority(Priority priority) {
+        if (priority == null) return 500.0;
+        return switch (priority) {
+            case LOW -> 200.0;
+            case MEDIUM -> 500.0;
+            case HIGH -> 1500.0;
+            case CRITICAL -> 3000.0;
+        };
+    }
+
+    private double priorityScore(Priority priority) {
+        if (priority == null) return 50.0;
+        return switch (priority) {
+            case LOW -> 25.0;
+            case MEDIUM -> 50.0;
+            case HIGH -> 75.0;
+            case CRITICAL -> 100.0;
+        };
+    }
+
+    private double amountScore(double amount) {
+        if (amount <= 0) {
+            return 0.0;
+        }
+        double clampedAmount = Math.max(MICRO_CREDIT_MIN_AMOUNT, Math.min(amount, MICRO_CREDIT_MAX_AMOUNT));
+        double normalized = (clampedAmount - MICRO_CREDIT_MIN_AMOUNT)
+                / (MICRO_CREDIT_MAX_AMOUNT - MICRO_CREDIT_MIN_AMOUNT);
+        return Math.max(0.0, Math.min(100.0, normalized * 100.0));
+    }
+
+    private double round2(double value) {
+        return Math.round(value * 100.0) / 100.0;
     }
 }

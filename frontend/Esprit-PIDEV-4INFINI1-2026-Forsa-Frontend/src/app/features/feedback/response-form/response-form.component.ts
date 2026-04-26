@@ -70,6 +70,11 @@ export class ResponseFormComponent implements OnInit {
         },
       });
     }
+    const prefillMessage = this.route.snapshot.queryParamMap.get('prefillMessage');
+    if (prefillMessage && !this.isEditMode && !(this.response.message ?? '').trim()) {
+      this.response.message = prefillMessage;
+      this.response.responseStatus = 'PROCESSED';
+    }
 
     // Populate responder info from current user
     const user = this.auth.currentUser();
