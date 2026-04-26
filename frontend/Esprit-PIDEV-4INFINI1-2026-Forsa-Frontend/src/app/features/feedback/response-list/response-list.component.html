@@ -13,7 +13,7 @@
 
 <app-forsa-card class="filter-card">
   <div class="filter-inner">
-    <select forsaInput [(ngModel)]="statusFilter" (ngModelChange)="applyFilter()">
+    <select class="resp-filter forsa-input" forsaInput [(ngModel)]="statusFilter" (ngModelChange)="applyFilter()">
       @for (status of statuses; track status) {
         <option [value]="status">{{ status || 'All Statuses' }}</option>
       }

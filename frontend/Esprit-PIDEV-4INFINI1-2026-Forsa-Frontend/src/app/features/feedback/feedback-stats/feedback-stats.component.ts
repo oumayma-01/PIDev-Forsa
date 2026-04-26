@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ComplaintService } from '../../../core/data/complaint.service';
 import { FeedbackService } from '../../../core/data/feedback.service';
+import { FeedbackFacadeService } from '../feedback-facade.service';
 import { ForsaButtonComponent } from '../../../shared/ui/forsa-button/forsa-button.component';
 import { ForsaCardComponent } from '../../../shared/ui/forsa-card/forsa-card.component';
 
@@ -20,6 +21,7 @@ type TrendItem = { period: string; count: number; label: string };
 export class FeedbackStatsComponent implements OnInit {
   private readonly complaintService = inject(ComplaintService);
   private readonly feedbackService = inject(FeedbackService);
+  private readonly feedbackFacade = inject(FeedbackFacadeService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
@@ -29,6 +31,8 @@ export class FeedbackStatsComponent implements OnInit {
   trendsData: TrendItem[] = [];
   feedbackSummary: any = null;
   satisfactionAverages: SatisfactionAvg[] = [];
+  responseSummary: any = null;
+  feedbackTrendsData: TrendItem[] = [];
   loading = false;
   error = '';
 
@@ -67,6 +71,46 @@ export class FeedbackStatsComponent implements OnInit {
       },
     });
     this.feedbackService.getSummary().subscribe({ next: (d) => (this.feedbackSummary = d), error: () => void 0 });
+    this.feedbackFacade.getResponsesSummaryReport().subscribe({
+      next: (d) => {
+        const backendTotal = Number(d?.total ?? 0);
+        this.feedbackFacade.getAllResponses().subscribe({
+          next: (responses: any[]) => {
+            const byStatus: Record<string, number> = {};
+            (Array.isArray(responses) ? responses : []).forEach((r: any) => {
+              const key = String(r?.responseStatus ?? 'PENDING').toUpperCase();
+              byStatus[key] = (byStatus[key] ?? 0) + 1;
+            });
+            const computedTotal = Object.values(byStatus).reduce((acc, value) => acc + Number(value ?? 0), 0);
+            this.responseSummary = {
+              total: backendTotal > 0 ? backendTotal : computedTotal,
+              byStatus,
+            };
+          },
+          error: () => {
+            this.responseSummary = {
+              total: backendTotal,
+              byStatus: {},
+            };
+          },
+        });
+      },
+      error: () => {
+        this.responseSummary = null;
+      },
+    });
+    this.feedbackFacade.getFeedbackTrends(6).subscribe({
+      next: (d: any[]) => {
+        this.feedbackTrendsData = (Array.isArray(d) ? d : []).map((item: any) => ({
+          period: item['period'] ?? item.period ?? '',
+          count: Number(item['count'] ?? item.count ?? 0),
+          label: this.formatPeriodLabel(item['period'] ?? item.period ?? ''),
+        }));
+      },
+      error: () => {
+        this.feedbackTrendsData = [];
+      },
+    });
     this.feedbackService.getAvgRatingByCategory().subscribe({
       next: (d: any) => {
         console.log('RAW avg rating response:', d);
@@ -212,5 +256,36 @@ export class FeedbackStatsComponent implements OnInit {
       const y = height - padding - (d.count / maxCount) * (height - 2 * padding);
       return { x, y, count: d.count, label: d.label };
     });
+  }
+
+  get feedbackTrendsSvgPath(): string {
+    if (!this.feedbackTrendsData.length) return '';
+    const width = 600;
+    const height = 200;
+    const padding = 40;
+    const maxCount = Math.max(...this.feedbackTrendsData.map((d) => d.count), 1);
+    const points = this.feedbackTrendsData.map((d, i) => {
+      const x = padding + (i / (this.feedbackTrendsData.length - 1 || 1)) * (width - 2 * padding);
+      const y = height - padding - (d.count / maxCount) * (height - 2 * padding);
+      return { x, y, count: d.count, label: d.label };
+    });
+    return points.map((p, i) => (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' ');
+  }
+
+  get feedbackTrendsPoints(): { x: number; y: number; count: number; label: string }[] {
+    if (!this.feedbackTrendsData.length) return [];
+    const width = 600;
+    const height = 200;
+    const padding = 40;
+    const maxCount = Math.max(...this.feedbackTrendsData.map((d) => d.count), 1);
+    return this.feedbackTrendsData.map((d, i) => {
+      const x = padding + (i / (this.feedbackTrendsData.length - 1 || 1)) * (width - 2 * padding);
+      const y = height - padding - (d.count / maxCount) * (height - 2 * padding);
+      return { x, y, count: d.count, label: d.label };
+    });
+  }
+
+  responseCount(status: string): number {
+    return Number(this.responseSummary?.byStatus?.[String(status).toUpperCase()] ?? 0);
   }
 }

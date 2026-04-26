@@ -2,9 +2,12 @@ package org.example.forsapidev.Services.Implementation;
 
 import lombok.RequiredArgsConstructor;
 import org.example.forsapidev.Repositories.FeedbackRepository;
+import org.example.forsapidev.Repositories.UserRepository;
 import org.example.forsapidev.Services.Interfaces.IFeedbackService;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Feedback;
+import org.example.forsapidev.entities.UserManagement.User;
 import org.example.forsapidev.openai.ComplaintAiAssistant;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
@@ -16,6 +19,7 @@ import java.util.stream.Collectors;
 public class FeedbackService implements IFeedbackService {
 
     private final FeedbackRepository feedbackRepository;
+    private final UserRepository userRepository;
     private final ComplaintAiAssistant complaintAiAssistant;
 
     @Override
@@ -32,12 +36,24 @@ public class FeedbackService implements IFeedbackService {
     @Override
     public List<Feedback> getFeedbacksByUsername(String username) {
         if (username == null || username.isBlank()) return Collections.emptyList();
-        return feedbackRepository.findByComplaintUserUsername(username);
+        List<Feedback> byUser = feedbackRepository.findByUserUsername(username);
+        List<Feedback> byComplaint = feedbackRepository.findByComplaintUserUsername(username);
+        // Merge both lists, avoid duplicates by id
+        Map<Long, Feedback> merged = new LinkedHashMap<>();
+        byUser.forEach(f -> merged.put(f.getId(), f));
+        byComplaint.forEach(f -> merged.put(f.getId(), f));
+        return new ArrayList<>(merged.values());
     }
 
     @Override
     public Feedback addFeedback(Feedback f) {
         if (f == null) return null;
+
+        String username = SecurityContextHolder.getContext()
+                .getAuthentication().getName();
+        User user = userRepository.findByUsername(username).orElse(null);
+        if (user != null) f.setUser(user);
+
         return feedbackRepository.save(f);
     }
 
@@ -52,7 +68,11 @@ public class FeedbackService implements IFeedbackService {
     @Override
     public Feedback modifyFeedback(Feedback feedback) {
         if (feedback == null || feedback.getId() == null) return null;
-        if (!feedbackRepository.existsById(feedback.getId())) return null;
+        Feedback existing = feedbackRepository.findById(feedback.getId()).orElse(null);
+        if (existing == null) return null;
+        feedback.setUser(existing.getUser());
+        feedback.setComplaint(existing.getComplaint());
+        feedback.setCreatedAt(existing.getCreatedAt());
         return feedbackRepository.save(feedback);
     }
 
@@ -124,6 +144,11 @@ public class FeedbackService implements IFeedbackService {
     @Override
     public Feedback addFeedbackWithAI(Feedback f) {
         if (f == null) return null;
+
+        String username = SecurityContextHolder.getContext()
+                .getAuthentication().getName();
+        User user = userRepository.findByUsername(username).orElse(null);
+        if (user != null) f.setUser(user);
 
         try {
             String level = complaintAiAssistant.analyzeFeedbackSatisfaction(

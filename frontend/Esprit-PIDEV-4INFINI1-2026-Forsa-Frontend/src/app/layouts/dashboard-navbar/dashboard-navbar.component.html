@@ -29,8 +29,15 @@
     <button type="button" class="text-btn bell">
       <app-forsa-icon name="bell" [size]="18" />
       <span>Notifications</span>
+      @if (responseNotificationCount() > 0) {
+        <span class="notif-count">{{ responseNotificationCount() }}</span>
+      }
       <span class="dot" aria-hidden="true"></span>
     </button>
+
+    @if (responseNotification()) {
+      <div class="notif-inline">{{ responseNotification() }}</div>
+    }
 
     <div class="divider"></div>
 
