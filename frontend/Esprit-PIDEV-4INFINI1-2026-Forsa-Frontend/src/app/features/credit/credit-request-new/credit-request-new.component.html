@@ -1,10 +1,17 @@
+<!-- ─── Page header ─────────────────────────────────────────────────────────── -->
 <div class="page-head">
   <h2>New Credit Request</h2>
-  <p>Submit a request with a medical report (PDF or image).</p>
+  <p>Step {{ step() }} of 2 — {{ step() === 1 ? 'Credit Details' : 'Guarantor Information' }}</p>
+</div>
+
+<!-- ─── Step progress bar ──────────────────────────────────────────────────── -->
+<div class="step-bar">
+  <div class="step-bar__fill" [style.width]="step() === 1 ? '50%' : '100%'"></div>
 </div>
 
 <app-forsa-card>
   <div class="card-pad-lg">
+
     @if (message()) {
     <p class="notice" role="status">{{ message() }}</p>
     }
@@ -12,10 +19,14 @@
     <p class="notice notice--err" role="alert">{{ error() }}</p>
     }
 
-    <form class="stack" (ngSubmit)="submit()">
+    <!-- ════════════════════════════════════════════════════════════════
+         STEP 1 — Credit Details
+    ════════════════════════════════════════════════════════════════ -->
+    @if (step() === 1) {
+    <form class="stack" (ngSubmit)="nextStep()">
       <div class="grid">
         <div>
-          <label class="forsa-label" for="cr-amount">Requested amount DT</label>
+          <label class="forsa-label" for="cr-amount">Requested Amount (DT)</label>
           <input id="cr-amount" forsaInput class="input-h-12" type="number" name="amountRequested"
             [(ngModel)]="amountRequested" min="0" step="0.01" required />
         </div>
@@ -25,30 +36,126 @@
             [(ngModel)]="durationMonths" min="1" step="1" required />
         </div>
         <div>
-          <label class="forsa-label" for="cr-type">Calculation type</label>
+          <label class="forsa-label" for="cr-type">Calculation Type</label>
           <select id="cr-type" class="forsa-input input-h-12" name="typeCalcul" [(ngModel)]="typeCalcul" required>
-            <option value="AMORTISSEMENT_CONSTANT">AMORTISSEMENT_CONSTANT</option>
-            <option value="ANNUITE_CONSTANTE">ANNUITE_CONSTANTE</option>
+            <option value="AMORTISSEMENT_CONSTANT">Constant Amortization</option>
+            <option value="ANNUITE_CONSTANTE">Constant Annuity</option>
           </select>
         </div>
         <div>
-          <label class="forsa-label">Medical report</label>
+          <label class="forsa-label">Medical Report (PDF / Image)</label>
           <div class="file-row">
-            <input #fileInput type="file" class="visually-hidden" title="Choose a medical report"
+            <input #fileInput type="file" class="visually-hidden" title="Choose medical report"
               accept="application/pdf,image/*" (change)="onHealthReportSelected($event)" />
             <app-forsa-button type="button" variant="secondary" [disabled]="busy()" (clicked)="fileInput.click()">
               <app-forsa-icon name="send" [size]="16" />
-              Choose file
+              Choose File
             </app-forsa-button>
-            <span class="text-muted file-name">{{ healthReportName() || 'No file chosen' }}</span>
+            <span class="text-muted file-name">{{ healthReportName() || 'No file selected' }}</span>
           </div>
         </div>
       </div>
 
       <div class="actions">
-        <app-forsa-button type="submit" [disabled]="busy()">{{ busy() ? 'Sending...' : 'Submit' }}</app-forsa-button>
+        <app-forsa-button type="submit">Next Step →</app-forsa-button>
         <app-forsa-button variant="outline" link="/dashboard/credit">Cancel</app-forsa-button>
       </div>
     </form>
+    }
+
+    <!-- ════════════════════════════════════════════════════════════════
+         STEP 2 — Guarantor Information
+    ════════════════════════════════════════════════════════════════ -->
+    @if (step() === 2) {
+    <form class="stack" (ngSubmit)="submit()">
+
+      <h3 class="sec-title">Guarantor Information</h3>
+
+      <div class="grid">
+        <div>
+          <label class="forsa-label" for="g-name">Guarantor's Full Name</label>
+          <input id="g-name" forsaInput class="input-h-12" type="text" name="guarantorName"
+            [(ngModel)]="guarantorName" placeholder="e.g. John Doe" required />
+        </div>
+        <div>
+          <label class="forsa-label" for="g-cin">Guarantor's CIN Number</label>
+          <input id="g-cin" forsaInput class="input-h-12" type="text" name="guarantorCin"
+            [(ngModel)]="guarantorCin" placeholder="e.g. 12345678" required />
+        </div>
+        <div class="span-2">
+          <label class="forsa-label" for="g-bank">Guarantor's Bank Account (RIB)</label>
+          <input id="g-bank" forsaInput class="input-h-12" type="text" name="guarantorBankAccount"
+            [(ngModel)]="guarantorBankAccount" placeholder="e.g. 07 123 0123456789 01" required />
+        </div>
+      </div>
+
+      <!-- ── Camera section ─────────────────────────────────────────── -->
+      <div class="camera-section">
+        <h4 class="camera-title">
+          <app-forsa-icon name="send" [size]="18" />
+          Guarantor's Photo with CIN Card
+        </h4>
+
+        @if (cameraError()) {
+        <p class="notice notice--err" role="alert">{{ cameraError() }}</p>
+        }
+
+        <!-- Photo already captured -->
+        @if (guarantorPhotoPreview()) {
+        <div class="photo-preview-wrap">
+          <img [src]="guarantorPhotoPreview()!" alt="Guarantor photo" class="photo-preview" />
+          <div class="photo-actions">
+            <app-forsa-button type="button" variant="secondary" size="sm" (clicked)="retakePhoto()">
+              🔄 Retake Photo
+            </app-forsa-button>
+          </div>
+          <span class="photo-ok">✅ Photo captured successfully</span>
+        </div>
+        }
+
+        <!-- Camera stream active -->
+        @if (cameraActive()) {
+        <div class="camera-wrap">
+          <video #videoEl autoplay playsinline class="camera-video"></video>
+          <!-- Hidden canvas used for capture -->
+          <canvas #canvasEl class="visually-hidden"></canvas>
+          <div class="camera-controls">
+            <app-forsa-button type="button" variant="secondary" (clicked)="capturePhoto()">
+              📸 Capture Photo
+            </app-forsa-button>
+            <app-forsa-button type="button" variant="outline" (clicked)="stopCamera()">
+              Cancel
+            </app-forsa-button>
+          </div>
+          <p class="camera-hint text-muted">Ensure the guarantor's CIN card is clearly visible.</p>
+        </div>
+        }
+
+        <!-- Button to open camera (only if not active and no photo yet) -->
+        @if (!cameraActive() && !guarantorPhotoPreview()) {
+        <div class="camera-start">
+          <canvas #canvasEl class="visually-hidden"></canvas>
+          <app-forsa-button type="button" variant="secondary" (clicked)="startCamera()">
+            📷 Open Camera
+          </app-forsa-button>
+          <p class="text-muted" style="font-size: 0.875rem; margin-top: 0.5rem;">
+            The photo must show the guarantor holding their CIN card.
+          </p>
+        </div>
+        }
+      </div>
+      <!-- End camera section -->
+
+      <div class="actions">
+        <app-forsa-button type="submit" [disabled]="busy()">
+          {{ busy() ? 'Submitting...' : '✅ Submit Request' }}
+        </app-forsa-button>
+        <app-forsa-button type="button" variant="outline" [disabled]="busy()" (clicked)="prevStep()">
+          ← Back
+        </app-forsa-button>
+      </div>
+    </form>
+    }
+
   </div>
 </app-forsa-card>

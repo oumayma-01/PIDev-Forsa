@@ -24,6 +24,42 @@
   <p class="notice notice--err" role="alert">{{ error() }}</p>
 }
 
+@if (!isClient()) {
+  <div class="filters-bar">
+    <div class="filter-group">
+      <div class="search-box">
+        <app-forsa-icon name="search" [size]="16" />
+        <input type="text" placeholder="Search by username or ID..." [value]="searchTerm()" (input)="searchTerm.set($any($event.target).value)" />
+      </div>
+      <div class="filter-select">
+        <select [value]="statusFilter()" (change)="statusFilter.set($any($event.target).value)">
+          <option value="">All Statuses</option>
+          <option value="SUBMITTED">Submitted</option>
+          <option value="UNDER_REVIEW">Under Review</option>
+          <option value="APPROVED">Approved</option>
+          <option value="REJECTED">Rejected</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <div class="date-range">
+        <div class="date-input">
+          <span>From:</span>
+          <input type="date" [value]="dateStart()" (change)="dateStart.set($any($event.target).value)" />
+        </div>
+        <div class="date-input">
+          <span>To:</span>
+          <input type="date" [value]="dateEnd()" (change)="dateEnd.set($any($event.target).value)" />
+        </div>
+      </div>
+      <app-forsa-button variant="ghost" size="sm" (clicked)="searchTerm.set(''); statusFilter.set(''); dateStart.set(''); dateEnd.set('');">
+        Clear
+      </app-forsa-button>
+    </div>
+  </div>
+}
+
 @if (isClient() && giftAlertVisible()) {
   <div class="gift-toast" role="status" aria-live="polite">
     <div class="gift-toast__card">
@@ -137,7 +173,7 @@
           <thead>
             <tr>
               <th>ID</th>
-              <th>Client</th>
+              <th>Client Name</th>
               <th>Amount</th>
               <th>Duration</th>
               <th>Status</th>
@@ -147,7 +183,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (c of credits(); track c.id) {
+            @for (c of filteredCredits(); track c.id) {
               <tr>
                 <td class="mono">{{ c.id }}</td>
                 <td>{{ c.user?.username || ('#' + (c.user?.id ?? '—')) }}</td>

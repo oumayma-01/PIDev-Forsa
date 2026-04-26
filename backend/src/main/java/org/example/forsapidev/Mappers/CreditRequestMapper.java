@@ -16,6 +16,8 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 public interface CreditRequestMapper {
 
     @Mapping(target = "user", expression = "java(toUserRefDTO(entity.getUser()))")
+    @Mapping(target = "hasGuarantorPhoto",
+             expression = "java(entity.getGuarantorCinPhoto() != null && entity.getGuarantorCinPhoto().length > 0)")
     CreditRequestDTO toDto(CreditRequest entity);
 
     default UserRefDTO toUserRefDTO(User user) {
