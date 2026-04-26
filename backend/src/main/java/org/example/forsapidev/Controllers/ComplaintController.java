@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.example.forsapidev.DTO.ComplaintCreditEligibilityDTO;
+import org.example.forsapidev.DTO.ComplaintFinancialImpactDTO;
 import org.example.forsapidev.Services.Interfaces.IComplaintService;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Complaint;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Response;
@@ -53,13 +55,13 @@ public class ComplaintController {
     }
 
     @DeleteMapping("/remove-complaint/{complaint-id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','CLIENT')")
     public void removeComplaint(@PathVariable("complaint-id") Long cId) {
         complaintService.removeComplaint(cId);
     }
 
     @PutMapping("/modify-complaint")
-    @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
+    @PreAuthorize("hasAnyRole('ADMIN','AGENT','CLIENT')")
     public Complaint modifyComplaint(@RequestBody Complaint c) {
         return complaintService.modifyComplaint(c);
     }
@@ -131,5 +133,21 @@ public class ComplaintController {
     @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
     public void closeComplaintIfEligible(@PathVariable Long complaintId) {
         complaintService.closeComplaintIfEligible(complaintId);
+    }
+
+    // ========== Financial mini-rules ==========
+
+    @GetMapping("/{complaintId}/financial/credit-eligibility")
+    @PreAuthorize("hasAnyRole('CLIENT','ADMIN','AGENT')")
+    public ComplaintCreditEligibilityDTO getCreditEligibilityByComplaint(
+            @PathVariable Long complaintId,
+            @RequestParam(required = false) Double requiredScore) {
+        return complaintService.getCreditEligibilityByComplaint(complaintId, requiredScore);
+    }
+
+    @GetMapping("/{complaintId}/financial/impact-score")
+    @PreAuthorize("hasAnyRole('CLIENT','ADMIN','AGENT')")
+    public ComplaintFinancialImpactDTO getFinancialImpactByComplaint(@PathVariable Long complaintId) {
+        return complaintService.getFinancialImpactByComplaint(complaintId);
     }
 }

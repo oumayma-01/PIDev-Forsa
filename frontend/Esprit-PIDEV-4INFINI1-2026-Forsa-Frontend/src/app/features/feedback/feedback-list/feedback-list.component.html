@@ -5,6 +5,64 @@
   </div>
   @if (isClient) {
     <div class="toolbar-actions">
+      <div class="notif-bell-wrapper">
+        <button class="notif-bell-btn" (click)="toggleNotifications()">
+          <app-forsa-icon name="bell" [size]="20" />
+          @if (unreadCount > 0) {
+            <span class="notif-count-badge">{{ unreadCount }}</span>
+          }
+        </button>
+
+        @if (showNotifications) {
+          <div class="notif-dropdown">
+            <div class="notif-dropdown-header">
+              <span>Notifications</span>
+              @if (notifications.length > 0) {
+                <span class="notif-total">{{ notifications.length }}</span>
+              }
+            </div>
+
+            @if (notifications.length === 0) {
+              <div class="notif-empty">
+                <app-forsa-icon name="bell" [size]="24" />
+                <p>No notifications yet</p>
+              </div>
+            }
+
+            @for (notif of notifications.slice(0, 8); track notif.id) {
+              <div
+                class="notif-item-drop"
+                [class.unread]="!notif.isRead"
+                (click)="goToComplaintFromNotif(notif.complaint?.id ?? 0, notif.id)"
+              >
+                <div class="notif-item-icon">
+                  @if (notif.type === 'RESPONSE_ADDED') {
+                    <app-forsa-icon name="message-square" [size]="14" />
+                  } @else if (notif.type === 'COMPLAINT_CLOSED') {
+                    <app-forsa-icon name="check-circle-2" [size]="14" />
+                  } @else {
+                    <app-forsa-icon name="bell" [size]="14" />
+                  }
+                </div>
+                <div class="notif-item-content">
+                  <p class="notif-item-title">{{ notif.title }}</p>
+                  <p class="notif-item-msg">
+                    {{ notif.message.slice(0, 80) }}
+                    {{ notif.message.length > 80 ? '...' : '' }}
+                  </p>
+                  <span class="notif-item-date">
+                    {{ notif.createdAt | date:'dd/MM/yyyy HH:mm' }}
+                  </span>
+                </div>
+                @if (!notif.isRead) {
+                  <div class="notif-unread-dot"></div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+
       <app-forsa-button (clicked)="goToAdd()">
         <app-forsa-icon name="plus" [size]="16" />
         New Complaint
@@ -16,6 +74,14 @@
       <app-forsa-button variant="outline" (clicked)="goToChatbot()">
         <app-forsa-icon name="message-square" [size]="16" />
         Open Chatbot
+      </app-forsa-button>
+    </div>
+  }
+  @if (isAdminOrAgent) {
+    <div class="toolbar-actions">
+      <app-forsa-button variant="outline" (clicked)="loadAiReport()">
+        <app-forsa-icon name="sparkles" [size]="16" />
+        Generate AI Report
       </app-forsa-button>
     </div>
   }
@@ -31,11 +97,32 @@
           </div>
           <h3>{{ card.title }}</h3>
           <p>{{ card.description }}</p>
-          <button class="card-link" type="button">{{ card.linkText }}</button>
+          <span class="card-link" (click)="$event.stopPropagation(); card.action === 'manageComplaints' ? showManageComplaints() : onRoleCardClick(card.action)">
+            {{ card.linkText }}
+          </span>
         </div>
       </app-forsa-card>
     }
   </div>
+}
+
+@if (isAdminOrAgent) {
+  <app-forsa-card class="ai-report-card">
+    <div class="section-pad">
+      <div class="section-head">
+        <h3>AI Complaint Report</h3>
+      </div>
+      @if (aiReportLoading) {
+        <p class="muted">Generating AI report...</p>
+      } @else if (aiReportError) {
+        <p class="simulator-error">{{ aiReportError }}</p>
+      } @else if (aiReportText) {
+        <p class="ai-report-text">{{ aiReportText }}</p>
+      } @else {
+        <p class="muted">Click "Generate AI Report" to load insights.</p>
+      }
+    </div>
+  </app-forsa-card>
 }
 
 @if (isClient) {
@@ -64,9 +151,38 @@
               <span>{{ item.createdAt | date:'yyyy-MM-dd HH:mm' }}</span>
             </div>
             <div class="client-actions">
-              @if (canAddFeedback(item)) {
-                <app-forsa-button size="sm" variant="outline" (clicked)="goToAddFeedback(item.id!)">Add Feedback</app-forsa-button>
+              @if (item.status === 'OPEN' && !item.responses?.length) {
+                <app-forsa-button size="sm" variant="ghost"
+                  (clicked)="goToEditComplaint(item.id!)">
+                  Edit
+                </app-forsa-button>
               }
+              @if (item.status === 'OPEN') {
+                <app-forsa-button size="sm" variant="outline"
+                  (clicked)="deleteComplaint(item.id!)">
+                  Cancel Complaint
+                </app-forsa-button>
+              }
+              @if (canAddFeedback(item)) {
+                <app-forsa-button size="sm" variant="outline"
+                  (clicked)="goToAddFeedback(item.id!)">
+                  Add Feedback
+                </app-forsa-button>
+              }
+              @if (item.status !== 'OPEN') {
+                <span class="muted">Read only</span>
+              }
+            </div>
+            <div class="client-responses">
+              <div *ngIf="item.responses?.length">
+                <div class="client-response" *ngFor="let resp of item.responses">
+                  <p>{{ resp.message }}</p>
+                  <small>{{ resp.responseDate | date:'yyyy-MM-dd HH:mm' }}</small>
+                </div>
+              </div>
+              <div *ngIf="!item.responses?.length">
+                <p class="muted">No response yet.</p>
+              </div>
             </div>
           </div>
         }
@@ -84,6 +200,13 @@
             <app-forsa-icon name="plus" [size]="14" />
             Add Feedback
           </app-forsa-button>
+        </div>
+        <div class="rating-summary">
+          <div class="rating-summary-main">{{ clientAverageRating | number:'1.1-2' }}/5</div>
+          <div class="rating-summary-stars">{{ clientAverageRatingStars }}</div>
+          <div class="rating-summary-meta">
+            Total ratings ({{ globalRatingScopeLabel }}): {{ globalFeedbacks.length }}
+          </div>
         </div>
         @if (loadingClientFeedbacks) {
           <p class="muted">Loading feedbacks...</p>
@@ -112,6 +235,48 @@
       </div>
     </app-forsa-card>
   </div>
+
+  <app-forsa-card class="eligibility-simulator">
+    <div class="section-pad">
+      <div class="section-head">
+        <h3>Credit Score Simulator</h3>
+      </div>
+      <p class="muted">Enter a credit amount to estimate the score you still need.</p>
+      <div class="simulator-actions">
+        <input
+          type="number"
+          min="1"
+          class="forsa-input simulator-input"
+          forsaInput
+          placeholder="Amount (DT)"
+          [(ngModel)]="creditAmountInput"
+        />
+        <app-forsa-button (clicked)="calculateClientMissingScore()">
+          Calculate Missing Score
+        </app-forsa-button>
+      </div>
+
+      @if (eligibilityCalcError) {
+        <p class="simulator-error">{{ eligibilityCalcError }}</p>
+      }
+
+      @if (isCalculatingEligibility) {
+        <p class="muted">Calculating...</p>
+      }
+
+      @if (!isCalculatingEligibility && clientCurrentScore !== null && clientRequiredScore !== null && clientMissingScore !== null) {
+        <div class="finance-result">
+          <div>Current score: <strong>{{ clientCurrentScore }}</strong></div>
+          <div>Required score: <strong>{{ clientRequiredScore }}</strong></div>
+          <div>Missing score: <strong>{{ clientMissingScore }}</strong></div>
+          <div>
+            Result:
+            <strong>{{ clientPreEligible ? 'Pre-eligible' : 'Needs +' + clientMissingScore + ' points' }}</strong>
+          </div>
+        </div>
+      }
+    </div>
+  </app-forsa-card>
 }
 
 @if (error) {
@@ -125,15 +290,21 @@
   </div>
 }
 
-@if (showComplaintsSection && isAdminOrAgent) {
+@if (showComplaintsList && isAdminOrAgent) {
+  <button class="back-btn" (click)="showComplaintsList = false">
+    ← Back
+  </button>
+}
+
+@if (showComplaintsList && isAdminOrAgent) {
   <app-forsa-card class="filters">
     <div class="filters-inner">
-      <select forsaInput [(ngModel)]="statusFilter" (ngModelChange)="applyFilters()">
+      <select class="fb-filter forsa-input" forsaInput [(ngModel)]="statusFilter" (ngModelChange)="applyFilters()">
         @for (status of statuses; track status) {
           <option [value]="status">{{ status || 'All Statuses' }}</option>
         }
       </select>
-      <select forsaInput [(ngModel)]="categoryFilter" (ngModelChange)="applyFilters()">
+      <select class="fb-filter forsa-input" forsaInput [(ngModel)]="categoryFilter" (ngModelChange)="applyFilters()">
         @for (category of categories; track category) {
           <option [value]="category">{{ category || 'All Categories' }}</option>
         }
@@ -142,7 +313,7 @@
   </app-forsa-card>
 }
 
-@if (showComplaintsSection && isAdminOrAgent) {
+@if (showComplaintsList && isAdminOrAgent) {
   <div class="fb-list">
     @for (item of filteredItems; track item.id) {
       <app-forsa-card class="fb-card">
@@ -199,6 +370,14 @@
                 <app-forsa-icon name="pencil" [size]="16" />
                 Edit
               </app-forsa-button>
+              <app-forsa-button
+                variant="ghost"
+                size="sm"
+                (clicked)="openAssignDialog(item.id!)"
+              >
+                <app-forsa-icon name="check-circle-2" [size]="16" />
+                Assign
+              </app-forsa-button>
             }
 
             @if (isAdminOrAgent) {
@@ -239,5 +418,36 @@
         <p>No complaints yet.</p>
       </div>
     }
+  </div>
+}
+
+@if (selectedAssignComplaintId !== null) {
+  <div class="assign-overlay">
+    <app-forsa-card class="assign-dialog">
+      <div class="section-pad">
+        <div class="section-head">
+          <h3>Assign Complaint #{{ selectedAssignComplaintId }}</h3>
+        </div>
+        @if (loadingAgents) {
+          <p class="muted">Loading available agents...</p>
+        } @else {
+          <select class="fb-filter forsa-input assign-select" forsaInput [(ngModel)]="selectedAgentId">
+            <option [ngValue]="null">Select an agent</option>
+            @for (agent of availableAgents; track agent.id) {
+              <option [ngValue]="agent.id">{{ agentLabel(agent) }}</option>
+            }
+          </select>
+          @if (availableAgents.length === 0) {
+            <p class="muted">No available agents found.</p>
+          }
+        }
+        <div class="assign-actions">
+          <app-forsa-button variant="outline" (clicked)="cancelAssignDialog()">Cancel</app-forsa-button>
+          <app-forsa-button (clicked)="confirmAssignComplaint()">
+            {{ assigningComplaint ? 'Assigning...' : 'Confirm Assign' }}
+          </app-forsa-button>
+        </div>
+      </div>
+    </app-forsa-card>
   </div>
 }

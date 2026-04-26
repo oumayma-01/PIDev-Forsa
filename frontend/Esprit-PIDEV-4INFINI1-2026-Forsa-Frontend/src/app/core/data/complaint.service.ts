@@ -4,6 +4,29 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ComplaintBackend, Category, Priority, ComplaintStatus } from '../models/forsa.models';
 
+export interface ComplaintCreditEligibility {
+  complaintId: number;
+  clientId: number | null;
+  currentScore: number;
+  requiredScore: number;
+  gap: number;
+  eligible: boolean;
+  fallbackUsed: boolean;
+  requestedAmount?: number;
+  recommendation?: string;
+}
+
+export interface ComplaintFinancialImpact {
+  complaintId: number;
+  complaintAmount: number;
+  amountSource: string;
+  priority: string;
+  daysSinceCreation: number;
+  financialImpactScore: number;
+  riskLevel?: string;
+  creditCategory?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ComplaintService {
   private readonly http = inject(HttpClient);
@@ -75,5 +98,17 @@ export class ComplaintService {
 
   assignToUser(complaintId: number, userId: number): Observable<ComplaintBackend> {
     return this.http.post<ComplaintBackend>(`${this.baseUrl}/${complaintId}/assign/${userId}`, {});
+  }
+
+  getCreditEligibility(complaintId: number, requiredScore?: number): Observable<ComplaintCreditEligibility> {
+    const hasManualOverride = Number.isFinite(requiredScore) && (requiredScore as number) > 0;
+    const url = hasManualOverride
+      ? `${this.baseUrl}/${complaintId}/financial/credit-eligibility?requiredScore=${requiredScore}`
+      : `${this.baseUrl}/${complaintId}/financial/credit-eligibility`;
+    return this.http.get<ComplaintCreditEligibility>(url);
+  }
+
+  getFinancialImpactScore(complaintId: number): Observable<ComplaintFinancialImpact> {
+    return this.http.get<ComplaintFinancialImpact>(`${this.baseUrl}/${complaintId}/financial/impact-score`);
   }
 }
