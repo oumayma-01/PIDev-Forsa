@@ -51,6 +51,22 @@ export class InsurancePolicyService {
   }
 
   downloadAmortizationPdf(policyId: number): Observable<Blob> {
-    return this.http.get(`${this.base}/download-amortization/${policyId}`, { responseType: 'blob' });
+    const url = `${environment.apiBaseUrl}/policy-pdf/amortization/download/${policyId}`;
+    return this.http.get(url, { responseType: 'blob' });
+  }
+
+  viewAmortizationPdf(policyId: number): Observable<Blob> {
+    const url = `${environment.apiBaseUrl}/policy-pdf/amortization/view/${policyId}`;
+    return this.http.get(url, { responseType: 'blob' });
+  }
+
+  downloadPolicyContract(policyId: number): Observable<Blob> {
+    const url = `${environment.apiBaseUrl}/policy-pdf/download/${policyId}`;
+    return this.http.get(url, { responseType: 'blob' });
+  }
+
+  viewPolicyContract(policyId: number): Observable<Blob> {
+    const url = `${environment.apiBaseUrl}/policy-pdf/view/${policyId}`;
+    return this.http.get(url, { responseType: 'blob' });
   }
 }

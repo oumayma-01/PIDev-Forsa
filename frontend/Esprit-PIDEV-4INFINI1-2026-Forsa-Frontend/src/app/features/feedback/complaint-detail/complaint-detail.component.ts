@@ -2,12 +2,12 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
-import { ComplaintService } from '../../../core/data/complaint.service';
-import { ResponseService } from '../../../core/data/response.service';
+import { ComplaintCreditEligibility, ComplaintFinancialImpact } from '../../../core/data/complaint.service';
 import { ComplaintBackend, ComplaintResponse } from '../../../core/models/forsa.models';
 import { ForsaBadgeComponent } from '../../../shared/ui/forsa-badge/forsa-badge.component';
 import { ForsaButtonComponent } from '../../../shared/ui/forsa-button/forsa-button.component';
 import { ForsaCardComponent } from '../../../shared/ui/forsa-card/forsa-card.component';
+import { FeedbackFacadeService } from '../feedback-facade.service';
 
 type ComplaintView = ComplaintBackend & { feedback?: { id?: number } | null };
 
@@ -19,8 +19,7 @@ type ComplaintView = ComplaintBackend & { feedback?: { id?: number } | null };
   styleUrl: './complaint-detail.component.css',
 })
 export class ComplaintDetailComponent implements OnInit {
-  private readonly complaintService = inject(ComplaintService);
-  private readonly responseService = inject(ResponseService);
+  private readonly feedbackFacade = inject(FeedbackFacadeService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(AuthService);
@@ -31,6 +30,10 @@ export class ComplaintDetailComponent implements OnInit {
   complaintId?: number;
   loading = false;
   error = '';
+  requiredScore: number | null = null;
+  creditEligibility: ComplaintCreditEligibility | null = null;
+  financialImpact: ComplaintFinancialImpact | null = null;
+  financialError = '';
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -43,13 +46,16 @@ export class ComplaintDetailComponent implements OnInit {
   }
 
   get isAdmin(): boolean {
-    return this.auth.currentUser()?.roles?.includes('ROLE_ADMIN') ?? false;
+    const roles = this.auth.currentUser()?.roles ?? [];
+    return roles.includes('ROLE_ADMIN') || roles.includes('ADMIN');
   }
   get isAgent(): boolean {
-    return this.auth.currentUser()?.roles?.includes('ROLE_AGENT') ?? false;
+    const roles = this.auth.currentUser()?.roles ?? [];
+    return roles.includes('ROLE_AGENT') || roles.includes('AGENT');
   }
   get isClient(): boolean {
-    return this.auth.currentUser()?.roles?.includes('ROLE_CLIENT') ?? false;
+    const roles = this.auth.currentUser()?.roles ?? [];
+    return roles.includes('ROLE_CLIENT') || roles.includes('CLIENT');
   }
   get isAdminOrAgent(): boolean {
     return this.isAdmin || this.isAgent;
@@ -61,10 +67,39 @@ export class ComplaintDetailComponent implements OnInit {
     }
     this.loading = true;
     this.error = '';
-    this.complaintService.getById(this.complaintId).subscribe({
+    if (this.isClient) {
+      this.feedbackFacade.getMyComplaints().subscribe({
+        next: (data: any) => {
+          const payload = data?.data ?? data?.result ?? data?.content ?? data;
+          const list = Array.isArray(payload) ? payload : [];
+          const found = list.find((c: any) => Number(c?.id) === this.complaintId) ?? null;
+          this.complaint = found;
+          this.responses = Array.isArray(found?.responses) ? found.responses : [];
+          console.log('[ComplaintDetail] client complaint from my-complaints:', found);
+          if (!found) {
+            this.error = 'Complaint not found for current client.';
+          }
+          this.loading = false;
+        },
+        error: (err) => {
+          console.error('[ComplaintDetail] client complaint load error:', err);
+          this.error = 'Unable to load complaint.';
+          this.loading = false;
+        },
+      });
+      return;
+    }
+    this.feedbackFacade.getComplaintById(this.complaintId).subscribe({
       next: (data: any) => {
-        this.complaint = data;
-        this.loadResponses();
+        const payload = data?.data ?? data?.result ?? data;
+        this.complaint = payload;
+        const embeddedResponses = Array.isArray(payload?.responses) ? payload.responses : [];
+        if (embeddedResponses.length > 0) {
+          this.responses = embeddedResponses;
+          this.loading = false;
+        } else {
+          this.loadResponses();
+        }
       },
       error: () => {
         this.error = this.isClient
@@ -79,12 +114,20 @@ export class ComplaintDetailComponent implements OnInit {
     if (!this.complaintId) {
       return;
     }
-    this.responseService.getAll().subscribe({
+    if (this.isClient) {
+      this.responses = Array.isArray((this.complaint as any)?.responses) ? (this.complaint as any).responses : [];
+      this.loading = false;
+      return;
+    }
+    this.feedbackFacade.getAllResponses().subscribe({
       next: (all) => {
-        this.responses = (all ?? []).filter((r) => r.complaint?.id === this.complaintId);
+        const list = all;
+        this.responses = (list ?? []).filter((r: any) => r.complaint?.id === this.complaintId);
+        console.log('[ComplaintDetail] responses response:', all);
         this.loading = false;
       },
-      error: () => {
+      error: (err) => {
+        console.error('[ComplaintDetail] responses error:', err);
         this.error = 'Unable to load responses.';
         this.loading = false;
       },
@@ -95,7 +138,7 @@ export class ComplaintDetailComponent implements OnInit {
     if (!this.complaintId) {
       return;
     }
-    this.complaintService.close(this.complaintId).subscribe({
+    this.feedbackFacade.closeComplaint(this.complaintId).subscribe({
       next: () => this.loadComplaint(),
       error: () => (this.error = 'Unable to close complaint.'),
     });
@@ -105,12 +148,60 @@ export class ComplaintDetailComponent implements OnInit {
     if (!this.complaintId) {
       return;
     }
-    this.complaintService.getAIResponse(this.complaintId).subscribe({
+    this.feedbackFacade.getAIResponse(this.complaintId).subscribe({
       next: (data: any) => {
         this.aiResponse = data?.response ?? data?.answer ?? String(data ?? '');
       },
       error: () => (this.error = 'Unable to generate AI response.'),
     });
+  }
+
+  checkCreditEligibility(requiredScoreRaw?: string | number): void {
+    if (!this.complaintId) {
+      return;
+    }
+
+    const parsed = Number(requiredScoreRaw);
+    const requiredScore = Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+    this.requiredScore = requiredScore ?? null;
+    this.financialError = '';
+    this.creditEligibility = null;
+
+    this.feedbackFacade.getCreditEligibility(this.complaintId, requiredScore).subscribe({
+      next: (payload: any) => {
+        this.creditEligibility = payload ?? null;
+        console.log('[ComplaintDetail] credit eligibility response:', payload);
+      },
+      error: (err) => {
+        console.error('[ComplaintDetail] credit eligibility error:', err);
+        this.financialError = 'Unable to fetch credit eligibility.';
+      },
+    });
+  }
+
+  loadFinancialImpact(): void {
+    if (!this.complaintId) {
+      return;
+    }
+
+    this.financialError = '';
+    this.financialImpact = null;
+    this.feedbackFacade.getFinancialImpactScore(this.complaintId).subscribe({
+      next: (payload: any) => {
+        this.financialImpact = payload ?? null;
+        console.log('[ComplaintDetail] financial impact response:', payload);
+      },
+      error: (err) => {
+        console.error('[ComplaintDetail] financial impact error:', err);
+        this.financialError = 'Unable to fetch financial impact score.';
+      },
+    });
+  }
+
+  impactLabel(score?: number): 'Low' | 'Medium' | 'High' {
+    if (!score || score < 35) return 'Low';
+    if (score < 70) return 'Medium';
+    return 'High';
   }
 
   goBack(): void {
@@ -119,6 +210,23 @@ export class ComplaintDetailComponent implements OnInit {
 
   goToAddResponse(): void {
     this.router.navigate(['/dashboard/feedback/response/add'], { queryParams: { complaintId: this.complaintId } });
+  }
+
+  sendEligibilityResponse(): void {
+    if (!this.complaintId || !this.creditEligibility) {
+      return;
+    }
+    const ce = this.creditEligibility;
+    const message = ce.eligible
+      ? `Based on scoring, your profile is pre-eligible for this request (current score: ${ce.currentScore}, required: ${ce.requiredScore}). Final credit approval still depends on policy checks and document validation.`
+      : `Based on scoring, your profile currently needs +${ce.gap} points to reach pre-eligibility (current score: ${ce.currentScore}, required: ${ce.requiredScore}). Please improve your score, then request a new assessment.`;
+
+    this.router.navigate(['/dashboard/feedback/response/add'], {
+      queryParams: {
+        complaintId: this.complaintId,
+        prefillMessage: message,
+      },
+    });
   }
 
   goToAddFeedback(): void {

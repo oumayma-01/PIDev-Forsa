@@ -15,6 +15,7 @@ public class PremiumCalculationResultDTO {
     private BigDecimal coverageAmount;
     private Double riskScore;
     private String riskCategory;
+    private Double riskCoefficient;
     private Double effectiveAnnualRate;
 
     private String calculationMethod;
@@ -54,6 +55,9 @@ public class PremiumCalculationResultDTO {
 
     public String getRiskCategory() { return riskCategory; }
     public void setRiskCategory(String riskCategory) { this.riskCategory = riskCategory; }
+
+    public Double getRiskCoefficient() { return riskCoefficient; }
+    public void setRiskCoefficient(Double riskCoefficient) { this.riskCoefficient = riskCoefficient; }
 
     public Double getEffectiveAnnualRate() { return effectiveAnnualRate; }
     public void setEffectiveAnnualRate(Double effectiveAnnualRate) { this.effectiveAnnualRate = effectiveAnnualRate; }

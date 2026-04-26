@@ -6,23 +6,28 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
-import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.example.forsapidev.Config.PdfConfig;
 import org.example.forsapidev.Repositories.InsurancePolicyRepository;
 import org.example.forsapidev.Services.Interfaces.IPolicyPdfService;
 import org.example.forsapidev.entities.InsuranceManagement.InsurancePolicy;
 import org.springframework.stereotype.Service;
 
+import java.awt.Color;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 
 @Service
 public class PolicyPdfService implements IPolicyPdfService {
 
     private final InsurancePolicyRepository policyRepository;
     private final PdfConfig pdfConfig;
+
+    // Brand Colors
+    private final Color NAVY = new Color(15, 23, 42);
+    private final Color TEAL = new Color(16, 185, 129);
+    private final Color LIGHT_GRAY = new Color(241, 245, 249);
+    private final Color TEXT_GRAY = new Color(100, 116, 139);
 
     public PolicyPdfService(InsurancePolicyRepository policyRepository, PdfConfig pdfConfig) {
         this.policyRepository = policyRepository;
@@ -45,231 +50,208 @@ public class PolicyPdfService implements IPolicyPdfService {
             document.addPage(page);
 
             try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
-                float yPosition = 750;
-                float margin = 50;
                 float pageWidth = page.getMediaBox().getWidth();
+                float pageHeight = page.getMediaBox().getHeight();
+                float margin = 50;
+                float yPos = pageHeight - margin;
 
-                // Add header with logo and company info
-                yPosition = addHeader(contentStream, document, yPosition, margin);
+                // 1. Header with Background Bar
+                contentStream.setNonStrokingColor(NAVY);
+                contentStream.addRect(0, pageHeight - 120, pageWidth, 120);
+                contentStream.fill();
 
-                // Add horizontal line
-                yPosition -= 20;
-                drawLine(contentStream, margin, yPosition, pageWidth - margin, yPosition);
-                yPosition -= 30;
+                // Company Name (White)
+                contentStream.beginText();
+                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 24);
+                contentStream.setNonStrokingColor(Color.WHITE);
+                contentStream.newLineAtOffset(margin, pageHeight - 60);
+                contentStream.showText(pdfConfig.getCompanyName().toUpperCase());
+                contentStream.endText();
 
-                // Add title
-                yPosition = addTitle(contentStream, "INSURANCE POLICY CERTIFICATE", yPosition, pageWidth);
-                yPosition -= 30;
+                // Contract Label
+                contentStream.beginText();
+                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 12);
+                contentStream.setNonStrokingColor(TEAL);
+                contentStream.newLineAtOffset(margin, pageHeight - 85);
+                contentStream.showText("OFFICIAL INSURANCE CONTRACT");
+                contentStream.endText();
 
-                // Add policy details section
-                yPosition = addSectionTitle(contentStream, "Policy Information", yPosition, margin);
-                yPosition -= 20;
-                yPosition = addPolicyDetails(contentStream, policy, yPosition, margin);
-                yPosition -= 30;
+                yPos = pageHeight - 150;
 
-                // Add coverage details section
-                yPosition = addSectionTitle(contentStream, "Coverage Details", yPosition, margin);
-                yPosition -= 20;
-                yPosition = addCoverageDetails(contentStream, policy, yPosition, margin);
-                yPosition -= 30;
+                // 2. Policy Header Info (Top Right)
+                contentStream.setNonStrokingColor(NAVY);
+                contentStream.beginText();
+                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 10);
+                contentStream.newLineAtOffset(pageWidth - 200, pageHeight - 50);
+                contentStream.setNonStrokingColor(Color.WHITE);
+                contentStream.showText("POLICY #: " + policy.getPolicyNumber());
+                contentStream.endText();
 
-                // Add beneficiary section (if user exists)
-                if (policy.getUser() != null) {
-                    yPosition = addSectionTitle(contentStream, "Policy Holder Information", yPosition, margin);
-                    yPosition -= 20;
-                    yPosition = addBeneficiaryDetails(contentStream, policy, yPosition, margin);
-                    yPosition -= 30;
+                contentStream.beginText();
+                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 9);
+                contentStream.newLineAtOffset(pageWidth - 200, pageHeight - 65);
+                String issueDate = policy.getStartDate() != null ? new SimpleDateFormat("dd MMM yyyy").format(policy.getStartDate()) : "N/A";
+                contentStream.showText("Issued on: " + issueDate);
+                contentStream.endText();
+
+                // 3. Client & Product Section
+                yPos = drawSectionHeader(contentStream, "CONTRACT PARTIES", yPos, margin, pageWidth);
+                
+                float col1 = margin;
+                float col2 = pageWidth / 2 + 20;
+                float startY = yPos;
+
+                // Left: Client Info
+                contentStream.setNonStrokingColor(TEXT_GRAY);
+                contentStream.beginText();
+                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 10);
+                contentStream.newLineAtOffset(col1, yPos);
+                contentStream.showText("INSURED PARTY");
+                contentStream.endText();
+                yPos -= 15;
+
+                contentStream.setNonStrokingColor(NAVY);
+                contentStream.beginText();
+                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 12);
+                contentStream.newLineAtOffset(col1, yPos);
+                contentStream.showText(policy.getUser() != null ? policy.getUser().getUsername() : "N/A");
+                contentStream.endText();
+                yPos -= 15;
+
+                contentStream.setNonStrokingColor(TEXT_GRAY);
+                contentStream.beginText();
+                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 10);
+                contentStream.newLineAtOffset(col1, yPos);
+                contentStream.showText(policy.getUser() != null ? policy.getUser().getEmail() : "");
+                contentStream.endText();
+
+                // Right: Product Info
+                yPos = startY;
+                contentStream.setNonStrokingColor(TEXT_GRAY);
+                contentStream.beginText();
+                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 10);
+                contentStream.newLineAtOffset(col2, yPos);
+                contentStream.showText("INSURANCE PRODUCT");
+                contentStream.endText();
+                yPos -= 15;
+
+                contentStream.setNonStrokingColor(NAVY);
+                contentStream.beginText();
+                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 12);
+                contentStream.newLineAtOffset(col2, yPos);
+                contentStream.showText(policy.getInsuranceProduct() != null ? policy.getInsuranceProduct().getProductName() : "Custom Plan");
+                contentStream.endText();
+                yPos -= 15;
+
+                contentStream.setNonStrokingColor(TEXT_GRAY);
+                contentStream.beginText();
+                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 10);
+                contentStream.newLineAtOffset(col2, yPos);
+                contentStream.showText("Type: " + policy.getPolicyType());
+                contentStream.endText();
+
+                yPos -= 50;
+
+                // 4. Coverage Table
+                yPos = drawSectionHeader(contentStream, "COVERAGE & PREMIUMS", yPos, margin, pageWidth);
+                
+                // Draw a simple box for coverage
+                contentStream.setNonStrokingColor(LIGHT_GRAY);
+                contentStream.addRect(margin, yPos - 80, pageWidth - (margin * 2), 80);
+                contentStream.fill();
+
+                float tableY = yPos - 25;
+                drawRow(contentStream, "Total Coverage Limit", policy.getCoverageLimit() + " TND", tableY, margin, pageWidth);
+                drawRow(contentStream, "Premium Amount", policy.getPremiumAmount() + " TND", tableY - 20, margin, pageWidth);
+                drawRow(contentStream, "Payment Frequency", policy.getPaymentFrequency(), tableY - 40, margin, pageWidth);
+
+                yPos -= 110;
+
+                // 5. Terms & Signature
+                yPos = drawSectionHeader(contentStream, "TERMS AND CONDITIONS", yPos, margin, pageWidth);
+                
+                contentStream.setNonStrokingColor(TEXT_GRAY);
+                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 9);
+                String[] terms = {
+                    "• This contract is binding upon the payment of the first premium.",
+                    "• Claims must be reported within 48 hours of the incident.",
+                    "• The insurer reserves the right to adjust risk coefficients annually.",
+                    "• Termination requires a 30-day written notice."
+                };
+                for (String term : terms) {
+                    contentStream.beginText();
+                    contentStream.newLineAtOffset(margin, yPos);
+                    contentStream.showText(term);
+                    contentStream.endText();
+                    yPos -= 15;
                 }
 
-                // Add terms and conditions
-                yPosition = addSectionTitle(contentStream, "Terms & Conditions", yPosition, margin);
-                yPosition -= 20;
-                yPosition = addTermsAndConditions(contentStream, yPosition, margin);
+                yPos -= 40;
 
-                // Add footer
-                addFooter(contentStream, page, margin, pageWidth);
+                // Signature Area
+                contentStream.setNonStrokingColor(NAVY);
+                contentStream.beginText();
+                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 10);
+                contentStream.newLineAtOffset(margin, yPos);
+                contentStream.showText("Authorized Signatory");
+                contentStream.endText();
+
+                contentStream.beginText();
+                contentStream.newLineAtOffset(pageWidth - 150, yPos);
+                contentStream.showText("Policy Holder");
+                contentStream.endText();
+
+                contentStream.setStrokingColor(TEXT_GRAY);
+                contentStream.moveTo(margin, yPos - 30);
+                contentStream.lineTo(margin + 120, yPos - 30);
+                contentStream.stroke();
+
+                contentStream.moveTo(pageWidth - 150, yPos - 30);
+                contentStream.lineTo(pageWidth - margin, yPos - 30);
+                contentStream.stroke();
+
+                // 6. Footer
+                contentStream.setNonStrokingColor(TEXT_GRAY);
+                contentStream.beginText();
+                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8);
+                contentStream.newLineAtOffset(margin, 30);
+                contentStream.showText("Forsa Insurance Management System - Confidential Document - " + new Date());
+                contentStream.endText();
             }
 
             document.save(outputStream);
-            System.out.println("✅ PDF generated successfully for policy: " + policy.getPolicyNumber());
         }
 
         return outputStream;
     }
 
-    private float addHeader(PDPageContentStream contentStream, PDDocument document,
-                            float yPosition, float margin) throws IOException {
-        // Try to add logo
-        try {
-            File logoFile = new File(pdfConfig.getLogoPath());
-            if (logoFile.exists()) {
-                PDImageXObject logo = PDImageXObject.createFromFile(pdfConfig.getLogoPath(), document);
-                float logoHeight = 40;
-                float logoWidth = logo.getWidth() * (logoHeight / logo.getHeight());
-                contentStream.drawImage(logo, margin, yPosition - logoHeight, logoWidth, logoHeight);
-                yPosition -= (logoHeight + 10);
-            }
-        } catch (Exception e) {
-            System.out.println("⚠️ Logo not found, using text header");
-        }
-
-        // Company name and info
-        contentStream.beginText();
-        contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 18);
-        contentStream.newLineAtOffset(margin, yPosition);
-        contentStream.showText(pdfConfig.getCompanyName());
-        contentStream.endText();
-        yPosition -= 20;
-
-        contentStream.beginText();
-        contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 10);
-        contentStream.newLineAtOffset(margin, yPosition);
-        contentStream.showText(pdfConfig.getCompanyAddress());
-        contentStream.endText();
-        yPosition -= 15;
-
-        contentStream.beginText();
-        contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 10);
-        contentStream.newLineAtOffset(margin, yPosition);
-        contentStream.showText("Phone: " + pdfConfig.getCompanyPhone() + " | Email: " + pdfConfig.getCompanyEmail());
-        contentStream.endText();
-        yPosition -= 10;
-
-        return yPosition;
+    private float drawSectionHeader(PDPageContentStream cs, String title, float y, float margin, float width) throws Exception {
+        cs.setNonStrokingColor(TEAL);
+        cs.addRect(margin, y - 2, width - (margin * 2), 1);
+        cs.fill();
+        
+        cs.beginText();
+        cs.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 10);
+        cs.setNonStrokingColor(NAVY);
+        cs.newLineAtOffset(margin, y + 5);
+        cs.showText(title);
+        cs.endText();
+        
+        return y - 25;
     }
 
-    private float addTitle(PDPageContentStream contentStream, String title,
-                           float yPosition, float pageWidth) throws IOException {
-        contentStream.beginText();
-        contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 16);
-        float titleWidth = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD)
-                .getStringWidth(title) / 1000 * 16;
-        float titleX = (pageWidth - titleWidth) / 2;
-        contentStream.newLineAtOffset(titleX, yPosition);
-        contentStream.showText(title);
-        contentStream.endText();
-        return yPosition - 20;
-    }
+    private void drawRow(PDPageContentStream cs, String label, String value, float y, float margin, float width) throws Exception {
+        cs.setNonStrokingColor(NAVY);
+        cs.beginText();
+        cs.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 10);
+        cs.newLineAtOffset(margin + 20, y);
+        cs.showText(label);
+        cs.endText();
 
-    private float addSectionTitle(PDPageContentStream contentStream, String title,
-                                  float yPosition, float margin) throws IOException {
-        contentStream.beginText();
-        contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 12);
-        contentStream.newLineAtOffset(margin, yPosition);
-        contentStream.showText(title);
-        contentStream.endText();
-        return yPosition - 15;
-    }
-
-    private float addPolicyDetails(PDPageContentStream contentStream, InsurancePolicy policy,
-                                   float yPosition, float margin) throws IOException {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-
-        yPosition = addKeyValue(contentStream, "Policy Number:", policy.getPolicyNumber(), yPosition, margin);
-        yPosition = addKeyValue(contentStream, "Policy Type:", policy.getPolicyType(), yPosition, margin);
-        yPosition = addKeyValue(contentStream, "Status:", policy.getStatus().toString(), yPosition, margin);
-        yPosition = addKeyValue(contentStream, "Issue Date:", dateFormat.format(policy.getStartDate()), yPosition, margin);
-        yPosition = addKeyValue(contentStream, "Expiry Date:", dateFormat.format(policy.getEndDate()), yPosition, margin);
-        yPosition = addKeyValue(contentStream, "Next Premium Due:",
-                dateFormat.format(policy.getNextPremiumDueDate()), yPosition, margin);
-
-        return yPosition;
-    }
-
-    private float addCoverageDetails(PDPageContentStream contentStream, InsurancePolicy policy,
-                                     float yPosition, float margin) throws IOException {
-        yPosition = addKeyValue(contentStream, "Premium Amount:",
-                "$" + policy.getPremiumAmount().toString(), yPosition, margin);
-        yPosition = addKeyValue(contentStream, "Coverage Limit:",
-                "$" + policy.getCoverageLimit().toString(), yPosition, margin);
-
-        if (policy.getInsuranceProduct() != null) {
-            yPosition = addKeyValue(contentStream, "Product Name:",
-                    policy.getInsuranceProduct().getProductName(), yPosition, margin);
-        }
-
-        return yPosition;
-    }
-
-    private float addBeneficiaryDetails(PDPageContentStream contentStream, InsurancePolicy policy,
-                                        float yPosition, float margin) throws IOException {
-        if (policy.getUser() != null) {
-            yPosition = addKeyValue(contentStream, "Name:", policy.getUser().getUsername(), yPosition, margin);
-            yPosition = addKeyValue(contentStream, "Email:", policy.getUser().getEmail(), yPosition, margin);
-        }
-        return yPosition;
-    }
-
-    private float addTermsAndConditions(PDPageContentStream contentStream, float yPosition,
-                                        float margin) throws IOException {
-        String[] terms = {
-                "1. This policy is valid only when premiums are paid on time.",
-                "2. Policy holder must notify the company of any changes within 30 days.",
-                "3. Claims must be filed within 60 days of the incident.",
-                "4. This policy is non-transferable without written consent.",
-                "5. Coverage begins on the start date specified above.",
-                "6. Company reserves the right to modify terms with 30 days notice."
-        };
-
-        contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 9);
-        for (String term : terms) {
-            contentStream.beginText();
-            contentStream.newLineAtOffset(margin, yPosition);
-            contentStream.showText(term);
-            contentStream.endText();
-            yPosition -= 12;
-        }
-
-        return yPosition;
-    }
-
-    private float addKeyValue(PDPageContentStream contentStream, String key, String value,
-                              float yPosition, float margin) throws IOException {
-        contentStream.beginText();
-        contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 10);
-        contentStream.newLineAtOffset(margin, yPosition);
-        contentStream.showText(key);
-        contentStream.endText();
-
-        contentStream.beginText();
-        contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 10);
-        contentStream.newLineAtOffset(margin + 150, yPosition);
-        contentStream.showText(value != null ? value : "N/A");
-        contentStream.endText();
-
-        return yPosition - 15;
-    }
-
-    private void drawLine(PDPageContentStream contentStream, float x1, float y, float x2, float y2)
-            throws IOException {
-        contentStream.moveTo(x1, y);
-        contentStream.lineTo(x2, y2);
-        contentStream.stroke();
-    }
-
-    private void addFooter(PDPageContentStream contentStream, PDPage page, float margin,
-                           float pageWidth) throws IOException {
-        float footerY = 50;
-
-        contentStream.beginText();
-        contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8);
-        contentStream.newLineAtOffset(margin, footerY);
-        contentStream.showText("This is a computer-generated document. No signature required.");
-        contentStream.endText();
-
-        contentStream.beginText();
-        contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_OBLIQUE), 8);
-        contentStream.newLineAtOffset(margin, footerY - 12);
-        contentStream.showText("Generated on: " + new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new java.util.Date()));
-        contentStream.endText();
-
-        contentStream.beginText();
-        contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8);
-        String pageNum = "Page 1 of 1";
-        float pageNumWidth = new PDType1Font(Standard14Fonts.FontName.HELVETICA)
-                .getStringWidth(pageNum) / 1000 * 8;
-        contentStream.newLineAtOffset(pageWidth - margin - pageNumWidth, footerY);
-        contentStream.showText(pageNum);
-        contentStream.endText();
+        cs.beginText();
+        cs.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 10);
+        cs.newLineAtOffset(width - margin - 150, y);
+        cs.showText(value != null ? value : "N/A");
+        cs.endText();
     }
 }

@@ -3,6 +3,7 @@ package org.example.forsapidev.Controllers;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.forsapidev.Services.Interfaces.IComplaintService;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Response;
 import org.example.forsapidev.Services.Interfaces.IResponseService;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,7 @@ import java.util.*;
 public class ResponseController {
 
     private final IResponseService responseService;
+    private final IComplaintService complaintService;
 
     @PreAuthorize("hasAnyRole('AGENT','ADMIN')")
     @GetMapping("/retrieve-all-responses")
@@ -43,7 +45,12 @@ public class ResponseController {
     @PreAuthorize("hasAnyRole('AGENT','ADMIN')")
     @PostMapping("/add-response")
     public ResponseEntity<Response> addResponse(@Valid @RequestBody Response r) {
-        Response saved = responseService.addResponse(r);
+        Response saved;
+        if (r != null && r.getComplaint() != null && r.getComplaint().getId() != null) {
+            saved = complaintService.addResponseAndUpdateStatus(r.getComplaint().getId(), r);
+        } else {
+            saved = responseService.addResponse(r);
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 

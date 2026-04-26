@@ -42,4 +42,5 @@ export type ForsaIconName =
   | 'power'
   | 'trash-2'
   | 'chevron-left'
-  | 'user-circle';
+  | 'user-circle'
+  | 'download';
