@@ -28,7 +28,7 @@ export class PolicyChatComponent implements OnInit, OnChanges, AfterViewChecked 
   constructor(private chatService: PolicyChatService) {}
 
   ngOnInit(): void {
-    this.isOpen = true; // Auto-open when specifically selected from a card
+    this.isOpen = false; // Start closed, user will click the floating button
     this.loadHistory();
   }
 

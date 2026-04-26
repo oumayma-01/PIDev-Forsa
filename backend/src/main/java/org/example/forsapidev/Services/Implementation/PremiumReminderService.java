@@ -6,6 +6,8 @@ import org.example.forsapidev.entities.InsuranceManagement.PaymentStatus;
 import org.example.forsapidev.entities.InsuranceManagement.PremiumPayment;
 import org.example.forsapidev.entities.UserManagement.User;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +40,12 @@ public class PremiumReminderService {
         sendUpcomingPaymentReminders();
         markOverduePayments();
         System.out.println("Premium payment reminder check completed!");
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void onApplicationReady() {
+        System.out.println("🚀 Application Ready: Triggering initial premium reminder check...");
+        checkAndSendReminders();
     }
 
     public void sendUpcomingPaymentReminders() {

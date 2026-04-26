@@ -8,6 +8,7 @@ import { ForsaIconComponent } from '../../../../../shared/ui/forsa-icon/forsa-ic
 import { InsurancePolicyService } from '../../../shared/services/insurance-policy.service';
 import { InsurancePolicy } from '../../../shared/models/insurance.models';
 import { PolicyStatus } from '../../../shared/enums/insurance.enums';
+import { AuthService } from '../../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-policy-detail',
@@ -19,11 +20,20 @@ import { PolicyStatus } from '../../../shared/enums/insurance.enums';
 export class PolicyDetailComponent implements OnInit {
   private readonly svc = inject(InsurancePolicyService);
   private readonly route = inject(ActivatedRoute);
+  private readonly auth = inject(AuthService);
 
   policy = signal<InsurancePolicy | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
   downloadingPdf = signal(false);
+
+  get isAdmin(): boolean {
+    return this.auth.currentUser()?.roles.includes('ROLE_ADMIN') || false;
+  }
+
+  get isAgent(): boolean {
+    return this.auth.currentUser()?.roles.includes('ROLE_AGENT') || false;
+  }
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');

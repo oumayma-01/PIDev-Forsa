@@ -24,6 +24,9 @@ export class ClientMyPoliciesComponent implements OnInit {
       next: (data) => {
         this.policies = data;
         this.isLoading = false;
+        if (this.policies.length > 0 && !this.selectedPolicyIdForChat) {
+          this.selectedPolicyIdForChat = this.policies[0].id!;
+        }
       },
       error: (err) => {
         console.error(err);
@@ -42,6 +45,25 @@ export class ClientMyPoliciesComponent implements OnInit {
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
+    });
+  }
+
+  downloadContract(policyId: number) {
+    this.policyService.downloadPolicyContract(policyId).subscribe((blob) => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Insurance_Contract_${policyId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+    });
+  }
+
+  viewContract(policyId: number) {
+    this.policyService.viewPolicyContract(policyId).subscribe((blob) => {
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
     });
   }
 

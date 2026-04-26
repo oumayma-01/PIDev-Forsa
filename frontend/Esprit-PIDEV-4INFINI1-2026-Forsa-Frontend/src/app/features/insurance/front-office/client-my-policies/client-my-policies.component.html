@@ -59,12 +59,12 @@
         </div>
       </div>
 
-      <div class="card-footer d-flex gap-2 mt-4 pt-3 border-top">
+      <div class="card-footer d-flex flex-wrap gap-2 mt-4 pt-3 border-top">
+        <button class="btn btn-outline flex-1" (click)="viewContract(p.id!)" [disabled]="!p.id || p.status === 'PENDING'">
+          <i class="fe fe-file-text"></i> Contract
+        </button>
         <button class="btn btn-outline flex-1" (click)="downloadAmortization(p)" [disabled]="!p.id || p.status === 'PENDING'">
           <i class="fe fe-download"></i> Amortization
-        </button>
-        <button class="btn btn-outline flex-1" (click)="openChat(p.id!)" *ngIf="p.id">
-          <i class="fe fe-message-circle"></i> AI Chat
         </button>
         <button class="btn btn-primary flex-1" [routerLink]="['/dashboard/insurance/client/file-claim', p.id]">
           <i class="fe fe-alert-circle"></i> File Claim
