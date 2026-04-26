@@ -37,6 +37,22 @@ export class ClientPolicyApplicationComponent implements OnInit {
   isPaying = false;
   applicationSuccess = false;
 
+  get isAdmin(): boolean {
+    return this.authService.currentUser()?.roles.includes('ROLE_ADMIN') || false;
+  }
+
+  get isAgent(): boolean {
+    return this.authService.currentUser()?.roles.includes('ROLE_AGENT') || false;
+  }
+
+  get canSeeRiskDetails(): boolean {
+    return this.isAdmin || this.isAgent;
+  }
+
+  get canSeeDetailedActuarial(): boolean {
+    return this.isAdmin;
+  }
+
   ngOnInit() {
     this.productId = Number(this.route.snapshot.paramMap.get('id'));
     this.initForm();

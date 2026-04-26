@@ -150,11 +150,21 @@
           </div>
           <div class="quote-details">
             <p><span>Total Coverage:</span> <strong>{{ quote.premiumDetails?.coverageAmount | number }} TND</strong></p>
-            <p><span>Actuarial Pure Premium:</span> <strong>{{ quote.premiumDetails?.purePremium | number:'1.2-2' }} TND</strong></p>
-            <p><span>Risk Score:</span> <strong>{{ quote.premiumDetails?.riskScore }} / 100</strong></p>
-            <p><span>Risk Category:</span> 
+            
+            <p *ngIf="canSeeDetailedActuarial">
+              <span>Actuarial Pure Premium:</span> <strong>{{ quote.premiumDetails?.purePremium | number:'1.2-2' }} TND</strong>
+            </p>
+            
+            <p *ngIf="canSeeRiskDetails">
+              <span>Risk Score:</span> <strong>{{ quote.premiumDetails?.riskScore }} / 100</strong>
+            </p>
+            
+            <p *ngIf="canSeeRiskDetails">
+              <span>Risk Category:</span> 
               <span class="badge {{ quote.premiumDetails?.riskCategory | lowercase }}">{{ quote.premiumDetails?.riskCategory }}</span>
             </p>
+
+            <p><span>Risk Coefficient:</span> <strong>{{ quote.premiumDetails?.riskCoefficient | number:'1.2-2' }}</strong></p>
           </div>
         </div>
 

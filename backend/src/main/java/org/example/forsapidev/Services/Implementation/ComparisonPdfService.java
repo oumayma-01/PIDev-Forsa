@@ -195,11 +195,11 @@ public class ComparisonPdfService implements IComparisonPdfService {
         // Draw data rows - FIXED
         String[][] rows = {
                 createRow("Policy Type", products, p -> p.getPolicyType()),
-                createRow("Premium", products, p -> "$" + p.getPremiumAmount().toString()),
-                createRow("Coverage", products, p -> "$" + p.getCoverageLimit().toString()),
+                createRow("Premium", products, p -> p.getPremiumAmount().toString() + " TND"),
+                createRow("Coverage", products, p -> p.getCoverageLimit().toString() + " TND"),
                 createRow("Duration", products, p -> p.getDurationMonths() + " months"),
-                createRow("Monthly Cost", products, p -> p.getCostPerMonth() != null ? "$" + p.getCostPerMonth().toString() : "N/A"),
-                createRow("Coverage/$", products, p -> p.getCoveragePerDollar() != null ? "$" + String.format("%.2f", p.getCoveragePerDollar()) : "N/A"),
+                createRow("Monthly Cost", products, p -> p.getCostPerMonth() != null ? p.getCostPerMonth().toString() + " TND" : "N/A"),
+                createRow("Coverage/TND", products, p -> p.getCoveragePerDollar() != null ? String.format("%.2f", p.getCoveragePerDollar()) + " TND" : "N/A"),
                 createRow("Value Rating", products, p -> p.getValueRating() != null ? p.getValueRating() : "N/A")
         };
 
