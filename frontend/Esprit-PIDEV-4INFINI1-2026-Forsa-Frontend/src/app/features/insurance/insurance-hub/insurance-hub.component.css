@@ -13,7 +13,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  background: white;
+  background: var(--color-card);
   border-bottom: 1px solid var(--color-border);
   position: sticky;
   top: 0;
@@ -26,7 +26,7 @@
   gap: 0.5rem;
   background: transparent;
   border: none;
-  color: var(--forsa-navy);
+  color: var(--color-foreground);
   font-weight: 700;
   cursor: pointer;
   padding: 0.5rem 1rem;
@@ -35,7 +35,7 @@
 }
 
 .back-link:hover {
-  background: var(--color-blue-50);
+  background: var(--color-accent);
   color: var(--forsa-teal);
 }
 
@@ -156,13 +156,13 @@
 .portal-hero {
   padding: 4rem 2rem 3rem;
   text-align: center;
-  background: linear-gradient(to bottom, var(--color-blue-50), transparent);
+  background: linear-gradient(to bottom, var(--color-accent), transparent);
 }
 
 .portal-hero h1 {
   font-size: 3rem;
   font-weight: 800;
-  color: var(--forsa-navy-deep);
+  color: var(--color-foreground);
   margin-bottom: 1rem;
 }
 
@@ -193,7 +193,7 @@
 }
 
 .p-card {
-  background: white;
+  background: var(--color-card);
   padding: 2rem;
   border-radius: var(--radius-xl);
   border: 1px solid var(--color-border);
@@ -227,7 +227,7 @@
 .p-card__body h3 {
   font-size: 1.25rem;
   margin-bottom: 0.5rem;
-  color: var(--forsa-navy-deep);
+  color: var(--color-foreground);
 }
 
 .p-card__body p {
@@ -254,7 +254,7 @@
 /* --- Process Section --- */
 .portal-process {
   padding: 6rem 2rem;
-  background: #fcfcfc;
+  background: var(--color-background);
   text-align: center;
 }
 
@@ -264,7 +264,7 @@
 
 .process-header h2 {
   font-size: 2.25rem;
-  color: var(--forsa-navy-deep);
+  color: var(--color-foreground);
 }
 
 .process-steps {
@@ -292,7 +292,7 @@
 .p-step h4 {
   font-size: 1.1rem;
   margin-bottom: 0.5rem;
-  color: var(--forsa-navy);
+  color: var(--color-foreground);
 }
 
 .p-step p {
@@ -340,7 +340,7 @@
 }
 
 .admin-btn {
-  background: white;
+  background: var(--color-card);
   border: 1px solid var(--color-border);
   padding: 2.5rem 2rem;
   border-radius: var(--radius-2xl);
@@ -406,7 +406,7 @@
 .a-title { 
   font-weight: 800; 
   font-size: 1.25rem; 
-  color: var(--forsa-navy-deep);
+  color: var(--color-foreground);
 }
 
 .a-description {

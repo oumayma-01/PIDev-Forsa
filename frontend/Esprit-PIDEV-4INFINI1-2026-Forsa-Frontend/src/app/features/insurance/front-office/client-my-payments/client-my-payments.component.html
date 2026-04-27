@@ -32,7 +32,7 @@
       <tbody>
         <tr *ngFor="let p of payments" [ngClass]="{'row-paid': p.status === 'PAID'}">
           <td>
-            <strong>{{ p.insurancePolicy?.policyNumber || p.insurancePolicy?.id }}</strong>
+            <strong>{{ p.insurancePolicy?.policyNumber || 'Processing Number' }}</strong>
           </td>
           <td>
             <div class="date-cell">

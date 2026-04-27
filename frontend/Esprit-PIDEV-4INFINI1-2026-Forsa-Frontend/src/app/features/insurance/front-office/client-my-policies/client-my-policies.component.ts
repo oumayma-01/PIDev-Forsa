@@ -56,20 +56,22 @@ export class ClientMyPoliciesComponent implements OnInit {
     });
   }
 
-  downloadContract(policyId: number) {
-    this.policyService.downloadPolicyContract(policyId).subscribe((blob) => {
+  downloadContract(policy: InsurancePolicy) {
+    if (!policy.id) return;
+    this.policyService.downloadPolicyContract(policy.id).subscribe((blob) => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Insurance_Contract_${policyId}.pdf`;
+      a.download = `Insurance_Contract_${policy.policyNumber || policy.id}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
     });
   }
 
-  viewContract(policyId: number) {
-    this.policyService.viewPolicyContract(policyId).subscribe((blob) => {
+  viewContract(policy: InsurancePolicy) {
+    if (!policy.id) return;
+    this.policyService.viewPolicyContract(policy.id).subscribe((blob) => {
       const url = window.URL.createObjectURL(blob);
       window.open(url, '_blank');
     });

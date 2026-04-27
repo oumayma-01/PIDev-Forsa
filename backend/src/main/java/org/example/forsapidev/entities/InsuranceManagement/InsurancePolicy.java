@@ -73,12 +73,12 @@ public class InsurancePolicy {
 
     // RELATIONSHIP: One Policy has Many Premium Payments
     @OneToMany(mappedBy = "insurancePolicy", cascade = CascadeType.ALL)
-    @JsonManagedReference("policy-payments")
+    @JsonIgnoreProperties("insurancePolicy")
     private Set<PremiumPayment> premiumPayments;
 
     // RELATIONSHIP: One Policy has Many Claims
     @OneToMany(mappedBy = "insurancePolicy", cascade = CascadeType.ALL)
-    @JsonManagedReference("policy-claims")
+    @JsonIgnoreProperties("insurancePolicy")
     private Set<InsuranceClaim> claims;
 
     // CONSTRUCTORS

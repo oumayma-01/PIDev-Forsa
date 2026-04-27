@@ -21,7 +21,7 @@
         <span class="reminder-title">
           {{ reminder.status === PaymentStatus.OVERDUE ? 'Urgent: Overdue Payment' : 'Upcoming Premium Payment' }}
         </span>
-        <p>A payment of <strong>{{ reminder.amount | number:'1.2-2' }} TND</strong> is due on <strong>{{ reminder.dueDate | date:'mediumDate' }}</strong> for Policy #{{ reminder.insurancePolicy?.policyNumber || reminder.id }}.</p>
+        <p>A payment of <strong>{{ reminder.amount | number:'1.2-2' }} TND</strong> is due on <strong>{{ reminder.dueDate | date:'mediumDate' }}</strong> for Policy #{{ reminder.insurancePolicy?.policyNumber || 'Pending' }}.</p>
       </div>
       <div class="reminder-actions">
         <button class="btn-pay" routerLink="./client/my-payments">Secure Payment</button>
@@ -30,6 +30,35 @@
         </button>
       </div>
     </div>
+  }
+
+  <!-- Guided Process Section (Now at the top) -->
+  @if (!isAdminOrAgent) {
+    <section class="portal-process">
+      <div class="process-header">
+        <h2>Getting Protected is Simple</h2>
+        <p>Three easy steps to financial peace of mind.</p>
+      </div>
+      <div class="process-steps">
+        <div class="p-step">
+          <div class="step-num">01</div>
+          <h4>Select a Plan</h4>
+          <p>Choose the coverage that fits your needs.</p>
+        </div>
+        <div class="step-arrow"><app-forsa-icon name="arrow-right" [size]="20" /></div>
+        <div class="p-step">
+          <div class="step-num">02</div>
+          <h4>Instant Quote</h4>
+          <p>Get a fair premium calculation immediately.</p>
+        </div>
+        <div class="step-arrow"><app-forsa-icon name="arrow-right" [size]="20" /></div>
+        <div class="p-step">
+          <div class="step-num">03</div>
+          <h4>Stay Protected</h4>
+          <p>Your policy is active and secure with Forsa.</p>
+        </div>
+      </div>
+    </section>
   }
 
   <!-- Core Actions Grid -->
@@ -86,35 +115,6 @@
             <span>Pay Premiums</span>
             <app-forsa-icon name="chevron-right" [size]="14" />
           </div>
-        </div>
-      </div>
-    </section>
-  }
-
-  <!-- Guided Process Section -->
-  @if (!isAdminOrAgent) {
-    <section class="portal-process">
-      <div class="process-header">
-        <h2>Getting Protected is Simple</h2>
-        <p>Three easy steps to financial peace of mind.</p>
-      </div>
-      <div class="process-steps">
-        <div class="p-step">
-          <div class="step-num">01</div>
-          <h4>Select a Plan</h4>
-          <p>Choose the coverage that fits your needs.</p>
-        </div>
-        <div class="step-arrow"><app-forsa-icon name="arrow-right" [size]="20" /></div>
-        <div class="p-step">
-          <div class="step-num">02</div>
-          <h4>Instant Quote</h4>
-          <p>Get a fair premium calculation immediately.</p>
-        </div>
-        <div class="step-arrow"><app-forsa-icon name="arrow-right" [size]="20" /></div>
-        <div class="p-step">
-          <div class="step-num">03</div>
-          <h4>Stay Protected</h4>
-          <p>Your policy is active and secure with Forsa.</p>
         </div>
       </div>
     </section>

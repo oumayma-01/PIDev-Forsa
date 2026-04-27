@@ -61,10 +61,10 @@
 
       <div class="card-footer d-flex flex-wrap gap-2 mt-4 pt-3 border-top">
         <div class="btn-group flex-1">
-          <button class="btn btn-outline" (click)="viewContract(p.id!)" [disabled]="!p.id || p.status === 'PENDING'">
+          <button class="btn btn-outline" (click)="viewContract(p)" [disabled]="!p.id || p.status === 'PENDING'">
             <i class="fe fe-file-text"></i> Contract
           </button>
-          <button class="btn btn-outline btn-icon" (click)="downloadContract(p.id!)" [disabled]="!p.id || p.status === 'PENDING'" title="Download Contract">
+          <button class="btn btn-outline btn-icon" (click)="downloadContract(p)" [disabled]="!p.id || p.status === 'PENDING'" title="Download Contract">
             <i class="fe fe-download"></i>
           </button>
         </div>

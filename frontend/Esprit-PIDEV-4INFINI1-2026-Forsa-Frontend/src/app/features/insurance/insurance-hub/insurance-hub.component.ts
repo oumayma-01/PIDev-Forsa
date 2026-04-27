@@ -31,6 +31,8 @@ export class InsuranceHubComponent {
     });
   }
 
+
+
   private checkReminders(): void {
     const roles = this.auth.currentUser()?.roles ?? [];
     if (!roles.includes('ROLE_CLIENT')) return;
