@@ -36,6 +36,10 @@ export class CreditListComponent {
   readonly repaymentsLoading = signal(false);
   readonly repaymentsError = signal<string | null>(null);
 
+  readonly giftAlertVisible = signal(false);
+  readonly giftAmount = signal<number | null>(null);
+  private giftAlertTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
   readonly roles = computed(() => this.auth.currentUser()?.roles ?? []);
   readonly isAdmin = computed(() => this.roles().includes('ROLE_ADMIN'));
   readonly isAgent = computed(() => this.roles().includes('ROLE_AGENT'));
@@ -75,6 +79,17 @@ export class CreditListComponent {
         next: (list) => {
           this.loading.set(false);
           this.credits.set(list ?? []);
+
+          this.api.consumeMyGiftAwardNotification().subscribe({
+            next: (res) => {
+              if (res?.show) {
+                this.showGiftAlert(res.amount);
+              }
+            },
+            error: () => {
+              // Non-blocking: we do not prevent the page from loading if the gift notification endpoint fails.
+            },
+          });
 
           const active = (list ?? []).find((c) => c.status === 'ACTIVE' || c.status === 'APPROVED');
           if (active && this.isRepaymentScheduleAvailable(active.status)) {
@@ -203,5 +218,29 @@ export class CreditListComponent {
       return anyErr.message.trim();
     }
     return 'Erreur lors du chargement des crédits.';
+  }
+
+  dismissGiftAlert(): void {
+    this.giftAlertVisible.set(false);
+    if (this.giftAlertTimeoutId) {
+      clearTimeout(this.giftAlertTimeoutId);
+      this.giftAlertTimeoutId = null;
+    }
+  }
+
+  private showGiftAlert(amount?: number): void {
+    if (amount != null) {
+      this.giftAmount.set(amount);
+    }
+    this.giftAlertVisible.set(true);
+
+    if (this.giftAlertTimeoutId) {
+      clearTimeout(this.giftAlertTimeoutId);
+    }
+
+    this.giftAlertTimeoutId = setTimeout(() => {
+      this.giftAlertVisible.set(false);
+      this.giftAlertTimeoutId = null;
+    }, 6500);
   }
 }

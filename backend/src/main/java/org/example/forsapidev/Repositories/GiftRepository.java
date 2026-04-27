@@ -11,9 +11,19 @@ import java.util.Optional;
 public interface GiftRepository extends JpaRepository<Gift, Long> {
 
     /**
-     * Trouve le gift d'un client spécifique
+     * Trouve le gift actif (non encore attribué) d'un client spécifique
      */
-    Optional<Gift> findByClientId(Long clientId);
+    Optional<Gift> findFirstByClientIdAndAwardedFalse(Long clientId);
+
+    /**
+     * Trouve le gift ayant une notification en attente pour un client
+     */
+    Optional<Gift> findFirstByClientIdAndNotificationPendingTrue(Long clientId);
+
+    /**
+     * Trouve le dernier gift d'un client (utile pour l'historique ou le backoffice)
+     */
+    Optional<Gift> findFirstByClientIdOrderByCreatedAtDesc(Long clientId);
 
     /**
      * Trouve tous les gifts non attribués qui ont atteint le seuil

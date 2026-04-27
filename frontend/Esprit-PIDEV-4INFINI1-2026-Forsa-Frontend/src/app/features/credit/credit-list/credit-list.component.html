@@ -1,20 +1,20 @@
 <div class="page-toolbar">
   <div class="page-head">
-    <h2>Crédit</h2>
+    <h2>Credit</h2>
     @if (isAdmin()) {
-      <p>Vue globale de tous les crédits.</p>
+      <p>Global view of all credits.</p>
     } @else if (isAgent()) {
-      <p>Crédits en attente de traitement.</p>
+      <p>Credits pending processing.</p>
     } @else {
-      <p>Simulation et création de demande.</p>
+      <p>Simulate and create a request.</p>
     }
   </div>
   <div class="toolbar-actions">
-    <app-forsa-button variant="outline" link="/dashboard/credit/simulate">Simuler</app-forsa-button>
+    <app-forsa-button variant="outline" link="/dashboard/credit/simulate">Simulate</app-forsa-button>
     @if (isClient()) {
       <app-forsa-button link="/dashboard/credit/new">
         <app-forsa-icon name="plus" [size]="16" />
-        Nouvelle demande
+        New request
       </app-forsa-button>
     }
   </div>
@@ -24,13 +24,29 @@
   <p class="notice notice--err" role="alert">{{ error() }}</p>
 }
 
+@if (isClient() && giftAlertVisible()) {
+  <div class="gift-toast" role="status" aria-live="polite">
+    <div class="gift-toast__card">
+      <div class="gift-toast__badge" aria-hidden="true">
+        <app-forsa-icon name="sparkles" [size]="18" />
+      </div>
+      <div class="gift-toast__body">
+        <p class="gift-toast__title">Congratulations!</p>
+        <p class="gift-toast__message">
+          You have just earned a loyalty gift of {{ (giftAmount() ?? 500) | number: '1.2-2' }} DT thanks to your credits. Enjoy it!
+        </p>
+      </div>
+      <app-forsa-button variant="ghost" size="sm" (clicked)="dismissGiftAlert()">Dismiss</app-forsa-button>
+    </div>
+  </div>
+}
+
 @if (isClient()) {
   <app-forsa-card>
     <div class="card-pad-lg">
-      <h3 class="sec-title">Espace client</h3>
+      <h3 class="sec-title">Client area</h3>
       <p class="text-muted">
-        Vous pouvez simuler un crédit et créer une demande. Après création, vous serez redirigé vers le détail du
-        crédit.
+        You can simulate a credit and create a request. After creation, you will be redirected to the credit detail.
       </p>
     </div>
   </app-forsa-card>
@@ -38,35 +54,34 @@
   <app-forsa-card>
     <div class="card-pad-lg table-wrap">
       <div class="table-head">
-        <h3 class="sec-title">Échéancier de remboursement</h3>
+        <h3 class="sec-title">Repayment schedule</h3>
         <app-forsa-button variant="ghost" size="sm" [disabled]="loading()" (clicked)="load()">
           <app-forsa-icon name="history" [size]="16" />
-          Rafraîchir
+          Refresh
         </app-forsa-button>
       </div>
 
       @if (loading()) {
-        <p class="text-muted">Chargement...</p>
+        <p class="text-muted">Loading...</p>
       }
 
       @if (!loading() && !activeCredit()) {
-        <p class="text-muted">Aucun crédit approuvé/actif trouvé pour afficher l’échéancier.</p>
+        <p class="text-muted">No approved/active credit found to display the schedule.</p>
       }
 
       @if (activeCredit(); as c) {
         @if (repaymentsError()) {
           <p class="notice notice--err" role="alert">{{ repaymentsError() }}</p>
         }
-
         @if (repaymentsLoading()) {
-          <p class="text-muted">Chargement des échéances...</p>
+          <p class="text-muted">Loading repayments...</p>
         }
 
         @if (!repaymentsLoading() && repayments().length === 0) {
           <p class="text-muted">
-            Aucune échéance pour ce crédit.
+            No repayment for this credit.
             @if (!c.status || c.status === 'SUBMITTED' || c.status === 'UNDER_REVIEW') {
-              <span> Elles sont générées après approbation/validation (statut actuel: {{ c.status ?? '-' }}).</span>
+              <span> They are generated after approval/validation (current status: {{ c.status ?? '-' }}).</span>
             }
           </p>
         }
@@ -76,9 +91,9 @@
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Échéance</th>
-                <th>Montant</th>
-                <th>Statut</th>
+                <th>Due date</th>
+                <th>Amount</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>
@@ -102,19 +117,19 @@
   <app-forsa-card>
     <div class="card-pad-lg table-wrap">
       <div class="table-head">
-        <h3 class="sec-title">Crédits</h3>
+        <h3 class="sec-title">Credits</h3>
         <app-forsa-button variant="ghost" size="sm" [disabled]="loading()" (clicked)="load()">
           <app-forsa-icon name="history" [size]="16" />
-          Rafraîchir
+          Refresh
         </app-forsa-button>
       </div>
 
       @if (loading()) {
-        <p class="text-muted">Chargement...</p>
+        <p class="text-muted">Loading...</p>
       }
 
       @if (!loading() && credits().length === 0) {
-        <p class="text-muted">Aucun crédit à afficher.</p>
+        <p class="text-muted">No credit to display.</p>
       }
 
       @if (credits().length > 0) {
@@ -123,9 +138,9 @@
             <tr>
               <th>ID</th>
               <th>Client</th>
-              <th>Montant</th>
-              <th>Durée</th>
-              <th>Statut</th>
+              <th>Amount</th>
+              <th>Duration</th>
+              <th>Status</th>
               <th>Date</th>
               <th>Agent</th>
               <th class="right">Actions</th>
@@ -146,7 +161,7 @@
                 <td class="right">
                   <app-forsa-button variant="ghost" size="sm" [link]="'/dashboard/credit/' + c.id">
                     <app-forsa-icon name="eye" [size]="16" />
-                    Détail
+                    Details
                   </app-forsa-button>
                 </td>
               </tr>
