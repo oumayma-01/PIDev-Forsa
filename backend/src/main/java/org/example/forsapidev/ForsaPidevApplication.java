@@ -6,19 +6,21 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
+@EnableScheduling
 public class ForsaPidevApplication {
 
     public static void main(String[] args) {
         System.out.println("Current Working Directory: " + System.getProperty("user.dir"));
-        
+
         // Try to load from current directory first, then from 'backend/' if not found
         io.github.cdimascio.dotenv.Dotenv dotenv = io.github.cdimascio.dotenv.Dotenv.configure()
                 .directory("./")
                 .ignoreIfMissing()
                 .load();
-        
+
         if (dotenv.get("STRIPE_SECRET_KEY") == null) {
             System.out.println(".env not found in ./, trying ./backend");
             dotenv = io.github.cdimascio.dotenv.Dotenv.configure()
@@ -35,7 +37,7 @@ public class ForsaPidevApplication {
         } else {
             System.err.println("STRIPE_SECRET_KEY NOT FOUND in .env files!");
         }
-        
+
         SpringApplication.run(ForsaPidevApplication.class, args);
     }
 

@@ -1,9 +1,11 @@
-import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { Component, ElementRef, OnDestroy, ViewChild, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
-import type { CurrentUser } from '../../../core/models/auth.model';
+import type { CurrentUser, WebAuthnCredentialItem } from '../../../core/models/auth.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { FaceCameraService } from '../../../core/services/face-camera.service';
 import { ProfileService } from '../../../core/services/profile.service';
 import { ForsaButtonComponent } from '../../../shared/ui/forsa-button/forsa-button.component';
 import { ForsaCardComponent } from '../../../shared/ui/forsa-card/forsa-card.component';
@@ -21,6 +23,7 @@ import { ForsaPasswordFieldComponent } from '../../../shared/ui/forsa-password-f
     ForsaIconComponent,
     ForsaInputDirective,
     ForsaPasswordFieldComponent,
+    DatePipe,
   ],
   templateUrl: './profile-page.component.html',
   styleUrl: './profile-page.component.css',
@@ -28,6 +31,7 @@ import { ForsaPasswordFieldComponent } from '../../../shared/ui/forsa-password-f
 export class ProfilePageComponent implements OnDestroy {
   private readonly profileApi = inject(ProfileService);
   private readonly auth = inject(AuthService);
+  private readonly faceCamera = inject(FaceCameraService);
 
   username = '';
   email = '';
@@ -43,6 +47,12 @@ export class ProfilePageComponent implements OnDestroy {
   readonly hasProfileImage = signal(false);
   /** Google-only account (no known password) until user sets one here. */
   readonly oauthGoogleOnly = signal(false);
+  readonly passkeys = signal<WebAuthnCredentialItem[]>([]);
+  readonly passkeyBusy = signal(false);
+  readonly faceEnrollOpen = signal(false);
+  readonly faceEnrollBusy = signal(false);
+  @ViewChild('faceEnrollVideo') faceEnrollVideoRef?: ElementRef<HTMLVideoElement>;
+  private enrollVideo: HTMLVideoElement | null = null;
 
   /** Prefer live session after password change; fall back to profile load. */
   readonly oauthGoogleOnlyUi = computed(
@@ -53,10 +63,12 @@ export class ProfilePageComponent implements OnDestroy {
 
   constructor() {
     this.reloadProfile();
+    this.reloadPasskeys();
   }
 
   ngOnDestroy(): void {
     this.revokeObjectUrl();
+    this.faceCamera.stop(this.enrollVideo ?? undefined);
   }
 
   onAvatarSelected(event: Event): void {
@@ -180,6 +192,79 @@ export class ProfilePageComponent implements OnDestroy {
     });
   }
 
+  registerPasskey(): void {
+    this.clearAlerts();
+    this.passkeyBusy.set(true);
+    this.auth
+      .registerCurrentDevicePasskey(`${navigator.platform || 'Device'} passkey`)
+      .then(() => {
+        this.flashMessage('Passkey registered successfully.');
+        this.reloadPasskeys();
+      })
+      .catch((err) => {
+        this.flashError(this.readError(err));
+      })
+      .finally(() => this.passkeyBusy.set(false));
+  }
+
+  removePasskey(credentialId: string): void {
+    this.passkeyBusy.set(true);
+    this.auth.removePasskey(credentialId).subscribe({
+      next: () => {
+        this.flashMessage('Passkey removed.');
+        this.reloadPasskeys();
+        this.passkeyBusy.set(false);
+      },
+      error: (err) => {
+        this.passkeyBusy.set(false);
+        this.flashError(this.readError(err));
+      },
+    });
+  }
+
+  async openFaceEnroll(): Promise<void> {
+    this.clearAlerts();
+    this.faceEnrollOpen.set(true);
+    setTimeout(async () => {
+      this.enrollVideo = this.faceEnrollVideoRef?.nativeElement ?? null;
+      if (!this.enrollVideo) {
+        this.faceEnrollOpen.set(false);
+        this.flashError('Camera view is unavailable.');
+        return;
+      }
+      try {
+        await this.faceCamera.start(this.enrollVideo);
+      } catch (err) {
+        this.faceEnrollOpen.set(false);
+        this.flashError(this.readError(err));
+      }
+    });
+  }
+
+  closeFaceEnroll(): void {
+    this.faceCamera.stop(this.enrollVideo ?? undefined);
+    this.enrollVideo = null;
+    this.faceEnrollOpen.set(false);
+    this.faceEnrollBusy.set(false);
+  }
+
+  captureAndEnrollFace(): void {
+    if (!this.enrollVideo) {
+      this.flashError('Camera is not ready.');
+      return;
+    }
+    this.faceEnrollBusy.set(true);
+    this.faceCamera
+      .captureDescriptor(this.enrollVideo)
+      .then((descriptor) => firstValueFrom(this.auth.enrollFace(descriptor)))
+      .then(() => {
+        this.flashMessage('Face profile enrolled successfully.');
+        this.closeFaceEnroll();
+      })
+      .catch((err) => this.flashError(this.readError(err)))
+      .finally(() => this.faceEnrollBusy.set(false));
+  }
+
   private reloadProfile(): void {
     this.clearAlerts();
     this.profileApi
@@ -205,6 +290,13 @@ export class ProfilePageComponent implements OnDestroy {
         },
         error: (err) => this.flashError(this.readError(err)),
       });
+  }
+
+  private reloadPasskeys(): void {
+    this.auth.listPasskeys().subscribe({
+      next: (items) => this.passkeys.set(items ?? []),
+      error: () => this.passkeys.set([]),
+    });
   }
 
   private refreshAvatarPreview(): void {
@@ -256,9 +348,13 @@ export class ProfilePageComponent implements OnDestroy {
   }
 
   private readError(err: unknown): string {
-    const body = (err as { error?: { message?: string } })?.error;
+    const body = (err as { error?: { message?: string }; message?: string })?.error;
     if (body?.message) {
       return body.message;
+    }
+    const msg = (err as { message?: string })?.message;
+    if (msg) {
+      return msg;
     }
     return 'Something went wrong. Please try again.';
   }

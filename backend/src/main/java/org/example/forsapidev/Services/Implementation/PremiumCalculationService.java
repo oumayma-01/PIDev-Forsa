@@ -60,6 +60,7 @@ public class PremiumCalculationService implements IPremiumCalculationService {
         result.setCoverageAmount(request.getCoverageAmount());
         result.setRiskScore(riskProfile.getRiskScore());
         result.setRiskCategory(riskProfile.getRiskCategory());
+        result.setRiskCoefficient(riskProfile.getRiskCoefficient());
         result.setEffectiveAnnualRate(ActuarialConstants.ANNUAL_TECHNICAL_RATE);
         result.setCalculationMethod(getCalculationMethod(request.getInsuranceType()));
         result.setAdditionalNotes(generateNotes(request, riskProfile));
@@ -176,10 +177,11 @@ public class PremiumCalculationService implements IPremiumCalculationService {
 
     private String generateNotes(PremiumCalculationRequestDTO request, InsuranceRiskAssessmentDTO riskProfile) {
         return String.format(
-                "Premium calculated for %s insurance with %s risk profile. " +
-                        "Coverage: $%s for %d months. Payment frequency: %s.",
+                "Premium calculated for %s insurance with %s risk profile (Coefficient: %.2f). " +
+                        "Coverage: %s TND for %d months. Payment frequency: %s.",
                 request.getInsuranceType(),
                 riskProfile.getRiskCategory(),
+                riskProfile.getRiskCoefficient(),
                 request.getCoverageAmount(),
                 request.getDurationMonths(),
                 request.getPaymentFrequency()

@@ -1,7 +1,9 @@
 <div class="shell">
-  <app-dashboard-sidebar />
+  @if (!isClient()) {
+    <app-dashboard-sidebar />
+  }
   <div class="shell__main">
-    <app-dashboard-navbar />
+    <app-dashboard-navbar [showSidebarItems]="isClient()" />
     <main class="shell__content">
       <router-outlet />
     </main>

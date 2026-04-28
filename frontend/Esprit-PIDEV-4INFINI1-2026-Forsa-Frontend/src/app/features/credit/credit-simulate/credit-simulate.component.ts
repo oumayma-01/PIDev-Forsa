@@ -31,15 +31,15 @@ export class CreditSimulateComponent {
     this.result.set(null);
 
     if (!Number.isFinite(this.principal) || this.principal <= 0) {
-      this.error.set('Veuillez saisir un montant valide.');
+      this.error.set('Please enter a valid amount.');
       return;
     }
     if (!Number.isFinite(this.rate) || this.rate <= 0) {
-      this.error.set('Veuillez saisir un taux valide.');
+      this.error.set('Please enter a valid rate.');
       return;
     }
     if (!Number.isFinite(this.duration) || this.duration <= 0) {
-      this.error.set('Veuillez saisir une durée valide.');
+      this.error.set('Please enter a valid duration.');
       return;
     }
 
@@ -71,6 +71,6 @@ export class CreditSimulateComponent {
     if (typeof body?.error === 'string' && body.error.trim()) {
       return body.error;
     }
-    return 'Erreur lors de la simulation. Veuillez réessayer.';
+    return 'Simulation failed. Please try again.';
   }
 }

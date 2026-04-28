@@ -36,10 +36,59 @@ export class CreditListComponent {
   readonly repaymentsLoading = signal(false);
   readonly repaymentsError = signal<string | null>(null);
 
+  readonly giftAlertVisible = signal(false);
+  readonly giftAmount = signal<number | null>(null);
+  private giftAlertTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
   readonly roles = computed(() => this.auth.currentUser()?.roles ?? []);
   readonly isAdmin = computed(() => this.roles().includes('ROLE_ADMIN'));
   readonly isAgent = computed(() => this.roles().includes('ROLE_AGENT'));
   readonly isClient = computed(() => this.roles().includes('ROLE_CLIENT'));
+
+  readonly searchTerm = signal('');
+  readonly statusFilter = signal<string>('');
+  readonly dateStart = signal<string>('');
+  readonly dateEnd = signal<string>('');
+
+  readonly filteredCredits = computed(() => {
+    let list = this.credits() ?? [];
+    const term = this.searchTerm().toLowerCase().trim();
+    const status = this.statusFilter();
+    const start = this.dateStart();
+    const end = this.dateEnd();
+
+    // Global search term
+    if (term) {
+      list = list.filter((c) => {
+        const idStr = c.id?.toString() || '';
+        const userStr = (c.user?.username || '').toLowerCase();
+        const statusStr = (c.status || '').toLowerCase();
+        return idStr.includes(term) || userStr.includes(term) || statusStr.includes(term);
+      });
+    }
+
+    // Status filter
+    if (status) {
+      list = list.filter((c) => c.status === status);
+    }
+
+    // Date interval filter
+    if (start || end) {
+      list = list.filter((c) => {
+        if (!c.requestDate) return false;
+        const d = new Date(c.requestDate);
+        if (start && d < new Date(start)) return false;
+        if (end) {
+          const endDate = new Date(end);
+          endDate.setHours(23, 59, 59, 999);
+          if (d > endDate) return false;
+        }
+        return true;
+      });
+    }
+
+    return list;
+  });
 
   readonly activeCredit = computed<CreditRequestApi | null>(() => {
     const list = this.credits() ?? [];
@@ -61,7 +110,7 @@ export class CreditListComponent {
     const ok = this.auth.currentUser() ? true : await this.auth.ensureSessionFromApi();
     if (!ok) {
       this.loading.set(false);
-      this.error.set('Session expirée. Veuillez vous reconnecter.');
+      this.error.set('Session expired. Please log in again.');
       return;
     }
 
@@ -75,6 +124,17 @@ export class CreditListComponent {
         next: (list) => {
           this.loading.set(false);
           this.credits.set(list ?? []);
+
+          this.api.consumeMyGiftAwardNotification().subscribe({
+            next: (res) => {
+              if (res?.show) {
+                this.showGiftAlert(res.amount);
+              }
+            },
+            error: () => {
+              // Non-blocking
+            },
+          });
 
           const active = (list ?? []).find((c) => c.status === 'ACTIVE' || c.status === 'APPROVED');
           if (active && this.isRepaymentScheduleAvailable(active.status)) {
@@ -92,13 +152,13 @@ export class CreditListComponent {
     if (!this.isAdmin() && !this.isAgent()) {
       this.credits.set([]);
       this.loading.set(false);
-      this.error.set("Accès indisponible: rôle requis AGENT ou ADMIN.");
+      this.error.set("Access denied: AGENT or ADMIN role required.");
       return;
     }
 
     this.loading.set(true);
-    const req$ = this.isAdmin() ? this.api.listAllCredits() : this.api.listPendingCredits();
-    this.inflight = req$.subscribe({
+    // Both Admin and Agent can now see all credits
+    this.inflight = this.api.listAllCredits().subscribe({
       next: (list) => {
         this.loading.set(false);
         this.credits.set(list ?? []);
@@ -181,27 +241,47 @@ export class CreditListComponent {
             : null;
 
     if (status === 0) {
-      return 'Impossible de joindre le serveur. Vérifiez que le backend est lancé et que CORS est autorisé.';
+      return 'Unable to reach the server. Please check your connection.';
     }
     if (status === 401) {
-      return 'Non authentifié. Veuillez vous reconnecter.';
+      return 'Not authenticated. Please log in again.';
     }
     if (status === 403) {
-      return 'Accès refusé. Cette page requiert le rôle AGENT (ou ADMIN pour la vue globale).';
+      return 'Access denied. You do not have the required permissions.';
     }
     if (status === 500) {
-      const base = 'Erreur serveur (500) lors du chargement des crédits.';
-      const extra = backendMessage?.trim() ? ` Détail: ${backendMessage.trim()}` : '';
-      const where = url ? ` Endpoint: ${url}` : '';
-      return `${base}${where}${extra}`;
+      const base = 'Server error (500) while loading credits.';
+      const extra = backendMessage?.trim() ? ` Detail: ${backendMessage.trim()}` : '';
+      return `${base}${extra}`;
     }
 
     if (backendMessage?.trim()) {
       return backendMessage.trim();
     }
-    if (typeof anyErr?.message === 'string' && anyErr.message.trim()) {
-      return anyErr.message.trim();
+    return 'An error occurred while loading credits.';
+  }
+
+  dismissGiftAlert(): void {
+    this.giftAlertVisible.set(false);
+    if (this.giftAlertTimeoutId) {
+      clearTimeout(this.giftAlertTimeoutId);
+      this.giftAlertTimeoutId = null;
     }
-    return 'Erreur lors du chargement des crédits.';
+  }
+
+  private showGiftAlert(amount?: number): void {
+    if (amount != null) {
+      this.giftAmount.set(amount);
+    }
+    this.giftAlertVisible.set(true);
+
+    if (this.giftAlertTimeoutId) {
+      clearTimeout(this.giftAlertTimeoutId);
+    }
+
+    this.giftAlertTimeoutId = setTimeout(() => {
+      this.giftAlertVisible.set(false);
+      this.giftAlertTimeoutId = null;
+    }, 6500);
   }
 }

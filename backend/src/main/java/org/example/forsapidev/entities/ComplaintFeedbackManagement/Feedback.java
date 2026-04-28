@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.example.forsapidev.entities.UserManagement.User;
 
 import java.util.Date;
 
@@ -42,6 +43,11 @@ public class Feedback {
     @JsonIgnore
     @OneToOne
     private Complaint complaint;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    @JsonIgnore
+    private User user;
 
     @PrePersist
     protected void onCreate() {

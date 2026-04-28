@@ -1,6 +1,7 @@
 package org.example.forsapidev.Controllers;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.example.forsapidev.Services.Interfaces.IAmortizationPdfService;
 import org.example.forsapidev.Services.Interfaces.IPolicyPdfService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,7 @@ import java.io.ByteArrayOutputStream;
 public class PolicyPdfController {
 
     private final IPolicyPdfService policyPdfService;
+    private final IAmortizationPdfService amortizationPdfService;
 
     /**
      * Generate and download PDF for a policy
@@ -60,6 +62,42 @@ public class PolicyPdfController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(("❌ Error generating PDF: " + e.getMessage()).getBytes());
+        }
+    }
+
+    /**
+     * Download amortization schedule
+     */
+    @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
+    @GetMapping("/amortization/download/{policy-id}")
+    public ResponseEntity<byte[]> downloadAmortization(@PathVariable("policy-id") Long policyId) {
+        try {
+            ByteArrayOutputStream pdfStream = amortizationPdfService.generateAmortizationTablePdf(policyId);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "Amortization_Policy_" + policyId + ".pdf");
+            return new ResponseEntity<>(pdfStream.toByteArray(), headers, HttpStatus.OK);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(("❌ Error: " + e.getMessage()).getBytes());
+        }
+    }
+
+    /**
+     * View amortization schedule
+     */
+    @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
+    @GetMapping("/amortization/view/{policy-id}")
+    public ResponseEntity<byte[]> viewAmortization(@PathVariable("policy-id") Long policyId) {
+        try {
+            ByteArrayOutputStream pdfStream = amortizationPdfService.generateAmortizationTablePdf(policyId);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("inline", "Amortization_Policy_" + policyId + ".pdf");
+            return new ResponseEntity<>(pdfStream.toByteArray(), headers, HttpStatus.OK);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(("❌ Error: " + e.getMessage()).getBytes());
         }
     }
 }

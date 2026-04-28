@@ -3,7 +3,16 @@ import { Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, firstValueFrom, tap, timeout } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import type { CurrentUser, JwtResponse, MessageResponse, SignupPayload } from '../models/auth.model';
+import { WebAuthnBrowserService } from './webauthn-browser.service';
+import type {
+  CurrentUser,
+  JwtResponse,
+  MessageResponse,
+  SignupPayload,
+  WebAuthnBeginLoginResponse,
+  WebAuthnBeginRegisterResponse,
+  WebAuthnCredentialItem,
+} from '../models/auth.model';
 
 const TOKEN_KEY = 'forsa_access_token';
 
@@ -11,6 +20,7 @@ const TOKEN_KEY = 'forsa_access_token';
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly webauthn = inject(WebAuthnBrowserService);
 
   readonly currentUser = signal<CurrentUser | null>(null);
 
@@ -29,18 +39,7 @@ export class AuthService {
     return this.http
       .post<JwtResponse>(`${environment.apiBaseUrl}/auth/signin`, { username, password })
       .pipe(
-        tap((res) => {
-          localStorage.setItem(TOKEN_KEY, res.token);
-          this.currentUser.set({
-            id: res.id,
-            username: res.username,
-            email: res.email,
-            roles: res.roles ?? [],
-            hasProfileImage: res.hasProfileImage ?? false,
-            oauthAccount: res.oauthAccount ?? false,
-            allowedNavPaths: res.allowedNavPaths,
-          });
-        }),
+        tap((res) => this.applyJwtSession(res)),
       );
   }
 
@@ -104,5 +103,122 @@ export class AuthService {
     return this.http.get<CurrentUser>(`${environment.apiBaseUrl}/auth/current`).pipe(
       tap((u) => this.currentUser.set(u)),
     );
+  }
+
+  supportsBiometrics(): boolean {
+    return this.webauthn.isSupported();
+  }
+
+  async loginWithPasskey(username: string): Promise<void> {
+    if (!this.webauthn.isSupported()) {
+      throw new Error('Biometric login is not supported on this browser.');
+    }
+    const begin = await firstValueFrom(
+      this.http.post<WebAuthnBeginLoginResponse>(`${environment.apiBaseUrl}/auth/webauthn/login/begin`, { username }),
+    );
+    const assertion = await this.webauthn.getCredential({
+      challenge: this.webauthn.toBuffer(begin.challenge),
+      rpId: begin.rpId,
+      allowCredentials: (begin.allowCredentialIds ?? []).map((id) => ({
+        id: this.webauthn.toBuffer(id),
+        type: 'public-key',
+      })),
+      timeout: begin.timeout ?? 60000,
+      userVerification: begin.userVerification ?? 'preferred',
+    });
+
+    const response = assertion.response as AuthenticatorAssertionResponse;
+    const credentialId = this.webauthn.fromBuffer(assertion.rawId);
+    const jwt = await firstValueFrom(
+      this.http.post<JwtResponse>(`${environment.apiBaseUrl}/auth/webauthn/login/finish`, {
+        username,
+        credentialId,
+        clientDataJSON: this.webauthn.fromBuffer(response.clientDataJSON),
+        authenticatorData: this.webauthn.fromBuffer(response.authenticatorData),
+        signature: this.webauthn.fromBuffer(response.signature),
+      }),
+    );
+    this.applyJwtSession(jwt);
+  }
+
+  async loginWithFace(username: string, descriptor: number[]): Promise<void> {
+    const jwt = await firstValueFrom(
+      this.http.post<JwtResponse>(`${environment.apiBaseUrl}/auth/face/login`, {
+        username,
+        descriptor,
+      }),
+    );
+    this.applyJwtSession(jwt);
+  }
+
+  enrollFace(descriptor: number[]): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${environment.apiBaseUrl}/auth/face/enroll`, { descriptor });
+  }
+
+  async registerCurrentDevicePasskey(deviceName?: string): Promise<void> {
+    if (!this.webauthn.isSupported()) {
+      throw new Error('Passkeys are not supported on this browser.');
+    }
+    const begin = await firstValueFrom(
+      this.http.post<WebAuthnBeginRegisterResponse>(`${environment.apiBaseUrl}/auth/webauthn/register/begin`, {
+        deviceName: deviceName ?? 'Current device',
+      }),
+    );
+    const credential = await this.webauthn.createCredential({
+      challenge: this.webauthn.toBuffer(begin.challenge),
+      rp: { id: begin.rpId, name: begin.rpName },
+      user: {
+        id: this.webauthn.toBuffer(begin.userId),
+        name: begin.userName,
+        displayName: begin.userDisplayName,
+      },
+      pubKeyCredParams: [
+        { type: 'public-key', alg: -7 },
+        { type: 'public-key', alg: -257 },
+      ],
+      timeout: begin.timeout ?? 60000,
+      excludeCredentials: (begin.excludeCredentialIds ?? []).map((id) => ({
+        type: 'public-key',
+        id: this.webauthn.toBuffer(id),
+      })),
+      authenticatorSelection: {
+        authenticatorAttachment: begin.authenticatorAttachment ?? 'platform',
+        residentKey: begin.residentKey ?? 'preferred',
+        userVerification: begin.userVerification ?? 'preferred',
+      },
+      attestation: 'none',
+    });
+    const response = credential.response as AuthenticatorAttestationResponse;
+    await firstValueFrom(
+      this.http.post<MessageResponse>(`${environment.apiBaseUrl}/auth/webauthn/register/finish`, {
+        credentialId: this.webauthn.fromBuffer(credential.rawId),
+        publicKey: this.webauthn.fromBuffer(response.getPublicKey() ?? new ArrayBuffer(0)),
+        clientDataJSON: this.webauthn.fromBuffer(response.clientDataJSON),
+        attestationObject: this.webauthn.fromBuffer(response.attestationObject),
+        transports: this.webauthn.transportsToCsv(response.getTransports?.()),
+        deviceName: deviceName ?? 'Current device',
+      }),
+    );
+  }
+
+  listPasskeys(): Observable<WebAuthnCredentialItem[]> {
+    return this.http.get<WebAuthnCredentialItem[]>(`${environment.apiBaseUrl}/auth/webauthn/credentials`);
+  }
+
+  removePasskey(credentialId: string): Observable<MessageResponse> {
+    return this.http.delete<MessageResponse>(`${environment.apiBaseUrl}/auth/webauthn/credentials/${encodeURIComponent(credentialId)}`);
+  }
+
+  private applyJwtSession(res: JwtResponse): void {
+    localStorage.setItem(TOKEN_KEY, res.token);
+    this.currentUser.set({
+      id: res.id,
+      username: res.username,
+      email: res.email,
+      roles: res.roles ?? [],
+      hasProfileImage: res.hasProfileImage ?? false,
+      oauthAccount: res.oauthAccount ?? false,
+      allowedNavPaths: res.allowedNavPaths,
+    });
   }
 }

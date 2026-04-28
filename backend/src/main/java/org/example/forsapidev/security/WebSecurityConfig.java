@@ -109,6 +109,7 @@ public class WebSecurityConfig implements WebMvcConfigurer {
 
             .authorizeHttpRequests()
             .requestMatchers(securityUtils.AUTH_WHITELIST).permitAll()
+            .requestMatchers("/api/insurance-chat/**").hasRole("CLIENT")
             .anyRequest().authenticated()
             .and()
 

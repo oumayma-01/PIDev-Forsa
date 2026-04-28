@@ -23,3 +23,77 @@
 .forgot-password-link {
   margin-top: 0;
 }
+
+.biometric-button {
+  --biometric-bg-1: #111827;
+  --biometric-bg-2: #1f2937;
+  --biometric-accent: #7c3aed;
+}
+
+.biometric-button :is(button, .btn, [role='button']) {
+  background: linear-gradient(135deg, var(--biometric-bg-1) 0%, var(--biometric-bg-2) 100%);
+  border: 1px solid rgba(124, 58, 237, 0.35);
+  color: #f9fafb;
+  box-shadow: 0 8px 20px rgba(17, 24, 39, 0.25);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.biometric-button :is(button, .btn, [role='button']):hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(17, 24, 39, 0.32);
+  filter: brightness(1.05);
+}
+
+.biometric-button__content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+}
+
+.biometric-button__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 999px;
+  background: rgba(124, 58, 237, 0.2);
+  color: #e9d5ff;
+}
+
+.face-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.72);
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.face-modal__card {
+  width: min(460px, 100%);
+  border-radius: 16px;
+  background: #0f172a;
+  color: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  padding: 1rem;
+  box-shadow: 0 16px 40px rgba(2, 6, 23, 0.45);
+}
+
+.face-modal__video {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  object-fit: cover;
+  background: #020617;
+  margin: 0.75rem 0;
+}
+
+.face-modal__actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}

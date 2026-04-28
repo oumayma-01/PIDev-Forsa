@@ -44,6 +44,7 @@ public class CreditRequestService {
     private final CreditScoringService creditScoringService;
     private final UnifiedCreditAnalysisService unifiedCreditAnalysisService;
     private final AgentAssignmentService agentAssignmentService;
+    private final GiftService giftService;
     private final CreditRequestMapper creditRequestMapper;
 
     public CreditRequestService(CreditRequestRepository creditRequestRepository,
@@ -53,6 +54,7 @@ public class CreditRequestService {
                                 CreditScoringService creditScoringService,
                                 UnifiedCreditAnalysisService unifiedCreditAnalysisService,
                                 AgentAssignmentService agentAssignmentService,
+                                GiftService giftService,
                                 CreditRequestMapper creditRequestMapper) {
         this.creditRequestRepository = creditRequestRepository;
         this.repaymentScheduleRepository = repaymentScheduleRepository;
@@ -61,6 +63,7 @@ public class CreditRequestService {
         this.creditScoringService = creditScoringService;
         this.unifiedCreditAnalysisService = unifiedCreditAnalysisService;
         this.agentAssignmentService = agentAssignmentService;
+        this.giftService = giftService;
         this.creditRequestMapper = creditRequestMapper;
     }
 
@@ -192,6 +195,10 @@ public class CreditRequestService {
             Integer durationMonths,
             String typeCalculStr,
             MultipartFile healthReport,
+            String guarantorName,
+            String guarantorCin,
+            String guarantorBankAccount,
+            MultipartFile guarantorPhoto,
             User authenticatedUser) {
 
         logger.info("🚀 Création d'une demande de crédit avec rapport médical pour l'utilisateur {} avec montant {}",
@@ -214,7 +221,26 @@ public class CreditRequestService {
                 request.getRequestDate(), durationMonths, null, null);
         request.setInterestRate(baseRate.doubleValue());
 
+        logger.info("Setting guarantor data...");
+        // Guarantor data
+        request.setGuarantorName(guarantorName);
+        request.setGuarantorCin(guarantorCin);
+        request.setGuarantorBankAccount(guarantorBankAccount);
+        if (guarantorPhoto != null && !guarantorPhoto.isEmpty()) {
+            try {
+                byte[] photoBytes = guarantorPhoto.getBytes();
+                request.setGuarantorCinPhoto(photoBytes);
+                request.setGuarantorCinPhotoContentType(
+                        guarantorPhoto.getContentType() != null ? guarantorPhoto.getContentType() : "image/jpeg");
+                logger.info("📸 Photo du garant stockée en base ({} octets)", photoBytes.length);
+            } catch (Exception e) {
+                logger.warn("⚠️ Impossible de sauvegarder la photo du garant : {}", e.getMessage());
+            }
+        }
+
+        logger.info("Saving initial request to DB...");
         CreditRequest savedRequest = creditRequestRepository.save(request);
+        logger.info("Initial request saved with ID: {}", savedRequest.getId());
 
         try {
             logger.info("📡 Appel de l'API Python unifiée pour l'analyse crédit complète...");
@@ -318,6 +344,9 @@ public class CreditRequestService {
 
         // Génération du tableau d'amortissement selon le type choisi
         generateRepaymentSchedule(saved);
+
+        // Gift accumulation rule: for every approved credit, accumulate 1.5% and award automatically at threshold.
+        giftService.accumulateForCredit(saved);
 
         logger.info("Crédit ID={} validé avec succès", id);
         return saved;

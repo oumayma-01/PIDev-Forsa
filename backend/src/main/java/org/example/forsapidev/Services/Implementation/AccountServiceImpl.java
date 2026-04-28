@@ -3,11 +3,14 @@ package org.example.forsapidev.Services.Implementation;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.forsapidev.DTO.AccountTypeAdviceDTO;
 import org.example.forsapidev.DTO.AdaptiveInterestResultDTO;
+import org.example.forsapidev.DTO.BankVaultDTO;
 import org.example.forsapidev.DTO.WalletForecastDTO;
 import org.example.forsapidev.DTO.WalletStatisticsDTO;
 import org.example.forsapidev.Repositories.*;
 import org.example.forsapidev.Services.Interfaces.AccountService;
+import org.example.forsapidev.entities.UserManagement.User;
 import org.example.forsapidev.entities.WalletManagement.*;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +27,7 @@ public class AccountServiceImpl implements AccountService {
     private final TransactionRepository transactionRepo;
     private final ActivityRepository activityRepo;
     private final UserRepository userRepo;
+    private final BankVaultRepository bankVaultRepo;
     private final WalletAiService walletAiService;
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -32,14 +36,18 @@ public class AccountServiceImpl implements AccountService {
                               TransactionRepository transactionRepo,
                               ActivityRepository activityRepo,
                               UserRepository userRepo,
+                              BankVaultRepository bankVaultRepo,
                               WalletAiService walletAiService) {
-        this.accountRepo = accountRepo;
-        this.walletRepo = walletRepo;
+        this.accountRepo     = accountRepo;
+        this.walletRepo      = walletRepo;
         this.transactionRepo = transactionRepo;
-        this.activityRepo = activityRepo;
-        this.userRepo = userRepo;
+        this.activityRepo    = activityRepo;
+        this.userRepo        = userRepo;
+        this.bankVaultRepo   = bankVaultRepo;
         this.walletAiService = walletAiService;
     }
+
+    // ── HELPERS ──────────────────────────────────────────────────────────────
 
     private Account findAccount(Long accountId) {
         return accountRepo.findById(accountId)
@@ -67,28 +75,79 @@ public class AccountServiceImpl implements AccountService {
         transactionRepo.save(tx);
     }
 
+    private BankVault getOrCreateVault() {
+        return bankVaultRepo.findById(1L).orElseGet(() -> {
+            BankVault vault = new BankVault(BigDecimal.ZERO);
+            return bankVaultRepo.save(vault);
+        });
+    }
+
+    private void increaseVault(BigDecimal amount) {
+        BankVault vault = getOrCreateVault();
+        vault.setTotalFunds(vault.getTotalFunds().add(amount));
+        bankVaultRepo.save(vault);
+    }
+
+    private void decreaseVault(BigDecimal amount) {
+        BankVault vault = getOrCreateVault();
+        vault.setTotalFunds(vault.getTotalFunds().subtract(amount));
+        bankVaultRepo.save(vault);
+    }
+
+    // ── CRUD ─────────────────────────────────────────────────────────────────
+
     @Transactional
     @Override
     public Account createAccount(Long ownerId, String type) {
+
+        User user = userRepo.findById(ownerId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + ownerId));
+
+        // Vérifier que l'utilisateur est un CLIENT (role_id = 2)
+        if (user.getRole() == null || user.getRole().getId() != 2L) {
+            throw new RuntimeException("Only clients (role_id=2) can create bank accounts.");
+        }
+
+        AccountType requestedType;
+        if (type == null) {
+            throw new RuntimeException("Account type cannot be null");
+        }
+
+        if (type.equalsIgnoreCase("INVESTMENT")) {
+            requestedType = AccountType.INVESTMENT;
+        } else if (type.equalsIgnoreCase("SAVINGS")) {
+            requestedType = AccountType.SAVINGS;
+        } else {
+            throw new RuntimeException("Invalid account type. Use 'INVESTMENT' or 'SAVINGS'");
+        }
+
+        // Un seul compte par type
+        List<Account> existingAccounts = getAccountsByOwner(ownerId);
+
+        boolean alreadyExists = existingAccounts.stream()
+                .anyMatch(a -> a.getType() == requestedType);
+
+        if (alreadyExists) {
+            throw new RuntimeException(
+                    "Client already has a " + requestedType + " account. Maximum one account per type."
+            );
+        }
+
+        // Chaque compte a SA PROPRE wallet
         Wallet wallet = new Wallet();
         wallet.setOwnerId(ownerId);
         wallet.setBalance(BigDecimal.ZERO);
-
-        Wallet savedWallet = walletRepo.save(wallet);
+        walletRepo.save(wallet);
 
         Account account = new Account();
         account.setWallet(wallet);
-
-        if (type.equalsIgnoreCase("INVESTMENT")) {
-            account.setType(AccountType.INVESTMENT);
-            account.setStatus(AccountStatus.BLOCKED);
-        } else {
-            account.setType(AccountType.SAVINGS);
-            account.setStatus(AccountStatus.ACTIVE);
-        }
+        account.setOwner(user);
+        account.setAccountHolderName(user.getUsername());
+        account.setType(requestedType);
+        account.setStatus(AccountStatus.BLOCKED); // Tous les comptes commencent bloqués
 
         Account saved = accountRepo.save(account);
-        logActivity(wallet, "Account created of type: " + type);
+        logActivity(wallet, "Account created of type: " + requestedType + " (BLOCKED by default)");
         return saved;
     }
 
@@ -100,7 +159,8 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public List<Account> getAccountsByOwner(Long ownerId) {
         return accountRepo.findAll().stream()
-                .filter(a -> a.getWallet() != null && ownerId.equals(a.getWallet().getOwnerId()))
+                .filter(a -> a.getWallet() != null
+                        && ownerId.equals(a.getWallet().getOwnerId()))
                 .toList();
     }
 
@@ -113,9 +173,10 @@ public class AccountServiceImpl implements AccountService {
     @Transactional
     public Account updateAccountStatus(Long accountId, String status) {
         Account account = findAccount(accountId);
-        account.setStatus(AccountStatus.valueOf(status.toUpperCase()));
+        AccountStatus newStatus = AccountStatus.valueOf(status.toUpperCase());
+        account.setStatus(newStatus);
         Account saved = accountRepo.save(account);
-        logActivity(account.getWallet(), "Status changed to: " + status.toUpperCase());
+        logActivity(account.getWallet(), "Status changed to: " + newStatus);
         return saved;
     }
 
@@ -124,11 +185,70 @@ public class AccountServiceImpl implements AccountService {
     public void deleteAccount(Long accountId) {
         Account account = findAccount(accountId);
         Wallet wallet = account.getWallet();
-        activityRepo.deleteAll(activityRepo.findByWallet_Id(wallet.getId()));
-        transactionRepo.deleteAll(wallet.getTransactions());
+
+        if (wallet != null) {
+            // 1. Retirer l'argent du BankVault
+            decreaseVault(wallet.getBalance());
+
+            // 2. Supprimer TOUTES les activités liées à cette wallet
+            List<Activity> walletActivities = activityRepo.findByWallet_Id(wallet.getId());
+            if (walletActivities != null && !walletActivities.isEmpty()) {
+                activityRepo.deleteAll(walletActivities);
+            }
+
+            // 3. Supprimer TOUTES les transactions liées à cette wallet
+            if (wallet.getTransactions() != null && !wallet.getTransactions().isEmpty()) {
+                transactionRepo.deleteAll(wallet.getTransactions());
+            }
+
+            // 4. D'abord dissocier le compte de la wallet (important !)
+            account.setWallet(null);
+            accountRepo.save(account);
+
+            // 5. Supprimer la wallet
+            walletRepo.delete(wallet);
+        }
+
+        // 6. Supprimer le compte
         accountRepo.delete(account);
-        walletRepo.delete(wallet);
+
+        System.out.println("Account " + accountId + " and its wallet deleted successfully.");
     }
+
+    @Override
+    @Transactional
+    public void deleteUserWithAccounts(Long userId) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        List<Account> userAccounts = getAccountsByOwner(userId);
+
+        for (Account account : userAccounts) {
+            Wallet wallet = account.getWallet();
+            if (wallet != null) {
+                decreaseVault(wallet.getBalance());
+
+                List<Activity> walletActivities = activityRepo.findByWallet_Id(wallet.getId());
+                if (walletActivities != null && !walletActivities.isEmpty()) {
+                    activityRepo.deleteAll(walletActivities);
+                }
+
+                if (wallet.getTransactions() != null && !wallet.getTransactions().isEmpty()) {
+                    transactionRepo.deleteAll(wallet.getTransactions());
+                }
+
+                account.setWallet(null);
+                accountRepo.save(account);
+                walletRepo.delete(wallet);
+            }
+            accountRepo.delete(account);
+        }
+
+        userRepo.delete(user);
+        System.out.println("User " + userId + " and all associated data deleted.");
+    }
+
+    // ── OPERATIONS ───────────────────────────────────────────────────────────
 
     @Override
     @Transactional
@@ -138,11 +258,12 @@ public class AccountServiceImpl implements AccountService {
 
         Account account = findAccount(accountId);
         if (account.getStatus() == AccountStatus.BLOCKED)
-            throw new RuntimeException("Account is blocked");
+            throw new RuntimeException("Account is blocked. Please contact an administrator.");
 
         Wallet wallet = account.getWallet();
         wallet.setBalance(wallet.getBalance().add(amount));
         walletRepo.save(wallet);
+        increaseVault(amount);
         saveTransaction(wallet, amount, TransactionType.DEPOSIT);
         logActivity(wallet, "Deposit of " + amount);
     }
@@ -155,7 +276,7 @@ public class AccountServiceImpl implements AccountService {
 
         Account account = findAccount(accountId);
         if (account.getStatus() == AccountStatus.BLOCKED)
-            throw new RuntimeException("Account is blocked");
+            throw new RuntimeException("Account is blocked. Please contact an administrator.");
 
         Wallet wallet = account.getWallet();
         if (wallet.getBalance().compareTo(amount) < 0)
@@ -163,6 +284,7 @@ public class AccountServiceImpl implements AccountService {
 
         wallet.setBalance(wallet.getBalance().subtract(amount));
         walletRepo.save(wallet);
+        decreaseVault(amount);
         saveTransaction(wallet, amount, TransactionType.WITHDRAW);
         logActivity(wallet, "Withdrawal of " + amount);
     }
@@ -170,14 +292,18 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional
     public void transfer(Long fromAccountId, Long toAccountId, BigDecimal amount) {
-        if (fromAccountId.equals(toAccountId)) throw new RuntimeException("Cannot transfer to same account");
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) throw new RuntimeException("Transfer must be positive");
+        if (fromAccountId.equals(toAccountId))
+            throw new RuntimeException("Cannot transfer to same account");
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0)
+            throw new RuntimeException("Transfer must be positive");
 
         Account from = findAccount(fromAccountId);
         Account to = findAccount(toAccountId);
 
-        if (from.getStatus() == AccountStatus.BLOCKED || to.getStatus() == AccountStatus.BLOCKED)
-            throw new RuntimeException("Account is blocked");
+        if (from.getStatus() == AccountStatus.BLOCKED)
+            throw new RuntimeException("Source account is blocked.");
+        if (to.getStatus() == AccountStatus.BLOCKED)
+            throw new RuntimeException("Destination account is blocked.");
 
         Wallet fromWallet = from.getWallet();
         Wallet toWallet = to.getWallet();
@@ -200,17 +326,30 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
+    @Scheduled(cron = "0 0 0 1 * ?")
     public void applyMonthlyInterest() {
+        System.out.println("Applying monthly interest to all active INVESTMENT accounts...");
+
         for (Account account : accountRepo.findAll()) {
             if (account.getType() == AccountType.INVESTMENT
                     && account.getStatus() == AccountStatus.ACTIVE) {
                 Wallet wallet = account.getWallet();
-                BigDecimal interest = wallet.getBalance().multiply(new BigDecimal("0.01")).setScale(2, RoundingMode.HALF_UP);
-                wallet.setBalance(wallet.getBalance().add(interest));
-                walletRepo.save(wallet);
+                BigDecimal interest = wallet.getBalance()
+                        .multiply(new BigDecimal("0.01"))
+                        .setScale(2, RoundingMode.HALF_UP);
+
+                if (interest.compareTo(BigDecimal.ZERO) > 0) {
+                    wallet.setBalance(wallet.getBalance().add(interest));
+                    walletRepo.save(wallet);
+                    increaseVault(interest);
+                    saveTransaction(wallet, interest, TransactionType.INTEREST);
+                    logActivity(wallet, "Monthly interest applied: " + interest);
+                }
             }
         }
     }
+
+    // ── QUERIES ──────────────────────────────────────────────────────────────
 
     @Override
     public BigDecimal getBalance(Long accountId) {
@@ -237,6 +376,16 @@ public class AccountServiceImpl implements AccountService {
     public List<Activity> getActivities(Long accountId) {
         return activityRepo.findByWallet_Id(findWallet(accountId).getId());
     }
+
+    // ── BANK VAULT ───────────────────────────────────────────────────────────
+
+    @Override
+    public BankVaultDTO getBankVault() {
+        BankVault vault = getOrCreateVault();
+        return new BankVaultDTO(vault.getTotalFunds());
+    }
+
+    // ── IA ───────────────────────────────────────────────────────────────────
 
     @Override
     public WalletForecastDTO forecastBalance(Long accountId, int days) {

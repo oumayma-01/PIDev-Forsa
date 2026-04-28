@@ -52,6 +52,11 @@ export class CreditDetailComponent {
   readonly actionBusy = signal(false);
   readonly payBusyId = signal<number | null>(null);
 
+  // Guarantor photo (loaded lazily for agents/admins)
+  readonly guarantorPhotoUrl = signal<string | null>(null);
+  readonly guarantorPhotoLoading = signal(false);
+  private guarantorObjectUrl: string | null = null;
+
   rejectReason = '';
 
   readonly roles = computed(() => this.auth.currentUser()?.roles ?? []);
@@ -92,6 +97,7 @@ export class CreditDetailComponent {
             this.repaymentsError.set(null);
             this.repayments.set([]);
           }
+          if (c.hasGuarantorPhoto) this.loadGuarantorPhoto(c.id);
         },
         error: (err) => {
           this.loading.set(false);
@@ -121,6 +127,7 @@ export class CreditDetailComponent {
           this.repaymentsError.set(null);
           this.repayments.set([]);
         }
+        if (c.hasGuarantorPhoto) this.loadGuarantorPhoto(c.id);
       },
       error: (err) => {
         this.loading.set(false);
@@ -140,7 +147,7 @@ export class CreditDetailComponent {
     this.api.approveCredit(c.id).subscribe({
       next: (updated) => {
         this.actionBusy.set(false);
-        this.actionMessage.set('Crédit approuvé.');
+        this.actionMessage.set('Credit approved.');
         this.credit.set(updated);
         this.loadScheduleIfAllowed(updated);
         if (this.isRepaymentScheduleAvailable(updated.status)) {
@@ -167,7 +174,7 @@ export class CreditDetailComponent {
 
     const reason = this.rejectReason.trim();
     if (!reason) {
-      this.actionError.set('Veuillez saisir une raison de rejet.');
+      this.actionError.set('Please enter a rejection reason.');
       return;
     }
 
@@ -175,7 +182,7 @@ export class CreditDetailComponent {
     this.api.rejectCredit(c.id, { reason }).subscribe({
       next: (updated) => {
         this.actionBusy.set(false);
-        this.actionMessage.set('Crédit rejeté.');
+        this.actionMessage.set('Credit rejected.');
         this.credit.set(updated);
       },
       error: (err) => {
@@ -195,7 +202,7 @@ export class CreditDetailComponent {
     this.api.payRepayment(r.id).subscribe({
       next: (updated) => {
         this.payBusyId.set(null);
-        this.actionMessage.set('Paiement enregistré.');
+        this.actionMessage.set('Payment recorded.');
         this.repayments.update((list) => list.map((x) => (x.id === updated.id ? updated : x)));
         // refresh credit status (ACTIVE/REPAID)
         const creditId = this.credit()?.id;
@@ -292,5 +299,28 @@ export class CreditDetailComponent {
       return body.error;
     }
     return 'Something went wrong. Please try again.';
+  }
+
+  /** Fetches the guarantor photo as a Blob and creates an object URL for display. */
+  private loadGuarantorPhoto(creditId: number): void {
+    if (!this.isAgent() && !this.isAdmin()) return;
+    // Revoke previous object URL to avoid memory leak
+    if (this.guarantorObjectUrl) {
+      URL.revokeObjectURL(this.guarantorObjectUrl);
+      this.guarantorObjectUrl = null;
+    }
+    this.guarantorPhotoLoading.set(true);
+    this.api.getGuarantorPhoto(creditId).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        this.guarantorObjectUrl = url;
+        this.guarantorPhotoUrl.set(url);
+        this.guarantorPhotoLoading.set(false);
+      },
+      error: () => {
+        this.guarantorPhotoLoading.set(false);
+        this.guarantorPhotoUrl.set(null);
+      },
+    });
   }
 }

@@ -28,10 +28,12 @@ export class FeedbackFormComponent implements OnInit {
   feedback: Feedback = {
     rating: 3,
     comment: '',
+    satisfactionLevel: 'NEUTRAL',
     isAnonymous: false,
   };
 
   isEditMode = false;
+  ratings = [1, 2, 3, 4, 5];
   useAI = false;
   loading = false;
   error = '';
@@ -57,10 +59,10 @@ export class FeedbackFormComponent implements OnInit {
       this.router.navigate(['/dashboard/feedback']);
       return;
     }
-    const queryComplaintId = Number(this.route.snapshot.queryParamMap.get('complaintId'));
-    if (queryComplaintId) {
-      this.complaintId = queryComplaintId;
-      this.feedback.complaint = { id: queryComplaintId, subject: '', description: '' };
+    const complaintId = this.route.snapshot.queryParamMap.get('complaintId');
+    if (complaintId) {
+      this.complaintId = +complaintId;
+      this.feedback.complaint = { id: +complaintId, subject: '', description: '' };
     }
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
@@ -80,7 +82,8 @@ export class FeedbackFormComponent implements OnInit {
   }
 
   get isClient(): boolean {
-    return this.auth.currentUser()?.roles?.includes('ROLE_CLIENT') ?? false;
+    const roles = this.auth.currentUser()?.roles ?? [];
+    return roles.includes('ROLE_CLIENT') || roles.includes('CLIENT');
   }
 
   setRating(rating: number): void {
@@ -107,13 +110,20 @@ export class FeedbackFormComponent implements OnInit {
     }
     this.loading = true;
     this.error = '';
-    const payload: Feedback = {
+    const payload: any = {
       ...this.feedback,
       complaint: this.feedback.complaint ?? (this.complaintId ? { id: this.complaintId, subject: '', description: '' } : undefined),
     };
+    console.log('[FeedbackForm] submit payload:', payload);
 
     if (this.isEditMode) {
-      this.feedbackService.update(payload).subscribe({
+      const updatePayload: any = {
+        ...this.feedback,
+        id: this.feedback.id,
+        complaint: this.feedback.complaint ??
+          (this.complaintId ? { id: this.complaintId, subject: '', description: '' } : undefined),
+      };
+      this.feedbackService.update(updatePayload).subscribe({
         next: () => this.router.navigate(['/dashboard/feedback']),
         error: () => {
           this.error = 'Error updating feedback';

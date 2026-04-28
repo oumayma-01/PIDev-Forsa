@@ -3,6 +3,7 @@ package org.example.forsapidev.Controllers;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.example.forsapidev.DTO.AccountTypeAdviceDTO;
 import org.example.forsapidev.DTO.AdaptiveInterestResultDTO;
+import org.example.forsapidev.DTO.BankVaultDTO;
 import org.example.forsapidev.DTO.WalletForecastDTO;
 import org.example.forsapidev.DTO.WalletStatisticsDTO;
 import org.example.forsapidev.Services.Interfaces.AccountService;
@@ -28,7 +29,8 @@ public class AccountController {
         this.accountService = accountService;
     }
 
-    // Create account - accessible to all authenticated users
+    // ── CLIENT endpoints ─────────────────────────────────────────────────────
+
     @SecurityRequirement(name = "Bearer Authentication")
     @PostMapping("/create")
     public Account createAccount(@RequestParam Long ownerId,
@@ -36,45 +38,18 @@ public class AccountController {
         return accountService.createAccount(ownerId, type);
     }
 
-    // Get all accounts - ADMIN ONLY
-    @SecurityRequirement(name = "Bearer Authentication")
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/all")
-    public List<Account> getAllAccounts() {
-        return accountService.getAllAccounts();
-    }
-
-    // Get single account
     @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping("/{id}")
     public Account getAccount(@PathVariable Long id) {
         return accountService.getAccount(id);
     }
 
-    // Delete account - ADMIN ONLY
-    @SecurityRequirement(name = "Bearer Authentication")
-    @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/{id}")
-    public String deleteAccount(@PathVariable Long id) {
-        accountService.deleteAccount(id);
-        return "Account deleted successfully";
-    }
-
-    // Update account status - ADMIN ONLY
-    @SecurityRequirement(name = "Bearer Authentication")
-    @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/{id}/status")
-    public Account updateAccountStatus(@PathVariable Long id,
-                                       @RequestParam String status) {
-        return accountService.updateAccountStatus(id, status);
-    }
-
-    // Get accounts by owner
     @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping("/owner/{ownerId}")
     public List<Account> getAccountsByOwner(@PathVariable Long ownerId) {
         return accountService.getAccountsByOwner(ownerId);
     }
+
     @SecurityRequirement(name = "Bearer Authentication")
     @PostMapping("/{id}/deposit")
     public String deposit(@PathVariable Long id,
@@ -101,15 +76,6 @@ public class AccountController {
     }
 
     @SecurityRequirement(name = "Bearer Authentication")
-    @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/apply-interest")
-    public String applyMonthlyInterest() {
-        accountService.applyMonthlyInterest();
-        return "Monthly interest applied";
-    }
-
-    // Statistics
-    @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping("/{id}/statistics")
     public WalletStatisticsDTO getStatistics(@PathVariable Long id) {
         return accountService.getStatistics(id);
@@ -129,7 +95,49 @@ public class AccountController {
         return accountService.getActivities(id);
     }
 
-    // ── IA ───────────────────────────────────────────────────────────────────
+    // ── AGENT + ADMIN endpoints ───────────────────────────────────────────────
+
+    @SecurityRequirement(name = "Bearer Authentication")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('AGENT')")
+    @GetMapping("/vault")
+    public BankVaultDTO getBankVault() {
+        return accountService.getBankVault();
+    }
+
+    // ── ADMIN only endpoints ──────────────────────────────────────────────────
+
+    @SecurityRequirement(name = "Bearer Authentication")
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/all")
+    public List<Account> getAllAccounts() {
+        return accountService.getAllAccounts();
+    }
+
+    @SecurityRequirement(name = "Bearer Authentication")
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{id}")
+    public String deleteAccount(@PathVariable Long id) {
+        accountService.deleteAccount(id);
+        return "Account deleted successfully";
+    }
+
+    @SecurityRequirement(name = "Bearer Authentication")
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}/status")
+    public Account updateAccountStatus(@PathVariable Long id,
+                                       @RequestParam String status) {
+        return accountService.updateAccountStatus(id, status);
+    }
+
+    @SecurityRequirement(name = "Bearer Authentication")
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/apply-interest")
+    public String applyMonthlyInterest() {
+        accountService.applyMonthlyInterest();
+        return "Monthly interest applied";
+    }
+
+    // ── AI endpoints ──────────────────────────────────────────────────────────
 
     @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping("/{id}/forecast")
@@ -141,8 +149,7 @@ public class AccountController {
 
     @SecurityRequirement(name = "Bearer Authentication")
     @PostMapping("/{id}/adaptive-interest")
-    public AdaptiveInterestResultDTO applyAdaptiveInterest(
-            @PathVariable Long id) {
+    public AdaptiveInterestResultDTO applyAdaptiveInterest(@PathVariable Long id) {
         return accountService.applyAdaptiveInterest(id);
     }
 

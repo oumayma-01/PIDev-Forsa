@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { DashboardNavbarComponent } from '../dashboard-navbar/dashboard-navbar.component';
@@ -13,6 +13,10 @@ import { DashboardSidebarCmp } from '../dashboard-sidebar/dashboard-sidebar.comp
 })
 export class DashboardLayoutComponent implements OnInit {
   private readonly auth = inject(AuthService);
+  readonly isClient = computed(() => {
+    const roles = this.auth.currentUser()?.roles ?? [];
+    return roles.some((role) => role.toUpperCase() === 'ROLE_CLIENT');
+  });
 
   /**
    * Recharge {@link AuthService#currentUser} depuis l’API pour mettre à jour
