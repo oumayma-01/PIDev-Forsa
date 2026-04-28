@@ -32,7 +32,11 @@
         <input type="text" placeholder="Search by username or ID..." [value]="searchTerm()" (input)="searchTerm.set($any($event.target).value)" />
       </div>
       <div class="filter-select">
-        <select [value]="statusFilter()" (change)="statusFilter.set($any($event.target).value)">
+        <select
+          aria-label="Filter by credit status"
+          [value]="statusFilter()"
+          (change)="statusFilter.set($any($event.target).value)"
+        >
           <option value="">All Statuses</option>
           <option value="SUBMITTED">Submitted</option>
           <option value="UNDER_REVIEW">Under Review</option>
@@ -45,12 +49,22 @@
     <div class="filter-group">
       <div class="date-range">
         <div class="date-input">
-          <span>From:</span>
-          <input type="date" [value]="dateStart()" (change)="dateStart.set($any($event.target).value)" />
+          <label for="credit-list-date-start">From:</label>
+          <input
+            id="credit-list-date-start"
+            type="date"
+            [value]="dateStart()"
+            (change)="dateStart.set($any($event.target).value)"
+          />
         </div>
         <div class="date-input">
-          <span>To:</span>
-          <input type="date" [value]="dateEnd()" (change)="dateEnd.set($any($event.target).value)" />
+          <label for="credit-list-date-end">To:</label>
+          <input
+            id="credit-list-date-end"
+            type="date"
+            [value]="dateEnd()"
+            (change)="dateEnd.set($any($event.target).value)"
+          />
         </div>
       </div>
       <app-forsa-button variant="ghost" size="sm" (clicked)="searchTerm.set(''); statusFilter.set(''); dateStart.set(''); dateEnd.set('');">
