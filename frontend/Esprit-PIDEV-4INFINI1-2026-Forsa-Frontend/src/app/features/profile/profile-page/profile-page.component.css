@@ -120,3 +120,39 @@
   white-space: nowrap;
   border: 0;
 }
+
+.face-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.72);
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.face-modal__card {
+  width: min(460px, 100%);
+  border-radius: 16px;
+  background: #0f172a;
+  color: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  padding: 1rem;
+  box-shadow: 0 16px 40px rgba(2, 6, 23, 0.45);
+}
+
+.face-modal__video {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  object-fit: cover;
+  background: #020617;
+  margin: 0.75rem 0;
+}
+
+.face-modal__actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
