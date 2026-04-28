@@ -12,6 +12,14 @@ import { ForsaInputDirective } from '../../shared/directives/forsa-input.directi
 import { ForsaBadgeComponent } from '../../shared/ui/forsa-badge/forsa-badge.component';
 import { ForsaIconComponent } from '../../shared/ui/forsa-icon/forsa-icon.component';
 import type { ForsaIconName } from '../../shared/ui/forsa-icon/forsa-icon.types';
+import { CreditApiService } from '../../core/services/credit-api.service';
+
+interface NotificationItem {
+  id: string;
+  message: string;
+  type: 'complaint' | 'gift';
+  amount?: number;
+}
 
 interface NavItem {
   label: string;
@@ -36,6 +44,7 @@ export class DashboardNavbarComponent {
   readonly auth = inject(AuthService);
   private readonly profileApi = inject(ProfileService);
   private readonly complaintApi = inject(ComplaintService);
+  private readonly creditApi = inject(CreditApiService);
   private readonly destroyRef = inject(DestroyRef);
   readonly profileMenuOpen = signal(false);
 
@@ -62,8 +71,9 @@ export class DashboardNavbarComponent {
     const seed = (u?.username ?? u?.email ?? 'user').trim() || 'user';
     return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`;
   });
-  readonly responseNotification = signal('');
-  readonly responseNotificationCount = signal(0);
+  readonly notifications = signal<NotificationItem[]>([]);
+  readonly responseNotificationCount = computed(() => this.notifications().length);
+  readonly notificationMenuOpen = signal(false);
   private readonly previousResponseCounts = new Map<number, number>();
   private pollId: ReturnType<typeof setInterval> | null = null;
 
@@ -201,11 +211,49 @@ export class DashboardNavbarComponent {
         }
         if (hasNewResponse) {
           const msg = 'You received a new response to your complaint';
-          this.responseNotification.set(msg);
-          this.responseNotificationCount.update((n) => n + 1);
+          const notif: NotificationItem = {
+            id: `complaint-${Date.now()}`,
+            message: msg,
+            type: 'complaint'
+          };
+          this.notifications.update(list => [notif, ...list]);
           alert(msg);
         }
       });
+
+    // Also poll for gifts
+    this.creditApi.consumeMyGiftAwardNotification().subscribe({
+      next: (res) => {
+        if (res?.show) {
+          const amount = res.amount ?? 500;
+          const msg = `Congratulations! You earned a loyalty gift of ${amount} DT.`;
+          const notif: NotificationItem = {
+            id: `gift-${Date.now()}`,
+            message: msg,
+            type: 'gift',
+            amount: amount
+          };
+          this.notifications.update(list => [notif, ...list]);
+          // Optional: also alert if you want immediate feedback
+          // alert(msg);
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  toggleNotificationMenu(event: MouseEvent): void {
+    event.stopPropagation();
+    this.notificationMenuOpen.update((open) => !open);
+  }
+
+  closeNotificationMenu(): void {
+    this.notificationMenuOpen.set(false);
+  }
+
+  removeNotification(id: string, event?: MouseEvent): void {
+    event?.stopPropagation();
+    this.notifications.update(list => list.filter(n => n.id !== id));
   }
 
   toggleProfileMenu(event: MouseEvent): void {
@@ -227,6 +275,9 @@ export class DashboardNavbarComponent {
     const target = event.target as HTMLElement | null;
     if (!target?.closest('.profile-menu')) {
       this.closeProfileMenu();
+    }
+    if (!target?.closest('.notification-container')) {
+      this.closeNotificationMenu();
     }
   }
 }
