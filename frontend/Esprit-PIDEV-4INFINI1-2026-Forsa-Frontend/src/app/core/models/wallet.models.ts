@@ -71,3 +71,7 @@ export interface AdaptiveInterestResultDTO {
   rateUsed: number;
   justification: string;
 }
+
+export interface BankVaultDTO {
+  totalFunds: number;
+}
