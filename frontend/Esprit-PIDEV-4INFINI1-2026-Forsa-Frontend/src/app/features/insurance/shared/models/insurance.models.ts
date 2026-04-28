@@ -144,7 +144,32 @@ export interface InsuranceClaim {
   accidentType?: string;
   damagedPoints?: string;
   attachmentUrl?: string;
+  claimSubtype?: string;
+  dynamicData?: string;
   insurancePolicy?: { id: number; policyNumber?: string };
+}
+
+export interface ClaimTemplate {
+  policyType: string;
+  fields: FormField[];
+  requiredDocuments: DocumentRequirement[];
+  optionalDocuments: DocumentRequirement[];
+}
+
+export interface FormField {
+  name: string;
+  label: string;
+  type: string;
+  required: boolean;
+  options?: string[];
+  defaultValue?: string;
+  placeholder?: string;
+}
+
+export interface DocumentRequirement {
+  id: string;
+  name: string;
+  description: string;
 }
 
 export interface PremiumPayment {

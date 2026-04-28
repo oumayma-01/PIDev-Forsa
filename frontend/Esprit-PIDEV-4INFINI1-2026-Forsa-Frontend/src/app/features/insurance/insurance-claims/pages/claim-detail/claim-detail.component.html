@@ -41,15 +41,23 @@
         <h4 class="section-title">Claim Data</h4>
         <div class="stat-grid">
           <div class="stat">
+            <span class="lbl">Claim Subtype</span>
+            <span class="val">{{ c.claimSubtype || 'General' }}</span>
+          </div>
+          <div class="stat">
             <span class="lbl">Accident Type</span>
             <span class="val">{{ c.accidentType || '—' }}</span>
           </div>
           @if (c.attachmentUrl) {
-            <div class="stat">
-              <span class="lbl">Evidence</span>
-              <a [href]="'http://localhost:8080/api/insurance-claim/attachments/' + c.attachmentUrl" target="_blank" class="val text-primary d-flex align-center gap-1">
-                 <app-forsa-icon name="history" [size]="14" /> View
-              </a>
+            <div class="stat full-width">
+              <span class="lbl">Uploaded Evidence</span>
+              <div class="evidence-list">
+                @for (file of (c.attachmentUrl.split(',')); track file) {
+                  <a [href]="svc.getAttachmentUrl(file)" target="_blank" class="val text-primary d-flex align-center gap-1">
+                     <app-forsa-icon name="history" [size]="14" /> {{ file }}
+                  </a>
+                }
+              </div>
             </div>
           }
           <div class="stat">
@@ -76,7 +84,21 @@
       </div>
     </app-forsa-card>
 
-    @if (c.damagedPoints) {
+    @if (parsedDynamicData.length > 0) {
+      <app-forsa-card>
+        <div class="card-pad">
+          <h4 class="section-title">Specific Details ({{ c.claimSubtype | titlecase }})</h4>
+          <div class="stat-grid">
+            <div class="stat" *ngFor="let field of parsedDynamicData">
+              <span class="lbl">{{ field.key }}</span>
+              <span class="val">{{ field.value }}</span>
+            </div>
+          </div>
+        </div>
+      </app-forsa-card>
+    }
+
+    @if (c.damagedPoints && c.damagedPoints !== '[]') {
       <app-forsa-card>
          <div class="card-pad">
            <h4 class="section-title">Visual Damage Assessment</h4>

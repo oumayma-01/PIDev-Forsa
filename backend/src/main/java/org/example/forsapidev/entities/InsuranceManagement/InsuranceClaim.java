@@ -42,10 +42,15 @@ public class InsuranceClaim {
 
     private String attachmentUrl;
 
+    private String claimSubtype;
+
+    @Column(columnDefinition = "TEXT")
+    private String dynamicData;
+
     // Relationship: Many Claims belong to One Policy
     @ManyToOne
     @JoinColumn(name = "policy_id", nullable = false)
-    @JsonIgnoreProperties("claims")
+    @JsonIgnoreProperties({"claims", "user", "premiumPayments"})
     private InsurancePolicy insurancePolicy;
 
     // Getters and Setters
@@ -87,4 +92,10 @@ public class InsuranceClaim {
 
     public String getAttachmentUrl() { return attachmentUrl; }
     public void setAttachmentUrl(String attachmentUrl) { this.attachmentUrl = attachmentUrl; }
+
+    public String getClaimSubtype() { return claimSubtype; }
+    public void setClaimSubtype(String claimSubtype) { this.claimSubtype = claimSubtype; }
+
+    public String getDynamicData() { return dynamicData; }
+    public void setDynamicData(String dynamicData) { this.dynamicData = dynamicData; }
 }

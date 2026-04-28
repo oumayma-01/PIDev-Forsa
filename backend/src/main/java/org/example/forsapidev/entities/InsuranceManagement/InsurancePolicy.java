@@ -67,7 +67,6 @@ public class InsurancePolicy {
     // RELATIONSHIP: Many Policies belong to One Product (the insurance plan)
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)
-    @JsonBackReference("product-policies")
     @JsonIgnoreProperties("policies")
     private InsuranceProduct insuranceProduct;
 

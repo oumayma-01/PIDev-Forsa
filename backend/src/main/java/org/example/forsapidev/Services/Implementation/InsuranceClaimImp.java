@@ -45,6 +45,7 @@ public class InsuranceClaimImp implements IInsuranceClaim {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public InsuranceClaim modifyInsuranceClaim(InsuranceClaim claim) {
         InsuranceClaim existing = insuranceClaimRepository.findById(claim.getId()).get();
         existing.setClaimNumber(claim.getClaimNumber());
@@ -58,6 +59,8 @@ public class InsuranceClaimImp implements IInsuranceClaim {
         existing.setAccidentType(claim.getAccidentType());
         existing.setDamagedPoints(claim.getDamagedPoints());
         existing.setAttachmentUrl(claim.getAttachmentUrl());
+        existing.setClaimSubtype(claim.getClaimSubtype());
+        existing.setDynamicData(claim.getDynamicData());
         return insuranceClaimRepository.save(existing);
     }
 

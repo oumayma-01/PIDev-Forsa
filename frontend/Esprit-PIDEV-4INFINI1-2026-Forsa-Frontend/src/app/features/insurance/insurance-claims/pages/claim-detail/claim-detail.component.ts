@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { ForsaBadgeComponent } from '../../../../../shared/ui/forsa-badge/forsa-badge.component';
 import { ForsaButtonComponent } from '../../../../../shared/ui/forsa-button/forsa-button.component';
 import { ForsaCardComponent } from '../../../../../shared/ui/forsa-card/forsa-card.component';
@@ -12,12 +12,12 @@ import { ClaimStatus } from '../../../shared/enums/insurance.enums';
 @Component({
   selector: 'app-claim-detail',
   standalone: true,
-  imports: [RouterLink, DatePipe, DecimalPipe, ForsaBadgeComponent, ForsaButtonComponent, ForsaCardComponent, ForsaIconComponent],
+  imports: [CommonModule, RouterLink, DatePipe, DecimalPipe, ForsaBadgeComponent, ForsaButtonComponent, ForsaCardComponent, ForsaIconComponent],
   templateUrl: './claim-detail.component.html',
   styleUrl: './claim-detail.component.css',
 })
 export class ClaimDetailComponent implements OnInit {
-  private readonly svc = inject(InsuranceClaimService);
+  public readonly svc = inject(InsuranceClaimService);
   private readonly route = inject(ActivatedRoute);
 
   claim = signal<InsuranceClaim | null>(null);
@@ -40,6 +40,20 @@ export class ClaimDetailComponent implements OnInit {
       case ClaimStatus.PENDING: return 'warning';
       case ClaimStatus.REJECTED: return 'danger';
       default: return 'muted';
+    }
+  }
+
+  get parsedDynamicData(): { key: string, value: any }[] {
+    const data = this.claim()?.dynamicData;
+    if (!data) return [];
+    try {
+      const parsed = JSON.parse(data);
+      return Object.keys(parsed).map(k => ({
+        key: k.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()), // Convert camelCase to Title Case
+        value: parsed[k] || 'N/A'
+      }));
+    } catch (e) {
+      return [];
     }
   }
 }
