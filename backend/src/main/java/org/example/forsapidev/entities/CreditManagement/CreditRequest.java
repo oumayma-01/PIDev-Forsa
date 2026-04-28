@@ -94,6 +94,23 @@ public class CreditRequest {
     @Column(name = "fraud_report_path")
     private String fraudReportPath;
 
+    // Guarantor fields
+    @Column(name = "guarantor_name")
+    private String guarantorName;
+
+    @Column(name = "guarantor_cin")
+    private String guarantorCin;
+
+    @Column(name = "guarantor_bank_account")
+    private String guarantorBankAccount;
+
+    @Lob
+    @Column(name = "guarantor_cin_photo_data", columnDefinition = "LONGBLOB")
+    private byte[] guarantorCinPhoto;
+
+    @Column(name = "guarantor_cin_photo_content_type")
+    private String guarantorCinPhotoContentType;
+
     // Constructors
     public CreditRequest() {
     }
@@ -312,6 +329,21 @@ public class CreditRequest {
     public void setFraudReportPath(String fraudReportPath) {
         this.fraudReportPath = fraudReportPath;
     }
+
+    public String getGuarantorName() { return guarantorName; }
+    public void setGuarantorName(String guarantorName) { this.guarantorName = guarantorName; }
+
+    public String getGuarantorCin() { return guarantorCin; }
+    public void setGuarantorCin(String guarantorCin) { this.guarantorCin = guarantorCin; }
+
+    public String getGuarantorBankAccount() { return guarantorBankAccount; }
+    public void setGuarantorBankAccount(String guarantorBankAccount) { this.guarantorBankAccount = guarantorBankAccount; }
+
+    public byte[] getGuarantorCinPhoto() { return guarantorCinPhoto; }
+    public void setGuarantorCinPhoto(byte[] guarantorCinPhoto) { this.guarantorCinPhoto = guarantorCinPhoto; }
+
+    public String getGuarantorCinPhotoContentType() { return guarantorCinPhotoContentType; }
+    public void setGuarantorCinPhotoContentType(String guarantorCinPhotoContentType) { this.guarantorCinPhotoContentType = guarantorCinPhotoContentType; }
 
     @Override
     public boolean equals(Object o) {

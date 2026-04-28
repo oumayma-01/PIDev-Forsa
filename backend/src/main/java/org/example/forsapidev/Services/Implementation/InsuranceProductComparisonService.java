@@ -73,7 +73,7 @@ public class InsuranceProductComparisonService implements IInsuranceProductCompa
             dto.setCostPerMonth(costPerMonth);
         }
 
-        // Calculate coverage per dollar (how much coverage you get per $1 premium)
+        // Calculate coverage per TND (how much coverage you get per 1 TND premium)
         if (product.getPremiumAmount().compareTo(BigDecimal.ZERO) > 0) {
             BigDecimal coveragePerDollar = product.getCoverageLimit()
                     .divide(product.getPremiumAmount(), 2, RoundingMode.HALF_UP);
@@ -144,8 +144,8 @@ public class InsuranceProductComparisonService implements IInsuranceProductCompa
 
         if (bestValue != null) {
             return String.format(
-                    "%s offers the best value with $%.2f coverage per dollar spent. " +
-                            "It provides $%s coverage for $%s premium over %d months.",
+                    "%s offers the best value with %.2f TND coverage per TND spent. " +
+                            "It provides %s TND coverage for %s TND premium over %d months.",
                     bestValue.getProductName(),
                     bestValue.getCoveragePerDollar(),
                     bestValue.getCoverageLimit().toString(),

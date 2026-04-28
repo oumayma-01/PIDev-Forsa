@@ -88,6 +88,7 @@ export interface PremiumCalculationResultDTO {
   coverageAmount?: number;
   riskScore?: number;
   riskCategory?: string;
+  riskCoefficient?: number;
   effectiveAnnualRate?: number;
   calculationMethod?: string;
   additionalNotes?: string;

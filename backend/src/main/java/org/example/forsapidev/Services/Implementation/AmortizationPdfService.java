@@ -183,7 +183,7 @@ public class AmortizationPdfService implements IAmortizationPdfService {
 
         yPosition -= 3;
         yPosition = addInfoLine(contentStream, "Coverage Amount:",
-                "$" + policy.getCoverageLimit().toString(), col1X, yPosition);
+                policy.getCoverageLimit().toString() + " TND", col1X, yPosition);
         yPosition = addInfoLine(contentStream, "Payment Frequency:",
                 policy.getPaymentFrequency(), col2X, yPosition + 15);
 
@@ -211,25 +211,25 @@ public class AmortizationPdfService implements IAmortizationPdfService {
         float col2X = margin + 250;
 
         yPosition = addInfoLine(contentStream, "Pure Premium (Prime Pure):",
-                "$" + policy.getPurePremium().toString(), col1X, yPosition);
+                policy.getPurePremium().toString() + " TND", col1X, yPosition);
         yPosition = addInfoLine(contentStream, "Risk Category:",
                 policy.getRiskCategory(), col2X, yPosition + 15);
 
         yPosition -= 3;
         yPosition = addInfoLine(contentStream, "Commercial Premium:",
-                "$" + policy.getCommercialPremium().toString(), col1X, yPosition);
+                policy.getCommercialPremium().toString() + " TND", col1X, yPosition);
         yPosition = addInfoLine(contentStream, "Risk Score:",
                 String.format("%.2f", policy.getRiskScore()), col2X, yPosition + 15);
 
         yPosition -= 3;
         yPosition = addInfoLine(contentStream, "Final Premium (Total):",
-                "$" + policy.getFinalPremium().toString(), col1X, yPosition);
+                policy.getFinalPremium().toString() + " TND", col1X, yPosition);
         yPosition = addInfoLine(contentStream, "Interest Rate:",
                 String.format("%.2f%%", policy.getEffectiveAnnualRate() * 100), col2X, yPosition + 15);
 
         yPosition -= 3;
         yPosition = addInfoLine(contentStream, "Periodic Payment:",
-                "$" + policy.getPeriodicPaymentAmount().toString(), col1X, yPosition);
+                policy.getPeriodicPaymentAmount().toString() + " TND", col1X, yPosition);
         yPosition = addInfoLine(contentStream, "Number of Payments:",
                 policy.getNumberOfPayments().toString(), col2X, yPosition + 15);
 
@@ -296,10 +296,10 @@ public class AmortizationPdfService implements IAmortizationPdfService {
             String[] rowData = {
                     String.valueOf(paymentNumber),
                     dateFormat.format(payment.getDueDate()),
-                    "$" + payment.getAmount().toString(),
-                    "$" + principalAmount.toString(),
-                    "$" + interestAmount.toString(),
-                    "$" + remainingBalance.toString()
+                    payment.getAmount().toString() + " TND",
+                    principalAmount.toString() + " TND",
+                    interestAmount.toString() + " TND",
+                    remainingBalance.toString() + " TND"
             };
 
             // Draw row
@@ -317,10 +317,10 @@ public class AmortizationPdfService implements IAmortizationPdfService {
         String[] totalsRow = {
                 "",
                 "TOTAL:",
-                "$" + totalPayments.toString(),
-                "$" + policy.getFinalPremium().toString(),
-                "$" + totalInterest.toString(),
-                "$0.00"
+                totalPayments.toString() + " TND",
+                policy.getFinalPremium().toString() + " TND",
+                totalInterest.toString() + " TND",
+                "0.00 TND"
         };
 
         yPosition = drawTableRow(contentStream, totalsRow, columnWidths, margin, yPosition, cellHeight, true);

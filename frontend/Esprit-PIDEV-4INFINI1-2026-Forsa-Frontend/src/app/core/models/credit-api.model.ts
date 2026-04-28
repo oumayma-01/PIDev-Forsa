@@ -42,6 +42,12 @@ export interface CreditRequestApi {
   globalDecision?: string | null;
   globalPdfPath?: string | null;
   fraudReportPath?: string | null;
+
+  // Guarantor
+  guarantorName?: string | null;
+  guarantorCin?: string | null;
+  guarantorBankAccount?: string | null;
+  hasGuarantorPhoto?: boolean;
 }
 
 export interface AmortizationScheduleResponse {

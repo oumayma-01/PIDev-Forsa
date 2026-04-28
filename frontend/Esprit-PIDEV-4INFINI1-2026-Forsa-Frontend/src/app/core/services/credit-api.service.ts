@@ -40,14 +40,27 @@ export class CreditApiService {
     durationMonths: number;
     typeCalcul: AmortizationType;
     healthReport: File;
+    guarantorName: string;
+    guarantorCin: string;
+    guarantorBankAccount: string;
+    guarantorPhoto: File;
   }): Observable<CreditRequestApi> {
     const body = new FormData();
     body.append('amountRequested', String(input.amountRequested));
     body.append('durationMonths', String(input.durationMonths));
     body.append('typeCalcul', input.typeCalcul);
     body.append('healthReport', input.healthReport, input.healthReport.name);
+    body.append('guarantorName', input.guarantorName);
+    body.append('guarantorCin', input.guarantorCin);
+    body.append('guarantorBankAccount', input.guarantorBankAccount);
+    body.append('guarantorPhoto', input.guarantorPhoto, input.guarantorPhoto.name);
 
     return this.http.post<CreditRequestApi>(`${environment.apiBaseUrl}/credits/with-health-report`, body);
+  }
+
+  /** AGENT/ADMIN only: `GET /api/credits/{id}/guarantor-photo` — returns decrypted image */
+  getGuarantorPhoto(creditId: number): Observable<Blob> {
+    return this.http.get(`${environment.apiBaseUrl}/credits/${creditId}/guarantor-photo`, { responseType: 'blob' });
   }
 
   /** Any authenticated role: `GET /api/credits/simulate` */

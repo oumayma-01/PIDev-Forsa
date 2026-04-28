@@ -5,25 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="47e49299-a848-4420-95ca-6e30d41b2c01" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Controllers/GiftController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Controllers/AccountController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Controllers/AccountController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Repositories/GiftRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Repositories/GiftRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Services/CreditRequestService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Services/CreditRequestService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Services/GiftService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Services/GiftService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Services/Interfaces/AccountService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Services/Interfaces/AccountService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/entities/CreditManagement/Gift.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/entities/CreditManagement/Gift.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/target/classes/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/backend/target/classes/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/core/services/credit-api.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/core/services/credit-api.service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/credit/credit-detail/credit-detail.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/credit/credit-detail/credit-detail.component.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/credit/credit-detail/credit-detail.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/credit/credit-detail/credit-detail.component.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/credit/credit-list/credit-list.component.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/credit/credit-list/credit-list.component.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/credit/credit-list/credit-list.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/credit/credit-list/credit-list.component.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/credit/credit-list/credit-list.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/credit/credit-list/credit-list.component.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/credit/credit-request-new/credit-request-new.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/credit/credit-request-new/credit-request-new.component.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/credit/credit-simulate/credit-simulate.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/credit/credit-simulate/credit-simulate.component.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/credit/credit-simulate/credit-simulate.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/credit/credit-simulate/credit-simulate.component.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/shared/ui/forsa-icon/forsa-icon.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/shared/ui/forsa-icon/forsa-icon.component.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -97,8 +79,9 @@
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "Spring Boot.ForsaPidevApplication.executor": "Run",
-    "git-widget-placeholder": "Merging WalletLina",
+    "git-widget-placeholder": "main",
     "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/nesma/Desktop/PIDEV/PIDev-Forsa/Backend/.env",
     "node.js.detected.package.eslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
@@ -126,6 +109,17 @@
     <configuration name="ForsaPidevApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
       <module name="ForsaPidev" />
       <option name="SPRING_BOOT_MAIN_CLASS" value="org.example.forsapidev.ForsaPidevApplication" />
+      <extension name="net.ashald.envfile">
+        <option name="IS_ENABLED" value="true" />
+        <option name="IS_SUBST" value="true" />
+        <option name="IS_PATH_MACRO_SUPPORTED" value="false" />
+        <option name="IS_IGNORE_MISSING_FILES" value="false" />
+        <option name="IS_ENABLE_EXPERIMENTAL_INTEGRATIONS" value="false" />
+        <ENTRIES>
+          <ENTRY IS_ENABLED="true" PARSER="runconfig" IS_EXECUTABLE="false" />
+          <ENTRY IS_ENABLED="true" PARSER="env" IS_EXECUTABLE="false" PATH="Backend/.env" />
+        </ENTRIES>
+      </extension>
       <method v="2">
         <option name="Make" enabled="true" />
       </method>

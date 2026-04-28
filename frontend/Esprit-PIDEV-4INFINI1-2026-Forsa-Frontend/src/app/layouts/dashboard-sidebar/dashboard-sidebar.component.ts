@@ -23,7 +23,7 @@ export class DashboardSidebarCmp {
   private readonly auth = inject(ForsaAuth);
 
   private readonly baseNav: NavItem[] = [
-    { label: 'Dashboard', href: '/dashboard', icon: 'layout-dashboard' },
+    { label: 'Home', href: '/dashboard', icon: 'layout-dashboard' },
     { label: 'My profile', href: '/dashboard/profile', icon: 'user-circle' },
     { label: 'Credit Management', href: '/dashboard/credit', icon: 'credit-card' },
     { label: 'Digital Wallet', href: '/dashboard/wallet', icon: 'wallet' },
