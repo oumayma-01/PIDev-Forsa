@@ -20,6 +20,14 @@
   <component name="EmbeddingIndexingInfo">
     <option name="cachedIndexableFilesCount" value="912" />
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Interface" />
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
@@ -87,6 +95,17 @@
   }
 }]]></component>
   <component name="RunManager">
+    <configuration default="true" type="JetRunConfigurationType">
+      <module name="ForsaPidev" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
+      <module name="ForsaPidev" />
+      <option name="filePath" />
+      <method v="2" />
+    </configuration>
     <configuration name="ForsaPidevApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
       <module name="ForsaPidev" />
       <option name="SPRING_BOOT_MAIN_CLASS" value="org.example.forsapidev.ForsaPidevApplication" />
