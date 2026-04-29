@@ -1,119 +1,188 @@
 <div class="catalog-container">
   <div class="header-section">
     <button routerLink="/dashboard/insurance" class="back-btn glass-btn">
-      <i class="fe fe-arrow-left"></i> Back to Hub
+      <app-forsa-icon name="chevron-left" [size]="16"></app-forsa-icon> Back to Hub
     </button>
     <h1>Our Insurance Products</h1>
     <p>Discover plans tailored to your needs. Compare, choose, and secure your future.</p>
   </div>
 
-  <div *ngIf="isLoading" class="loading-state">
-    <div class="spinner"></div>
-    <p>Loading products...</p>
-  </div>
-
-  <div *ngIf="!isLoading && !comparisonResult" class="product-grid">
-    <div *ngFor="let p of products" class="product-card" [class.selected]="isSelected(p.id)">
-      <div class="card-header">
-        <h3>{{ p.productName }}</h3>
-        <span class="badge">{{ p.policyType }}</span>
-      </div>
-      
-      <div class="price-section">
-        <span class="currency">TND</span>
-        <span class="amount">{{ p.premiumAmount }}</span>
-        <span class="period">/ {{ p.durationMonths }} mo</span>
-      </div>
-
-      <div class="features">
-        <p><strong>Coverage:</strong> {{ p.coverageLimit | number }} TND</p>
-        <p><strong>Value Score:</strong> {{ p.valueScore | number:'1.0-1' }} / 10</p>
-        <p><strong>Rating:</strong> <span class="rating-badge {{ p.valueRating | lowercase }}">{{ p.valueRating }}</span></p>
-      </div>
-
-      <p class="description">{{ p.description }}</p>
-
-      <div class="card-actions">
-        <button class="btn btn-outline" (click)="toggleComparison(p.id)">
-          {{ isSelected(p.id) ? 'Remove' : 'Compare' }}
+  @if (isLoading) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading premium plans...</p>
+    </div>
+  } @else if (comparisonResult) {
+    <!-- Comparison Results View -->
+    <div class="comparison-view">
+      <div class="comparison-header">
+        <h2>Comparison Results</h2>
+        <button class="btn btn-outline" (click)="clearComparison()">
+          <app-forsa-icon name="chevron-left" [size]="16"></app-forsa-icon> Back to Catalog
         </button>
-        <button class="btn btn-primary" (click)="applyForProduct(p.id)">
-          Apply Now
-        </button>
+      </div>
+
+      <div class="comparison-table-wrapper">
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>Key Features</th>
+              @for (p of comparisonResult.products; track p.id) {
+                <th>{{ p.productName }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Category</td>
+              @for (p of comparisonResult.products; track p.id) {
+                <td><span class="badge">{{ p.policyType }}</span></td>
+              }
+            </tr>
+            <tr>
+              <td>Base Premium</td>
+              @for (p of comparisonResult.products; track p.id) {
+                <td class="highlight-val">{{ p.premiumAmount | number:'1.2-2' }} TND</td>
+              }
+            </tr>
+            <tr>
+              <td>Coverage Limit</td>
+              @for (p of comparisonResult.products; track p.id) {
+                <td>{{ p.coverageLimit | number }} TND</td>
+              }
+            </tr>
+            <tr>
+              <td>Value Score</td>
+              @for (p of comparisonResult.products; track p.id) {
+                <td class="score-cell">{{ p.valueScore | number:'1.0-1' }}/10</td>
+              }
+            </tr>
+            <tr>
+              <td>Market Rating</td>
+              @for (p of comparisonResult.products; track p.id) {
+                <td>
+                  <span class="rating-badge" [attr.data-rating]="p.valueRating | lowercase">{{ p.valueRating }}</span>
+                </td>
+              }
+            </tr>
+            <tr>
+              <td>Cost per Month</td>
+              @for (p of comparisonResult.products; track p.id) {
+                <td class="cost-cell">{{ p.costPerMonth | number:'1.0-2' }} TND</td>
+              }
+            </tr>
+            <tr>
+              <td>Action</td>
+              @for (p of comparisonResult.products; track p.id) {
+                <td>
+                  <button class="btn btn-primary w-100" (click)="applyForProduct(p.id)">Secure Now</button>
+                </td>
+              }
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      @if (comparisonResult.bestValueProduct) {
+        <div class="recommendation-panel glass-panel">
+          <app-forsa-icon name="sparkles" [size]="24" class="rec-ico"></app-forsa-icon>
+          <div class="rec-content">
+            <h3>Top Recommendation</h3>
+            <p>Based on our analysis, <strong>{{ comparisonResult.bestValueProduct.productName }}</strong> offers the best balance of coverage and cost for your profile.</p>
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <!-- Filter Bar -->
+    <div class="filter-bar glass-panel">
+      <div class="filter-group search">
+        <app-forsa-icon name="search" [size]="18"></app-forsa-icon>
+        <input type="text" [(ngModel)]="searchTerm" placeholder="Search by name or description...">
+      </div>
+      <div class="filter-group">
+        <app-forsa-icon name="filter" [size]="16"></app-forsa-icon>
+        <select [(ngModel)]="selectedType">
+          <option value="">All Categories</option>
+          @for (type of productTypes; track type) {
+            <option [value]="type">{{ type }}</option>
+          }
+        </select>
+      </div>
+      <div class="filter-group price">
+        <app-forsa-icon name="wallet" [size]="16"></app-forsa-icon>
+        <input type="number" [(ngModel)]="minPrice" placeholder="Min TND">
+        <span>-</span>
+        <input type="number" [(ngModel)]="maxPrice" placeholder="Max TND">
       </div>
     </div>
-  </div>
+
+    <!-- Product Grid -->
+    <div class="product-grid">
+      @for (p of filteredProducts; track p.id) {
+        <div class="product-card" [class.selected]="isSelected(p.id)">
+          <div class="card-glow"></div>
+          <div class="card-header">
+            <span class="policy-type">{{ p.policyType }}</span>
+            <h3 class="product-name">{{ p.productName }}</h3>
+          </div>
+          
+          <div class="price-box">
+            <span class="amount">{{ p.premiumAmount | number:'1.2-2' }}</span>
+            <span class="currency">TND</span>
+            <span class="period">/ {{ p.durationMonths }}mo</span>
+          </div>
+
+          <div class="features-list">
+            <div class="feature-item">
+              <span class="lbl">Coverage</span>
+              <span class="val">{{ p.coverageLimit | number }} TND</span>
+            </div>
+            <div class="feature-item">
+              <span class="lbl">Value Score</span>
+              <span class="val">{{ p.valueScore | number:'1.0-1' }}/10</span>
+            </div>
+            <div class="feature-item">
+              <span class="lbl">Rating</span>
+              <span class="rating-badge" [attr.data-rating]="p.valueRating | lowercase">{{ p.valueRating }}</span>
+            </div>
+          </div>
+
+          <p class="desc-text">{{ p.description }}</p>
+
+          <div class="card-actions">
+            <button class="btn-compare" [class.active]="isSelected(p.id)" (click)="toggleComparison(p.id)">
+              <app-forsa-icon [name]="isSelected(p.id) ? 'check-circle-2' : 'plus'" [size]="16"></app-forsa-icon>
+              {{ isSelected(p.id) ? 'Selected' : 'Compare' }}
+            </button>
+            <button class="btn btn-primary" (click)="applyForProduct(p.id)">
+              Apply Now
+            </button>
+          </div>
+        </div>
+      } @empty {
+        <div class="empty-results">
+          <app-forsa-icon name="search" [size]="48"></app-forsa-icon>
+          <p>No products match your current filters.</p>
+          <button class="btn-text" (click)="searchTerm=''; selectedType=''; minPrice=null; maxPrice=null;">Reset Filters</button>
+        </div>
+      }
+    </div>
+  }
 
   <!-- Action Bar for Comparison -->
-  <div class="compare-action-bar glass-panel" *ngIf="selectedForComparison.size > 0 && !comparisonResult">
-    <span>{{ selectedForComparison.size }} product(s) selected</span>
-    <div class="actions">
-      <button class="btn btn-text" (click)="clearComparison()">Clear</button>
-      <button class="btn btn-secondary" [disabled]="selectedForComparison.size < 2" (click)="compareSelected()">
-        Compare Products
-      </button>
+  @if (selectedForComparison.size > 0 && !comparisonResult) {
+    <div class="compare-action-bar glass-panel animate-in">
+      <div class="selection-info">
+        <span class="count">{{ selectedForComparison.size }}</span>
+        <span>Plans selected for comparison</span>
+      </div>
+      <div class="bar-actions">
+        <button class="btn-text" (click)="clearComparison()">Clear All</button>
+        <button class="btn btn-primary" [disabled]="selectedForComparison.size < 2" (click)="compareSelected()">
+          Compare Now
+        </button>
+      </div>
     </div>
-  </div>
-
-  <!-- Comparison Results View -->
-  <div class="comparison-view" *ngIf="comparisonResult">
-    <div class="comparison-header">
-      <h2>Comparison Results</h2>
-      <button class="btn btn-outline" (click)="clearComparison()">Back to Catalog</button>
-    </div>
-
-    <div class="comparison-table-wrapper">
-      <table class="comparison-table">
-        <thead>
-          <tr>
-            <th>Feature</th>
-            <th *ngFor="let p of comparisonResult.products">{{ p.productName }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Type</td>
-            <td *ngFor="let p of comparisonResult.products">{{ p.policyType }}</td>
-          </tr>
-          <tr>
-            <td>Base Premium</td>
-            <td *ngFor="let p of comparisonResult.products" class="highlight">{{ p.premiumAmount }} TND</td>
-          </tr>
-          <tr>
-            <td>Coverage Limit</td>
-            <td *ngFor="let p of comparisonResult.products">{{ p.coverageLimit | number }} TND</td>
-          </tr>
-          <tr>
-            <td>Value Score</td>
-            <td *ngFor="let p of comparisonResult.products">{{ p.valueScore | number:'1.0-1' }}/10</td>
-          </tr>
-          <tr>
-            <td>Rating</td>
-            <td *ngFor="let p of comparisonResult.products">
-              <span class="rating-badge {{ p.valueRating | lowercase }}">{{ p.valueRating }}</span>
-            </td>
-          </tr>
-          <tr>
-            <td>Duration</td>
-            <td *ngFor="let p of comparisonResult.products">{{ p.durationMonths }} months</td>
-          </tr>
-          <tr>
-            <td>Cost per Month</td>
-            <td *ngFor="let p of comparisonResult.products">{{ p.costPerMonth | number:'1.0-2' }} TND</td>
-          </tr>
-          <tr>
-            <td>Action</td>
-            <td *ngFor="let p of comparisonResult.products">
-              <button class="btn btn-primary w-100" (click)="applyForProduct(p.id)">Apply</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="recommendation-panel glass-panel" *ngIf="comparisonResult.bestValueProduct">
-      <h3><i class="fe fe-star"></i> Recommended Plan</h3>
-      <p>Based on coverage value, we recommend <strong>{{ comparisonResult.bestValueProduct.productName }}</strong>.</p>
-    </div>
-  </div>
+  }
 </div>

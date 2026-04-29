@@ -32,6 +32,11 @@
             </div>
             <div class="status-wrap">
               <span class="status-badge" [attr.data-status]="p.status | lowercase">{{ p.status }}</span>
+              @if (p.clientSignature) {
+                <div class="signed-indicator">
+                  <app-forsa-icon name="check-circle-2" [size]="10"></app-forsa-icon> Signed
+                </div>
+              }
             </div>
           </div>
 
@@ -87,11 +92,7 @@
             </div>
           </div>
 
-          @if (p.clientSignature) {
-            <div class="signed-indicator">
-              <app-forsa-icon name="check-circle-2" [size]="12"></app-forsa-icon> Digitally Signed
-            </div>
-          }
+          <!-- Signature info moved to header -->
         </div>
       }
     </div>

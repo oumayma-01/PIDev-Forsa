@@ -43,6 +43,10 @@ export class InsuranceClaimService {
     return `${this.base}/attachments/${fileName}`;
   }
 
+  downloadAttachment(fileName: string): Observable<Blob> {
+    return this.http.get(`${this.base}/attachments/${fileName}`, { responseType: 'blob' });
+  }
+
   getClaimTemplate(policyType: string): Observable<ClaimTemplate> {
     return this.http.get<ClaimTemplate>(`${this.base}/template/${policyType}`);
   }

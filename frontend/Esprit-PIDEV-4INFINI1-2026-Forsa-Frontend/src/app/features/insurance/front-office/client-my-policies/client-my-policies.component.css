@@ -238,12 +238,12 @@
 }
 
 .btn-claim {
-  background: #0f172a;
+  background: #1e40af;
   color: #fff;
 }
 
 .btn-claim:hover:not(:disabled) {
-  background: #1e293b;
+  background: #1e3a8a;
   transform: translateY(-2px);
 }
 
@@ -265,10 +265,14 @@
   box-shadow: 0 6px 15px rgba(16, 185, 129, 0.3);
 }
 
+.status-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
 .signed-indicator {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
   background: #ecfdf5;
   color: #059669;
   font-size: 0.625rem;
@@ -279,6 +283,7 @@
   align-items: center;
   gap: 0.25rem;
   text-transform: uppercase;
+  border: 1px solid #d1fae5;
 }
 
 /* Modal Styling (same as detail page for consistency) */

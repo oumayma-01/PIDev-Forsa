@@ -1,61 +1,92 @@
 <div class="portal-container">
   <div class="header-section">
-    <button routerLink="/dashboard/insurance" class="back-btn glass-btn">
-      <i class="fe fe-arrow-left"></i> Back to Hub
-    </button>
-    <h1>My Claims</h1>
-    <p>Track your insurance claims and submit new incident reports.</p>
-    <a routerLink="../my-policies" class="btn btn-primary mt-3">
-      <i class="fe fe-plus"></i> File New Claim
-    </a>
-  </div>
-
-  <div *ngIf="isLoading" class="loading-state">
-    <div class="spinner"></div>
-    <p>Loading your claims...</p>
-  </div>
-
-  <div *ngIf="!isLoading && claims.length === 0" class="empty-state glass-panel">
-    <i class="fe fe-folder"></i>
-    <h3>No Claims Found</h3>
-    <p>You haven't filed any claims yet.</p>
-  </div>
-
-  <div *ngIf="!isLoading && claims.length > 0" class="claims-list">
-    <div *ngFor="let c of claims" class="claim-card glass-panel flex-row justify-between align-center">
-      
-      <div class="claim-info">
-        <h3 class="m-0 text-xl font-bold">Claim Ref: #{{ c.claimNumber || 'Pending Assignment' }}</h3>
-        <p class="text-sm text-muted mb-2">Policy: {{ c.insurancePolicy?.policyNumber || 'Pending Number' }}</p>
-        
-        <p class="description">{{ c.description }}</p>
-
-        <div class="claim-extras mt-2" *ngIf="c.accidentType || c.attachmentUrl">
-          <span class="badge badge-accent" *ngIf="c.accidentType" style="background: rgba(99, 102, 241, 0.1); color: #6366f1; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; margin-right: 8px;">{{ c.accidentType }}</span>
-          <a *ngIf="c.attachmentUrl" [href]="'http://localhost:8080/api/insurance-claim/attachments/' + c.attachmentUrl" target="_blank" class="attachment-link" style="font-size: 0.8rem; color: #6366f1; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-            <i class="fe fe-file"></i> View Attachment
-          </a>
-        </div>
-        
-        <div class="claim-meta mt-3">
-          <span><i class="fe fe-calendar"></i> Incident: {{ c.incidentDate | date:'mediumDate' }}</span>
-          <span><i class="fe fe-calendar"></i> Filed: {{ c.claimDate | date:'mediumDate' }}</span>
-        </div>
-      </div>
-
-      <div class="claim-status-block flex-column align-end">
-        <span class="status-badge" [ngClass]="c.status | lowercase">{{ c.status }}</span>
-        <div class="claim-amount mt-2">
-          Requested: <strong>{{ c.claimAmount | number:'1.2-2' }} TND</strong>
-        </div>
-        <div class="approved-amount mt-1 text-success" *ngIf="c.approvedAmount">
-          Approved: <strong>{{ c.approvedAmount | number:'1.2-2' }} TND</strong>
-        </div>
-        <div class="paid-amount mt-1 text-primary" *ngIf="c.indemnificationPaid">
-          Paid: <strong>{{ c.indemnificationPaid | number:'1.2-2' }} TND</strong>
-        </div>
-      </div>
-
+    <div class="header-badge">Insurance Hub</div>
+    <h1>My Claims Dashboard</h1>
+    <p>Monitor your active claims, track status updates, and review settlements in real-time.</p>
+    
+    <div class="header-actions">
+      <button routerLink="/dashboard/insurance" class="btn-secondary">
+        <app-forsa-icon name="chevron-left" [size]="16" /> Back to Hub
+      </button>
+      <a routerLink="../my-policies" class="btn-primary">
+        <app-forsa-icon name="plus" [size]="18" /> File New Claim
+      </a>
     </div>
   </div>
+
+  @if (isLoading) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Retrieving your claim records...</p>
+    </div>
+  } @else if (claims.length === 0) {
+    <div class="empty-state glass-panel">
+      <div class="empty-icon-wrapper">
+        <app-forsa-icon name="layout-dashboard" [size]="48" />
+      </div>
+      <h3>No Active Claims</h3>
+      <p>You haven't filed any insurance claims yet. Your history will appear here.</p>
+      <button routerLink="../my-policies" class="btn-text">Start your first claim</button>
+    </div>
+  } @else {
+    <div class="claims-grid">
+      @for (c of claims; track c.id) {
+        <div class="claim-card-modern">
+          <div class="card-status-line" [attr.data-status]="c.status | lowercase"></div>
+          
+          <div class="card-header">
+            <div class="claim-id-group">
+              <span class="id-label">Claim Reference</span>
+              <h3 class="id-value">#{{ c.claimNumber || 'PENDING' }}</h3>
+            </div>
+            <div class="status-pill" [attr.data-status]="c.status | lowercase">
+              {{ c.status }}
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="policy-info">
+              <app-forsa-icon name="shield-check" [size]="14" />
+              <span>Policy: <strong>{{ c.insurancePolicy?.policyNumber || '—' }}</strong></span>
+            </div>
+            
+            <p class="claim-description">{{ c.description }}</p>
+
+            <div class="meta-tags">
+              @if (c.accidentType) {
+                <span class="tag type">{{ c.accidentType }}</span>
+              }
+              @if (c.attachmentUrl) {
+                <button (click)="downloadFile(c.attachmentUrl)" class="tag attachment border-0 cursor-pointer">
+                  <app-forsa-icon name="download" [size]="12" /> Evidence Attached
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="card-footer">
+            <div class="financial-block">
+              <div class="amount-item">
+                <span class="lbl">Requested</span>
+                <span class="val">{{ c.claimAmount | number:'1.2-2' }} <small>TND</small></span>
+              </div>
+              @if (c.approvedAmount) {
+                <div class="amount-item highlight">
+                  <span class="lbl">Approved</span>
+                  <span class="val">{{ c.approvedAmount | number:'1.2-2' }} <small>TND</small></span>
+                </div>
+              }
+            </div>
+
+            <div class="dates-block">
+              <div class="date-item">
+                <span class="lbl">Incident Date</span>
+                <span class="val">{{ c.incidentDate | date:'dd MMM yyyy' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
 </div>
