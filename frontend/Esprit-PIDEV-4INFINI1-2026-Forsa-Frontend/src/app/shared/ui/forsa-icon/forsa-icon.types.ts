@@ -43,4 +43,7 @@ export type ForsaIconName =
   | 'trash-2'
   | 'chevron-left'
   | 'user-circle'
-  | 'download';
+  | 'download'
+  | 'refresh-cw'
+  | 'x-circle'
+  | 'alert-octagon';

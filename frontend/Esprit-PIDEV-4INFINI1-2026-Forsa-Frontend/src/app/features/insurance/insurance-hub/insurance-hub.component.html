@@ -32,7 +32,234 @@
     </div>
   }
 
-  <!-- Guided Process Section (Now at the top) -->
+  <!-- ADMIN / AGENT COMMAND CENTER -->
+  @if (isAdminOrAgent) {
+    <div class="dashboard-wrapper">
+      <header class="dashboard-header">
+        <div class="header-content">
+          <h1>Insurance Operations Dashboard</h1>
+          <p>Real-time analytics across products, policies, and claims.</p>
+        </div>
+        @if (overview()) {
+          <div class="header-refresh">
+            <span class="update-label">Last updated: {{ lastUpdated() | date:'shortTime' }}</span>
+            <button class="refresh-pill" (click)="isLoadingAnalytics.set(true); startAnalyticsPolling()">
+              <app-forsa-icon name="refresh-cw" [size]="14" [class.spin]="isLoadingAnalytics()" /> Refresh
+            </button>
+          </div>
+        }
+      </header>
+
+      <!-- Operational Terminals (TOP PRIORITY) -->
+      <section class="portal-admin">
+        <div class="admin-divider"><span>Operational Terminals</span></div>
+        <div class="admin-grid">
+          @for (mod of modules; track mod.route) {
+            <a [routerLink]="mod.route" class="admin-btn">
+              <div class="a-btn-ico" [attr.data-tone]="mod.tone">
+                <app-forsa-icon [name]="$any(mod.icon)" [size]="20" />
+              </div>
+              <div class="a-btn-text">
+                <span class="a-title">{{ mod.title }}</span>
+                <p class="a-description">{{ mod.description }}</p>
+                <div class="a-footer">
+                   <span class="a-stats">{{ mod.stats }}</span>
+                   <app-forsa-icon name="arrow-right" [size]="14" />
+                </div>
+              </div>
+            </a>
+          }
+        </div>
+      </section>
+
+      @if (analyticsError()) {
+        <div class="dashboard-error glass-panel">
+          <app-forsa-icon name="alert-circle" [size]="48" />
+          <h3>Analytics Unavailable</h3>
+          <p>{{ analyticsError() }}</p>
+          <div class="error-actions">
+            <button class="btn-primary" (click)="isLoadingAnalytics.set(true); startAnalyticsPolling()">Try Again</button>
+            <small style="display: block; margin-top: 10px; opacity: 0.7;">User Roles: {{ auth.currentUser()?.roles?.join(', ') }}</small>
+          </div>
+        </div>
+      } @else if (!overview()) {
+        <div class="dashboard-loading">
+          <div class="spinner"></div>
+          <p>Compiling global insurance analytics...</p>
+          @if (isLoadingAnalytics()) { <small>Connecting to terminal...</small> }
+          <button class="btn-retry" (click)="startAnalyticsPolling()">Force Retry Terminal</button>
+        </div>
+      } @else {
+        @if (overview(); as data) {
+          <!-- Primary Stats Row -->
+          <div class="stats-grid">
+            <div class="stat-card blue">
+              <div class="stat-icon"><app-forsa-icon name="shield" [size]="24" /></div>
+              <div class="stat-info">
+                <span class="lbl">Total Products</span>
+                <span class="val">{{ data.totalProducts }}</span>
+              </div>
+            </div>
+            <div class="stat-card emerald">
+              <div class="stat-icon"><app-forsa-icon name="check-circle-2" [size]="24" /></div>
+              <div class="stat-info">
+                <span class="lbl">Active Policies</span>
+                <span class="val">{{ data.activePolicies }}</span>
+              </div>
+            </div>
+            <div class="stat-card amber">
+              <div class="stat-icon"><app-forsa-icon name="clock" [size]="24" /></div>
+              <div class="stat-info">
+                <span class="lbl">Pending Review</span>
+                <span class="val">{{ data.pendingPolicies }}</span>
+              </div>
+            </div>
+            <div class="stat-card rose">
+              <div class="stat-icon"><app-forsa-icon name="x-circle" [size]="24" /></div>
+              <div class="stat-info">
+                <span class="lbl">Canceled</span>
+                <span class="val">{{ data.canceledPolicies }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Revenue Highlight -->
+          <div class="revenue-hero glass-panel">
+            <div class="hero-content">
+              <span class="hero-label">Projected Annual Premium Revenue</span>
+              <h2 class="hero-amount">{{ data.totalPremiumRevenue | number:'1.2-2' }} <small>TND</small></h2>
+            </div>
+            <div class="hero-trend">
+              <app-forsa-icon name="trending-up" [size]="20" />
+              <span>Operational Health: Optimal</span>
+            </div>
+          </div>
+
+          <!-- Charts Row -->
+          <div class="dashboard-charts">
+            <div class="chart-container glass-panel">
+              <div class="chart-header">
+                <h3>Claims Submission Trend</h3>
+                <p>Monthly volume of incoming insurance claims</p>
+              </div>
+              <div class="canvas-wrapper">
+                <canvas #claimsTrendChart></canvas>
+              </div>
+            </div>
+            <div class="chart-container glass-panel">
+              <div class="chart-header">
+                <h3>Revenue by Product</h3>
+                <p>Contribution of top products to total premium</p>
+              </div>
+              <div class="canvas-wrapper">
+                <canvas #productRevenueChart></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tables Row -->
+          <div class="dashboard-data-row">
+            <!-- Popular Products -->
+            <div class="data-table-card glass-panel">
+              <div class="card-head">
+                <h3>Top Performing Products</h3>
+                <button class="btn-text" routerLink="products">View All</button>
+              </div>
+              <table class="forsa-table">
+                <thead>
+                  <tr>
+                    <th>Product Name</th>
+                    <th>Policies</th>
+                    <th>Revenue</th>
+                    <th>Trend</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (prod of data.popularProducts; track prod.productName) {
+                    <tr>
+                      <td><strong>{{ prod.productName }}</strong></td>
+                      <td>{{ prod.policyCount }}</td>
+                      <td>{{ prod.totalRevenue | number:'1.2-2' }} TND</td>
+                      <td><app-forsa-icon name="trending-up" [size]="14" class="text-success" /></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Claims Overview -->
+            <div class="claims-summary-card glass-panel">
+              <div class="card-head">
+                <h3>Claims Summary</h3>
+                <button class="btn-text" routerLink="claims-analytics">Full Report</button>
+              </div>
+              <div class="claims-mini-stats">
+                <div class="mini-stat">
+                  <span class="m-val">{{ data.claimsAnalytics.totalClaims }}</span>
+                  <span class="m-lbl">Total Filed</span>
+                </div>
+                <div class="mini-stat">
+                  <span class="m-val">{{ data.claimsAnalytics.approvalRate | number:'1.1-1' }}%</span>
+                  <span class="m-lbl">Approval Rate</span>
+                </div>
+              </div>
+              <div class="status-bars">
+                @for (st of data.claimsAnalytics.claimsByStatus; track st.status) {
+                  <div class="status-bar-row">
+                    <div class="bar-info">
+                      <span>{{ st.status }}</span>
+                      <span>{{ st.count }}</span>
+                    </div>
+                    <div class="bar-bg">
+                      <div class="bar-fill" [style.width.%]="(st.count / data.claimsAnalytics.totalClaims) * 100"></div>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Data Row 2: Recent Claims -->
+          <div class="dashboard-data-row full-width">
+            <div class="data-table-card glass-panel">
+              <div class="card-head">
+                <h3>Recent High-Value Claims</h3>
+                <button class="btn-text" routerLink="claims">View All Claims</button>
+              </div>
+              <table class="forsa-table">
+                <thead>
+                  <tr>
+                    <th>Claim #</th>
+                    <th>Policy #</th>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (claim of data.claimsAnalytics.topClaims; track claim.id) {
+                    <tr>
+                      <td><strong>{{ claim.claimNumber }}</strong></td>
+                      <td>{{ claim.policyNumber }}</td>
+                      <td>{{ claim.claimDate | date:'shortDate' }}</td>
+                      <td class="text-bold">{{ claim.claimAmount | number:'1.2-2' }} TND</td>
+                      <td>
+                        <span class="status-badge" [attr.data-status]="claim.status">
+                          {{ claim.status }}
+                        </span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  }
+
+  <!-- CLIENT VIEW (Original) -->
   @if (!isAdminOrAgent) {
     <section class="portal-process">
       <div class="process-header">
@@ -59,13 +286,9 @@
         </div>
       </div>
     </section>
-  }
 
-  <!-- Core Actions Grid -->
-  @if (!isAdminOrAgent) {
     <section class="portal-grid">
       <div class="cards-wrapper">
-        <!-- Catalog -->
         <div class="p-card" routerLink="./client/catalog">
           <div class="p-card__icon teal"><app-forsa-icon name="sparkles" [size]="28" /></div>
           <div class="p-card__body">
@@ -77,8 +300,6 @@
             <app-forsa-icon name="chevron-right" [size]="14" />
           </div>
         </div>
-
-        <!-- Policies -->
         <div class="p-card" routerLink="./client/my-policies">
           <div class="p-card__icon navy"><app-forsa-icon name="shield-check" [size]="28" /></div>
           <div class="p-card__body">
@@ -90,8 +311,6 @@
             <app-forsa-icon name="chevron-right" [size]="14" />
           </div>
         </div>
-
-        <!-- Claims -->
         <div class="p-card" routerLink="./client/my-claims">
           <div class="p-card__icon gold"><app-forsa-icon name="alert-circle" [size]="28" /></div>
           <div class="p-card__body">
@@ -103,8 +322,6 @@
             <app-forsa-icon name="chevron-right" [size]="14" />
           </div>
         </div>
-
-        <!-- Payments -->
         <div class="p-card" routerLink="./client/my-payments">
           <div class="p-card__icon lime"><app-forsa-icon name="credit-card" [size]="28" /></div>
           <div class="p-card__body">
@@ -116,30 +333,6 @@
             <app-forsa-icon name="chevron-right" [size]="14" />
           </div>
         </div>
-      </div>
-    </section>
-  }
-
-  <!-- Admin / Agent Console (Condensed) -->
-  @if (isAdminOrAgent) {
-    <section class="portal-admin">
-      <div class="admin-divider"><span>Administrative Access</span></div>
-      <div class="admin-grid">
-        @for (mod of modules; track mod.route) {
-          <a [routerLink]="mod.route" class="admin-btn">
-            <div class="a-btn-ico" [attr.data-tone]="mod.tone">
-              <app-forsa-icon [name]="$any(mod.icon)" [size]="20" />
-            </div>
-            <div class="a-btn-text">
-              <span class="a-title">{{ mod.title }}</span>
-              <p class="a-description">{{ mod.description }}</p>
-              <div class="a-footer">
-                 <span class="a-stats">{{ mod.stats }}</span>
-                 <app-forsa-icon name="arrow-right" [size]="14" />
-              </div>
-            </div>
-          </a>
-        }
       </div>
     </section>
   }

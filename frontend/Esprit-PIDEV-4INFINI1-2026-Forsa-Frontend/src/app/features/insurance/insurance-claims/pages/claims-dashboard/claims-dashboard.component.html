@@ -1,160 +1,188 @@
-<div class="page-head">
-  <div>
-    <h2>Insurance Claims Analytics</h2>
-    <p>Real-time insights and distribution analysis for claims management.</p>
-    <div class="status-indicator">
-      <div class="dot" [class.pulse]="loading()"></div>
-      <small class="last-update">Live Updates Active • Last sync: {{ lastUpdated() | date:'HH:mm:ss' }}</small>
+<div class="analytics-container">
+  <!-- Elegant Header -->
+  <header class="dashboard-header">
+    <div class="header-main">
+      <h1>Insurance Claims Analytics</h1>
+      <p class="subtitle">Operational insights and real-time distribution analysis for claims management.</p>
+      <div class="header-meta">
+        <div class="status-pill">
+          <span class="pulse-dot" [class.active]="!loading()"></span>
+          <span>{{ loading() ? 'Syncing...' : 'Live Updates Active' }}</span>
+        </div>
+        <span class="divider"></span>
+        <span class="timestamp">Last sync: {{ lastUpdated() | date:'HH:mm:ss' }}</span>
+      </div>
     </div>
-  </div>
-  <div class="head-actions">
-    <app-forsa-button variant="outline" (click)="loadData()" [disabled]="loading()">
-      <app-forsa-icon name="history" [size]="14" [class.spin]="loading()" /> Refresh
-    </app-forsa-button>
-    <a routerLink="/dashboard/insurance/claims">
-      <app-forsa-button variant="outline"><app-forsa-icon name="layout-dashboard" [size]="16" /> All Claims</app-forsa-button>
-    </a>
-    <a routerLink="/dashboard/insurance/claims/new">
-      <app-forsa-button><app-forsa-icon name="plus" [size]="16" /> New Claim</app-forsa-button>
-    </a>
-  </div>
-</div>
-    <div *ngIf="showRefreshMessage()" class="refresh-toast">Dashboard refreshed</div>
 
-@if (loading() && !data()) {
-  <div class="state-box">
-    <app-forsa-icon name="history" [size]="48" class="spin" />
-    <p>Calculating analytics...</p>
+    <div class="header-actions">
+      <button class="btn-icon-text outline" (click)="loadData()" [disabled]="loading()">
+        <app-forsa-icon name="history" [size]="16" [class.spin]="loading()" />
+        <span>Refresh</span>
+      </button>
+      <button class="btn-icon-text outline" routerLink="/dashboard/insurance/claims">
+        <app-forsa-icon name="layout-dashboard" [size]="16" />
+        <span>All Claims</span>
+      </button>
+      <button class="btn-icon-text primary" routerLink="/dashboard/insurance/claims/new">
+        <app-forsa-icon name="plus" [size]="16" />
+        <span>New Claim</span>
+      </button>
+    </div>
+  </header>
+
+  <div *ngIf="showRefreshMessage()" class="refresh-toast">
+    <app-forsa-icon name="check-circle-2" [size]="18" />
+    <span>Dashboard refreshed</span>
   </div>
-} @else if (error()) {
-  <div class="state-box state-error">
-    <app-forsa-icon name="alert-circle" [size]="48" />
-    <p>{{ error() }}</p>
-    <app-forsa-button (click)="loadData()">Retry</app-forsa-button>
-  </div>
-} @else if (data()) {
-  <!-- Stats Cards -->
-  <div class="stats-grid">
-    <app-forsa-card class="stat-card">
-      <div class="stat-content">
-        <div class="stat-icon bg-indigo"><app-forsa-icon name="bar-chart-3" [size]="20" /></div>
-        <div class="stat-data">
-          <span class="label">Total Claims</span>
-          <span class="value">{{ data()?.totalClaims | number }}</span>
+
+  @if (loading() && !data()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Compiling global insurance analytics...</p>
+    </div>
+  } @else if (error()) {
+    <div class="error-state glass-panel">
+      <app-forsa-icon name="alert-circle" [size]="48" />
+      <h3>Analysis Interrupted</h3>
+      <p>{{ error() }}</p>
+      <button class="btn-primary" (click)="loadData()">Retry Analysis</button>
+    </div>
+  } @else if (data()) {
+    <!-- Refined Stats Grid -->
+    <div class="stats-grid">
+      <div class="premium-stat-card navy">
+        <div class="stat-inner">
+          <div class="stat-icon"><app-forsa-icon name="bar-chart-3" [size]="24" /></div>
+          <div class="stat-info">
+            <span class="stat-label">Total Claims</span>
+            <span class="stat-value">{{ data()?.totalClaims | number }}</span>
+          </div>
         </div>
       </div>
-    </app-forsa-card>
 
-    <app-forsa-card class="stat-card">
-      <div class="stat-content">
-        <div class="stat-icon bg-emerald"><app-forsa-icon name="shield-check" [size]="20" /></div>
-        <div class="stat-data">
-          <span class="label">Total Claim Value</span>
-          <span class="value">{{ data()?.totalClaimAmount | number:'1.2-2' }} TND</span>
+      <div class="premium-stat-card teal">
+        <div class="stat-inner">
+          <div class="stat-icon"><app-forsa-icon name="shield-check" [size]="24" /></div>
+          <div class="stat-info">
+            <span class="stat-label">Total Claim Value</span>
+            <span class="stat-value">{{ data()?.totalClaimAmount | number:'1.2-2' }} <small>TND</small></span>
+          </div>
         </div>
       </div>
-    </app-forsa-card>
 
-    <app-forsa-card class="stat-card">
-      <div class="stat-content">
-        <div class="stat-icon bg-amber"><app-forsa-icon name="settings" [size]="20" /></div>
-        <div class="stat-data">
-          <span class="label">Avg. Claim Cost</span>
-          <span class="value">{{ data()?.averageClaimAmount | number:'1.2-2' }} TND</span>
+      <div class="premium-stat-card amber">
+        <div class="stat-inner">
+          <div class="stat-icon"><app-forsa-icon name="settings" [size]="24" /></div>
+          <div class="stat-info">
+            <span class="stat-label">Avg. Claim Cost</span>
+            <span class="stat-value">{{ data()?.averageClaimAmount | number:'1.2-2' }} <small>TND</small></span>
+          </div>
         </div>
       </div>
-    </app-forsa-card>
 
-    <app-forsa-card class="stat-card">
-      <div class="stat-content">
-        <div class="stat-icon bg-rose"><app-forsa-icon name="heart" [size]="20" /></div>
-        <div class="stat-data">
-          <span class="label">Approval Rate</span>
-          <span class="value">{{ data()?.approvalRate | number:'1.1-1' }}%</span>
+      <div class="premium-stat-card rose">
+        <div class="stat-inner">
+          <div class="stat-icon"><app-forsa-icon name="heart" [size]="24" /></div>
+          <div class="stat-info">
+            <span class="stat-label">Approval Rate</span>
+            <span class="stat-value">{{ data()?.approvalRate | number:'1.1-1' }}%</span>
+          </div>
         </div>
       </div>
-    </app-forsa-card>
-  </div>
+    </div>
 
-  <!-- Charts Grid -->
-  <div class="chart-layout">
-    <app-forsa-card class="line-chart-area interactive-card">
-      <div class="card-head"><h4>Monthly Claims Trend</h4></div>
-      <div class="chart-box">
-        <canvas #trendChart></canvas>
+    <!-- Elegant Chart Grid -->
+    <div class="main-chart-grid">
+      <div class="chart-card glass-panel main-trend">
+        <div class="card-header">
+          <div class="header-text">
+            <h4>Monthly Claims Trend</h4>
+            <p>Volume distribution over time</p>
+          </div>
+          <div class="header-pill">Real-time</div>
+        </div>
+        <div class="chart-container">
+          <canvas #trendChart></canvas>
+        </div>
       </div>
-    </app-forsa-card>
 
-    <app-forsa-card class="pie-chart-area interactive-card">
-      <div class="card-head"><h4>Claims by Status</h4></div>
-      <div class="chart-box">
-        <canvas #statusChart></canvas>
+      <div class="chart-card glass-panel status-distribution">
+        <div class="card-header">
+          <div class="header-text">
+            <h4>Claims by Status</h4>
+            <p>Processing state distribution</p>
+          </div>
+        </div>
+        <div class="chart-container donut">
+          <canvas #statusChart></canvas>
+        </div>
       </div>
-    </app-forsa-card>
-  </div>
+    </div>
 
-  <div class="chart-layout second-row">
-    <app-forsa-card class="bar-chart-area interactive-card">
-      <div class="card-head"><h4>Volume by Insurance Type</h4></div>
-      <div class="chart-box">
-        <canvas #typeChart></canvas>
+    <div class="secondary-grid">
+      <div class="chart-card glass-panel type-distribution">
+        <div class="card-header">
+          <div class="header-text">
+            <h4>Volume by Insurance Type</h4>
+            <p>Segmentation by product category</p>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas #typeChart></canvas>
+        </div>
       </div>
-    </app-forsa-card>
 
-    <app-forsa-card class="info-area">
-      <div class="info-hero">
-        <app-forsa-icon name="shield-check" [size]="48" />
+      <div class="hero-info-card glass-panel">
+        <div class="hero-icon"><app-forsa-icon name="shield-check" [size]="40" /></div>
         <h3>System Integrity</h3>
         <p>Managed insurance claims are analyzed using Forsa AI models to ensure risk compliance and fraud prevention.</p>
-        <app-forsa-badge tone="success">Active Protection</app-forsa-badge>
+        <span class="hero-badge">Active Protection</span>
       </div>
-    </app-forsa-card>
-  </div>
+    </div>
 
-  <!-- Top Claims Table -->
-  <div class="table-section">
-    <app-forsa-card [overflowHidden]="true" class="interactive-card">
-      <div class="card-head table-head">
-        <h4>Top 10 Highest Value Claims</h4>
-        <app-forsa-badge tone="info">{{ data()?.topClaims?.length }} Entry</app-forsa-badge>
+    <!-- Neat High-Value Claims Table -->
+    <section class="table-section glass-panel">
+      <div class="section-header">
+        <div class="header-text">
+          <h4>Recent High-Value Claims</h4>
+          <p>Top {{ data()?.topClaims?.length }} entries by amount</p>
+        </div>
+        <button class="btn-text" routerLink="/dashboard/insurance/claims">View All Detailed Logs</button>
       </div>
-      <div class="table-wrap">
-        <table class="table">
+
+      <div class="table-container">
+        <table class="premium-table">
           <thead>
             <tr>
               <th>Claim #</th>
-              <th>Policy</th>
+              <th>Policy Reference</th>
               <th>Incident Date</th>
               <th>Amount</th>
               <th>Status</th>
-              <th class="th-actions">Actions</th>
+              <th class="actions-th">Actions</th>
             </tr>
           </thead>
           <tbody>
             @for (c of data()?.topClaims; track c.id) {
               <tr class="table-row">
-                <td class="td-mono">{{ c.claimNumber }}</td>
-                <td class="td-mono">{{ c.policyNumber }}</td>
-                <td>{{ c.claimDate | date:'dd MMM yyyy' }}</td>
-                <td class="td-bold">{{ c.claimAmount | number:'1.2-2' }} TND</td>
-                <td>
-                  <app-forsa-badge [tone]="statusTone(c.status)">
+                <td class="td-number"><span>{{ c.claimNumber }}</span></td>
+                <td class="td-policy">{{ c.policyNumber }}</td>
+                <td class="td-date">{{ c.claimDate | date:'dd MMM yyyy' }}</td>
+                <td class="td-amount">{{ c.claimAmount | number:'1.2-2' }} TND</td>
+                <td class="td-status">
+                  <span class="status-pill-small" [attr.data-status]="c.status">
                     {{ c.status }}
-                  </app-forsa-badge>
+                  </span>
                 </td>
                 <td class="td-actions">
-                  <div class="action-buttons">
-                    <a [routerLink]="['/dashboard/insurance/claims', c.id]" title="View Details">
-                      <app-forsa-button variant="ghost" size="sm">
-                        <app-forsa-icon name="eye" [size]="14" />
-                      </app-forsa-button>
-                    </a>
+                  <div class="action-group">
+                    <button class="action-btn" [routerLink]="['/dashboard/insurance/claims', c.id]" title="View Details">
+                      <app-forsa-icon name="eye" [size]="14" />
+                    </button>
                     @if (canEdit()) {
-                      <a [routerLink]="['/dashboard/insurance/claims', c.id, 'edit']" title="Edit Claim">
-                        <app-forsa-button variant="ghost" size="sm" class="btn-edit">
-                          <app-forsa-icon name="pencil" [size]="14" />
-                        </app-forsa-button>
-                      </a>
+                      <button class="action-btn edit" [routerLink]="['/dashboard/insurance/claims', c.id, 'edit']" title="Edit Claim">
+                        <app-forsa-icon name="pencil" [size]="14" />
+                      </button>
                     }
                   </div>
                 </td>
@@ -163,6 +191,6 @@
           </tbody>
         </table>
       </div>
-    </app-forsa-card>
-  </div>
-}
+    </section>
+  }
+</div>
