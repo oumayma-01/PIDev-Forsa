@@ -11,6 +11,7 @@ export interface InsuranceOverviewDTO {
   activePolicies: number;
   canceledPolicies: number;
   pendingPolicies: number;
+  suspendedPolicies: number;
   totalPremiumRevenue: number;
   popularProducts: ProductPopularityDTO[];
   claimsAnalytics: ClaimsDashboardDTO;

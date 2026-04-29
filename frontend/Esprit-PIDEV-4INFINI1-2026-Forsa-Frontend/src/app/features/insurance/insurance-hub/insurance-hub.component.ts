@@ -1,4 +1,4 @@
-import { Component, inject, signal, effect, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, inject, signal, effect, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ForsaCardComponent } from '../../../shared/ui/forsa-card/forsa-card.component';
@@ -7,9 +7,10 @@ import { ForsaBadgeComponent } from '../../../shared/ui/forsa-badge/forsa-badge.
 import { ForsaButtonComponent } from '../../../shared/ui/forsa-button/forsa-button.component';
 import { PremiumPaymentService } from '../shared/services/premium-payment.service';
 import { InsuranceAnalyticsService } from '../shared/services/insurance-analytics.service';
-import { PremiumPayment } from '../shared/models/insurance.models';
+import { InsurancePolicyService } from '../shared/services/insurance-policy.service';
+import { PaymentStatus, PolicyStatus } from '../shared/enums/insurance.enums';
+import { InsurancePolicy, PremiumPayment } from '../shared/models/insurance.models';
 import { InsuranceOverviewDTO } from '../shared/models/insurance-analytics.models';
-import { PaymentStatus } from '../shared/enums/insurance.enums';
 import { CommonModule } from '@angular/common';
 import { Chart } from 'chart.js/auto';
 import { interval, Subscription } from 'rxjs';
@@ -26,9 +27,12 @@ export class InsuranceHubComponent implements OnInit, OnDestroy, AfterViewInit {
   readonly auth = inject(AuthService);
   private readonly paymentService = inject(PremiumPaymentService);
   private readonly analyticsService = inject(InsuranceAnalyticsService);
+  private readonly policyService = inject(InsurancePolicyService);
 
   readonly PaymentStatus = PaymentStatus;
+  readonly PolicyStatus = PolicyStatus;
   upcomingReminder = signal<PremiumPayment | null>(null);
+  suspendedPolicy = signal<InsurancePolicy | null>(null);
 
   // Analytics State
   overview = signal<InsuranceOverviewDTO | null>(null);
@@ -143,10 +147,10 @@ export class InsuranceHubComponent implements OnInit, OnDestroy, AfterViewInit {
         const c = new Chart(this.claimsTrendCanvas.nativeElement, {
           type: 'line',
           data: {
-            labels: data.claimsAnalytics.monthlyTrends.map(t => months[t.month - 1] || '???'),
+            labels: data.claimsAnalytics.monthlyTrends.map((t: any) => months[t.month - 1] || '???'),
             datasets: [{
               label: 'Claims Volume',
-              data: data.claimsAnalytics.monthlyTrends.map(t => t.count),
+              data: data.claimsAnalytics.monthlyTrends.map((t: any) => t.count),
               borderColor: '#1e40af',
               backgroundColor: 'rgba(30, 64, 175, 0.1)',
               fill: true,
@@ -168,9 +172,9 @@ export class InsuranceHubComponent implements OnInit, OnDestroy, AfterViewInit {
         const c = new Chart(this.productRevenueCanvas.nativeElement, {
           type: 'doughnut',
           data: {
-            labels: data.popularProducts.map(p => p.productName || 'Unknown'),
+            labels: data.popularProducts.map((p: any) => p.productName || 'Unknown'),
             datasets: [{
-              data: data.popularProducts.map(p => p.totalRevenue),
+              data: data.popularProducts.map((p: any) => p.totalRevenue),
               backgroundColor: ['#1e40af', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
               borderWidth: 0
             }]
@@ -197,18 +201,27 @@ export class InsuranceHubComponent implements OnInit, OnDestroy, AfterViewInit {
         const overdue = payments.find(p => p.status === PaymentStatus.OVERDUE);
         if (overdue) {
           this.upcomingReminder.set(overdue);
-          return;
-        }
-
-        const soon = payments
-          .filter(p => p.status === PaymentStatus.PENDING && !!p.dueDate)
-          .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())[0];
-        
-        if (soon && soon.dueDate) {
-          const diffDays = Math.ceil((new Date(soon.dueDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-          if (diffDays <= 7) {
-            this.upcomingReminder.set(soon);
+        } else {
+          const soon = payments
+            .filter(p => p.status === PaymentStatus.PENDING && !!p.dueDate)
+            .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())[0];
+          
+          if (soon && soon.dueDate) {
+            const diffDays = Math.ceil((new Date(soon.dueDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+            if (diffDays <= 7) {
+              this.upcomingReminder.set(soon);
+            }
           }
+        }
+      }
+    });
+
+    // Also check for suspended policies
+    this.policyService.getMyPolicies().subscribe({
+      next: (policies: InsurancePolicy[]) => {
+        const suspended = policies.find((p: InsurancePolicy) => p.status === PolicyStatus.SUSPENDED);
+        if (suspended) {
+          this.suspendedPolicy.set(suspended);
         }
       }
     });
@@ -228,38 +241,41 @@ export class InsuranceHubComponent implements OnInit, OnDestroy, AfterViewInit {
     return roles.includes('ROLE_CLIENT');
   }
 
-  readonly modules = [
-    {
-      title: 'Insurance Products',
-      description: 'Catalogue of accessible health, life, and crop coverage.',
-      icon: 'shield',
-      route: 'products',
-      tone: 'blue',
-      stats: 'Manage Catalogue',
-    },
-    {
-      title: 'Policies',
-      description: 'Review and approve active coverage across the platform.',
-      icon: 'layout-dashboard',
-      route: 'policies',
-      tone: 'emerald',
-      stats: 'Policy Management',
-    },
-    {
-      title: 'Insurance Claims',
-      description: 'Process indemnification requests and track status.',
-      icon: 'alert-circle',
-      route: 'claims',
-      tone: 'amber',
-      stats: 'Claim Processing',
-    },
-    {
-      title: 'Premium Payments',
-      description: 'Monitor periodic payments for all active policies.',
-      icon: 'credit-card',
-      route: 'payments',
-      tone: 'rose',
-      stats: 'Billing Terminal',
-    },
-  ];
+  modules = computed(() => {
+    const data = this.overview();
+    return [
+      {
+        title: 'Insurance Products',
+        description: 'Catalogue of accessible health, life, and crop coverage.',
+        icon: 'shield',
+        route: 'products',
+        tone: 'blue',
+        stats: data ? `${data.totalProducts} Products` : 'Manage Catalogue',
+      },
+      {
+        title: 'Policies',
+        description: 'Review and approve active coverage across the platform.',
+        icon: 'layout-dashboard',
+        route: 'policies',
+        tone: 'emerald',
+        stats: data ? `${data.activePolicies} Active / ${data.suspendedPolicies} Suspended` : 'Policy Management',
+      },
+      {
+        title: 'Insurance Claims',
+        description: 'Process indemnification requests and track status.',
+        icon: 'alert-circle',
+        route: 'claims',
+        tone: 'amber',
+        stats: data ? `${data.claimsAnalytics.totalClaims} Total Claims` : 'Claim Processing',
+      },
+      {
+        title: 'Premium Payments',
+        description: 'Monitor periodic payments for all active policies.',
+        icon: 'credit-card',
+        route: 'payments',
+        tone: 'rose',
+        stats: 'Billing Terminal',
+      },
+    ];
+  });
 }

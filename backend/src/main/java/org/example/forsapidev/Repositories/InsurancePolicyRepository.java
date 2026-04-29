@@ -21,6 +21,9 @@ public interface InsurancePolicyRepository extends JpaRepository<InsurancePolicy
     @Query("SELECT COUNT(p) FROM InsurancePolicy p WHERE p.status = 'PENDING'")
     long countPendingPolicies();
 
+    @Query("SELECT COUNT(p) FROM InsurancePolicy p WHERE p.status = 'SUSPENDED'")
+    long countSuspendedPolicies();
+
     @Query("SELECT p.insuranceProduct.productName, COUNT(p), SUM(p.periodicPaymentAmount) " +
            "FROM InsurancePolicy p " +
            "GROUP BY p.insuranceProduct.productName " +

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ForsaBadgeComponent } from '../../../../../shared/ui/forsa-badge/forsa-badge.component';
@@ -10,10 +10,12 @@ import { PremiumPayment } from '../../../shared/models/insurance.models';
 import { PaymentStatus } from '../../../shared/enums/insurance.enums';
 import type { ForsaIconName } from '../../../../../shared/ui/forsa-icon/forsa-icon.types';
 
+import { FormsModule } from '@angular/forms';
+
 @Component({
   selector: 'app-premium-payement-list',
   standalone: true,
-  imports: [RouterLink, DatePipe, DecimalPipe, ForsaBadgeComponent, ForsaButtonComponent, ForsaCardComponent, ForsaIconComponent],
+  imports: [RouterLink, DatePipe, DecimalPipe, ForsaBadgeComponent, ForsaButtonComponent, ForsaCardComponent, ForsaIconComponent, FormsModule],
   templateUrl: './premium-payement-list.component.html',
   styleUrl: './premium-payement-list.component.css',
 })
@@ -21,9 +23,27 @@ export class PremiumPayementListComponent implements OnInit {
   private readonly svc = inject(PremiumPaymentService);
 
   payments = signal<PremiumPayment[]>([]);
+  searchTerm = signal('');
+  statusFilter = signal<string>('ALL');
   loading = signal(true);
   error = signal<string | null>(null);
   deletingId = signal<number | null>(null);
+
+  filteredPayments = computed(() => {
+    const term = this.searchTerm().toLowerCase();
+    const status = this.statusFilter();
+    
+    return this.payments().filter(p => {
+      const matchesSearch = !term || 
+        p.insurancePolicy?.policyNumber?.toLowerCase().includes(term);
+        
+      const matchesStatus = status === 'ALL' || p.status === status;
+      
+      return matchesSearch && matchesStatus;
+    });
+  });
+
+  PaymentStatus = PaymentStatus; // Expose to template
 
   ngOnInit(): void { this.load(); }
 

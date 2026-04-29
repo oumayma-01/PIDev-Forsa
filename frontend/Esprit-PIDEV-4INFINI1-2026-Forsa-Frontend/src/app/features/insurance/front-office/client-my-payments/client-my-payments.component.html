@@ -7,6 +7,21 @@
     <p>Manage your upcoming and past insurance premium payments securely.</p>
   </div>
 
+  <div class="filter-section glass-panel" *ngIf="allPayments.length > 0">
+    <div class="filter-controls">
+      <div class="filter-group">
+        <label for="policyFilter"><i class="fe fe-filter"></i> Filter by Policy:</label>
+        <select id="policyFilter" [(ngModel)]="selectedPolicy" (change)="filterByPolicy()" class="filter-select">
+          <option value="all">All Policies</option>
+          <option *ngFor="let pol of policies" [value]="pol">{{ pol }}</option>
+        </select>
+      </div>
+      <div class="filter-info">
+        <span>Showing <strong>{{ payments.length }}</strong> of {{ allPayments.length }} installments</span>
+      </div>
+    </div>
+  </div>
+
   <div *ngIf="isLoading" class="loading-state">
     <div class="spinner"></div>
     <p>Loading your payments...</p>

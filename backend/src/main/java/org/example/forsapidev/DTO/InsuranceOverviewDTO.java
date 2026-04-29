@@ -13,6 +13,7 @@ public class InsuranceOverviewDTO {
     private long activePolicies;
     private long canceledPolicies;
     private long pendingPolicies;
+    private long suspendedPolicies;
     private double totalPremiumRevenue;
     
     private List<ProductPopularityDTO> popularProducts = new java.util.ArrayList<>();

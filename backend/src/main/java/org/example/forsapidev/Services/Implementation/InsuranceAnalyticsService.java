@@ -32,6 +32,7 @@ public class InsuranceAnalyticsService {
             overview.setActivePolicies(policyRepository.countActivePolicies());
             overview.setCanceledPolicies(policyRepository.countCanceledPolicies());
             overview.setPendingPolicies(policyRepository.countPendingPolicies());
+            overview.setSuspendedPolicies(policyRepository.countSuspendedPolicies());
             
             Double revenue = policyRepository.getTotalActivePremiumRevenue();
             overview.setTotalPremiumRevenue(revenue != null ? revenue : 0.0);
