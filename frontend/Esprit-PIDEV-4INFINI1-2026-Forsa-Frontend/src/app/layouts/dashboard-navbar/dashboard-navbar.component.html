@@ -26,18 +26,53 @@
       <app-forsa-badge tone="default" class="role-badge">{{ rolesLabel() }}</app-forsa-badge>
     </div>
 
-    <button type="button" class="text-btn bell">
-      <app-forsa-icon name="bell" [size]="18" />
-      <span>Notifications</span>
-      @if (responseNotificationCount() > 0) {
-        <span class="notif-count">{{ responseNotificationCount() }}</span>
-      }
-      <span class="dot" aria-hidden="true"></span>
-    </button>
+    <div class="notification-container">
+      <button type="button" class="text-btn bell" (click)="toggleNotificationMenu($event)">
+        <app-forsa-icon name="bell" [size]="18" />
+        <span>Notifications</span>
+        @if (responseNotificationCount() > 0) {
+          <span class="notif-count">{{ responseNotificationCount() }}</span>
+        }
+        <span class="dot" [class.has-notif]="responseNotificationCount() > 0" aria-hidden="true"></span>
+      </button>
 
-    @if (responseNotification()) {
-      <div class="notif-inline">{{ responseNotification() }}</div>
-    }
+      @if (notificationMenuOpen()) {
+        <div class="notification-dropdown" role="menu">
+          <div class="notification-header">
+            <h3>Notifications</h3>
+            @if (notifications().length > 0) {
+              <button class="clear-all" (click)="notifications.set([])">Clear all</button>
+            }
+          </div>
+          <div class="notification-list">
+            @if (notifications().length === 0) {
+              <div class="empty-state">
+                <app-forsa-icon [name]="$any('bell-off')" [size]="24" />
+                <p>No new notifications</p>
+              </div>
+            } @else {
+              @for (notif of notifications(); track notif.id) {
+                <div class="notification-item" [class]="notif.type">
+                  <div class="notif-icon">
+                    @if (notif.type === 'gift') {
+                      <app-forsa-icon [name]="$any('gift')" [size]="16" />
+                    } @else {
+                      <app-forsa-icon name="message-square" [size]="16" />
+                    }
+                  </div>
+                  <div class="notif-content">
+                    <p class="notif-message">{{ notif.message }}</p>
+                  </div>
+                  <button class="notif-remove" (click)="removeNotification(notif.id, $event)" aria-label="Remove notification">
+                    <app-forsa-icon [name]="$any('x')" [size]="14" />
+                  </button>
+                </div>
+              }
+            }
+          </div>
+        </div>
+      }
+    </div>
 
     <div class="divider"></div>
 

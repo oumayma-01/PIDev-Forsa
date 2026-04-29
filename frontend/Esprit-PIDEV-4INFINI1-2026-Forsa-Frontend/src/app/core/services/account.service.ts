@@ -10,6 +10,7 @@ import type {
   WalletForecastDTO,
   AccountTypeAdviceDTO,
   AdaptiveInterestResultDTO,
+  BankVaultDTO,
 } from '../models/wallet.models';
 
 @Injectable({ providedIn: 'root' })
@@ -86,6 +87,10 @@ export class AccountService {
 
   getActivities(accountId: number): Observable<Activity[]> {
     return this.http.get<Activity[]>(`${this.base}/${accountId}/activities`);
+  }
+
+  getBankVault(): Observable<BankVaultDTO> {
+    return this.http.get<BankVaultDTO>(`${this.base}/vault`);
   }
 
   // ── AI ───────────────────────────────────────────────────────────────────────
