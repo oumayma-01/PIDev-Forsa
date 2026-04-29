@@ -1,14 +1,16 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
+import { RouterModule, RouterLink } from '@angular/router';
 import { InsurancePolicyService } from '../../shared/services/insurance-policy.service';
 import { InsurancePolicy } from '../../shared/models/insurance.models';
 import { PolicyChatComponent } from './policy-chat/policy-chat.component';
+import { DigitalSignatureComponent } from '../../../../shared/ui/forsa-signature/forsa-signature.component';
+import { ForsaIconComponent } from '../../../../shared/ui/forsa-icon/forsa-icon.component';
 
 @Component({
   selector: 'app-client-my-policies',
   standalone: true,
-  imports: [CommonModule, RouterModule, PolicyChatComponent],
+  imports: [RouterLink, DatePipe, DecimalPipe, PolicyChatComponent, DigitalSignatureComponent, ForsaIconComponent, CommonModule],
   templateUrl: './client-my-policies.component.html',
   styleUrls: ['./client-my-policies.component.css']
 })
@@ -18,6 +20,10 @@ export class ClientMyPoliciesComponent implements OnInit {
   policies: InsurancePolicy[] = [];
   isLoading = true;
   selectedPolicyIdForChat: number | null = null;
+  
+  showSignatureUI = false;
+  selectedPolicyForSigning: InsurancePolicy | null = null;
+  isSigning = false;
 
   ngOnInit() {
     this.policyService.getMyPolicies().subscribe({
@@ -79,5 +85,29 @@ export class ClientMyPoliciesComponent implements OnInit {
 
   openChat(policyId: number) {
     this.selectedPolicyIdForChat = policyId;
+  }
+
+  openSignModal(policy: InsurancePolicy) {
+    this.selectedPolicyForSigning = policy;
+    this.showSignatureUI = true;
+  }
+
+  handleSign(signature: string) {
+    if (!this.selectedPolicyForSigning?.id) return;
+    this.isSigning = true;
+    this.policyService.signPolicy(this.selectedPolicyForSigning.id, signature).subscribe({
+      next: (updated) => {
+        const idx = this.policies.findIndex(p => p.id === updated.id);
+        if (idx !== -1) this.policies[idx] = updated;
+        this.isSigning = false;
+        this.showSignatureUI = false;
+        this.selectedPolicyForSigning = null;
+      },
+      error: (err) => {
+        console.error(err);
+        this.isSigning = false;
+        alert('Signing failed. Please try again.');
+      }
+    });
   }
 }

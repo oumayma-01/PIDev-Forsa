@@ -58,6 +58,15 @@ public class InsurancePolicy {
     @Column(columnDefinition = "TEXT")
     private String calculationNotes;          // Detailed actuarial calculation notes
 
+    @Column(columnDefinition = "MEDIUMTEXT")
+    private String clientSignature;           // Base64 signature image or typed name
+
+    @Column(columnDefinition = "MEDIUMTEXT")
+    private String adminStamp;                // Base64 stamp image for admins/agents
+
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date signedAt;                    // Date and time of signature
+
     // RELATIONSHIP: Many Policies belong to One User (the client/policyholder)
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
@@ -150,6 +159,15 @@ public class InsurancePolicy {
 
     public String getCalculationNotes() { return calculationNotes; }
     public void setCalculationNotes(String calculationNotes) { this.calculationNotes = calculationNotes; }
+
+    public String getClientSignature() { return clientSignature; }
+    public void setClientSignature(String clientSignature) { this.clientSignature = clientSignature; }
+
+    public String getAdminStamp() { return adminStamp; }
+    public void setAdminStamp(String adminStamp) { this.adminStamp = adminStamp; }
+
+    public Date getSignedAt() { return signedAt; }
+    public void setSignedAt(Date signedAt) { this.signedAt = signedAt; }
 
     // Relationships
     public User getUser() { return user; }

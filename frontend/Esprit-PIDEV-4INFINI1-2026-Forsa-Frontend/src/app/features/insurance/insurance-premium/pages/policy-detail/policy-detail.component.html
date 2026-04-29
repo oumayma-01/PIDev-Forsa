@@ -5,28 +5,72 @@
       <app-forsa-button variant="outline">Back</app-forsa-button>
     </a>
     @if (policy()) {
-      <div class="pdf-actions">
-        <!-- Contract PDF -->
-        <app-forsa-button variant="outline" (click)="viewContract()" title="View Contract">
-          <app-forsa-icon name="shield-check" [size]="16" /> View Contract
-        </app-forsa-button>
-        <app-forsa-button variant="outline" [disabled]="downloadingContract()" (click)="downloadContract()" title="Download Contract">
-          @if (downloadingContract()) { <app-forsa-icon name="history" [size]="16" class="spin" /> } @else { <app-forsa-icon name="download" [size]="16" /> }
-          Download Contract
-        </app-forsa-button>
+      <div class="header-tools">
+        <!-- Group: Contract -->
+        <div class="action-group">
+          <span class="group-label">Policy Contract</span>
+          <div class="group-content">
+            <app-forsa-button variant="outline" (click)="viewContract()" size="sm" title="View Contract">
+              <app-forsa-icon name="shield-check" [size]="14" /> View
+            </app-forsa-button>
+            <app-forsa-button variant="outline" [disabled]="downloadingContract()" (click)="downloadContract()" size="sm" title="Download Contract">
+              @if (downloadingContract()) { <app-forsa-icon name="history" [size]="14" class="spin" /> } @else { <app-forsa-icon name="download" [size]="14" /> }
+              Download
+            </app-forsa-button>
 
-        <!-- Amortization Schedule -->
-        <app-forsa-button variant="outline" (click)="viewAmortization()" title="View Schedule">
-          <app-forsa-icon name="eye" [size]="16" /> View Schedule
-        </app-forsa-button>
-        <app-forsa-button variant="outline" [disabled]="downloadingAmortization()" (click)="downloadAmortization()" title="Download Schedule">
-          @if (downloadingAmortization()) { <app-forsa-icon name="history" [size]="16" class="spin" /> } @else { <app-forsa-icon name="download" [size]="16" /> }
-          Download
-        </app-forsa-button>
+            <!-- Signing Logic -->
+            @if (isAdmin || isAgent) {
+              @if (!policy()?.adminStamp) {
+                <app-forsa-button variant="default" [disabled]="signing()" (click)="adminAutoSign()" size="sm">
+                  @if (signing()) { <app-forsa-icon name="history" [size]="14" class="spin" /> } @else { <app-forsa-icon name="pencil" [size]="14" /> }
+                  Sign & Stamp
+                </app-forsa-button>
+              } @else {
+                <app-forsa-badge tone="success" size="sm"><app-forsa-icon name="check-circle-2" [size]="12" /> Stamped</app-forsa-badge>
+              }
+            } @else {
+              @if (!policy()?.clientSignature) {
+                <app-forsa-button variant="default" (click)="showSignatureUI.set(true)" size="sm">
+                  <app-forsa-icon name="pencil" [size]="14" /> Sign
+                </app-forsa-button>
+              } @else {
+                <app-forsa-badge tone="success" size="sm"><app-forsa-icon name="check-circle-2" [size]="12" /> Signed</app-forsa-badge>
+              }
+            }
+          </div>
+        </div>
+
+        <div class="separator"></div>
+
+        <!-- Group: Schedule -->
+        <div class="action-group">
+          <span class="group-label">Amortization</span>
+          <div class="group-content">
+            <app-forsa-button variant="outline" (click)="viewAmortization()" size="sm" title="View Schedule">
+              <app-forsa-icon name="eye" [size]="14" /> View
+            </app-forsa-button>
+            <app-forsa-button variant="outline" [disabled]="downloadingAmortization()" (click)="downloadAmortization()" size="sm" title="Download Schedule">
+              @if (downloadingAmortization()) { <app-forsa-icon name="history" [size]="14" class="spin" /> } @else { <app-forsa-icon name="download" [size]="14" /> }
+              Download
+            </app-forsa-button>
+          </div>
+        </div>
       </div>
     }
   </div>
 </div>
+
+@if (showSignatureUI()) {
+  <div class="sig-modal-overlay" (click)="showSignatureUI.set(false)">
+    <div class="sig-modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Sign Your Insurance Contract</h3>
+        <button class="close-btn" (click)="showSignatureUI.set(false)">&times;</button>
+      </div>
+      <app-forsa-signature (onConfirm)="handleSign($event)" />
+    </div>
+  </div>
+}
 
 @if (loading()) {
   <div class="state-box"><app-forsa-icon name="history" [size]="32" class="spin" /></div>

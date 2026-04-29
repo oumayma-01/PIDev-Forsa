@@ -1,91 +1,114 @@
 <div class="portal-container">
   <div class="header-section">
     <button routerLink="/dashboard/insurance" class="back-btn glass-btn">
-      <i class="fe fe-arrow-left"></i> Back to Hub
+      <app-forsa-icon name="chevron-left" [size]="16"></app-forsa-icon> Back to Hub
     </button>
-    <h1>My Policies</h1>
-    <p>Manage your active insurance policies, review coverage, and download schedules.</p>
+    <h1>My Insurance Portfolio</h1>
+    <p>Manage your active coverage, sign legal contracts, and handle claims with ease.</p>
   </div>
 
-  <div *ngIf="isLoading" class="loading-state">
-    <div class="spinner"></div>
-    <p>Loading your policies...</p>
-  </div>
-
-  <div *ngIf="!isLoading && policies.length === 0" class="empty-state glass-panel">
-    <i class="fe fe-folder"></i>
-    <h3>No Policies Found</h3>
-    <p>You don't have any active policies yet.</p>
-    <button class="btn btn-primary" routerLink="/dashboard/insurance/client/catalog">Browse Catalog</button>
-  </div>
-
-  <div *ngIf="!isLoading && policies.length > 0" class="policy-grid">
-    <div *ngFor="let p of policies" class="policy-card glass-panel flex-column">
-      
-      <div class="card-header d-flex justify-between align-center border-bottom pb-3 mb-3">
-        <div>
-          <h3 class="m-0 text-xl font-bold">{{ p.insuranceProduct?.productName || 'Custom Policy' }}</h3>
-          <span class="text-sm text-muted">Policy #: {{ p.policyNumber || 'Pending' }}</span>
-        </div>
-        <span class="status-badge" [ngClass]="p.status | lowercase">{{ p.status }}</span>
-      </div>
-
-      <div class="card-body flex-grow-1">
-        <div class="metric-grid">
-          <div class="metric">
-            <span class="label">Coverage Limit</span>
-            <span class="value">{{ p.coverageLimit | number }} TND</span>
-          </div>
-          <div class="metric">
-            <span class="label">Payment</span>
-            <span class="value text-primary">{{ p.periodicPaymentAmount | number:'1.2-2' }} TND</span>
-            <span class="period">/ {{ p.paymentFrequency | lowercase }}</span>
-          </div>
-        </div>
-
-        <div class="detail-list mt-4">
-          <div class="detail-item">
-            <i class="fe fe-calendar text-muted"></i>
-            <span><strong>Start Date:</strong> {{ p.startDate | date:'mediumDate' || 'TBD' }}</span>
-          </div>
-          <div class="detail-item">
-            <i class="fe fe-calendar text-muted"></i>
-            <span><strong>End Date:</strong> {{ p.endDate | date:'mediumDate' || 'TBD' }}</span>
-          </div>
-          <div class="detail-item" *ngIf="p.nextPremiumDueDate">
-            <i class="fe fe-clock text-warning"></i>
-            <span><strong>Next Due:</strong> <span class="text-warning">{{ p.nextPremiumDueDate | date:'mediumDate' }}</span></span>
-          </div>
-        </div>
-      </div>
-
-      <div class="card-footer d-flex flex-wrap gap-2 mt-4 pt-3 border-top">
-        <div class="btn-group flex-1">
-          <button class="btn btn-outline" (click)="viewContract(p)" [disabled]="!p.id || p.status === 'PENDING'">
-            <i class="fe fe-file-text"></i> Contract
-          </button>
-          <button class="btn btn-outline btn-icon" (click)="downloadContract(p)" [disabled]="!p.id || p.status === 'PENDING'" title="Download Contract">
-            <i class="fe fe-download"></i>
-          </button>
-        </div>
-        
-        <div class="btn-group flex-1">
-          <button class="btn btn-outline" (click)="viewAmortization(p)" [disabled]="!p.id || p.status === 'PENDING'">
-            <i class="fe fe-calendar"></i> Schedule
-          </button>
-          <button class="btn btn-outline btn-icon" (click)="downloadAmortization(p)" [disabled]="!p.id || p.status === 'PENDING'" title="Download Amortization">
-            <i class="fe fe-download"></i>
-          </button>
-        </div>
-
-        <button class="btn btn-primary flex-1" [routerLink]="['/dashboard/insurance/client/file-claim', p.id]">
-          <i class="fe fe-alert-circle"></i> File Claim
-        </button>
-      </div>
-
+  @if (isLoading) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Syncing your portfolio...</p>
     </div>
-  </div>
+  } @else if (policies.length === 0) {
+    <div class="empty-state glass-panel">
+      <app-forsa-icon name="layout-dashboard" [size]="48" class="empty-ico"></app-forsa-icon>
+      <h3>No Policies Found</h3>
+      <p>You don't have any active policies yet.</p>
+      <button class="btn btn-primary" routerLink="/dashboard/insurance/client/catalog">Explore Plans</button>
+    </div>
+  } @else {
+    <div class="policy-grid">
+      @for (p of policies; track p.id) {
+        <div class="policy-card glass-panel" [class.signed]="p.clientSignature">
+          <div class="card-glow"></div>
+          
+          <div class="card-header">
+            <div class="header-main">
+              <h3 class="product-name">{{ p.insuranceProduct?.productName || 'Custom Policy' }}</h3>
+              <span class="policy-num">REF: {{ p.policyNumber || 'Pending' }}</span>
+            </div>
+            <div class="status-wrap">
+              <span class="status-badge" [attr.data-status]="p.status | lowercase">{{ p.status }}</span>
+            </div>
+          </div>
 
-  <!-- Global Chatbot Instance -->
+          <div class="card-body">
+            <div class="metric-row">
+              <div class="metric">
+                <span class="label">Total Coverage</span>
+                <span class="value">{{ p.coverageLimit | number }} <small>TND</small></span>
+              </div>
+              <div class="metric highlight">
+                <span class="label">Monthly Premium</span>
+                <span class="value">{{ p.periodicPaymentAmount | number:'1.2-2' }} <small>TND</small></span>
+              </div>
+            </div>
+
+            <div class="info-list">
+              <div class="info-item">
+                <app-forsa-icon name="history" [size]="14"></app-forsa-icon>
+                <span>Valid from <strong>{{ p.startDate | date:'mediumDate' }}</strong></span>
+              </div>
+              <div class="info-item">
+                <app-forsa-icon name="clock" [size]="14"></app-forsa-icon>
+                <span>Renewal: <strong>{{ p.endDate | date:'mediumDate' }}</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-actions">
+            <!-- Documents Group -->
+            <div class="btn-group">
+              <button class="btn-action" (click)="viewContract(p)" [disabled]="!p.id || p.status === 'PENDING'" title="View Contract">
+                <app-forsa-icon name="shield-check" [size]="16"></app-forsa-icon>
+                <span>Contract</span>
+              </button>
+              <button class="btn-action" (click)="viewAmortization(p)" [disabled]="!p.id || p.status === 'PENDING'" title="View Schedule">
+                <app-forsa-icon name="eye" [size]="16"></app-forsa-icon>
+                <span>Schedule</span>
+              </button>
+            </div>
+            
+            <div class="footer-primary">
+              @if (!p.clientSignature && p.status === 'ACTIVE') {
+                <button class="btn btn-sign" (click)="openSignModal(p)">
+                  <app-forsa-icon name="pencil" [size]="16"></app-forsa-icon> Sign Required
+                </button>
+              } @else {
+                <button class="btn btn-claim" 
+                        [routerLink]="['/dashboard/insurance/client/file-claim', p.id]"
+                        [disabled]="p.status !== 'ACTIVE'">
+                  <app-forsa-icon name="alert-circle" [size]="16"></app-forsa-icon> File Claim
+                </button>
+              }
+            </div>
+          </div>
+
+          @if (p.clientSignature) {
+            <div class="signed-indicator">
+              <app-forsa-icon name="check-circle-2" [size]="12"></app-forsa-icon> Digitally Signed
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Signing Modal Overlay -->
+  @if (showSignatureUI) {
+    <div class="sig-modal-overlay" (click)="showSignatureUI = false">
+      <div class="sig-modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Confirm Your Identity & Sign</h3>
+          <button class="close-btn" (click)="showSignatureUI = false">&times;</button>
+        </div>
+        <app-forsa-signature (onConfirm)="handleSign($event)"></app-forsa-signature>
+      </div>
+    </div>
+  }
+
   <app-policy-chat *ngIf="selectedPolicyIdForChat" [policyId]="selectedPolicyIdForChat"></app-policy-chat>
 </div>

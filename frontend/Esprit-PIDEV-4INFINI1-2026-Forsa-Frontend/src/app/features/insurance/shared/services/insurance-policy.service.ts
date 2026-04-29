@@ -69,4 +69,8 @@ export class InsurancePolicyService {
     const url = `${environment.apiBaseUrl}/policy-pdf/view/${policyId}`;
     return this.http.get(url, { responseType: 'blob' });
   }
+
+  signPolicy(policyId: number, signature: string): Observable<InsurancePolicy> {
+    return this.http.put<InsurancePolicy>(`${this.base}/sign-policy/${policyId}`, signature);
+  }
 }

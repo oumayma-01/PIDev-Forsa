@@ -37,6 +37,9 @@ export interface InsurancePolicy {
   numberOfPayments?: number;
   effectiveAnnualRate?: number;
   calculationNotes?: string;
+  clientSignature?: string;
+  adminStamp?: string;
+  signedAt?: string;
   // Relations
   insuranceProduct?: InsuranceProduct;
   premiumPayments?: PremiumPayment[];
