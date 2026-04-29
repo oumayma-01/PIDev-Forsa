@@ -3,7 +3,7 @@
   max-width: 1200px;
   margin: 0 auto;
   font-family: 'Inter', sans-serif;
-  color: #334155;
+  color: var(--color-foreground);
 }
 
 .header-section {
@@ -21,14 +21,14 @@
   gap: 0.5rem;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: var(--color-muted-foreground);
   cursor: pointer;
   font-weight: 500;
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
   transition: all 0.2s;
 }
-.back-btn:hover { background: #e2e8f0; color: #0f172a; }
+.back-btn:hover { background: var(--color-accent); color: var(--color-foreground); }
 
 .application-grid {
   display: grid;
@@ -42,23 +42,23 @@
 }
 
 .glass-panel {
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--color-card);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--color-border);
   border-radius: 1rem;
   padding: 2rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 .panel-title {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--color-foreground);
   margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--color-border);
   padding-bottom: 0.75rem;
 }
 
@@ -76,14 +76,16 @@
   display: block;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #475569;
+  color: var(--color-muted-foreground);
   margin-bottom: 0.5rem;
 }
 
 .form-control {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--color-border);
+  background: var(--color-input);
+  color: var(--color-foreground);
   border-radius: 0.5rem;
   font-family: inherit;
   font-size: 1rem;
@@ -92,8 +94,8 @@
 
 .form-control:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--forsa-teal);
+  box-shadow: 0 0 0 3px var(--color-accent);
 }
 
 .checkbox-group {
@@ -113,8 +115,8 @@
 .empty-quote {
   text-align: center;
   padding: 4rem 2rem;
-  color: #64748b;
-  border: 2px dashed #cbd5e1;
+  color: var(--color-muted-foreground);
+  border: 2px dashed var(--color-border);
 }
 
 .empty-icon {
@@ -177,11 +179,11 @@
 .schedule-table td {
   padding: 0.75rem;
   text-align: left;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .schedule-table th {
-  color: #64748b;
+  color: var(--color-muted-foreground);
   font-weight: 600;
 }
 
@@ -234,15 +236,15 @@
   display: flex;
   flex-direction: column;
   padding: 0.75rem 1rem;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--color-secondary);
+  border: 1px solid var(--color-border);
   border-radius: 0.5rem;
 }
 
 .info-value {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--color-foreground);
 }
 
 .info-note {

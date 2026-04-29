@@ -30,9 +30,8 @@ public class PremiumPayment {
 
     // Relationship: Many Payments belong to One Policy
     @ManyToOne
-    @JoinColumn(name = "policy_id", nullable = true)   // join w policy
-    @JsonBackReference ("policy-payments") // Jackson will stop here and NOT go back to the policy
-    @JsonIgnoreProperties("premiumPayments")   // prevent going back
+    @JoinColumn(name = "policy_id", nullable = false)
+    @JsonIgnoreProperties("premiumPayments")
     private InsurancePolicy insurancePolicy;
 
     // Getters and Setters

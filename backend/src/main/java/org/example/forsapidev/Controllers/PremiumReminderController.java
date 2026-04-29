@@ -16,19 +16,19 @@ public class PremiumReminderController {
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/send-upcoming-reminders")
     public String sendUpcomingReminders() {
-        premiumReminderService.sendUpcomingPaymentReminders();
-        return "Upcoming payment reminders sent successfully!";
+        premiumReminderService.sendConsolidatedReminders();
+        return "Consolidated payment reminders sent successfully!";
     }
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/mark-overdue")
     public String markOverduePayments() {
-        premiumReminderService.markOverduePayments();
-        return "Overdue payments marked successfully!";
+        premiumReminderService.markNewOverduePayments();
+        return "Overdue payments marked and processed successfully!";
     }
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/run-full-check")
     public String runFullCheck() {
-        premiumReminderService.checkAndSendReminders();
-        return "Full reminder check completed successfully!";
+        premiumReminderService.checkAndProcessPayments();
+        return "Full consolidated reminder check completed successfully!";
     }
 }

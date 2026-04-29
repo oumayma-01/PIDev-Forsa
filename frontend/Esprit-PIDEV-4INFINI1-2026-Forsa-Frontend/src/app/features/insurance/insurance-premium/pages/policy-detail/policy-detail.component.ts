@@ -9,11 +9,12 @@ import { InsurancePolicyService } from '../../../shared/services/insurance-polic
 import { InsurancePolicy } from '../../../shared/models/insurance.models';
 import { PolicyStatus } from '../../../shared/enums/insurance.enums';
 import { AuthService } from '../../../../../core/services/auth.service';
+import { DigitalSignatureComponent } from '../../../../../shared/ui/forsa-signature/forsa-signature.component';
 
 @Component({
   selector: 'app-policy-detail',
   standalone: true,
-  imports: [RouterLink, DatePipe, DecimalPipe, ForsaBadgeComponent, ForsaButtonComponent, ForsaCardComponent, ForsaIconComponent],
+  imports: [RouterLink, DatePipe, DecimalPipe, ForsaBadgeComponent, ForsaButtonComponent, ForsaCardComponent, ForsaIconComponent, DigitalSignatureComponent],
   templateUrl: './policy-detail.component.html',
   styleUrl: './policy-detail.component.css',
 })
@@ -25,7 +26,10 @@ export class PolicyDetailComponent implements OnInit {
   policy = signal<InsurancePolicy | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
-  downloadingPdf = signal(false);
+  downloadingAmortization = signal(false);
+  downloadingContract = signal(false);
+  showSignatureUI = signal(false);
+  signing = signal(false);
 
   get isAdmin(): boolean {
     return this.auth.currentUser()?.roles.includes('ROLE_ADMIN') || false;
@@ -44,23 +48,23 @@ export class PolicyDetailComponent implements OnInit {
     });
   }
 
-  downloadPdf(): void {
+  downloadAmortization(): void {
     const p = this.policy();
     if (!p?.id) return;
-    this.downloadingPdf.set(true);
+    this.downloadingAmortization.set(true);
     this.svc.downloadAmortizationPdf(p.id).subscribe({
       next: (blob) => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url; a.download = `Amortization_Policy_${p.id}.pdf`; a.click();
+        a.href = url; a.download = `Amortization_Schedule_${p.policyNumber}.pdf`; a.click();
         URL.revokeObjectURL(url);
-        this.downloadingPdf.set(false);
+        this.downloadingAmortization.set(false);
       },
-      error: () => { alert('PDF download failed.'); this.downloadingPdf.set(false); },
+      error: () => { alert('Amortization download failed.'); this.downloadingAmortization.set(false); },
     });
   }
 
-  viewPdf(): void {
+  viewAmortization(): void {
     const p = this.policy();
     if (!p?.id) return;
     this.svc.viewAmortizationPdf(p.id).subscribe({
@@ -68,8 +72,89 @@ export class PolicyDetailComponent implements OnInit {
         const url = URL.createObjectURL(blob);
         window.open(url, '_blank');
       },
-      error: () => { alert('PDF view failed.'); },
+      error: () => { alert('Amortization view failed.'); },
     });
+  }
+
+  downloadContract(): void {
+    const p = this.policy();
+    if (!p?.id) return;
+    this.downloadingContract.set(true);
+    this.svc.downloadPolicyContract(p.id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `Contract_${p.policyNumber}.pdf`; a.click();
+        URL.revokeObjectURL(url);
+        this.downloadingContract.set(false);
+      },
+      error: () => { alert('Contract download failed.'); this.downloadingContract.set(false); },
+    });
+  }
+
+  viewContract(): void {
+    const p = this.policy();
+    if (!p?.id) return;
+    this.svc.viewPolicyContract(p.id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+      },
+      error: () => { alert('Contract view failed.'); },
+    });
+  }
+
+  handleSign(signature: string): void {
+    const p = this.policy();
+    if (!p?.id) return;
+    this.signing.set(true);
+    this.svc.signPolicy(p.id, signature).subscribe({
+      next: (updated) => {
+        this.policy.set(updated);
+        this.signing.set(false);
+        this.showSignatureUI.set(false);
+        alert('Contract signed successfully!');
+      },
+      error: (e) => {
+        alert('Signing failed: ' + (e.error?.message ?? e.message));
+        this.signing.set(false);
+      }
+    });
+  }
+
+  adminAutoSign(): void {
+    const p = this.policy();
+    if (!p?.id) return;
+    
+    // Create a digital stamp image using a temporary canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = 300;
+    canvas.height = 150;
+    const ctx = canvas.getContext('2d')!;
+    
+    // Stamp background (circle/oval)
+    ctx.strokeStyle = '#003399';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.ellipse(150, 75, 140, 70, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    // Company name
+    ctx.font = 'bold 20px Arial';
+    ctx.fillStyle = '#003399';
+    ctx.textAlign = 'center';
+    ctx.fillText('FORSA INSURANCE', 150, 55);
+    
+    // Signer info
+    ctx.font = '14px Arial';
+    ctx.fillText('OFFICIALLY STAMPED', 150, 80);
+    ctx.fillText(this.auth.currentUser()?.username.toUpperCase() ?? 'ADMIN', 150, 100);
+    
+    // Date
+    ctx.font = 'italic 12px Arial';
+    ctx.fillText(new Date().toLocaleDateString(), 150, 125);
+    
+    this.handleSign(canvas.toDataURL('image/png'));
   }
 
   statusTone(s?: PolicyStatus): 'success' | 'warning' | 'danger' | 'info' | 'muted' {
