@@ -137,6 +137,18 @@
   border-radius: 9999px;
   background: var(--color-destructive);
   border: 2px solid var(--color-background);
+  display: none;
+}
+
+.dot.has-notif {
+  display: block;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 4px rgba(239, 68, 68, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }
 
 .notif-count {
@@ -152,14 +164,153 @@
   padding: 0 0.25rem;
 }
 
-.notif-inline {
+.notification-container {
+  position: relative;
+}
+
+.notification-dropdown {
+  position: absolute;
+  right: -80px;
+  top: calc(100% + 0.5rem);
+  width: 320px;
+  max-height: 400px;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.notification-header {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: color-mix(in oklab, var(--color-muted) 30%, transparent);
+}
+
+.notification-header h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.clear-all {
   font-size: 0.75rem;
+  color: var(--color-primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+}
+
+.clear-all:hover {
+  background: color-mix(in oklab, var(--color-primary) 10%, transparent);
+}
+
+.notification-list {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.empty-state {
+  padding: 2rem;
+  text-align: center;
+  color: var(--color-muted-foreground);
+}
+
+.empty-state p {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.notification-item {
+  padding: 0.75rem 1rem;
+  display: flex;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  transition: background 0.2s;
+  position: relative;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-item:hover {
+  background: color-mix(in oklab, var(--color-muted) 40%, transparent);
+}
+
+.notif-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.complaint .notif-icon {
+  background: color-mix(in oklab, var(--color-primary) 15%, transparent);
+  color: var(--color-primary);
+}
+
+.gift .notif-icon {
+  background: #fef3c7;
+  color: #d97706;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.notif-content {
+  flex: 1;
+}
+
+.notif-message {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
   color: var(--color-foreground);
-  background: color-mix(in oklab, var(--color-primary) 14%, transparent);
-  border: 1px solid color-mix(in oklab, var(--color-primary) 35%, transparent);
-  border-radius: 0.5rem;
-  padding: 0.3rem 0.5rem;
-  white-space: nowrap;
+}
+
+.notif-remove {
+  color: var(--color-muted-foreground);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.notification-item:hover .notif-remove {
+  opacity: 1;
+}
+
+.notif-remove:hover {
+  background: color-mix(in oklab, var(--color-destructive) 10%, transparent);
+  color: var(--color-destructive);
+}
+
+.gift {
+  background: color-mix(in oklab, #fef3c7 20%, transparent);
 }
 
 .divider {
