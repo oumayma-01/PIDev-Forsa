@@ -89,10 +89,12 @@
         <div class="card-pad">
           <h4 class="section-title">Specific Details ({{ c.claimSubtype | titlecase }})</h4>
           <div class="stat-grid">
-            <div class="stat" *ngFor="let field of parsedDynamicData">
-              <span class="lbl">{{ field.key }}</span>
-              <span class="val">{{ field.value }}</span>
-            </div>
+            @for (field of parsedDynamicData; track field.key) {
+              <div class="stat">
+                <span class="lbl">{{ field.key }}</span>
+                <span class="val">{{ field.value }}</span>
+              </div>
+            }
           </div>
         </div>
       </app-forsa-card>

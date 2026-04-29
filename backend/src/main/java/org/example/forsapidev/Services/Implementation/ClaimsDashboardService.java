@@ -87,13 +87,14 @@ public class ClaimsDashboardService implements IClaimsDashboardService {
 
         for (int i = 0; i < limit; i++) {
             Object[] row = topClaimsData.get(i);
-            String claimNumber = row[0] != null ? row[0].toString() : "N/A";
-            String policyNumber = row[1] != null ? row[1].toString() : "N/A";
-            Double amount = row[2] != null ? ((Number) row[2]).doubleValue() : 0.0;
-            String status = row[3] != null ? row[3].toString() : "UNKNOWN";
-            Date claimDate = row[4] != null ? (Date) row[4] : new Date();
+            Long id = row[0] != null ? ((Number) row[0]).longValue() : 0L;
+            String claimNumber = row[1] != null ? row[1].toString() : "N/A";
+            String policyNumber = row[2] != null ? row[2].toString() : "N/A";
+            Double amount = row[3] != null ? ((Number) row[3]).doubleValue() : 0.0;
+            String status = row[4] != null ? row[4].toString() : "UNKNOWN";
+            Date claimDate = row[5] != null ? (Date) row[5] : new Date();
 
-            topClaims.add(new TopClaimDTO(claimNumber, policyNumber, amount, status, claimDate));
+            topClaims.add(new TopClaimDTO(id, claimNumber, policyNumber, amount, status, claimDate));
         }
         dashboard.setTopClaims(topClaims);
 

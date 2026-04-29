@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.example.forsapidev.DTO.InsurancePolicyApplicationDTO;
 import org.example.forsapidev.Repositories.UserRepository;
 import org.example.forsapidev.Services.Interfaces.IAmortizationPdfService;
+import org.example.forsapidev.Services.Interfaces.IPolicyPdfService;
 import org.example.forsapidev.entities.InsuranceManagement.InsurancePolicy;
 import org.example.forsapidev.Services.Interfaces.IInsurancePolicy;
 import lombok.AllArgsConstructor;
@@ -35,6 +36,7 @@ public class InsurancePolicyController {
     IInsurancePolicy insurancePolicyService;
     UserRepository userRepository;
     private final IAmortizationPdfService amortizationPdfService;
+    private final IPolicyPdfService policyPdfService;
 
     /**
      * CLIENT: Submit policy application
@@ -153,6 +155,24 @@ public class InsurancePolicyController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(("Error generating PDF: " + e.getMessage()).getBytes());
+        }
+    }
+
+    @GetMapping("/download-contract/{policy-id}")
+    @PreAuthorize("hasAnyRole('CLIENT', 'AGENT', 'ADMIN')")
+    public ResponseEntity<byte[]> downloadPolicyContract(@PathVariable("policy-id") Long policyId) {
+        try {
+            ByteArrayOutputStream pdfStream = policyPdfService.generatePolicyPdf(policyId);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "Insurance_Contract_Policy_" + policyId + ".pdf");
+
+            return new ResponseEntity<>(pdfStream.toByteArray(), headers, HttpStatus.OK);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(("Error generating Contract PDF: " + e.getMessage()).getBytes());
         }
     }
 }

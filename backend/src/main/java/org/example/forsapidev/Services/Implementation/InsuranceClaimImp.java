@@ -30,8 +30,9 @@ public class InsuranceClaimImp implements IInsuranceClaim {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public InsuranceClaim retrieveInsuranceClaim(Long claimId) {
-        return insuranceClaimRepository.findById(claimId).get();
+        return insuranceClaimRepository.findById(claimId).orElse(null);
     }
 
     @Override
@@ -66,9 +67,13 @@ public class InsuranceClaimImp implements IInsuranceClaim {
 
     private final String uploadDir = "uploads/claims";
 
+    private Path getUploadPath() {
+        return Path.of(uploadDir).toAbsolutePath().normalize();
+    }
+
     @Override
     public String uploadAttachment(org.springframework.web.multipart.MultipartFile file) throws IOException {
-        Path root = Path.of(System.getProperty("user.dir")).resolve(uploadDir).normalize();
+        Path root = getUploadPath();
         if (!Files.exists(root)) {
             Files.createDirectories(root);
         }
@@ -81,11 +86,13 @@ public class InsuranceClaimImp implements IInsuranceClaim {
     @Override
     public org.springframework.core.io.Resource getAttachment(String fileName) {
         try {
-            Path file = Path.of(System.getProperty("user.dir")).resolve(uploadDir).resolve(fileName).normalize();
+            Path file = getUploadPath().resolve(fileName).normalize();
             org.springframework.core.io.Resource resource = new org.springframework.core.io.UrlResource(file.toUri());
             if (resource.exists() || resource.isReadable()) {
                 return resource;
             } else {
+                // Log the path for debugging
+                System.out.println("❌ Could not find file at: " + file.toAbsolutePath());
                 throw new RuntimeException("Could not read file: " + fileName);
             }
         } catch (java.net.MalformedURLException e) {

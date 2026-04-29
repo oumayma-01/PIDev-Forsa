@@ -25,7 +25,8 @@ export class PolicyDetailComponent implements OnInit {
   policy = signal<InsurancePolicy | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
-  downloadingPdf = signal(false);
+  downloadingAmortization = signal(false);
+  downloadingContract = signal(false);
 
   get isAdmin(): boolean {
     return this.auth.currentUser()?.roles.includes('ROLE_ADMIN') || false;
@@ -44,23 +45,23 @@ export class PolicyDetailComponent implements OnInit {
     });
   }
 
-  downloadPdf(): void {
+  downloadAmortization(): void {
     const p = this.policy();
     if (!p?.id) return;
-    this.downloadingPdf.set(true);
+    this.downloadingAmortization.set(true);
     this.svc.downloadAmortizationPdf(p.id).subscribe({
       next: (blob) => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url; a.download = `Amortization_Policy_${p.id}.pdf`; a.click();
+        a.href = url; a.download = `Amortization_Schedule_${p.policyNumber}.pdf`; a.click();
         URL.revokeObjectURL(url);
-        this.downloadingPdf.set(false);
+        this.downloadingAmortization.set(false);
       },
-      error: () => { alert('PDF download failed.'); this.downloadingPdf.set(false); },
+      error: () => { alert('Amortization download failed.'); this.downloadingAmortization.set(false); },
     });
   }
 
-  viewPdf(): void {
+  viewAmortization(): void {
     const p = this.policy();
     if (!p?.id) return;
     this.svc.viewAmortizationPdf(p.id).subscribe({
@@ -68,7 +69,35 @@ export class PolicyDetailComponent implements OnInit {
         const url = URL.createObjectURL(blob);
         window.open(url, '_blank');
       },
-      error: () => { alert('PDF view failed.'); },
+      error: () => { alert('Amortization view failed.'); },
+    });
+  }
+
+  downloadContract(): void {
+    const p = this.policy();
+    if (!p?.id) return;
+    this.downloadingContract.set(true);
+    this.svc.downloadPolicyContract(p.id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `Contract_${p.policyNumber}.pdf`; a.click();
+        URL.revokeObjectURL(url);
+        this.downloadingContract.set(false);
+      },
+      error: () => { alert('Contract download failed.'); this.downloadingContract.set(false); },
+    });
+  }
+
+  viewContract(): void {
+    const p = this.policy();
+    if (!p?.id) return;
+    this.svc.viewPolicyContract(p.id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+      },
+      error: () => { alert('Contract view failed.'); },
     });
   }
 

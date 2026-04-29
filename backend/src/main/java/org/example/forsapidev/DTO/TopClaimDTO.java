@@ -3,20 +3,26 @@ package org.example.forsapidev.DTO;
 import java.util.Date;
 
 public class TopClaimDTO {
+    private Long id;
     private String claimNumber;
     private String policyNumber;
     private Double claimAmount;
     private String status;
     private Date claimDate;
 
-    public TopClaimDTO(String claimNumber, String policyNumber, Double claimAmount,
+    public TopClaimDTO(Long id, String claimNumber, String policyNumber, Double claimAmount,
                        String status, Date claimDate) {
+        this.id = id;
         this.claimNumber = claimNumber;
         this.policyNumber = policyNumber;
         this.claimAmount = claimAmount;
         this.status = status;
         this.claimDate = claimDate;
     }
+
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
     // Getters and Setters
     public String getClaimNumber() { return claimNumber; }

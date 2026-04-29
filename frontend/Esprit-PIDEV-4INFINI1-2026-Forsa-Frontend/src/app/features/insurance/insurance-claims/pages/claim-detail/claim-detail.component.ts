@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { timeout } from 'rxjs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { ForsaBadgeComponent } from '../../../../../shared/ui/forsa-badge/forsa-badge.component';
@@ -26,11 +27,32 @@ export class ClaimDetailComponent implements OnInit {
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
-    if (!id) { this.error.set('No ID provided'); this.loading.set(false); return; }
-    this.svc.getById(+id).subscribe({
-      next: (c) => { this.claim.set(c); this.loading.set(false); },
-      error: (e) => { this.error.set(e.message ?? 'Failed to load.'); this.loading.set(false); },
-    });
+    if (!id) {
+      this.error.set('No ID provided');
+      this.loading.set(false);
+      return;
+    }
+
+    // Add a 10s timeout to prevent endless loading in case of network/backend hang
+    this.svc.getById(+id)
+      .pipe(
+        timeout(10000)
+      )
+      .subscribe({
+        next: (c) => {
+          if (!c) {
+            this.error.set('Claim not found.');
+          } else {
+            this.claim.set(c);
+          }
+          this.loading.set(false);
+        },
+        error: (e) => {
+          console.error('Error loading claim:', e);
+          this.error.set(e.name === 'TimeoutError' ? 'Request timed out. Please try again.' : (e.message ?? 'Failed to load claim details.'));
+          this.loading.set(false);
+        },
+      });
   }
 
   statusTone(s?: ClaimStatus): 'success' | 'warning' | 'danger' | 'info' | 'muted' {

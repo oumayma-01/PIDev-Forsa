@@ -5,13 +5,25 @@
       <app-forsa-button variant="outline">Back</app-forsa-button>
     </a>
     @if (policy()) {
-      <app-forsa-button variant="outline" (click)="viewPdf()">
-        <app-forsa-icon name="eye" [size]="16" /> View Schedule
-      </app-forsa-button>
-      <app-forsa-button variant="outline" [disabled]="downloadingPdf()" (click)="downloadPdf()">
-        @if (downloadingPdf()) { <app-forsa-icon name="history" [size]="16" class="spin" /> } @else { <app-forsa-icon name="download" [size]="16" /> }
-        Download
-      </app-forsa-button>
+      <div class="pdf-actions">
+        <!-- Contract PDF -->
+        <app-forsa-button variant="outline" (click)="viewContract()" title="View Contract">
+          <app-forsa-icon name="shield-check" [size]="16" /> View Contract
+        </app-forsa-button>
+        <app-forsa-button variant="outline" [disabled]="downloadingContract()" (click)="downloadContract()" title="Download Contract">
+          @if (downloadingContract()) { <app-forsa-icon name="history" [size]="16" class="spin" /> } @else { <app-forsa-icon name="download" [size]="16" /> }
+          Download Contract
+        </app-forsa-button>
+
+        <!-- Amortization Schedule -->
+        <app-forsa-button variant="outline" (click)="viewAmortization()" title="View Schedule">
+          <app-forsa-icon name="eye" [size]="16" /> View Schedule
+        </app-forsa-button>
+        <app-forsa-button variant="outline" [disabled]="downloadingAmortization()" (click)="downloadAmortization()" title="Download Schedule">
+          @if (downloadingAmortization()) { <app-forsa-icon name="history" [size]="16" class="spin" /> } @else { <app-forsa-icon name="download" [size]="16" /> }
+          Download
+        </app-forsa-button>
+      </div>
     }
   </div>
 </div>

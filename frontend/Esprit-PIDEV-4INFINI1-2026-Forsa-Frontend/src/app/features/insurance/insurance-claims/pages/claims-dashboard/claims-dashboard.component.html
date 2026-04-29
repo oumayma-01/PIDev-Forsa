@@ -2,19 +2,24 @@
   <div>
     <h2>Insurance Claims Analytics</h2>
     <p>Real-time insights and distribution analysis for claims management.</p>
+    <div class="status-indicator">
+      <div class="dot" [class.pulse]="loading()"></div>
+      <small class="last-update">Live Updates Active • Last sync: {{ lastUpdated() | date:'HH:mm:ss' }}</small>
+    </div>
   </div>
   <div class="head-actions">
-    <app-forsa-button variant="outline" (click)="loadData()">
+    <app-forsa-button variant="outline" (click)="loadData()" [disabled]="loading()">
       <app-forsa-icon name="history" [size]="14" [class.spin]="loading()" /> Refresh
     </app-forsa-button>
-    <a routerLink="/dashboard/insurance/claims-analytics">
-      <app-forsa-button variant="outline"><app-forsa-icon name="layout-dashboard" [size]="16" /> Analytics</app-forsa-button>
+    <a routerLink="/dashboard/insurance/claims">
+      <app-forsa-button variant="outline"><app-forsa-icon name="layout-dashboard" [size]="16" /> All Claims</app-forsa-button>
     </a>
     <a routerLink="/dashboard/insurance/claims/new">
-      <app-forsa-button>Manage All Claims</app-forsa-button>
+      <app-forsa-button><app-forsa-icon name="plus" [size]="16" /> New Claim</app-forsa-button>
     </a>
   </div>
 </div>
+    <div *ngIf="showRefreshMessage()" class="refresh-toast">Dashboard refreshed</div>
 
 @if (loading() && !data()) {
   <div class="state-box">
@@ -73,14 +78,14 @@
 
   <!-- Charts Grid -->
   <div class="chart-layout">
-    <app-forsa-card class="line-chart-area">
+    <app-forsa-card class="line-chart-area interactive-card">
       <div class="card-head"><h4>Monthly Claims Trend</h4></div>
       <div class="chart-box">
         <canvas #trendChart></canvas>
       </div>
     </app-forsa-card>
 
-    <app-forsa-card class="pie-chart-area">
+    <app-forsa-card class="pie-chart-area interactive-card">
       <div class="card-head"><h4>Claims by Status</h4></div>
       <div class="chart-box">
         <canvas #statusChart></canvas>
@@ -89,7 +94,7 @@
   </div>
 
   <div class="chart-layout second-row">
-    <app-forsa-card class="bar-chart-area">
+    <app-forsa-card class="bar-chart-area interactive-card">
       <div class="card-head"><h4>Volume by Insurance Type</h4></div>
       <div class="chart-box">
         <canvas #typeChart></canvas>
@@ -108,7 +113,7 @@
 
   <!-- Top Claims Table -->
   <div class="table-section">
-    <app-forsa-card [overflowHidden]="true">
+    <app-forsa-card [overflowHidden]="true" class="interactive-card">
       <div class="card-head table-head">
         <h4>Top 10 Highest Value Claims</h4>
         <app-forsa-badge tone="info">{{ data()?.topClaims?.length }} Entry</app-forsa-badge>
@@ -126,8 +131,8 @@
             </tr>
           </thead>
           <tbody>
-            @for (c of data()?.topClaims; track c.claimNumber) {
-              <tr>
+            @for (c of data()?.topClaims; track c.id) {
+              <tr class="table-row">
                 <td class="td-mono">{{ c.claimNumber }}</td>
                 <td class="td-mono">{{ c.policyNumber }}</td>
                 <td>{{ c.claimDate | date:'dd MMM yyyy' }}</td>
@@ -137,10 +142,21 @@
                     {{ c.status }}
                   </app-forsa-badge>
                 </td>
-                <td>
-                   <app-forsa-button variant="ghost" size="sm">
-                     <app-forsa-icon name="eye" [size]="14" />
-                   </app-forsa-button>
+                <td class="td-actions">
+                  <div class="action-buttons">
+                    <a [routerLink]="['/dashboard/insurance/claims', c.id]" title="View Details">
+                      <app-forsa-button variant="ghost" size="sm">
+                        <app-forsa-icon name="eye" [size]="14" />
+                      </app-forsa-button>
+                    </a>
+                    @if (canEdit()) {
+                      <a [routerLink]="['/dashboard/insurance/claims', c.id, 'edit']" title="Edit Claim">
+                        <app-forsa-button variant="ghost" size="sm" class="btn-edit">
+                          <app-forsa-icon name="pencil" [size]="14" />
+                        </app-forsa-button>
+                      </a>
+                    }
+                  </div>
                 </td>
               </tr>
             }
