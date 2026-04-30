@@ -18,6 +18,7 @@ export interface MonthlyClaimTrendDTO {
 }
 
 export interface TopClaimDTO {
+  id: number;
   claimNumber: string;
   policyNumber: string;
   claimAmount: number;

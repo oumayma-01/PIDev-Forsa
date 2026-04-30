@@ -357,7 +357,7 @@ public class AccountServiceImpl implements AccountService {
                 if (interest.compareTo(BigDecimal.ZERO) > 0) {
                     wallet.setBalance(wallet.getBalance().add(interest));
                     walletRepo.save(wallet);
-                    increaseVault(interest);
+                    decreaseVault(interest); // ✅ bank pays the client — vault decreases
                     saveTransaction(wallet, interest, TransactionType.INTEREST);
                     logActivity(wallet, "Monthly interest applied: " + interest);
                 }

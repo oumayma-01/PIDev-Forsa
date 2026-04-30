@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { ProductComparisonService } from '../../shared/services/product-comparison.service';
 import { InsuranceProductComparisonDTO } from '../../shared/models/insurance.models';
+import { FormsModule } from '@angular/forms';
+import { ForsaIconComponent } from '../../../../shared/ui/forsa-icon/forsa-icon.component';
 
 @Component({
   selector: 'app-client-product-catalog',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule, ForsaIconComponent],
   templateUrl: './client-product-catalog.component.html',
   styleUrls: ['./client-product-catalog.component.css']
 })
@@ -20,6 +22,28 @@ export class ClientProductCatalogComponent implements OnInit {
   
   isLoading = true;
   comparisonResult: any = null;
+
+  // Filters
+  searchTerm = '';
+  selectedType = '';
+  minPrice: number | null = null;
+  maxPrice: number | null = null;
+
+  get filteredProducts() {
+    return this.products.filter(p => {
+      const matchesSearch = p.productName?.toLowerCase().includes(this.searchTerm.toLowerCase()) || 
+                           p.description?.toLowerCase().includes(this.searchTerm.toLowerCase());
+      const matchesType = !this.selectedType || p.policyType === this.selectedType;
+      const matchesMin = this.minPrice === null || (p.premiumAmount ?? 0) >= this.minPrice;
+      const matchesMax = this.maxPrice === null || (p.premiumAmount ?? 0) <= this.maxPrice;
+      
+      return matchesSearch && matchesType && matchesMin && matchesMax;
+    });
+  }
+
+  get productTypes() {
+    return Array.from(new Set(this.products.map(p => p.policyType).filter(Boolean)));
+  }
 
   ngOnInit() {
     this.loadProducts();

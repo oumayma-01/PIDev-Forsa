@@ -4,11 +4,12 @@ import { RouterModule, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { InsuranceClaimService } from '../../shared/services/insurance-claim.service';
 import { InsuranceClaim } from '../../shared/models/insurance.models';
+import { ForsaIconComponent } from '../../../../shared/ui/forsa-icon/forsa-icon.component';
 
 @Component({
   selector: 'app-client-my-claims',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, ForsaIconComponent, ReactiveFormsModule],
   templateUrl: './client-my-claims.component.html',
   styleUrls: ['./client-my-claims.component.css']
 })
@@ -93,6 +94,22 @@ export class ClientMyClaimsComponent implements OnInit {
         this.isSubmitting = false;
         alert('Failed to submit claim.');
       }
+    });
+  }
+
+  downloadFile(fileName: string) {
+    this.claimService.downloadAttachment(fileName).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+      },
+      error: (err) => console.error('Download failed', err)
     });
   }
 }

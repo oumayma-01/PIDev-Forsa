@@ -15,6 +15,32 @@
     <a routerLink="/dashboard/insurance/payments/new"><app-forsa-button>Record First Payment</app-forsa-button></a>
   </div>
 } @else {
+  <div class="filters-panel glass-panel">
+    <div class="search-group">
+      <app-forsa-icon name="credit-card" [size]="18" />
+      <input 
+        type="text" 
+        [ngModel]="searchTerm()" 
+        (ngModelChange)="searchTerm.set($event)" 
+        placeholder="Search by Policy Number..."
+        class="filter-input"
+      />
+    </div>
+    <div class="filter-group">
+      <label>Payment Status:</label>
+      <select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)" class="filter-select">
+        <option value="ALL">All Payments</option>
+        <option [value]="PaymentStatus.PAID">Paid</option>
+        <option [value]="PaymentStatus.PENDING">Pending</option>
+        <option [value]="PaymentStatus.OVERDUE">Overdue</option>
+        <option [value]="PaymentStatus.CANCELLED">Cancelled</option>
+      </select>
+    </div>
+    <div class="filter-stats">
+      <span>Showing <strong>{{ filteredPayments().length }}</strong> of {{ payments().length }} installments</span>
+    </div>
+  </div>
+
   <app-forsa-card [overflowHidden]="true">
     <div class="table-wrap">
       <table class="table">
@@ -31,7 +57,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (p of payments(); track p.id) {
+          @for (p of filteredPayments(); track p.id) {
             <tr>
               <td class="td-mono">#{{ p.id }}</td>
               <td class="td-mono">{{ p.insurancePolicy?.policyNumber ?? '—' }}</td>

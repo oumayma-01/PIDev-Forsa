@@ -35,7 +35,7 @@ public class InsuranceProduct {
 
     // RELATIONSHIP: One Product has Many Policies
     @OneToMany(mappedBy = "insuranceProduct", cascade = CascadeType.ALL)
-    @JsonManagedReference("product-policies")
+    @JsonIgnoreProperties("insuranceProduct")
     private Set<InsurancePolicy> policies;
 
     // CONSTRUCTORS

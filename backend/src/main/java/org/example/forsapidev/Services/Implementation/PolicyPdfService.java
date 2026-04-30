@@ -189,6 +189,18 @@ public class PolicyPdfService implements IPolicyPdfService {
                 yPos -= 40;
 
                 // Signature Area
+                float sigY = yPos - 60;
+                
+                // Admin/Agent Stamp
+                if (policy.getAdminStamp() != null) {
+                    drawSignature(document, contentStream, policy.getAdminStamp(), margin, sigY, 100, 50);
+                }
+                
+                // Client Signature
+                if (policy.getClientSignature() != null) {
+                    drawSignature(document, contentStream, policy.getClientSignature(), pageWidth - 150, sigY, 100, 50);
+                }
+
                 contentStream.setNonStrokingColor(NAVY);
                 contentStream.beginText();
                 contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 10);
@@ -202,13 +214,21 @@ public class PolicyPdfService implements IPolicyPdfService {
                 contentStream.endText();
 
                 contentStream.setStrokingColor(TEXT_GRAY);
-                contentStream.moveTo(margin, yPos - 30);
-                contentStream.lineTo(margin + 120, yPos - 30);
+                contentStream.moveTo(margin, yPos - 65);
+                contentStream.lineTo(margin + 120, yPos - 65);
                 contentStream.stroke();
 
-                contentStream.moveTo(pageWidth - 150, yPos - 30);
-                contentStream.lineTo(pageWidth - margin, yPos - 30);
+                contentStream.moveTo(pageWidth - 150, yPos - 65);
+                contentStream.lineTo(pageWidth - margin, yPos - 65);
                 contentStream.stroke();
+                
+                if (policy.getSignedAt() != null) {
+                    contentStream.beginText();
+                    contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8);
+                    contentStream.newLineAtOffset(margin, yPos - 75);
+                    contentStream.showText("Digitally signed on: " + new SimpleDateFormat("dd/MM/yyyy HH:mm").format(policy.getSignedAt()));
+                    contentStream.endText();
+                }
 
                 // 6. Footer
                 contentStream.setNonStrokingColor(TEXT_GRAY);
@@ -253,5 +273,28 @@ public class PolicyPdfService implements IPolicyPdfService {
         cs.newLineAtOffset(width - margin - 150, y);
         cs.showText(value != null ? value : "N/A");
         cs.endText();
+    }
+
+    private void drawSignature(PDDocument doc, PDPageContentStream cs, String sigData, float x, float y, float width, float height) throws Exception {
+        if (sigData == null || sigData.isEmpty()) return;
+
+        if (sigData.startsWith("data:image")) {
+            try {
+                String base64Image = sigData.split(",")[1];
+                byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject pdImage =
+                    org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject.createFromByteArray(doc, imageBytes, "signature");
+                cs.drawImage(pdImage, x, y, width, height);
+            } catch (Exception e) {
+                System.err.println("Error rendering signature image: " + e.getMessage());
+            }
+        } else {
+            cs.beginText();
+            cs.setFont(new PDType1Font(Standard14Fonts.FontName.TIMES_ITALIC), 14);
+            cs.setNonStrokingColor(new Color(0, 51, 153)); // Dark Blue for signature
+            cs.newLineAtOffset(x, y + 10);
+            cs.showText(sigData);
+            cs.endText();
+        }
     }
 }

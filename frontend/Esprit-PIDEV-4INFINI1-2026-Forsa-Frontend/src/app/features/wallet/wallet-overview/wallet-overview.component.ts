@@ -28,7 +28,9 @@ export class WalletOverviewComponent implements OnInit {
 
   // ── Auth ─────────────────────────────────────────────────────────────────────
   get isAdmin(): boolean { return this.auth.currentUser()?.roles?.includes('ROLE_ADMIN') ?? false; }
-  get isClient(): boolean { return !this.isAdmin; }
+  get isAgent(): boolean { return this.auth.currentUser()?.roles?.includes('ROLE_AGENT') ?? false; }
+  get isClient(): boolean { return this.auth.currentUser()?.roles?.includes('ROLE_CLIENT') ?? false; }
+  get isStaff(): boolean { return this.isAdmin || this.isAgent; }
 
   // ── CLIENT state ─────────────────────────────────────────────────────────────
   account: Account | null = null;
@@ -47,6 +49,15 @@ export class WalletOverviewComponent implements OnInit {
   adminSearchTerm = '';
   adminTypeFilter: '' | 'SAVINGS' | 'INVESTMENT' = '';
   adminStatusFilter: '' | 'ACTIVE' | 'BLOCKED' = '';
+
+  bankVaultTotal: number | null = null;
+  loadingVault = false;
+
+  staffLookupAccountId: number | null = null;
+  staffLookupAccount: Account | null = null;
+  staffLookupStats: WalletStatisticsDTO | null = null;
+  staffLookupActivities: Activity[] = [];
+  loadingStaffLookup = false;
 
   // ── Loading flags ─────────────────────────────────────────────────────────────
   loading = true;
@@ -88,11 +99,57 @@ export class WalletOverviewComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     await this.auth.ensureSessionFromApi();
-    if (this.isAdmin) {
-      this.loadAllAccounts();
-    } else {
-      this.loadClientAccount();
+    if (this.isStaff) {
+      this.loadBankVault();
+      if (this.isAdmin) {
+        this.loadAllAccounts();
+      }
+      this.loading = false;
+      return;
     }
+    this.loadClientAccount();
+  }
+
+  // ── STAFF methods (ADMIN + AGENT) ────────────────────────────────────────────
+
+  loadBankVault(): void {
+    this.loadingVault = true;
+    this.accountSvc.getBankVault().subscribe({
+      next: (v) => {
+        this.bankVaultTotal = Number(v.totalFunds ?? 0);
+        this.loadingVault = false;
+      },
+      error: () => {
+        this.bankVaultTotal = null;
+        this.loadingVault = false;
+      },
+    });
+  }
+
+  staffLookup(): void {
+    const id = this.staffLookupAccountId;
+    if (!id || id <= 0) {
+      return;
+    }
+    this.operationMessage = '';
+    this.operationError = '';
+    this.loadingStaffLookup = true;
+    this.staffLookupAccount = null;
+    this.staffLookupStats = null;
+    this.staffLookupActivities = [];
+
+    this.accountSvc.getAccount(id).subscribe({
+      next: (acc) => {
+        this.staffLookupAccount = acc;
+        this.accountSvc.getStatistics(id).subscribe({ next: (s) => (this.staffLookupStats = s) });
+        this.accountSvc.getActivities(id).subscribe({ next: (a) => (this.staffLookupActivities = a) });
+        this.loadingStaffLookup = false;
+      },
+      error: (e) => {
+        this.operationError = e?.error?.message || e?.error || 'Account not found.';
+        this.loadingStaffLookup = false;
+      },
+    });
   }
 
   // ── ADMIN computed stats ──────────────────────────────────────────────────────
@@ -119,6 +176,9 @@ export class WalletOverviewComponent implements OnInit {
   // ── ADMIN methods ─────────────────────────────────────────────────────────────
 
   loadAllAccounts(): void {
+    if (!this.isAdmin) {
+      return;
+    }
     this.loading = true;
     this.accountSvc.getAllAccounts().subscribe({
       next: (list) => { this.allAccounts = list; this.loading = false; },
@@ -127,6 +187,9 @@ export class WalletOverviewComponent implements OnInit {
   }
 
   selectAdminAccount(acc: Account): void {
+    if (!this.isAdmin) {
+      return;
+    }
     this.adminSelectedAccount = acc;
     this.adminStats = null;
     this.operationMessage = '';
@@ -135,6 +198,9 @@ export class WalletOverviewComponent implements OnInit {
   }
 
   openAdminCreate(): void {
+    if (!this.isAdmin) {
+      return;
+    }
     this.adminCreateOwnerId = null;
     this.adminCreateType = 'SAVINGS';
     this.adminCreateHolderName = '';
@@ -143,6 +209,9 @@ export class WalletOverviewComponent implements OnInit {
   }
 
   submitAdminCreate(): void {
+    if (!this.isAdmin) {
+      return;
+    }
     if (!this.adminCreateOwnerId || this.adminCreateOwnerId <= 0) return;
     this.loadingAdminOp = true;
     this.accountSvc.createAccount(this.adminCreateOwnerId, this.adminCreateType, this.adminCreateHolderName || undefined).subscribe({
@@ -157,6 +226,9 @@ export class WalletOverviewComponent implements OnInit {
   }
 
   adminDeposit(): void {
+    if (!this.isAdmin) {
+      return;
+    }
     if (!this.adminSelectedAccount || !this.adminDepositAmount || this.adminDepositAmount <= 0) return;
     const amount = this.adminDepositAmount;
     this.loadingAdminOp = true;
@@ -172,6 +244,9 @@ export class WalletOverviewComponent implements OnInit {
   }
 
   adminWithdraw(): void {
+    if (!this.isAdmin) {
+      return;
+    }
     if (!this.adminSelectedAccount || !this.adminWithdrawAmount || this.adminWithdrawAmount <= 0) return;
     const amount = this.adminWithdrawAmount;
     this.loadingAdminOp = true;
@@ -187,6 +262,9 @@ export class WalletOverviewComponent implements OnInit {
   }
 
   toggleStatus(acc: Account, event: Event): void {
+    if (!this.isAdmin) {
+      return;
+    }
     event.stopPropagation();
     const next = acc.status === 'ACTIVE' ? 'BLOCKED' : 'ACTIVE';
     this.accountSvc.updateAccountStatus(acc.id, next).subscribe({
@@ -201,6 +279,9 @@ export class WalletOverviewComponent implements OnInit {
   }
 
   deleteAccount(acc: Account, event: Event): void {
+    if (!this.isAdmin) {
+      return;
+    }
     event.stopPropagation();
     if (!confirm(`Delete account #${acc.id}? This cannot be undone.`)) return;
     this.accountSvc.deleteAccount(acc.id).subscribe({
@@ -214,6 +295,9 @@ export class WalletOverviewComponent implements OnInit {
   }
 
   applyMonthlyInterest(): void {
+    if (!this.isAdmin) {
+      return;
+    }
     this.accountSvc.applyMonthlyInterest().subscribe({
       next: () => {
         this.operationMessage = 'Monthly interest applied to all active INVESTMENT accounts.';

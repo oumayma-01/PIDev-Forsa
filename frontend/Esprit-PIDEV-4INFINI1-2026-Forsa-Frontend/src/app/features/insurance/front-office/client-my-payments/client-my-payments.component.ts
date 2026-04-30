@@ -5,10 +5,12 @@ import { PremiumPaymentService } from '../../shared/services/premium-payment.ser
 import { PremiumPayment } from '../../shared/models/insurance.models';
 import { PaymentStatus } from '../../shared/enums/insurance.enums';
 
+import { FormsModule } from '@angular/forms';
+
 @Component({
   selector: 'app-client-my-payments',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './client-my-payments.component.html',
   styleUrls: ['./client-my-payments.component.css']
 })
@@ -16,7 +18,10 @@ export class ClientMyPaymentsComponent implements OnInit {
   private readonly paymentService = inject(PremiumPaymentService);
   private readonly router = inject(Router);
 
+  allPayments: PremiumPayment[] = [];
   payments: PremiumPayment[] = [];
+  policies: string[] = [];
+  selectedPolicy: string = 'all';
   isLoading = true;
 
   ngOnInit() {
@@ -59,9 +64,19 @@ export class ClientMyPaymentsComponent implements OnInit {
     this.paymentService.getMyPayments().subscribe({
       next: (data) => {
         // Sort by due date ascending
-        this.payments = data.sort((a, b) => {
+        this.allPayments = data.sort((a, b) => {
           return new Date(a.dueDate || '').getTime() - new Date(b.dueDate || '').getTime();
         });
+        
+        // Extract unique policy numbers
+        const policySet = new Set<string>();
+        this.allPayments.forEach(p => {
+          const num = p.insurancePolicy?.policyNumber;
+          if (num) policySet.add(num);
+        });
+        this.policies = Array.from(policySet);
+        
+        this.filterByPolicy();
         this.isLoading = false;
       },
       error: (err) => {
@@ -69,6 +84,16 @@ export class ClientMyPaymentsComponent implements OnInit {
         this.isLoading = false;
       }
     });
+  }
+
+  filterByPolicy() {
+    if (this.selectedPolicy === 'all') {
+      this.payments = [...this.allPayments];
+    } else {
+      this.payments = this.allPayments.filter(p => 
+        p.insurancePolicy?.policyNumber === this.selectedPolicy
+      );
+    }
   }
 
   payNow(payment: PremiumPayment) {

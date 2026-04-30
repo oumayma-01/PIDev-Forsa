@@ -7,9 +7,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class MonthlyClaimTrendDTO {
-    private Integer year;
-    private Integer month;
-    private Long count;
-    private Double totalAmount;
+public class ProductPopularityDTO {
+    private String productName;
+    private long policyCount;
+    private double totalRevenue;
 }

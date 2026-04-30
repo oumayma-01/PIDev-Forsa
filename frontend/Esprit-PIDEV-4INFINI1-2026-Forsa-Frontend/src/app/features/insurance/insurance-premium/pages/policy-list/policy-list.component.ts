@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
 import { ForsaBadgeComponent } from '../../../../../shared/ui/forsa-badge/forsa-badge.component';
@@ -10,10 +10,12 @@ import { InsurancePolicy } from '../../../shared/models/insurance.models';
 import { PolicyStatus } from '../../../shared/enums/insurance.enums';
 import type { ForsaIconName } from '../../../../../shared/ui/forsa-icon/forsa-icon.types';
 
+import { FormsModule } from '@angular/forms';
+
 @Component({
   selector: 'app-policy-list',
   standalone: true,
-  imports: [RouterLink, DatePipe, DecimalPipe, TitleCasePipe, ForsaBadgeComponent, ForsaButtonComponent, ForsaCardComponent, ForsaIconComponent],
+  imports: [RouterLink, DatePipe, DecimalPipe, TitleCasePipe, ForsaBadgeComponent, ForsaButtonComponent, ForsaCardComponent, ForsaIconComponent, FormsModule],
   templateUrl: './policy-list.component.html',
   styleUrl: './policy-list.component.css',
 })
@@ -21,10 +23,29 @@ export class PolicyListComponent implements OnInit {
   private readonly svc = inject(InsurancePolicyService);
 
   policies = signal<InsurancePolicy[]>([]);
+  searchTerm = signal('');
+  statusFilter = signal<string>('ALL');
   loading = signal(true);
   error = signal<string | null>(null);
   deletingId = signal<number | null>(null);
   reviewingId = signal<number | null>(null);
+
+  filteredPolicies = computed(() => {
+    const term = this.searchTerm().toLowerCase();
+    const status = this.statusFilter();
+    
+    return this.policies().filter(p => {
+      const matchesSearch = !term || 
+        p.policyNumber?.toLowerCase().includes(term) || 
+        p.user?.username?.toLowerCase().includes(term);
+        
+      const matchesStatus = status === 'ALL' || p.status === status;
+      
+      return matchesSearch && matchesStatus;
+    });
+  });
+
+  PolicyStatus = PolicyStatus; // Expose to template
 
   ngOnInit(): void { this.load(); }
 

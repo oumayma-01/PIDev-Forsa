@@ -1,13 +1,16 @@
-import { Component, OnInit, inject, signal, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, inject, signal, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Chart } from 'chart.js/auto';
+import { interval, Subscription } from 'rxjs';
+import { startWith, switchMap } from 'rxjs/operators';
 import { ClaimsDashboardService } from '../../../shared/services/claims-dashboard.service';
 import { ClaimsDashboardDTO } from '../../../shared/models/claims-dashboard.models';
 import { ForsaCardComponent } from '../../../../../shared/ui/forsa-card/forsa-card.component';
 import { ForsaIconComponent } from '../../../../../shared/ui/forsa-icon/forsa-icon.component';
 import { ForsaBadgeComponent } from '../../../../../shared/ui/forsa-badge/forsa-badge.component';
 import { ForsaButtonComponent } from '../../../../../shared/ui/forsa-button/forsa-button.component';
+import { AuthService } from '../../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-claims-dashboard',
@@ -23,8 +26,12 @@ import { ForsaButtonComponent } from '../../../../../shared/ui/forsa-button/fors
   templateUrl: './claims-dashboard.component.html',
   styleUrl: './claims-dashboard.component.css'
 })
-export class ClaimsDashboardComponent implements OnInit, AfterViewInit {
+export class ClaimsDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly dashboardService = inject(ClaimsDashboardService);
+  private readonly authService = inject(AuthService);
+
+  // New signal for showing refresh toast
+  showRefreshMessage = signal<boolean>(false);
 
   @ViewChild('statusChart') statusChartCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('trendChart') trendChartCanvas!: ElementRef<HTMLCanvasElement>;
@@ -33,24 +40,60 @@ export class ClaimsDashboardComponent implements OnInit, AfterViewInit {
   data = signal<ClaimsDashboardDTO | null>(null);
   loading = signal<boolean>(true);
   error = signal<string | null>(null);
+  lastUpdated = signal<Date>(new Date());
 
   private charts: Chart[] = [];
+  private refreshSubscription?: Subscription;
 
   ngOnInit() {
-    this.loadData();
+    this.startAutoRefresh();
+  }
+
+  ngOnDestroy() {
+    this.refreshSubscription?.unsubscribe();
   }
 
   ngAfterViewInit() {
-    // Charts will be initialized after data is loaded and signals trigger a re-render
+    // Charts will be initialized after data is loaded
+  }
+
+  startAutoRefresh() {
+    // Poll every 30 seconds
+    this.refreshSubscription = interval(30000)
+      .pipe(
+        startWith(0),
+        switchMap(() => {
+          if (!this.data()) this.loading.set(true);
+          return this.dashboardService.getAnalytics();
+        })
+      )
+      .subscribe({
+        next: (resp) => {
+      this.data.set(resp);
+      this.loading.set(false);
+      this.lastUpdated.set(new Date());
+      // Show toast for auto-refresh
+      this.showRefreshMessage.set(true);
+      setTimeout(() => this.showRefreshMessage.set(false), 2000);
+      setTimeout(() => this.initCharts(), 0);
+        },
+        error: (err) => {
+          this.error.set('Failed to load dashboard analytics');
+          this.loading.set(false);
+        }
+      });
   }
 
   loadData() {
+    // Manual trigger
     this.loading.set(true);
     this.dashboardService.getAnalytics().subscribe({
       next: (resp) => {
         this.data.set(resp);
         this.loading.set(false);
-        // Small timeout to ensure canvas elements are rendered in DOM (due to @if)
+        this.lastUpdated.set(new Date());
+        this.showRefreshMessage.set(true);
+        setTimeout(() => this.showRefreshMessage.set(false), 2000);
         setTimeout(() => this.initCharts(), 0);
       },
       error: (err) => {
@@ -58,6 +101,12 @@ export class ClaimsDashboardComponent implements OnInit, AfterViewInit {
         this.loading.set(false);
       }
     });
+  }
+
+  canEdit(): boolean {
+    const user = this.authService.currentUser();
+    if (!user) return false;
+    return user.roles.some(r => r === 'ROLE_ADMIN' || r === 'ROLE_AGENT');
   }
 
   initCharts() {

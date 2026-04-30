@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.example.forsapidev.DTO.InsurancePolicyApplicationDTO;
 import org.example.forsapidev.Repositories.UserRepository;
 import org.example.forsapidev.Services.Interfaces.IAmortizationPdfService;
+import org.example.forsapidev.Services.Interfaces.IPolicyPdfService;
 import org.example.forsapidev.entities.InsuranceManagement.InsurancePolicy;
 import org.example.forsapidev.Services.Interfaces.IInsurancePolicy;
 import lombok.AllArgsConstructor;
@@ -35,6 +36,7 @@ public class InsurancePolicyController {
     IInsurancePolicy insurancePolicyService;
     UserRepository userRepository;
     private final IAmortizationPdfService amortizationPdfService;
+    private final IPolicyPdfService policyPdfService;
 
     /**
      * CLIENT: Submit policy application
@@ -153,6 +155,57 @@ public class InsurancePolicyController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(("Error generating PDF: " + e.getMessage()).getBytes());
+        }
+    }
+
+    @GetMapping("/download-contract/{policy-id}")
+    @PreAuthorize("hasAnyRole('CLIENT', 'AGENT', 'ADMIN')")
+    public ResponseEntity<byte[]> downloadPolicyContract(@PathVariable("policy-id") Long policyId) {
+        try {
+            ByteArrayOutputStream pdfStream = policyPdfService.generatePolicyPdf(policyId);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "Insurance_Contract_Policy_" + policyId + ".pdf");
+
+            return new ResponseEntity<>(pdfStream.toByteArray(), headers, HttpStatus.OK);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(("Error generating Contract PDF: " + e.getMessage()).getBytes());
+        }
+    }
+
+    @PutMapping("/sign-policy/{policy-id}")
+    @PreAuthorize("hasAnyRole('CLIENT', 'AGENT', 'ADMIN')")
+    public ResponseEntity<?> signPolicy(
+            @PathVariable("policy-id") Long policyId,
+            @RequestBody String signature) {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+
+            InsurancePolicy policy = insurancePolicyService.retrieveInsurancePolicy(policyId);
+            if (policy == null) return ResponseEntity.notFound().build();
+
+            boolean isAdminOrAgent = auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_AGENT"));
+
+            if (isAdminOrAgent) {
+                policy.setAdminStamp(signature);
+            } else {
+                if (!policy.getUser().getUsername().equals(userDetails.getUsername())) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only sign your own policies");
+                }
+                policy.setClientSignature(signature);
+            }
+
+            policy.setSignedAt(new java.util.Date());
+            InsurancePolicy updated = insurancePolicyService.modifyInsurancePolicy(policy);
+            return ResponseEntity.ok(updated);
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error signing policy: " + e.getMessage());
         }
     }
 }

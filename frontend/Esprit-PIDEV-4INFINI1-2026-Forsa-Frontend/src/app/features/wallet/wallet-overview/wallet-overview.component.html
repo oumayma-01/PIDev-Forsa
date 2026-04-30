@@ -26,233 +26,351 @@
 <!-- ══════════════════════════════════════════════════════════════════════════════
      ADMIN VIEW
      ══════════════════════════════════════════════════════════════════════════════ -->
-@if (!loading && isAdmin) {
+@if (!loading && isStaff) {
 
-  <!-- Stats banner -->
-  <div class="stats-banner">
-    <div class="stat-pill stat-pill--blue">
-      <span class="pill-icon">🏦</span>
-      <div>
-        <p class="pill-label">Total Accounts</p>
-        <p class="pill-val">{{ allAccounts.length }}</p>
+  <app-forsa-card style="margin-bottom: 1.25rem;">
+    <div class="card-pad-lg">
+      <div class="act-head">
+        <div>
+          <h3>Bank Vault</h3>
+          <p class="text-muted sm">Total funds held by the bank across all client wallets.</p>
+        </div>
+        <app-forsa-button variant="outline" (click)="loadBankVault()">
+          <app-forsa-icon name="history" [size]="15" /> Refresh
+        </app-forsa-button>
       </div>
-    </div>
-    <div class="stat-pill stat-pill--green">
-      <span class="pill-icon">💰</span>
-      <div>
-        <p class="pill-label">Total Balance</p>
-        <p class="pill-val">${{ adminTotalBalance | number : '1.2-2' }}</p>
-      </div>
-    </div>
-    <div class="stat-pill stat-pill--teal">
-      <span class="pill-icon">✅</span>
-      <div>
-        <p class="pill-label">Active</p>
-        <p class="pill-val">{{ adminActiveCount }}</p>
-      </div>
-    </div>
-    <div class="stat-pill stat-pill--purple">
-      <span class="pill-icon">📈</span>
-      <div>
-        <p class="pill-label">Investment</p>
-        <p class="pill-val">{{ adminInvestmentCount }}</p>
-      </div>
-    </div>
-    <div class="stat-pill stat-pill--red">
-      <span class="pill-icon">🔒</span>
-      <div>
-        <p class="pill-label">Blocked</p>
-        <p class="pill-val">{{ adminBlockedCount }}</p>
-      </div>
-    </div>
-  </div>
 
-  <!-- Toolbar -->
-  <div class="admin-toolbar">
-    <div class="toolbar-left">
-      <input class="search-input" type="text" placeholder="Search by ID or holder…" [(ngModel)]="adminSearchTerm" />
-      <select class="filter-select" [(ngModel)]="adminTypeFilter" aria-label="Filter accounts by type">
-        <option value="">All Types</option>
-        <option value="SAVINGS">Savings</option>
-        <option value="INVESTMENT">Investment</option>
-      </select>
-      <select class="filter-select" [(ngModel)]="adminStatusFilter" aria-label="Filter accounts by status">
-        <option value="">All Status</option>
-        <option value="ACTIVE">Active</option>
-        <option value="BLOCKED">Blocked</option>
-      </select>
-    </div>
-    <div class="toolbar-right">
-      <app-forsa-button variant="outline" (click)="loadAllAccounts()">
-        <app-forsa-icon name="history" [size]="15" /> Refresh
-      </app-forsa-button>
-      <app-forsa-button variant="outline" (click)="openAdminCreate()">
-        <app-forsa-icon name="plus" [size]="15" /> New Account
-      </app-forsa-button>
-      <app-forsa-button (click)="applyMonthlyInterest()">
-        📈 Apply Monthly Interest
-      </app-forsa-button>
-    </div>
-  </div>
-
-  <div class="admin-layout">
-    <!-- Accounts table -->
-    <app-forsa-card class="table-card">
-      <div class="table-wrap">
-        @if (filteredAccounts.length === 0 && !loading) {
-          <div class="empty-state">
-            <div class="empty-ico">🏦</div>
-            <h3>No accounts found</h3>
-            <p>@if (allAccounts.length === 0) { No wallet accounts exist yet. Create the first one! } @else { No accounts match your filters. }</p>
-            @if (allAccounts.length === 0) {
-              <app-forsa-button (click)="openAdminCreate()">
-                <app-forsa-icon name="plus" [size]="16" /> Create First Account
-              </app-forsa-button>
-            }
+      @if (loadingVault) {
+        <p class="muted">Loading vault…</p>
+      } @else if (bankVaultTotal !== null) {
+        <div class="forecast-row">
+          <div class="forecast-col">
+            <p class="fcast-label">Total Funds</p>
+            <p class="fcast-val">${{ bankVaultTotal | number : '1.2-2' }}</p>
           </div>
-        } @else {
-          <table class="acct-table">
-            <thead>
-              <tr>
-                <th>#ID</th>
-                <th>Holder</th>
-                <th>Type</th>
-                <th>Status</th>
-                <th>Balance</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (acc of filteredAccounts; track acc.id) {
-                <tr [class.selected-row]="adminSelectedAccount?.id === acc.id" (click)="selectAdminAccount(acc)">
-                  <td class="id-cell">#{{ acc.id }}</td>
-                  <td class="holder-cell">
-                    <div class="holder-avatar">{{ (acc.accountHolderName || 'U')[0].toUpperCase() }}</div>
-                    {{ acc.accountHolderName || '—' }}
-                  </td>
-                  <td>
-                    <span class="type-badge"
-                      [class.type-badge--savings]="acc.type === 'SAVINGS'"
-                      [class.type-badge--investment]="acc.type === 'INVESTMENT'">
-                      {{ acc.type }}
-                    </span>
-                  </td>
-                  <td>
-                    <app-forsa-badge [tone]="acc.status === 'ACTIVE' ? 'success' : 'danger'">
-                      {{ acc.status }}
-                    </app-forsa-badge>
-                  </td>
-                  <td class="amount-cell">${{ acc.wallet.balance | number : '1.2-2' }}</td>
-                  <td class="actions-cell" (click)="$event.stopPropagation()">
-                    <button class="icon-btn icon-btn--green" title="Deposit"
-                      (click)="selectAdminAccount(acc); adminDepositAmount = null; operationError = ''; showAdminDepositModal = true">
-                      ↓ Deposit
-                    </button>
-                    <button class="icon-btn icon-btn--orange" title="Withdraw"
-                      (click)="selectAdminAccount(acc); adminWithdrawAmount = null; operationError = ''; showAdminWithdrawModal = true">
-                      ↑ Withdraw
-                    </button>
-                    <button class="icon-btn"
-                      [class.icon-btn--red]="acc.status === 'ACTIVE'"
-                      [class.icon-btn--green]="acc.status === 'BLOCKED'"
-                      (click)="toggleStatus(acc, $event)">
-                      {{ acc.status === 'ACTIVE' ? '🔒 Block' : '🔓 Unblock' }}
-                    </button>
-                    <button class="icon-btn icon-btn--danger" (click)="deleteAccount(acc, $event)">
-                      🗑 Delete
-                    </button>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        }
+        </div>
+      } @else {
+        <p class="muted">Vault data not available.</p>
+      }
+    </div>
+  </app-forsa-card>
+
+  <app-forsa-card style="margin-bottom: 1.25rem;">
+    <div class="card-pad-lg">
+      <div class="act-head">
+        <div>
+          <h3>Lookup Account</h3>
+          <p class="text-muted sm">View account details, stats and activity log by account ID.</p>
+        </div>
       </div>
-    </app-forsa-card>
 
-    <!-- Detail panel -->
-    @if (adminSelectedAccount) {
-      <div class="detail-panel">
-        <app-forsa-card>
-          <div class="card-pad-lg">
-            <div class="detail-header">
-              <div class="detail-avatar">{{ (adminSelectedAccount.accountHolderName || 'U')[0].toUpperCase() }}</div>
-              <div>
-                <h3 class="detail-name">{{ adminSelectedAccount.accountHolderName || 'Unknown' }}</h3>
-                <p class="detail-sub">Account #{{ adminSelectedAccount.id }}</p>
-              </div>
-            </div>
+      <div class="admin-toolbar" style="margin-bottom: 0;">
+        <div class="toolbar-left">
+          <input class="search-input" type="number" min="1" placeholder="Account ID (e.g. 12)" [(ngModel)]="staffLookupAccountId" />
+        </div>
+        <div class="toolbar-right">
+          <app-forsa-button (click)="staffLookup()" [disabled]="!staffLookupAccountId || staffLookupAccountId <= 0 || loadingStaffLookup">
+            {{ loadingStaffLookup ? 'Loading…' : 'Search' }}
+          </app-forsa-button>
+        </div>
+      </div>
 
-            <div class="detail-balance-card">
-              <p class="detail-balance-label">Current Balance</p>
-              <p class="detail-balance">${{ adminSelectedAccount.wallet.balance | number : '1.2-2' }}</p>
-            </div>
-
-            @if (adminStats) {
-              <div class="detail-stats">
-                <div class="dstat"><span class="dstat-label">Deposits</span><span class="dstat-val green">${{ adminStats.totalDeposits | number : '1.2-2' }}</span></div>
-                <div class="dstat"><span class="dstat-label">Withdrawals</span><span class="dstat-val red">${{ adminStats.totalWithdrawals | number : '1.2-2' }}</span></div>
-                <div class="dstat"><span class="dstat-label">Transactions</span><span class="dstat-val">{{ adminStats.numberOfTransactions }}</span></div>
-              </div>
-            }
-
-            <div class="detail-badges">
-              <span class="type-badge"
-                [class.type-badge--savings]="adminSelectedAccount.type === 'SAVINGS'"
-                [class.type-badge--investment]="adminSelectedAccount.type === 'INVESTMENT'">
-                {{ adminSelectedAccount.type }}
-              </span>
-              <app-forsa-badge [tone]="adminSelectedAccount.status === 'ACTIVE' ? 'success' : 'danger'">
-                {{ adminSelectedAccount.status }}
-              </app-forsa-badge>
-            </div>
-
-            <div class="detail-actions">
-              <app-forsa-button [widthFull]="true" (click)="adminDepositAmount = null; operationError = ''; showAdminDepositModal = true">
-                ↓ Deposit Funds
-              </app-forsa-button>
-              <app-forsa-button variant="outline" [widthFull]="true" (click)="adminWithdrawAmount = null; operationError = ''; showAdminWithdrawModal = true">
-                ↑ Withdraw Funds
-              </app-forsa-button>
-              <app-forsa-button variant="outline" [widthFull]="true" (click)="toggleStatus(adminSelectedAccount, $event)">
-                {{ adminSelectedAccount.status === 'ACTIVE' ? '🔒 Block Account' : '🔓 Unblock Account' }}
-              </app-forsa-button>
-              <app-forsa-button variant="destructive" [widthFull]="true" (click)="deleteAccount(adminSelectedAccount, $event)">
-                🗑 Delete Account
-              </app-forsa-button>
-            </div>
-          </div>
-        </app-forsa-card>
-
-        @if (adminSelectedAccount.wallet.transactions.length) {
+      @if (staffLookupAccount) {
+        <div class="detail-panel" style="margin-top: 1rem;">
           <app-forsa-card>
             <div class="card-pad-lg">
-              <h3 class="side-title">Recent Transactions</h3>
+              <div class="detail-header">
+                <div class="detail-avatar">{{ (staffLookupAccount.accountHolderName || 'U')[0].toUpperCase() }}</div>
+                <div>
+                  <h3 class="detail-name">{{ staffLookupAccount.accountHolderName || 'Unknown' }}</h3>
+                  <p class="detail-sub">Account #{{ staffLookupAccount.id }}</p>
+                </div>
+              </div>
+
+              <div class="detail-balance-card">
+                <p class="detail-balance-label">Current Balance</p>
+                <p class="detail-balance">${{ staffLookupAccount.wallet.balance | number : '1.2-2' }}</p>
+              </div>
+
+              @if (staffLookupStats) {
+                <div class="detail-stats">
+                  <div class="dstat"><span class="dstat-label">Deposits</span><span class="dstat-val green">${{ staffLookupStats.totalDeposits | number : '1.2-2' }}</span></div>
+                  <div class="dstat"><span class="dstat-label">Withdrawals</span><span class="dstat-val red">${{ staffLookupStats.totalWithdrawals | number : '1.2-2' }}</span></div>
+                  <div class="dstat"><span class="dstat-label">Transactions</span><span class="dstat-val">{{ staffLookupStats.numberOfTransactions }}</span></div>
+                </div>
+              }
+
+              <div class="detail-badges">
+                <span class="type-badge"
+                  [class.type-badge--savings]="staffLookupAccount.type === 'SAVINGS'"
+                  [class.type-badge--investment]="staffLookupAccount.type === 'INVESTMENT'">
+                  {{ staffLookupAccount.type }}
+                </span>
+                <app-forsa-badge [tone]="staffLookupAccount.status === 'ACTIVE' ? 'success' : 'danger'">
+                  {{ staffLookupAccount.status }}
+                </app-forsa-badge>
+              </div>
+            </div>
+          </app-forsa-card>
+
+          <app-forsa-card>
+            <div class="card-pad-lg">
+              <h3 class="side-title">Activity Log</h3>
               <div class="act-list">
-                @for (tx of adminSelectedAccount.wallet.transactions; track tx.id) {
+                @if (staffLookupActivities.length === 0) {
+                  <p class="muted">No activity recorded.</p>
+                }
+                @for (act of staffLookupActivities; track act.id) {
                   <div class="act-row">
                     <div class="act-left">
-                      <span class="act-ico" [class.dep]="isIncoming(tx)">
-                        @if (isIncoming(tx)) { <app-forsa-icon name="arrow-up-right" [size]="17" /> }
-                        @else { <app-forsa-icon name="arrow-down-right" [size]="17" /> }
-                      </span>
-                      <div>
-                        <p class="act-title">{{ txLabel(tx) }}</p>
-                        <p class="act-meta">{{ formatDate(tx.date) }}</p>
-                      </div>
+                      <span class="act-ico"><app-forsa-icon name="history" [size]="17" /></span>
+                      <div><p class="act-title">{{ act.action }}</p><p class="act-meta">{{ formatDate(act.timestamp) }}</p></div>
                     </div>
-                    <p class="act-amt" [class.dep]="isIncoming(tx)">
-                      {{ isIncoming(tx) ? '+' : '-' }}${{ tx.amount | number : '1.2-2' }}
-                    </p>
                   </div>
                 }
               </div>
             </div>
           </app-forsa-card>
-        }
+        </div>
+      }
+    </div>
+  </app-forsa-card>
+
+  @if (!isAdmin) {
+    <app-forsa-card>
+      <div class="card-pad-lg">
+        <p class="muted">As an agent, you can view the vault and inspect accounts by ID. Admin-only features (create accounts, deposits/withdrawals, status changes, delete) are hidden.</p>
       </div>
-    }
-  </div>
+    </app-forsa-card>
+  }
+
+  @if (isAdmin) {
+    <!-- Stats banner -->
+    <div class="stats-banner">
+      <div class="stat-pill stat-pill--blue">
+        <span class="pill-icon">🏦</span>
+        <div>
+          <p class="pill-label">Total Accounts</p>
+          <p class="pill-val">{{ allAccounts.length }}</p>
+        </div>
+      </div>
+      <div class="stat-pill stat-pill--green">
+        <span class="pill-icon">💰</span>
+        <div>
+          <p class="pill-label">Total Balance</p>
+          <p class="pill-val">${{ adminTotalBalance | number : '1.2-2' }}</p>
+        </div>
+      </div>
+      <div class="stat-pill stat-pill--teal">
+        <span class="pill-icon">✅</span>
+        <div>
+          <p class="pill-label">Active</p>
+          <p class="pill-val">{{ adminActiveCount }}</p>
+        </div>
+      </div>
+      <div class="stat-pill stat-pill--purple">
+        <span class="pill-icon">📈</span>
+        <div>
+          <p class="pill-label">Investment</p>
+          <p class="pill-val">{{ adminInvestmentCount }}</p>
+        </div>
+      </div>
+      <div class="stat-pill stat-pill--red">
+        <span class="pill-icon">🔒</span>
+        <div>
+          <p class="pill-label">Blocked</p>
+          <p class="pill-val">{{ adminBlockedCount }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="admin-toolbar">
+      <div class="toolbar-left">
+        <input class="search-input" type="text" placeholder="Search by ID or holder…" [(ngModel)]="adminSearchTerm" />
+        <select class="filter-select" [(ngModel)]="adminTypeFilter" aria-label="Filter accounts by type">
+          <option value="">All Types</option>
+          <option value="SAVINGS">Savings</option>
+          <option value="INVESTMENT">Investment</option>
+        </select>
+        <select class="filter-select" [(ngModel)]="adminStatusFilter" aria-label="Filter accounts by status">
+          <option value="">All Status</option>
+          <option value="ACTIVE">Active</option>
+          <option value="BLOCKED">Blocked</option>
+        </select>
+      </div>
+      <div class="toolbar-right">
+        <app-forsa-button variant="outline" (click)="loadAllAccounts()">
+          <app-forsa-icon name="history" [size]="15" /> Refresh
+        </app-forsa-button>
+        <app-forsa-button variant="outline" (click)="openAdminCreate()">
+          <app-forsa-icon name="plus" [size]="15" /> New Account
+        </app-forsa-button>
+        <app-forsa-button (click)="applyMonthlyInterest()">
+          📈 Apply Monthly Interest
+        </app-forsa-button>
+      </div>
+    </div>
+
+    <div class="admin-layout">
+      <!-- Accounts table -->
+      <app-forsa-card class="table-card">
+        <div class="table-wrap">
+          @if (filteredAccounts.length === 0 && !loading) {
+            <div class="empty-state">
+              <div class="empty-ico">🏦</div>
+              <h3>No accounts found</h3>
+              <p>@if (allAccounts.length === 0) { No wallet accounts exist yet. Create the first one! } @else { No accounts match your filters. }</p>
+              @if (allAccounts.length === 0) {
+                <app-forsa-button (click)="openAdminCreate()">
+                  <app-forsa-icon name="plus" [size]="16" /> Create First Account
+                </app-forsa-button>
+              }
+            </div>
+          } @else {
+            <table class="acct-table">
+              <thead>
+                <tr>
+                  <th>#ID</th>
+                  <th>Holder</th>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th>Balance</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (acc of filteredAccounts; track acc.id) {
+                  <tr [class.selected-row]="adminSelectedAccount?.id === acc.id" (click)="selectAdminAccount(acc)">
+                    <td class="id-cell">#{{ acc.id }}</td>
+                    <td class="holder-cell">
+                      <div class="holder-avatar">{{ (acc.accountHolderName || 'U')[0].toUpperCase() }}</div>
+                      {{ acc.accountHolderName || '—' }}
+                    </td>
+                    <td>
+                      <span class="type-badge"
+                        [class.type-badge--savings]="acc.type === 'SAVINGS'"
+                        [class.type-badge--investment]="acc.type === 'INVESTMENT'">
+                        {{ acc.type }}
+                      </span>
+                    </td>
+                    <td>
+                      <app-forsa-badge [tone]="acc.status === 'ACTIVE' ? 'success' : 'danger'">
+                        {{ acc.status }}
+                      </app-forsa-badge>
+                    </td>
+                    <td class="amount-cell">${{ acc.wallet.balance | number : '1.2-2' }}</td>
+                    <td class="actions-cell" (click)="$event.stopPropagation()">
+                      <button class="icon-btn icon-btn--green" title="Deposit"
+                        (click)="selectAdminAccount(acc); adminDepositAmount = null; operationError = ''; showAdminDepositModal = true">
+                        ↓ Deposit
+                      </button>
+                      <button class="icon-btn icon-btn--orange" title="Withdraw"
+                        (click)="selectAdminAccount(acc); adminWithdrawAmount = null; operationError = ''; showAdminWithdrawModal = true">
+                        ↑ Withdraw
+                      </button>
+                      <button class="icon-btn"
+                        [class.icon-btn--red]="acc.status === 'ACTIVE'"
+                        [class.icon-btn--green]="acc.status === 'BLOCKED'"
+                        (click)="toggleStatus(acc, $event)">
+                        {{ acc.status === 'ACTIVE' ? '🔒 Block' : '🔓 Unblock' }}
+                      </button>
+                      <button class="icon-btn icon-btn--danger" (click)="deleteAccount(acc, $event)">
+                        🗑 Delete
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </div>
+      </app-forsa-card>
+
+      <!-- Detail panel -->
+      @if (adminSelectedAccount) {
+        <div class="detail-panel">
+          <app-forsa-card>
+            <div class="card-pad-lg">
+              <div class="detail-header">
+                <div class="detail-avatar">{{ (adminSelectedAccount.accountHolderName || 'U')[0].toUpperCase() }}</div>
+                <div>
+                  <h3 class="detail-name">{{ adminSelectedAccount.accountHolderName || 'Unknown' }}</h3>
+                  <p class="detail-sub">Account #{{ adminSelectedAccount.id }}</p>
+                </div>
+              </div>
+
+              <div class="detail-balance-card">
+                <p class="detail-balance-label">Current Balance</p>
+                <p class="detail-balance">${{ adminSelectedAccount.wallet.balance | number : '1.2-2' }}</p>
+              </div>
+
+              @if (adminStats) {
+                <div class="detail-stats">
+                  <div class="dstat"><span class="dstat-label">Deposits</span><span class="dstat-val green">${{ adminStats.totalDeposits | number : '1.2-2' }}</span></div>
+                  <div class="dstat"><span class="dstat-label">Withdrawals</span><span class="dstat-val red">${{ adminStats.totalWithdrawals | number : '1.2-2' }}</span></div>
+                  <div class="dstat"><span class="dstat-label">Transactions</span><span class="dstat-val">{{ adminStats.numberOfTransactions }}</span></div>
+                </div>
+              }
+
+              <div class="detail-badges">
+                <span class="type-badge"
+                  [class.type-badge--savings]="adminSelectedAccount.type === 'SAVINGS'"
+                  [class.type-badge--investment]="adminSelectedAccount.type === 'INVESTMENT'">
+                  {{ adminSelectedAccount.type }}
+                </span>
+                <app-forsa-badge [tone]="adminSelectedAccount.status === 'ACTIVE' ? 'success' : 'danger'">
+                  {{ adminSelectedAccount.status }}
+                </app-forsa-badge>
+              </div>
+
+              <div class="detail-actions">
+                <app-forsa-button [widthFull]="true" (click)="adminDepositAmount = null; operationError = ''; showAdminDepositModal = true">
+                  ↓ Deposit Funds
+                </app-forsa-button>
+                <app-forsa-button variant="outline" [widthFull]="true" (click)="adminWithdrawAmount = null; operationError = ''; showAdminWithdrawModal = true">
+                  ↑ Withdraw Funds
+                </app-forsa-button>
+                <app-forsa-button variant="outline" [widthFull]="true" (click)="toggleStatus(adminSelectedAccount, $event)">
+                  {{ adminSelectedAccount.status === 'ACTIVE' ? '🔒 Block Account' : '🔓 Unblock Account' }}
+                </app-forsa-button>
+                <app-forsa-button variant="destructive" [widthFull]="true" (click)="deleteAccount(adminSelectedAccount, $event)">
+                  🗑 Delete Account
+                </app-forsa-button>
+              </div>
+            </div>
+          </app-forsa-card>
+
+          @if (adminSelectedAccount.wallet.transactions.length) {
+            <app-forsa-card>
+              <div class="card-pad-lg">
+                <h3 class="side-title">Recent Transactions</h3>
+                <div class="act-list">
+                  @for (tx of adminSelectedAccount.wallet.transactions; track tx.id) {
+                    <div class="act-row">
+                      <div class="act-left">
+                        <span class="act-ico" [class.dep]="isIncoming(tx)">
+                          @if (isIncoming(tx)) { <app-forsa-icon name="arrow-up-right" [size]="17" /> }
+                          @else { <app-forsa-icon name="arrow-down-right" [size]="17" /> }
+                        </span>
+                        <div>
+                          <p class="act-title">{{ txLabel(tx) }}</p>
+                          <p class="act-meta">{{ formatDate(tx.date) }}</p>
+                        </div>
+                      </div>
+                      <p class="act-amt" [class.dep]="isIncoming(tx)">
+                        {{ isIncoming(tx) ? '+' : '-' }}${{ tx.amount | number : '1.2-2' }}
+                      </p>
+                    </div>
+                  }
+                </div>
+              </div>
+            </app-forsa-card>
+          }
+        </div>
+      }
+    </div>
+  }
 }
 
 @if (!loading && isClient && !account) {
@@ -587,7 +705,7 @@
 <!-- ══════════════════════════════════════════════════════════════════════════════
      MODALS — ADMIN
      ══════════════════════════════════════════════════════════════════════════════ -->
-@if (showAdminCreateModal) {
+@if (isAdmin && showAdminCreateModal) {
   <div class="modal-backdrop" (click)="showAdminCreateModal = false">
     <div class="modal" (click)="$event.stopPropagation()">
       <div class="modal-head"><h3>🏦 Create Account for User</h3><button class="modal-close" (click)="showAdminCreateModal = false">✕</button></div>
@@ -617,7 +735,7 @@
   </div>
 }
 
-@if (showAdminDepositModal && adminSelectedAccount) {
+@if (isAdmin && showAdminDepositModal && adminSelectedAccount) {
   <div class="modal-backdrop" (click)="showAdminDepositModal = false">
     <div class="modal" (click)="$event.stopPropagation()">
       <div class="modal-head"><h3>↓ Deposit — Account #{{ adminSelectedAccount.id }}</h3><button class="modal-close" (click)="showAdminDepositModal = false">✕</button></div>
@@ -635,7 +753,7 @@
   </div>
 }
 
-@if (showAdminWithdrawModal && adminSelectedAccount) {
+@if (isAdmin && showAdminWithdrawModal && adminSelectedAccount) {
   <div class="modal-backdrop" (click)="showAdminWithdrawModal = false">
     <div class="modal" (click)="$event.stopPropagation()">
       <div class="modal-head"><h3>↑ Withdraw — Account #{{ adminSelectedAccount.id }}</h3><button class="modal-close" (click)="showAdminWithdrawModal = false">✕</button></div>

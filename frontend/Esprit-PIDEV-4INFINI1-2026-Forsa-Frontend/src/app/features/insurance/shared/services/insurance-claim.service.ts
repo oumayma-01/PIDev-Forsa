@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
-import { InsuranceClaim } from '../models/insurance.models';
+import { InsuranceClaim, ClaimTemplate } from '../models/insurance.models';
 
 @Injectable({ providedIn: 'root' })
 export class InsuranceClaimService {
@@ -41,5 +41,13 @@ export class InsuranceClaimService {
 
   getAttachmentUrl(fileName: string): string {
     return `${this.base}/attachments/${fileName}`;
+  }
+
+  downloadAttachment(fileName: string): Observable<Blob> {
+    return this.http.get(`${this.base}/attachments/${fileName}`, { responseType: 'blob' });
+  }
+
+  getClaimTemplate(policyType: string): Observable<ClaimTemplate> {
+    return this.http.get<ClaimTemplate>(`${this.base}/template/${policyType}`);
   }
 }
