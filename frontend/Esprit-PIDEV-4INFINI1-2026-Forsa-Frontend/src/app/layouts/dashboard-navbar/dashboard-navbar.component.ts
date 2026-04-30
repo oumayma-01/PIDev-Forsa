@@ -13,12 +13,14 @@ import { ForsaBadgeComponent } from '../../shared/ui/forsa-badge/forsa-badge.com
 import { ForsaIconComponent } from '../../shared/ui/forsa-icon/forsa-icon.component';
 import type { ForsaIconName } from '../../shared/ui/forsa-icon/forsa-icon.types';
 import { CreditApiService } from '../../core/services/credit-api.service';
+import { GlobalNotificationService } from '../../core/services/global-notification.service';
 
 interface NotificationItem {
   id: string;
   message: string;
-  type: 'complaint' | 'gift';
+  type: 'complaint' | 'gift' | 'insurance-warning' | 'insurance-critical';
   amount?: number;
+  actionRoute?: string;
 }
 
 interface NavItem {
@@ -45,6 +47,7 @@ export class DashboardNavbarComponent {
   private readonly profileApi = inject(ProfileService);
   private readonly complaintApi = inject(ComplaintService);
   private readonly creditApi = inject(CreditApiService);
+  private readonly globalNotifService = inject(GlobalNotificationService);
   private readonly destroyRef = inject(DestroyRef);
   readonly profileMenuOpen = signal(false);
 
@@ -71,7 +74,16 @@ export class DashboardNavbarComponent {
     const seed = (u?.username ?? u?.email ?? 'user').trim() || 'user';
     return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`;
   });
-  readonly notifications = signal<NotificationItem[]>([]);
+  readonly localNotifications = signal<NotificationItem[]>([]);
+  readonly notifications = computed(() => {
+    const global = this.globalNotifService.notifications().map(n => ({
+      id: n.id,
+      message: n.message,
+      type: n.type as any, // mapping types
+      actionRoute: n.actionRoute
+    }));
+    return [...this.localNotifications(), ...global];
+  });
   readonly responseNotificationCount = computed(() => this.notifications().length);
   readonly notificationMenuOpen = signal(false);
   private readonly previousResponseCounts = new Map<number, number>();
@@ -209,12 +221,11 @@ export class DashboardNavbarComponent {
         }
         if (hasNewResponse) {
           const msg = 'You received a new response to your complaint';
-          const notif: NotificationItem = {
+          this.localNotifications.update(list => [{
             id: `complaint-${Date.now()}`,
             message: msg,
             type: 'complaint'
-          };
-          this.notifications.update(list => [notif, ...list]);
+          }, ...list]);
           alert(msg);
         }
       });
@@ -225,15 +236,12 @@ export class DashboardNavbarComponent {
         if (res?.show) {
           const amount = res.amount ?? 500;
           const msg = `Congratulations! You earned a loyalty gift of ${amount} DT.`;
-          const notif: NotificationItem = {
+          this.localNotifications.update(list => [{
             id: `gift-${Date.now()}`,
             message: msg,
             type: 'gift',
             amount: amount
-          };
-          this.notifications.update(list => [notif, ...list]);
-          // Optional: also alert if you want immediate feedback
-          // alert(msg);
+          }, ...list]);
         }
       },
       error: () => {}
@@ -249,9 +257,15 @@ export class DashboardNavbarComponent {
     this.notificationMenuOpen.set(false);
   }
 
+  clearAllNotifications(): void {
+    this.localNotifications.set([]);
+    this.globalNotifService.clearAll();
+  }
+
   removeNotification(id: string, event?: MouseEvent): void {
     event?.stopPropagation();
-    this.notifications.update(list => list.filter(n => n.id !== id));
+    this.localNotifications.update(list => list.filter(n => n.id !== id));
+    this.globalNotifService.removeNotification(id);
   }
 
   toggleProfileMenu(event: MouseEvent): void {
