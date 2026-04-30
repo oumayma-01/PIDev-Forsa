@@ -24,6 +24,7 @@ public class Transaction {
 
     @ManyToOne
     @JoinColumn(name = "wallet_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Wallet wallet;
 
     public Long getId() { return id; }

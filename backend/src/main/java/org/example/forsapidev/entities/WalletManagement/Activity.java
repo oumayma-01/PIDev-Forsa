@@ -15,6 +15,7 @@ public class Activity {
     private LocalDateTime timestamp;
 
     @ManyToOne
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Wallet wallet;
 
     public Long getId() {

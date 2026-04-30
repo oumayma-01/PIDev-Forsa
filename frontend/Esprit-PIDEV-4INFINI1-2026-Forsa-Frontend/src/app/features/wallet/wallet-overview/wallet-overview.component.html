@@ -373,36 +373,22 @@
   }
 }
 
-<!-- ══════════════════════════════════════════════════════════════════════════════
-     CLIENT VIEW — No account
-     ══════════════════════════════════════════════════════════════════════════════ -->
 @if (!loading && isClient && !account) {
   <div class="no-account-wrap">
     <div class="no-account-hero">
-      <div class="hero-float-icons">
-        <span class="float-icon fi-1">💳</span>
-        <span class="float-icon fi-2">📈</span>
-        <span class="float-icon fi-3">💰</span>
-      </div>
       <div class="no-account-content">
-        <div class="no-acct-ico">🏦</div>
-        <h2>Start Your Digital Wallet</h2>
-        <p>Create a wallet account to deposit, transfer money, earn interest, and get AI-powered financial insights.</p>
-        <div class="account-type-cards">
-          <div class="type-preview" [class.type-preview--selected]="createType === 'SAVINGS'" (click)="createType = 'SAVINGS'">
-            <span class="type-preview-icon">💵</span>
-            <strong>SAVINGS</strong>
-            <p>Everyday banking, instant access to your funds</p>
-          </div>
-          <div class="type-preview" [class.type-preview--selected]="createType === 'INVESTMENT'" (click)="createType = 'INVESTMENT'">
-            <span class="type-preview-icon">📈</span>
-            <strong>INVESTMENT</strong>
-            <p>Earns AI-adaptive monthly interest on your balance</p>
-          </div>
-        </div>
-        <app-forsa-button (click)="submitCreate()">
-          <app-forsa-icon name="plus" [size]="18" /> Create {{ createType }} Account
-        </app-forsa-button>
+        @if (operationError) {
+          <div class="no-acct-ico">⚠️</div>
+          <h2>Initialization Failed</h2>
+          <p>{{ operationError }}</p>
+          <app-forsa-button (click)="submitCreate()">
+             Retry Now
+          </app-forsa-button>
+        } @else {
+          <div class="ai-spinner">⏳</div>
+          <h2>Initializing Your Wallet</h2>
+          <p>Please wait while we set up your secure digital wallet...</p>
+        }
       </div>
     </div>
   </div>
@@ -478,11 +464,19 @@
             <div class="qa-text"><strong>Account Advice</strong><span>SAVINGS vs INVESTMENT</span></div>
             <span class="qa-arrow">›</span>
           </button>
-          <button class="qa-btn" (click)="applyAdaptiveInterest()">
-            <span class="qa-ico qa-ico--orange">📈</span>
-            <div class="qa-text"><strong>Smart Interest</strong><span>AI adaptive rate (Investment)</span></div>
-            <span class="qa-arrow">›</span>
-          </button>
+          @if (!investmentAccount) {
+            <button class="qa-btn qa-btn--primary" (click)="openInvestmentCreate()">
+              <span class="qa-ico qa-ico--orange">📈</span>
+              <div class="qa-text"><strong>Open Investment Account</strong><span>Earn AI-adaptive interest</span></div>
+              <span class="qa-arrow">›</span>
+            </button>
+          } @else {
+            <button class="qa-btn" (click)="applyAdaptiveInterest()">
+              <span class="qa-ico qa-ico--orange">📈</span>
+              <div class="qa-text"><strong>Smart Interest</strong><span>AI adaptive rate (Investment)</span></div>
+              <span class="qa-arrow">›</span>
+            </button>
+          }
           <button class="qa-btn" (click)="openActivities()">
             <span class="qa-ico qa-ico--teal">📋</span>
             <div class="qa-text"><strong>Activity Log</strong><span>Full audit trail</span></div>
@@ -582,38 +576,39 @@
     </app-forsa-card>
   }
 
-  <!-- Transactions -->
-  <app-forsa-card>
-    <div class="card-pad-lg">
-      <div class="act-head">
-        <div><h3>Recent Activity</h3><p class="text-muted sm">Your latest financial movements.</p></div>
-      </div>
-      <div class="act-list">
-        @if (transactions.length === 0) {
-          <div class="tx-empty"><span>📭</span><p>No transactions yet. Make your first deposit!</p></div>
-        }
-        @for (tx of transactions; track tx.id) {
-          <div class="act-row">
-            <div class="act-left">
-              <span class="act-ico" [class.dep]="isIncoming(tx)">
-                @if (isIncoming(tx)) { <app-forsa-icon name="arrow-up-right" [size]="20" /> }
-                @else { <app-forsa-icon name="arrow-down-right" [size]="20" /> }
-              </span>
-              <div>
-                <p class="act-title">{{ txLabel(tx) }}</p>
-                <p class="act-meta">{{ formatDate(tx.date) }}</p>
-              </div>
-            </div>
-            <div class="act-right">
-              <p class="act-amt" [class.dep]="isIncoming(tx)">
-                {{ isIncoming(tx) ? '+' : '-' }}${{ tx.amount | number : '1.2-2' }}
-              </p>
-            </div>
+  <div class="history-section">
+    <app-forsa-card>
+      <div class="card-pad-lg">
+        <div class="act-head">
+          <div>
+            <h3>Activity Log</h3>
+            <p class="text-muted sm">Full history of your wallet actions and transactions.</p>
           </div>
-        }
+        </div>
+
+        <div class="act-list">
+          @if (loadingActivities) {
+            <div class="ai-loading"><span class="ai-spinner">⏳</span> Fetching activity log...</div>
+          } @else if (activities.length === 0) {
+            <div class="tx-empty"><span>📋</span><p>No activity recorded yet.</p></div>
+          } @else {
+            <div class="activity-trail">
+              @for (act of activities; track act.id) {
+                <div class="trail-item">
+                  <div class="trail-line"></div>
+                  <div class="trail-dot"></div>
+                  <div class="trail-content">
+                    <p class="trail-action">{{ act.action }}</p>
+                    <p class="trail-date">{{ formatDate(act.timestamp) }}</p>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
       </div>
-    </div>
-  </app-forsa-card>
+    </app-forsa-card>
+  </div>
 }
 
 <!-- ══════════════════════════════════════════════════════════════════════════════
@@ -683,6 +678,25 @@
             </div>
           </div>
         }
+      </div>
+    </div>
+  </div>
+}
+
+@if (showInvestmentCreateModal) {
+  <div class="modal-backdrop" (click)="showInvestmentCreateModal = false">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-head"><h3>📈 Open Investment Account</h3><button class="modal-close" (click)="showInvestmentCreateModal = false">✕</button></div>
+      <p>By opening an investment account, you can earn AI-adaptive monthly interest based on bank performance and market trends.</p>
+      <div class="modal-hint">
+        <ul>
+          <li>Monthly interest is automatically applied.</li>
+          <li>Account status will be BLOCKED until approved by an agent.</li>
+        </ul>
+      </div>
+      <div class="modal-actions">
+        <app-forsa-button variant="outline" (click)="showInvestmentCreateModal = false">Cancel</app-forsa-button>
+        <app-forsa-button (click)="submitCreate()">Confirm & Open</app-forsa-button>
       </div>
     </div>
   </div>
