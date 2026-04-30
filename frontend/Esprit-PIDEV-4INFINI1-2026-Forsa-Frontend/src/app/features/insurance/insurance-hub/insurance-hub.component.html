@@ -11,45 +11,6 @@
     </div>
   </nav>
 
-  <!-- Payment Reminder "Pushup" Notification -->
-  @if (upcomingReminder(); as reminder) {
-    @if (!suspendedPolicy()) {
-      <div class="reminder-banner" [class.overdue]="reminder.status === PaymentStatus.OVERDUE">
-        <div class="reminder-icon">
-          <app-forsa-icon [name]="reminder.status === PaymentStatus.OVERDUE ? 'shield-alert' : 'clock'" [size]="24" />
-        </div>
-        <div class="reminder-text">
-          <span class="reminder-title">
-            {{ reminder.status === PaymentStatus.OVERDUE ? 'Urgent: Overdue Payment' : 'Upcoming Premium Payment' }}
-          </span>
-          <p>A payment of <strong>{{ reminder.amount | number:'1.2-2' }} TND</strong> is due on <strong>{{ reminder.dueDate | date:'mediumDate' }}</strong> for Policy #{{ reminder.insurancePolicy?.policyNumber || 'Pending' }}.</p>
-        </div>
-        <div class="reminder-actions">
-          <button class="btn-pay" routerLink="./client/my-payments">Secure Payment</button>
-          <button class="btn-close" (click)="closeReminder()">
-            <app-forsa-icon name="plus" [size]="16" style="transform: rotate(45deg);" />
-          </button>
-        </div>
-      </div>
-    }
-  }
-
-  <!-- Suspension Critical Warning -->
-  @if (suspendedPolicy(); as policy) {
-    <div class="reminder-banner critical">
-      <div class="reminder-icon">
-        <app-forsa-icon name="shield-alert" [size]="24" />
-      </div>
-      <div class="reminder-text">
-        <span class="reminder-title">CRITICAL: Policy Suspended</span>
-        <p>Your policy <strong>#{{ policy.policyNumber }}</strong> has been suspended due to consecutive missed payments. <strong>Coverage is currently inactive.</strong></p>
-      </div>
-      <div class="reminder-actions">
-        <button class="btn-pay" routerLink="./client/my-payments">Reactivate Now</button>
-      </div>
-    </div>
-  }
-
   <!-- ADMIN / AGENT COMMAND CENTER -->
   @if (isAdminOrAgent) {
     <div class="dashboard-wrapper">
@@ -315,6 +276,32 @@
         </div>
       </header>
 
+      <section class="portal-process glass-panel">
+        <div class="process-header">
+          <h2>Your Journey to Protection</h2>
+          <p>How Forsa keeps you and your assets secure in three simple steps.</p>
+        </div>
+        <div class="process-steps">
+          <div class="p-step">
+            <div class="step-num">01</div>
+            <h4>Select Your Plan</h4>
+            <p>Pick the coverage that matches your specific life or business goals.</p>
+          </div>
+          <div class="step-arrow"><app-forsa-icon name="arrow-right" [size]="24" /></div>
+          <div class="p-step">
+            <div class="step-num">02</div>
+            <h4>Instant Calculation</h4>
+            <p>Our smart actuarial engine provides a fair, transparent premium quote.</p>
+          </div>
+          <div class="step-arrow"><app-forsa-icon name="arrow-right" [size]="24" /></div>
+          <div class="p-step">
+            <div class="step-num">03</div>
+            <h4>Immediate Coverage</h4>
+            <p>Sign digitally and gain full protection immediately with Forsa.</p>
+          </div>
+        </div>
+      </section>
+
       <section class="portal-grid">
         <div class="cards-wrapper">
           <a class="p-card" routerLink="./client/catalog">
@@ -364,32 +351,6 @@
               <app-forsa-icon name="arrow-right" [size]="16" />
             </div>
           </a>
-        </div>
-      </section>
-
-      <section class="portal-process glass-panel">
-        <div class="process-header">
-          <h2>Your Journey to Protection</h2>
-          <p>How Forsa keeps you and your assets secure in three simple steps.</p>
-        </div>
-        <div class="process-steps">
-          <div class="p-step">
-            <div class="step-num">01</div>
-            <h4>Select Your Plan</h4>
-            <p>Pick the coverage that matches your specific life or business goals.</p>
-          </div>
-          <div class="step-arrow"><app-forsa-icon name="arrow-right" [size]="24" /></div>
-          <div class="p-step">
-            <div class="step-num">02</div>
-            <h4>Instant Calculation</h4>
-            <p>Our smart actuarial engine provides a fair, transparent premium quote.</p>
-          </div>
-          <div class="step-arrow"><app-forsa-icon name="arrow-right" [size]="24" /></div>
-          <div class="p-step">
-            <div class="step-num">03</div>
-            <h4>Immediate Coverage</h4>
-            <p>Sign digitally and gain full protection immediately with Forsa.</p>
-          </div>
         </div>
       </section>
     </div>

@@ -15,6 +15,7 @@ import { CommonModule } from '@angular/common';
 import { Chart } from 'chart.js/auto';
 import { interval, Subscription } from 'rxjs';
 import { startWith, switchMap, catchError } from 'rxjs/operators';
+import { GlobalNotificationService } from '../../../core/services/global-notification.service';
 
 @Component({
   selector: 'app-insurance-hub',
@@ -28,6 +29,7 @@ export class InsuranceHubComponent implements OnInit, OnDestroy, AfterViewInit {
   private readonly paymentService = inject(PremiumPaymentService);
   private readonly analyticsService = inject(InsuranceAnalyticsService);
   private readonly policyService = inject(InsurancePolicyService);
+  private readonly globalNotifService = inject(GlobalNotificationService);
 
   readonly PaymentStatus = PaymentStatus;
   readonly PolicyStatus = PolicyStatus;
@@ -210,6 +212,12 @@ export class InsuranceHubComponent implements OnInit, OnDestroy, AfterViewInit {
             const diffDays = Math.ceil((new Date(soon.dueDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
             if (diffDays <= 7) {
               this.upcomingReminder.set(soon);
+              this.globalNotifService.addNotification({
+                id: `ins-rem-${soon.id}`,
+                message: `Upcoming Premium: ${soon.amount} TND due on ${soon.dueDate}`,
+                type: 'insurance-warning',
+                actionRoute: '/dashboard/insurance/client/my-payments'
+              });
             }
           }
         }
@@ -222,6 +230,12 @@ export class InsuranceHubComponent implements OnInit, OnDestroy, AfterViewInit {
         const suspended = policies.find((p: InsurancePolicy) => p.status === PolicyStatus.SUSPENDED);
         if (suspended) {
           this.suspendedPolicy.set(suspended);
+          this.globalNotifService.addNotification({
+            id: `ins-susp-${suspended.id}`,
+            message: `CRITICAL: Policy #${suspended.policyNumber} is SUSPENDED. coverage is inactive.`,
+            type: 'insurance-critical',
+            actionRoute: '/dashboard/insurance/client/my-payments'
+          });
         }
       }
     });
