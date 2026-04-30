@@ -1,13 +1,17 @@
 @import './forsa-app.css';
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* Forsa brand tokens (logo: navy + teal → lime → gold) */
 :root {
   --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
   --radius-xl: 1rem;
   --radius-2xl: 1.5rem;
   --radius-3xl: 2rem;
-  --forsa-navy: #1e40af;
-  --forsa-navy-deep: #1e3a8a;
+  --forsa-navy: #1a4a8d;
+  --forsa-navy-deep: #0f2f5c;
   --forsa-teal: #2a9d8f;
   --forsa-lime: #a8d18d;
   --forsa-gold: #e9d5a1;
@@ -40,6 +44,15 @@
   --color-amber-100: #fef3c7;
   --color-amber-700: #b45309;
   --color-zinc-900: #18181b;
+
+  /* Enhanced design system tokens */
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.25);
+  --glass-shadow: 0 8px 32px rgba(15, 47, 92, 0.08);
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --neon-blue: rgba(26, 74, 141, 0.5);
+  --neon-teal: rgba(42, 157, 143, 0.5);
 }
 
 /* Logo: light asset by default; dark asset when `html.dark` (dashboard theme toggle). */
@@ -60,22 +73,29 @@ html.dark .forsa-logo--dark {
 }
 
 .dark {
-  --color-background: #0c1524;
-  --color-foreground: #f0f4fa;
-  --color-card: #131f33;
-  --color-card-foreground: #f0f4fa;
-  --color-primary: #3d6fb5;
+  --color-background: #070d18;
+  --color-foreground: #e8eef8;
+  --color-card: rgba(16, 28, 50, 0.85);
+  --color-card-foreground: #e8eef8;
+  --color-primary: #4d8bd6;
   --color-primary-foreground: #ffffff;
-  --color-secondary: #1c2a3f;
-  --color-secondary-foreground: #f0f4fa;
-  --color-muted: #1c2a3f;
-  --color-muted-foreground: #9fb0c8;
-  --color-accent: #1e3d36;
-  --color-accent-foreground: #c8ebe4;
+  --color-secondary: #152238;
+  --color-secondary-foreground: #e8eef8;
+  --color-muted: #152238;
+  --color-muted-foreground: #8ba3c4;
+  --color-accent: #163830;
+  --color-accent-foreground: #a8e6d8;
   --color-destructive: #f87171;
-  --color-border: #2a3d55;
-  --color-input: #2a3d55;
+  --color-border: rgba(42, 61, 85, 0.6);
+  --color-input: rgba(42, 61, 85, 0.6);
   --color-ring: var(--forsa-teal);
+
+  /* Dark glass tokens */
+  --glass-bg: rgba(10, 18, 35, 0.75);
+  --glass-border: rgba(60, 100, 160, 0.15);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --neon-blue: rgba(77, 139, 214, 0.4);
+  --neon-teal: rgba(42, 157, 143, 0.4);
 }
 
 *,
@@ -84,17 +104,19 @@ html.dark .forsa-logo--dark {
   box-sizing: border-box;
 }
 
-html,
-body {
+html {
   height: 100%;
+  scroll-behavior: smooth;
 }
 
 body {
+  height: 100%;
   margin: 0;
   font-family: var(--font-sans);
   background: var(--color-background);
   color: var(--color-foreground);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 h1,
@@ -121,5 +143,330 @@ textarea {
   font-family: inherit;
 }
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+/* ═══════════════════════════════════════════════════════════════
+   GLASSMORPHISM UTILITIES
+   ═══════════════════════════════════════════════════════════════ */
+
+.glass {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(16px) saturate(1.8);
+  backdrop-filter: blur(16px) saturate(1.8);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-subtle {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+}
+
+.glass-card {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  backdrop-filter: blur(20px) saturate(1.6);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--radius-xl);
+  transition: var(--transition-smooth);
+}
+
+.glass-card:hover {
+  box-shadow: 0 12px 40px rgba(15, 47, 92, 0.12);
+  transform: translateY(-2px);
+}
+
+.dark .glass-card:hover {
+  box-shadow: 0 12px 40px rgba(77, 139, 214, 0.12);
+  border-color: rgba(77, 139, 214, 0.2);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   NEUMORPHISM - LIGHT USAGE FOR BUTTONS & INPUTS
+   ═══════════════════════════════════════════════════════════════ */
+
+.neu-raised {
+  box-shadow:
+    4px 4px 8px color-mix(in oklab, var(--color-border) 60%, transparent),
+    -4px -4px 8px rgba(255, 255, 255, 0.8);
+}
+
+.dark .neu-raised {
+  box-shadow:
+    4px 4px 8px rgba(0, 0, 0, 0.3),
+    -4px -4px 8px rgba(30, 50, 80, 0.15);
+}
+
+.neu-pressed {
+  box-shadow:
+    inset 2px 2px 5px color-mix(in oklab, var(--color-border) 50%, transparent),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.7);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MICRO-INTERACTIONS - BUTTONS
+   ═══════════════════════════════════════════════════════════════ */
+
+app-forsa-button button,
+button.forsa-btn {
+  transition:
+    background 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.15s ease !important;
+}
+
+app-forsa-button button:hover:not(:disabled),
+button.forsa-btn:hover:not(:disabled) {
+  transform: scale(1.03);
+}
+
+app-forsa-button button:active:not(:disabled),
+button.forsa-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Animated gradient hover for primary buttons */
+app-forsa-button button.variant-default {
+  background-size: 200% auto;
+  background-image: linear-gradient(
+    135deg,
+    var(--forsa-navy) 0%,
+    var(--forsa-teal) 50%,
+    var(--forsa-navy) 100%
+  );
+  transition:
+    background-position 0.5s ease,
+    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.25s ease !important;
+}
+
+app-forsa-button button.variant-default:hover:not(:disabled) {
+  background-position: right center;
+  box-shadow: 0 12px 30px -8px color-mix(in oklab, var(--color-primary) 50%, transparent);
+  transform: scale(1.03);
+}
+
+app-forsa-button button.variant-default:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MICRO-INTERACTIONS - CARDS
+   ═══════════════════════════════════════════════════════════════ */
+
+app-forsa-card > div {
+  transition: var(--transition-smooth) !important;
+}
+
+app-forsa-card > div:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 40px -12px color-mix(in oklab, var(--color-primary) 15%, transparent);
+}
+
+.dark app-forsa-card > div:hover {
+  box-shadow: 0 16px 40px -12px rgba(77, 139, 214, 0.15);
+  border-color: rgba(77, 139, 214, 0.2);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MICRO-INTERACTIONS - INPUTS
+   ═══════════════════════════════════════════════════════════════ */
+
+.forsa-input,
+textarea.forsa-input,
+input[forsaInput] {
+  transition:
+    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.3s ease,
+    background 0.3s ease !important;
+}
+
+.forsa-input:focus-visible,
+textarea.forsa-input:focus-visible,
+input[forsaInput]:focus-visible {
+  box-shadow:
+    0 0 0 3px color-mix(in oklab, var(--forsa-teal) 25%, transparent),
+    0 0 20px -4px color-mix(in oklab, var(--forsa-teal) 20%, transparent) !important;
+  border-color: var(--forsa-teal) !important;
+  background: color-mix(in oklab, var(--color-card) 90%, transparent) !important;
+}
+
+.dark .forsa-input:focus-visible,
+.dark textarea.forsa-input:focus-visible,
+.dark input[forsaInput]:focus-visible {
+  box-shadow:
+    0 0 0 3px rgba(42, 157, 143, 0.2),
+    0 0 30px -4px rgba(42, 157, 143, 0.15) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ENHANCED TABLE STYLES
+   ═══════════════════════════════════════════════════════════════ */
+
+.forsa-table {
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+.forsa-table th {
+  background: color-mix(in oklab, var(--color-muted) 40%, transparent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+}
+
+.forsa-table tr {
+  transition: background 0.2s ease;
+}
+
+.forsa-table tr:hover td {
+  background: color-mix(in oklab, var(--forsa-teal) 5%, transparent);
+}
+
+.dark .forsa-table tr:hover td {
+  background: color-mix(in oklab, var(--forsa-teal) 8%, transparent);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SKELETON LOADING
+   ═══════════════════════════════════════════════════════════════ */
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--color-muted) 50%, transparent) 25%,
+    color-mix(in oklab, var(--color-muted) 80%, transparent) 50%,
+    color-mix(in oklab, var(--color-muted) 50%, transparent) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 0.5rem;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-text {
+  height: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.skeleton-card {
+  height: 12rem;
+  border-radius: var(--radius-xl);
+}
+
+.skeleton-avatar {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 9999px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SCROLL ENHANCEMENTS
+   ═══════════════════════════════════════════════════════════════ */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--color-muted-foreground) 30%, transparent);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--color-muted-foreground) 50%, transparent);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ENHANCED MODALS (global)
+   ═══════════════════════════════════════════════════════════════ */
+
+.cdk-overlay-pane .mat-mdc-dialog-surface {
+  background: var(--glass-bg) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  backdrop-filter: blur(20px) saturate(1.6);
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--radius-2xl) !important;
+  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GSAP ANIMATION HELPER CLASSES
+   ═══════════════════════════════════════════════════════════════ */
+
+.gsap-fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.gsap-scale-in {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.gsap-slide-right {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DARK MODE NEON ACCENTS
+   ═══════════════════════════════════════════════════════════════ */
+
+.dark app-forsa-badge .tone-default {
+  background: rgba(77, 139, 214, 0.15);
+  color: #6dadff;
+}
+
+.dark app-forsa-badge .tone-success {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+
+.dark .forsa-auth-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ANIMATED PAGE ENTRANCE
+   ═══════════════════════════════════════════════════════════════ */
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.shell__content > * {
+  animation: page-enter 0.35s ease-out;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FOCUS-VISIBLE ACCESSIBILITY
+   ═══════════════════════════════════════════════════════════════ */
+
+:focus-visible {
+  outline: 2px solid var(--forsa-teal);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
