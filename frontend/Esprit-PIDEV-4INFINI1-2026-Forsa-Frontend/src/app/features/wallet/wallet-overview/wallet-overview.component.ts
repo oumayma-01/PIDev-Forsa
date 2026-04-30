@@ -32,6 +32,7 @@ export class WalletOverviewComponent implements OnInit {
 
   // ── CLIENT state ─────────────────────────────────────────────────────────────
   account: Account | null = null;
+  investmentAccount: Account | null = null;
   transactions: Transaction[] = [];
   activities: Activity[] = [];
   stats: WalletStatisticsDTO | null = null;
@@ -64,6 +65,8 @@ export class WalletOverviewComponent implements OnInit {
   showAdminCreateModal = false;
   showAdminDepositModal = false;
   showAdminWithdrawModal = false;
+  showActivitiesInHistory = false;
+  showInvestmentCreateModal = false;
 
   // ── Form fields ───────────────────────────────────────────────────────────────
   createType: 'SAVINGS' | 'INVESTMENT' = 'SAVINGS';
@@ -240,14 +243,30 @@ export class WalletOverviewComponent implements OnInit {
     if (!user?.id) { this.loading = false; return; }
     this.accountSvc.getAccountsByOwner(+user.id).subscribe({
       next: (accounts) => {
-        if (accounts && accounts.length > 0) {
-          this.account = accounts[0];
-          this.transactions = accounts[0].wallet?.transactions ?? [];
+        const savings = accounts.find(a => a.type === 'SAVINGS');
+        const investment = accounts.find(a => a.type === 'INVESTMENT');
+
+        if (savings) {
+          this.account = savings;
+          this.transactions = savings.wallet?.transactions ?? [];
           this.loadStats();
+          this.loadActivitiesInternal();
+        } else if (this.isClient) {
+          // Auto-create SAVINGS wallet if missing for client
+          this.createType = 'SAVINGS';
+          this.submitCreate();
         }
+
+        if (investment) {
+          this.investmentAccount = investment;
+        }
+
         this.loading = false;
       },
-      error: () => { this.loading = false; },
+      error: (err) => { 
+        this.loading = false; 
+        this.operationError = err.error?.message || err.message || 'Failed to load your accounts. The server might be unreachable.'; 
+      },
     });
   }
 
@@ -262,14 +281,28 @@ export class WalletOverviewComponent implements OnInit {
     const holderName = user.username ?? `User #${user.id}`;
     this.accountSvc.createAccount(+user.id, this.createType, holderName).subscribe({
       next: (acc) => {
-        this.account = acc;
-        this.transactions = [];
+        if (this.createType === 'SAVINGS') {
+          this.account = acc;
+          this.transactions = [];
+          this.loadStats();
+        } else {
+          this.investmentAccount = acc;
+        }
         this.showCreateModal = false;
-        this.operationMessage = `${this.createType} account created successfully!`;
-        this.loadStats();
+        this.showInvestmentCreateModal = false;
+        this.operationError = '';
+        this.operationMessage = `${acc.type} Wallet activated successfully!`;
       },
-      error: () => { this.operationError = 'Account creation failed. Please try again.'; },
+      error: (err) => { 
+        console.error(err);
+        this.operationError = err.error?.message || err.message || 'Failed to activate wallet. Ensure you are logged in as a Client.'; 
+      },
     });
+  }
+
+  openInvestmentCreate(): void {
+    this.createType = 'INVESTMENT';
+    this.showInvestmentCreateModal = true;
   }
 
   openDepositModal(): void { this.depositAmount = null; this.operationError = ''; this.showDepositModal = true; }
@@ -368,7 +401,26 @@ export class WalletOverviewComponent implements OnInit {
   private refreshClientAccount(): void {
     if (!this.account) return;
     this.accountSvc.getAccount(this.account.id).subscribe({
-      next: (acc) => { this.account = acc; this.transactions = acc.wallet?.transactions ?? []; this.loadStats(); },
+      next: (acc) => {
+        this.account = acc;
+        this.transactions = acc.wallet?.transactions ?? [];
+        this.loadStats();
+        this.loadActivitiesInternal();
+      },
+    });
+  }
+
+  private loadActivitiesInternal(): void {
+    if (!this.account) return;
+    this.loadingActivities = true;
+    this.accountSvc.getActivities(this.account.id).subscribe({
+      next: (a) => {
+        this.activities = a;
+        this.loadingActivities = false;
+      },
+      error: () => {
+        this.loadingActivities = false;
+      },
     });
   }
 }

@@ -370,33 +370,67 @@
   font-size: 0.88rem; color: var(--color-muted-foreground); line-height: 1.6;
 }
 
-/* Transaction list */
-.act-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1rem; }
-.act-head h3 { margin: 0 0 0.25rem; }
-.sm { font-size: 0.8rem; margin: 0; }
-.act-list { display: flex; flex-direction: column; gap: 0.75rem; }
-
-.act-row {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 1rem; padding: 0.5rem 0.5rem;
-  margin: 0 -0.5rem; border-radius: 0.75rem; transition: background 0.12s;
+/* ── History Section ───────────────────────────────────────────────────────── */
+.history-section { margin-top: 1.5rem; }
+.history-tabs {
+  display: flex; gap: 1rem; border-bottom: 1px solid var(--color-border, #e2e8f0);
+  margin-bottom: 1.5rem; padding-bottom: 0.25rem;
 }
-.act-row:hover { background: color-mix(in oklab, var(--color-muted) 40%, transparent); }
-.act-left { display: flex; align-items: center; gap: 0.85rem; }
+.h-tab {
+  background: none; border: none; padding: 0.6rem 1rem;
+  font-size: 0.9rem; font-weight: 600; color: var(--color-muted-foreground);
+  cursor: pointer; position: relative; display: flex; align-items: center; gap: 0.5rem;
+  transition: color 0.2s;
+}
+.h-tab:hover { color: var(--color-foreground); }
+.h-tab.active { color: var(--color-primary); }
+.h-tab.active::after {
+  content: ''; position: absolute; bottom: -0.3rem; left: 0; right: 0;
+  height: 2.5px; background: var(--color-primary); border-radius: 2px;
+}
+
+.table-container { overflow-x: auto; }
+.history-table { width: 100%; border-collapse: collapse; }
+.history-table th {
+  text-align: left; padding: 0.75rem 1rem; font-size: 0.75rem;
+  color: var(--color-muted-foreground); text-transform: uppercase; letter-spacing: 0.05em;
+  border-bottom: 1.5px solid var(--color-border, #e2e8f0);
+}
+.history-table td { padding: 1rem; border-bottom: 1px solid var(--color-border, #f1f5f9); font-size: 0.9rem; }
+.tx-type-cell { display: flex; align-items: center; gap: 0.75rem; font-weight: 600; }
+.tx-status-pill {
+  padding: 0.15rem 0.5rem; border-radius: 1rem; background: #f1f5f9;
+  font-size: 0.65rem; font-weight: 700; color: #64748b; text-transform: uppercase;
+}
+.text-right { text-align: right; }
+.text-muted { color: var(--color-muted-foreground); font-size: 0.8rem; }
+
+/* Activity Trail */
+.activity-trail { padding-left: 0.5rem; }
+.trail-item { position: relative; padding: 0 0 1.5rem 1.5rem; }
+.trail-line { position: absolute; left: 0; top: 0.5rem; bottom: 0; width: 2px; background: #e2e8f0; }
+.trail-item:last-child .trail-line { display: none; }
+.trail-dot {
+  position: absolute; left: -4px; top: 0.5rem;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--color-primary); border: 2px solid #fff; box-shadow: 0 0 0 2px #e2e8f0;
+}
+.trail-content { margin-top: -0.2rem; }
+.trail-action { margin: 0; font-weight: 600; font-size: 0.88rem; }
+.trail-date   { margin: 0.1rem 0 0; font-size: 0.75rem; color: var(--color-muted-foreground); }
+
+.act-list { display: flex; flex-direction: column; gap: 0.75rem; }
 .act-ico {
-  width: 2.4rem; height: 2.4rem; border-radius: 0.85rem; flex-shrink: 0;
+  width: 2.2rem; height: 2.2rem; border-radius: 0.65rem; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
-  background: var(--color-slate-100, #f1f5f9); color: #64748b;
+  background: var(--color-muted, #f1f5f9); color: #64748b;
 }
 .act-ico.dep { background: #dbeafe; color: #2563eb; }
-.act-title { margin: 0; font-weight: 700; font-size: 0.88rem; }
-.act-meta  { margin: 0.1rem 0 0; font-size: 0.72rem; color: var(--color-muted-foreground); }
-.act-right { text-align: right; }
-.act-amt   { margin: 0; font-size: 1rem; font-weight: 800; }
+.act-amt { font-weight: 800; font-size: 1rem; }
 .act-amt.dep { color: #16a34a; }
 
-.tx-empty { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 2rem; color: var(--color-muted-foreground); text-align: center; }
-.tx-empty span { font-size: 2.5rem; }
+.tx-empty { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 3rem; color: var(--color-muted-foreground); text-align: center; }
+.tx-empty span { font-size: 3rem; opacity: 0.5; }
 
 /* ════════════════════════════════════════════════════════════════
    MODALS
