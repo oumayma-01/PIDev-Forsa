@@ -35,43 +35,12 @@
       @if (aiResponse) {
         <div class="ai-box">{{ aiResponse }}</div>
       }
-
       @if (isAdminOrAgent) {
-        <div class="finance-box">
-          <h4>Credit Eligibility</h4>
-          <div class="finance-actions">
-            <input #requiredScoreInput type="number" min="1" [value]="requiredScore ?? ''" placeholder="Auto (by amount)" />
-            <app-forsa-button variant="outline" (clicked)="checkCreditEligibility(requiredScoreInput.value)">
-              Check Eligibility
-            </app-forsa-button>
-          </div>
-
-          @if (creditEligibility) {
-            <div class="finance-result">
-              <div>Current score: <strong>{{ creditEligibility.currentScore }}</strong></div>
-              <div>Required score: <strong>{{ creditEligibility.requiredScore }}</strong></div>
-              <div>Gap: <strong>{{ creditEligibility.gap }}</strong></div>
-              <div>
-                Result:
-                <strong>
-                  {{ creditEligibility.eligible ? 'Score pre-eligible' : 'Needs +' + creditEligibility.gap + ' points' }}
-                </strong>
-              </div>
-            </div>
-            <div class="finance-actions">
-              <app-forsa-button (clicked)="sendEligibilityResponse()">
-                Send Eligibility Response
-              </app-forsa-button>
-            </div>
-          }
-        </div>
-
         <div class="finance-box">
           <h4>Financial Impact Score</h4>
           <div class="finance-actions">
             <app-forsa-button variant="outline" (clicked)="loadFinancialImpact()">Compute Impact</app-forsa-button>
           </div>
-
           @if (financialImpact) {
             <div class="finance-result">
               <div>Impact score: <strong>{{ financialImpact.financialImpactScore }}</strong></div>
@@ -80,43 +49,12 @@
               <div>Days since creation: <strong>{{ financialImpact.daysSinceCreation }}</strong></div>
             </div>
           }
-        </div>
-      }
-
-      @if (isClient) {
-        <div class="finance-box">
-          <h4>My Credit Eligibility</h4>
-          <div class="finance-actions">
-            <app-forsa-button variant="outline" (clicked)="checkCreditEligibility()">
-              Calculate Missing Score
-            </app-forsa-button>
-          </div>
-
-          @if (creditEligibility) {
-            <div class="finance-result">
-              <div>Current score: <strong>{{ creditEligibility.currentScore }}</strong></div>
-              <div>Required score: <strong>{{ creditEligibility.requiredScore }}</strong></div>
-              <div>Missing score: <strong>{{ creditEligibility.gap }}</strong></div>
-              @if (creditEligibility.requestedAmount != null) {
-                <div>Requested amount: <strong>{{ creditEligibility.requestedAmount }}</strong> DT</div>
-              }
-              <div>
-                Result:
-                <strong>
-                  {{ creditEligibility.eligible ? 'Pre-eligible' : 'Needs +' + creditEligibility.gap + ' points' }}
-                </strong>
-              </div>
-              @if (creditEligibility.recommendation) {
-                <div>Recommendation: <strong>{{ creditEligibility.recommendation }}</strong></div>
-              }
-            </div>
+          @if (financialError) {
+            <div class="error">{{ financialError }}</div>
           }
         </div>
       }
 
-      @if (financialError) {
-        <div class="error">{{ financialError }}</div>
-      }
     </div>
   </app-forsa-card>
 

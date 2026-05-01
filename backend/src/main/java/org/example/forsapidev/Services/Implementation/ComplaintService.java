@@ -1,8 +1,6 @@
 package org.example.forsapidev.Services.Implementation;
 
 import lombok.RequiredArgsConstructor;
-import org.example.forsapidev.DTO.ComplaintCreditEligibilityDTO;
-import org.example.forsapidev.DTO.ComplaintFinancialImpactDTO;
 import org.example.forsapidev.Repositories.ComplaintRepository;
 import org.example.forsapidev.Repositories.FeedbackRepository;
 import org.example.forsapidev.Repositories.ResponseRepository;
@@ -249,68 +247,7 @@ public class ComplaintService implements IComplaintService {
     }
 
     @Override
-    public ComplaintCreditEligibilityDTO getCreditEligibilityByComplaint(Long complaintId, Double requiredScore) {
-        Complaint complaint = complaintRepository.findById(complaintId)
-                .orElseThrow(() -> new IllegalArgumentException("Complaint not found"));
-
-        double amount = extractAmountFromDescription(complaint.getDescription());
-        if (amount <= 0) {
-            amount = simulatedAmountByPriority(complaint.getPriority());
-        }
-
-        double required = (requiredScore != null && requiredScore > 0)
-                ? requiredScore
-                : computeRequiredScore(amount);
-        Long clientId = complaint.getUser() != null ? complaint.getUser().getId() : null;
-
-        double currentScore;
-        boolean fallbackUsed = false;
-
-        if (clientId == null) {
-            currentScore = 50.0;
-            fallbackUsed = true;
-        } else {
-            try {
-                ScoreResult scoreResult = scoringAggregationService.getOrCalculateScore(clientId);
-                currentScore = scoreResult.getFinalScore() != null ? scoreResult.getFinalScore() : 50.0;
-                if (scoreResult.getFinalScore() == null) {
-                    fallbackUsed = true;
-                }
-            } catch (Exception e) {
-                currentScore = 50.0;
-                fallbackUsed = true;
-            }
-        }
-
-        double gap = Math.max(0.0, required - currentScore);
-        boolean eligible = currentScore >= required;
-        String recommendation;
-        if (eligible) {
-            recommendation = "Profile eligible. Current score: " + round2(currentScore)
-                    + " >= Required: " + round2(required)
-                    + ". Amount: " + round2(amount) + " DT.";
-        } else {
-            recommendation = "Score insufficient. Need " + round2(gap)
-                    + " more points. Current: " + round2(currentScore)
-                    + ", Required: " + round2(required)
-                    + " for amount " + round2(amount) + " DT.";
-        }
-
-        return new ComplaintCreditEligibilityDTO(
-                complaintId,
-                clientId,
-                round2(currentScore),
-                round2(required),
-                round2(gap),
-                eligible,
-                fallbackUsed,
-                round2(amount),
-                recommendation
-        );
-    }
-
-    @Override
-    public ComplaintFinancialImpactDTO getFinancialImpactByComplaint(Long complaintId) {
+    public Map<String, Object> getFinancialImpactByComplaint(Long complaintId) {
         Complaint complaint = complaintRepository.findById(complaintId)
                 .orElseThrow(() -> new IllegalArgumentException("Complaint not found"));
 
@@ -345,9 +282,9 @@ public class ComplaintService implements IComplaintService {
 
         double impactScore = round2(
                 (amountScore * 0.40) +
-                (priorityScore * 0.25) +
-                (clientRiskScore * 0.20) +
-                (ageScore * 0.15)
+                        (priorityScore * 0.25) +
+                        (clientRiskScore * 0.20) +
+                        (ageScore * 0.15)
         );
 
         String riskLevel;
@@ -362,17 +299,18 @@ public class ComplaintService implements IComplaintService {
         else if (amount <= 3000) creditCategory = "MICRO_MEDIUM";
         else creditCategory = "MICRO_LARGE";
 
-        return new ComplaintFinancialImpactDTO(
-                complaintId,
-                round2(amount),
-                amountSource,
-                complaint.getPriority() != null ? complaint.getPriority().name() : Priority.MEDIUM.name(),
-                daysSinceCreation,
-                impactScore,
-                riskLevel,
-                creditCategory
-        );
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("complaintId", complaintId);
+        res.put("complaintAmount", round2(amount));
+        res.put("amountSource", amountSource);
+        res.put("priority", complaint.getPriority() != null ? complaint.getPriority().name() : Priority.MEDIUM.name());
+        res.put("daysSinceCreation", daysSinceCreation);
+        res.put("financialImpactScore", impactScore);
+        res.put("riskLevel", riskLevel);
+        res.put("creditCategory", creditCategory);
+        return res;
     }
+
 
     private double computeRequiredScore(double amount) {
         if (amount <= 0) return 40.0;

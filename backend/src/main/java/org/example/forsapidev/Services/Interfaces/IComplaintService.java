@@ -2,8 +2,6 @@ package org.example.forsapidev.Services.Interfaces;
 
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Complaint;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Response;
-import org.example.forsapidev.DTO.ComplaintCreditEligibilityDTO;
-import org.example.forsapidev.DTO.ComplaintFinancialImpactDTO;
 
 import java.util.List;
 import java.util.Map;
@@ -30,7 +28,6 @@ public interface IComplaintService {
     Complaint affectComplaintToUser(Long complaintId, Long userId);
     Response addResponseAndUpdateStatus(Long complaintId, Response r);
     void closeComplaintIfEligible(Long complaintId);
+    Map<String, Object> getFinancialImpactByComplaint(Long complaintId);
 
-    ComplaintCreditEligibilityDTO getCreditEligibilityByComplaint(Long complaintId, Double requiredScore);
-    ComplaintFinancialImpactDTO getFinancialImpactByComplaint(Long complaintId);
 }

@@ -245,22 +245,21 @@
 
 .notification-container {
   position: relative;
+  overflow: visible;
 }
 
 /* ── NOTIFICATION DROPDOWN (Glass) ── */
 .notification-dropdown {
-  position: absolute;
-  right: -80px;
-  top: calc(100% + 0.5rem);
-  width: 340px;
-  max-height: 400px;
+  position: relative;
+  width: min(360px, 92vw);
+  max-height: min(70vh, 560px);
   background: var(--glass-bg);
   -webkit-backdrop-filter: blur(24px) saturate(1.6);
   backdrop-filter: blur(24px) saturate(1.6);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
   box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.15);
-  z-index: 50;
+  z-index: 10000;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -309,6 +308,7 @@
 .notification-list {
   overflow-y: auto;
   flex: 1;
+  min-height: 0;
 }
 
 .empty-state {
