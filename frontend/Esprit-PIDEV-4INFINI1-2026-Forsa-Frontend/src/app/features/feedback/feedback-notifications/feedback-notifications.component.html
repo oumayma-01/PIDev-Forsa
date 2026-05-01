@@ -1,0 +1,29 @@
+<div class="page-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+  <h2>Notifications</h2>
+  <app-forsa-button variant="outline" (clicked)="load()">Refresh</app-forsa-button>
+</div>
+
+@if (loading) {
+  <p>Loading...</p>
+}
+
+@if (!loading && notifications.length === 0) {
+  <app-forsa-card>
+    <div style="padding:16px;">No notifications.</div>
+  </app-forsa-card>
+}
+
+@for (n of notifications; track n.id) {
+  <app-forsa-card style="margin-bottom:10px;cursor:pointer;" (click)="open(n)">
+    <div style="padding:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <strong>{{ n.title }}</strong>
+        @if (!n.isRead) {
+          <span style="font-size:12px;color:#e11d48;">Unread</span>
+        }
+      </div>
+      <p style="margin:8px 0 4px 0;white-space:normal;overflow-wrap:anywhere;">{{ n.message }}</p>
+      <small>{{ n.createdAt | date:'yyyy-MM-dd HH:mm' }}</small>
+    </div>
+  </app-forsa-card>
+}

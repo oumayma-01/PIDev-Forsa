@@ -81,6 +81,16 @@ export const routes: Routes = [
               import('./features/feedback/feedback-list/feedback-list.component').then((m) => m.FeedbackListComponent),
           },
           {
+            path: 'complaints',
+            loadComponent: () =>
+              import('./features/feedback/feedback-list/feedback-list.component').then((m) => m.FeedbackListComponent),
+          },
+          {
+            path: 'notifications',
+            loadComponent: () =>
+              import('./features/feedback/feedback-notifications/feedback-notifications.component').then((m) => m.FeedbackNotificationsComponent),
+          },
+          {
             path: 'complaint/add',
             loadComponent: () =>
               import('./features/feedback/complaint-form/complaint-form.component').then((m) => m.ComplaintFormComponent),

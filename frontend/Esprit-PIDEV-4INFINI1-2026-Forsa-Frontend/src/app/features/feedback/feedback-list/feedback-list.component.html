@@ -5,64 +5,6 @@
   </div>
   @if (isClient) {
     <div class="toolbar-actions">
-      <div class="notif-bell-wrapper">
-        <button class="notif-bell-btn" (click)="toggleNotifications()">
-          <app-forsa-icon name="bell" [size]="20" />
-          @if (unreadCount > 0) {
-            <span class="notif-count-badge">{{ unreadCount }}</span>
-          }
-        </button>
-
-        @if (showNotifications) {
-          <div class="notif-dropdown">
-            <div class="notif-dropdown-header">
-              <span>Notifications</span>
-              @if (notifications.length > 0) {
-                <span class="notif-total">{{ notifications.length }}</span>
-              }
-            </div>
-
-            @if (notifications.length === 0) {
-              <div class="notif-empty">
-                <app-forsa-icon name="bell" [size]="24" />
-                <p>No notifications yet</p>
-              </div>
-            }
-
-            @for (notif of notifications.slice(0, 8); track notif.id) {
-              <div
-                class="notif-item-drop"
-                [class.unread]="!notif.isRead"
-                (click)="goToComplaintFromNotif(notif.complaint?.id ?? 0, notif.id)"
-              >
-                <div class="notif-item-icon">
-                  @if (notif.type === 'RESPONSE_ADDED') {
-                    <app-forsa-icon name="message-square" [size]="14" />
-                  } @else if (notif.type === 'COMPLAINT_CLOSED') {
-                    <app-forsa-icon name="check-circle-2" [size]="14" />
-                  } @else {
-                    <app-forsa-icon name="bell" [size]="14" />
-                  }
-                </div>
-                <div class="notif-item-content">
-                  <p class="notif-item-title">{{ notif.title }}</p>
-                  <p class="notif-item-msg">
-                    {{ notif.message.slice(0, 80) }}
-                    {{ notif.message.length > 80 ? '...' : '' }}
-                  </p>
-                  <span class="notif-item-date">
-                    {{ notif.createdAt | date:'dd/MM/yyyy HH:mm' }}
-                  </span>
-                </div>
-                @if (!notif.isRead) {
-                  <div class="notif-unread-dot"></div>
-                }
-              </div>
-            }
-          </div>
-        }
-      </div>
-
       <app-forsa-button (clicked)="goToAdd()">
         <app-forsa-icon name="plus" [size]="16" />
         New Complaint
@@ -236,47 +178,6 @@
     </app-forsa-card>
   </div>
 
-  <app-forsa-card class="eligibility-simulator">
-    <div class="section-pad">
-      <div class="section-head">
-        <h3>Credit Score Simulator</h3>
-      </div>
-      <p class="muted">Enter a credit amount to estimate the score you still need.</p>
-      <div class="simulator-actions">
-        <input
-          type="number"
-          min="1"
-          class="forsa-input simulator-input"
-          forsaInput
-          placeholder="Amount (DT)"
-          [(ngModel)]="creditAmountInput"
-        />
-        <app-forsa-button (clicked)="calculateClientMissingScore()">
-          Calculate Missing Score
-        </app-forsa-button>
-      </div>
-
-      @if (eligibilityCalcError) {
-        <p class="simulator-error">{{ eligibilityCalcError }}</p>
-      }
-
-      @if (isCalculatingEligibility) {
-        <p class="muted">Calculating...</p>
-      }
-
-      @if (!isCalculatingEligibility && clientCurrentScore !== null && clientRequiredScore !== null && clientMissingScore !== null) {
-        <div class="finance-result">
-          <div>Current score: <strong>{{ clientCurrentScore }}</strong></div>
-          <div>Required score: <strong>{{ clientRequiredScore }}</strong></div>
-          <div>Missing score: <strong>{{ clientMissingScore }}</strong></div>
-          <div>
-            Result:
-            <strong>{{ clientPreEligible ? 'Pre-eligible' : 'Needs +' + clientMissingScore + ' points' }}</strong>
-          </div>
-        </div>
-      }
-    </div>
-  </app-forsa-card>
 }
 
 @if (error) {
@@ -291,7 +192,7 @@
 }
 
 @if (showComplaintsList && isAdminOrAgent) {
-  <button class="back-btn" (click)="showComplaintsList = false">
+  <button class="back-btn" (click)="goBackFromComplaints()">
     ← Back
   </button>
 }
@@ -401,7 +302,7 @@
               </app-forsa-button>
             }
 
-            @if (canAddFeedback(item)) {
+            @if (isClient && canAddFeedback(item)) {
               <app-forsa-button variant="ghost" size="sm" (clicked)="goToAddFeedback(item.id!)">
                 <app-forsa-icon name="message-square" [size]="16" />
                 Add Feedback

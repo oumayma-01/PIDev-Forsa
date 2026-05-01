@@ -150,17 +150,73 @@ public class FeedbackService implements IFeedbackService {
         User user = userRepository.findByUsername(username).orElse(null);
         if (user != null) f.setUser(user);
 
-        try {
-            String level = complaintAiAssistant.analyzeFeedbackSatisfaction(
-                    f.getRating(), f.getComment()
-            );
-            f.setSatisfactionLevel(level);
-        } catch (Exception e) {
-            int r = (f.getRating() == null) ? 3 : f.getRating();
-            f.setSatisfactionLevel(computeSatisfactionFromRating(r));
-        }
+        int rating = (f.getRating() == null) ? 3 : Math.max(1, Math.min(5, f.getRating()));
+        f.setRating(rating);
+
+        String ratingLevel = computeSatisfactionFromRating(rating);
+        String finalLevel = resolveSatisfactionLevel(ratingLevel, rating, f.getComment());
+        f.setSatisfactionLevel(finalLevel);
 
         return feedbackRepository.save(f);
+    }
+
+    private String resolveSatisfactionLevel(String ratingLevel, int rating, String comment) {
+        String normalizedComment = comment == null ? "" : comment.trim();
+        if (normalizedComment.isBlank()) {
+            return ratingLevel;
+        }
+
+        String aiLevel = ratingLevel;
+        try {
+            aiLevel = normalizeSatisfactionLevel(
+                    complaintAiAssistant.analyzeFeedbackSatisfaction(rating, normalizedComment)
+            );
+        } catch (Exception ignored) {
+            return ratingLevel;
+        }
+
+        int gap = distance(aiLevel, ratingLevel);
+        if (gap == 0) {
+            return ratingLevel;
+        }
+        if (gap == 1) {
+            // close to user rating: accept AI nuance
+            return aiLevel;
+        }
+        if (gap >= 3) {
+            // too far from explicit user rating: keep rating-based level
+            return ratingLevel;
+        }
+
+        // gap == 2: allow AI only for mid ratings where comment sentiment can add nuance
+        if (rating == 3 || rating == 4) {
+            return aiLevel;
+        }
+        return ratingLevel;
+    }
+
+    private String normalizeSatisfactionLevel(String raw) {
+        if (raw == null || raw.isBlank()) return "NEUTRAL";
+        String v = raw.trim().toUpperCase(Locale.ROOT);
+        return switch (v) {
+            case "VERY_SATISFIED", "SATISFIED", "NEUTRAL", "DISSATISFIED", "VERY_DISSATISFIED" -> v;
+            default -> "NEUTRAL";
+        };
+    }
+
+    private int levelRank(String level) {
+        return switch (normalizeSatisfactionLevel(level)) {
+            case "VERY_DISSATISFIED" -> 1;
+            case "DISSATISFIED" -> 2;
+            case "NEUTRAL" -> 3;
+            case "SATISFIED" -> 4;
+            case "VERY_SATISFIED" -> 5;
+            default -> 3;
+        };
+    }
+
+    private int distance(String a, String b) {
+        return Math.abs(levelRank(a) - levelRank(b));
     }
 
     private String computeSatisfactionFromRating(int rating) {

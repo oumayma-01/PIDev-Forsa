@@ -1,5 +1,7 @@
 package org.example.forsapidev.entities.ComplaintFeedbackManagement;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
@@ -45,12 +47,23 @@ public class Complaint {
     private Priority priority;
 
     @ManyToOne
+    @JsonIgnoreProperties({
+            "password",
+            "passwordHash",
+            "insurancePolicies",
+            "credits",
+            "roles",
+            "roleNavAccessSettings",
+            "hibernateLazyInitializer",
+            "handler"
+    })
     private User user;
 
     @JsonManagedReference
     @OneToMany(mappedBy = "complaint")
     private Set<Response> responses;
 
+    @JsonIgnore
     @OneToOne(mappedBy = "complaint")
     private Feedback feedback;
 

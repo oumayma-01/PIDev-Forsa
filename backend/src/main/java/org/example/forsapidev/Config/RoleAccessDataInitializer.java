@@ -1,6 +1,5 @@
 package org.example.forsapidev.Config;
 
-import lombok.RequiredArgsConstructor;
 import org.example.forsapidev.Repositories.RoleNavAccessSettingRepository;
 import org.example.forsapidev.entities.UserManagement.ERole;
 import org.example.forsapidev.entities.UserManagement.RoleNavAccessSetting;
@@ -11,10 +10,13 @@ import org.springframework.stereotype.Component;
 
 /** Seeds default sidebar navigation access on first application startup. */
 @Component
-@RequiredArgsConstructor
 public class RoleAccessDataInitializer implements ApplicationRunner {
 
   private final RoleNavAccessSettingRepository roleNavAccessSettingRepository;
+  
+  public RoleAccessDataInitializer(RoleNavAccessSettingRepository roleNavAccessSettingRepository) {
+    this.roleNavAccessSettingRepository = roleNavAccessSettingRepository;
+  }
 
   @Override
   public void run(ApplicationArguments args) {
