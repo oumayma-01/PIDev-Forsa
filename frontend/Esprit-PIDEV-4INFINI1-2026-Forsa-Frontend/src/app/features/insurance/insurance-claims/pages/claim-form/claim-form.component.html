@@ -69,6 +69,19 @@
         <textarea id="description" [(ngModel)]="form.description" name="description" rows="3"></textarea>
       </div>
 
+      @if (form.attachmentUrl) {
+        <div class="form-group">
+          <label>Evidence</label>
+          <div class="evidence-list" style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
+            @for (file of (form.attachmentUrl.split(',')); track file) {
+              <a [href]="claimSvc.getAttachmentUrl(file)" target="_blank" class="evidence-link">
+                <app-forsa-icon name="history" [size]="14" /> {{ file }}
+              </a>
+            }
+          </div>
+        </div>
+      }
+
       <div class="form-footer">
         <a routerLink="/dashboard/insurance/claims"><app-forsa-button type="button" variant="ghost">Cancel</app-forsa-button></a>
         <app-forsa-button type="submit" [disabled]="saving() || !!f.invalid">

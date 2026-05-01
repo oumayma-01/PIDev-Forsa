@@ -26,6 +26,32 @@
     </a>
   </div>
 } @else {
+  <div class="filters-panel glass-panel">
+    <div class="search-group">
+      <app-forsa-icon name="sparkles" [size]="18" />
+      <input 
+        type="text" 
+        [ngModel]="searchTerm()" 
+        (ngModelChange)="searchTerm.set($event)" 
+        placeholder="Search Policy # or Client Name..."
+        class="filter-input"
+      />
+    </div>
+    <div class="filter-group">
+      <label>Status:</label>
+      <select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)" class="filter-select">
+        <option value="ALL">All Statuses</option>
+        <option [value]="PolicyStatus.ACTIVE">Active</option>
+        <option [value]="PolicyStatus.PENDING">Pending Review</option>
+        <option [value]="PolicyStatus.SUSPENDED">Suspended</option>
+        <option [value]="PolicyStatus.CANCELLED">Cancelled</option>
+      </select>
+    </div>
+    <div class="filter-stats">
+      <span>Showing <strong>{{ filteredPolicies().length }}</strong> of {{ policies().length }} policies</span>
+    </div>
+  </div>
+
   <app-forsa-card [overflowHidden]="true">
     <div class="table-wrap">
       <table class="table">
@@ -43,7 +69,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (p of policies(); track p.id) {
+          @for (p of filteredPolicies(); track p.id) {
             <tr>
               <td class="td-mono">{{ p.policyNumber ?? '—' }}</td>
               <td>{{ p.insuranceProduct?.productName ?? '—' }}</td>

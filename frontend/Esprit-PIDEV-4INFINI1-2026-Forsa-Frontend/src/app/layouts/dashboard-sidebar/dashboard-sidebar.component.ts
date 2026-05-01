@@ -29,10 +29,8 @@ export class DashboardSidebarCmp {
     { label: 'Digital Wallet', href: '/dashboard/wallet', icon: 'wallet' },
     { label: 'Insurance', href: '/dashboard/insurance', icon: 'shield-check' },
     { label: 'Partnerships', href: '/dashboard/partenariat', icon: 'users' },
-    { label: 'Credit scoring', href: '/dashboard/scoring', icon: 'sparkles' },
     { label: 'My AI score', href: '/dashboard/ai-score', icon: 'brain' },
     { label: 'Feedback', href: '/dashboard/feedback', icon: 'message-square' },
-    { label: 'AI Risk Analysis', href: '/dashboard/ai', icon: 'bar-chart-3' },
   ];
 
   /** Footer profile link uses the same rule as the "My profile" nav entry. */

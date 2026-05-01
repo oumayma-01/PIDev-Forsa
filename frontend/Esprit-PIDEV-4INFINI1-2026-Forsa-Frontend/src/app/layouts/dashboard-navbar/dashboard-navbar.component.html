@@ -4,12 +4,6 @@
       <app-forsa-logo [height]="32" />
       <span class="navbar__brand-name">Forsa</span>
     </a>
-    <div class="navbar__search">
-      <span class="navbar__search-icon" aria-hidden="true">
-        <app-forsa-icon name="search" [size]="16" />
-      </span>
-      <input forsaInput type="search" placeholder="Search transactions, credits, or policies..." class="navbar__input" />
-    </div>
   </div>
 
   <div class="navbar__actions">
@@ -41,7 +35,7 @@
           <div class="notification-header">
             <h3>Notifications</h3>
             @if (notifications().length > 0) {
-              <button class="clear-all" (click)="notifications.set([])">Clear all</button>
+              <button class="clear-all" (click)="clearAllNotifications()">Clear all</button>
             }
           </div>
           <div class="notification-list">
@@ -52,16 +46,27 @@
               </div>
             } @else {
               @for (notif of notifications(); track notif.id) {
-                <div class="notification-item" [class]="notif.type">
+                <div class="notification-item" 
+                     [class]="notif.type" 
+                     [class.clickable]="!!notif.actionRoute"
+                     (click)="notif.actionRoute ? closeNotificationMenu() : null"
+                     [routerLink]="notif.actionRoute || null">
                   <div class="notif-icon">
                     @if (notif.type === 'gift') {
                       <app-forsa-icon [name]="$any('gift')" [size]="16" />
+                    } @else if (notif.type === 'insurance-warning') {
+                      <app-forsa-icon name="clock" [size]="16" />
+                    } @else if (notif.type === 'insurance-critical') {
+                      <app-forsa-icon name="shield-alert" [size]="16" />
                     } @else {
                       <app-forsa-icon name="message-square" [size]="16" />
                     }
                   </div>
                   <div class="notif-content">
                     <p class="notif-message">{{ notif.message }}</p>
+                    @if (notif.actionRoute) {
+                      <span class="notif-action">View Details</span>
+                    }
                   </div>
                   <button class="notif-remove" (click)="removeNotification(notif.id, $event)" aria-label="Remove notification">
                     <app-forsa-icon [name]="$any('x')" [size]="14" />
@@ -117,7 +122,7 @@
         }
       </div>
     } @else {
-        <div class="profile">
+      <div class="profile">
         <div class="profile__text">
           <p class="profile__name">{{ displayName() }}</p>
           <p class="profile__role">{{ rolesLabel() }}</p>

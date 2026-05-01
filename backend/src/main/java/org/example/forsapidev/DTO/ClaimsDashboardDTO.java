@@ -8,10 +8,10 @@ public class ClaimsDashboardDTO {
     private Double averageClaimAmount;
     private Double approvalRate;
 
-    private List<ClaimsByStatusDTO> claimsByStatus;
-    private List<ClaimsByTypeDTO> claimsByType;
-    private List<MonthlyClaimTrendDTO> monthlyTrends;
-    private List<TopClaimDTO> topClaims;
+    private List<ClaimsByStatusDTO> claimsByStatus = new java.util.ArrayList<>();
+    private List<ClaimsByTypeDTO> claimsByType = new java.util.ArrayList<>();
+    private List<MonthlyClaimTrendDTO> monthlyTrends = new java.util.ArrayList<>();
+    private List<TopClaimDTO> topClaims = new java.util.ArrayList<>();
 
     // Constructor
     public ClaimsDashboardDTO() {}
