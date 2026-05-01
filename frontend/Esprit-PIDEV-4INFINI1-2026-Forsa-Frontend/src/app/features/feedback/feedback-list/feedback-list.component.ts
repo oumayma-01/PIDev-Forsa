@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, effect, inject } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth.service';
@@ -44,6 +44,7 @@ export class FeedbackListComponent implements OnInit, OnDestroy {
   private readonly feedbackFacade = inject(FeedbackFacadeService);
   readonly notificationService = inject(ComplaintNotificationService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(AuthService);
 
 items: ClientComplaint[] = [];
@@ -71,13 +72,6 @@ isAdmin = false;
   notifications: ComplaintNotification[] = [];
   unreadCount = 0;
   showNotifications = false;
-  creditAmountInput: number | null = null;
-  clientCurrentScore: number | null = null;
-  clientRequiredScore: number | null = null;
-  clientMissingScore: number | null = null;
-  clientPreEligible: boolean | null = null;
-  eligibilityCalcError = '';
-  isCalculatingEligibility = false;
   aiReportText = '';
   aiReportLoading = false;
   aiReportError = '';
@@ -101,12 +95,14 @@ isAdmin = false;
 
   ngOnInit(): void {
     const roles = this.auth.currentUser()?.roles ?? [];
-    console.log('[DEBUG] roles:', this.auth.currentUser()?.roles);
     this.applyRoleContext(roles);
-    console.log('[DEBUG] isClient:', this.isClient);
     if (this.isClient) {
       this.loadClientData();
       this.loadNotifications();
+    }
+    if (this.isAdminOrAgent && this.route.snapshot.routeConfig?.path === 'complaints') {
+      this.showComplaintsList = true;
+      this.loadComplaints();
     }
   }
 
@@ -154,9 +150,8 @@ isAdmin = false;
     this.clientPollId = setInterval(() => {
       if (this.isClient) {
         this.loadClientComplaints();
-        this.loadNotifications();
       }
-    }, 10000);
+    }, 30000);
   }
 
   private buildRoleCards(): RoleCard[] {
@@ -185,19 +180,14 @@ isAdmin = false;
   loadComplaints(): void {
     this.loading = true;
     this.error = '';
-    console.log('Loading all complaints...');
     this.feedbackFacade.getAllComplaints().subscribe({
       next: (data: ComplaintBackend[]) => {
-        console.log('Complaints loaded:', data);
         this.items = data ?? [];
         this.filteredComplaints = [...(data ?? [])];
         this.applyFilters();
         this.loading = false;
       },
       error: (err) => {
-        console.error('Error loading complaints:', err);
-        console.error('Status:', err?.status);
-        console.error('URL:', err?.url);
         this.error = 'Error loading complaints. Please try again.';
         this.loading = false;
       },
@@ -209,8 +199,15 @@ isAdmin = false;
     this.loadComplaints();
   }
 
+  goBackFromComplaints(): void {
+    if (this.route.snapshot.routeConfig?.path === 'complaints') {
+      this.router.navigate(['/dashboard/feedback']);
+      return;
+    }
+    this.showComplaintsList = false;
+  }
+
   private loadClientData(): void {
-    console.log('[DEBUG] loadClientData called');
     this.loadClientComplaints();
     this.loadClientFeedbacks();
     this.loadGlobalFeedbacksForRating();
@@ -235,7 +232,9 @@ isAdmin = false;
         console.log('Notifications loaded:', this.notifications.length, 'Unread:', this.unreadCount);
       },
       error: (err) => {
-        console.error('Notifications error:', err?.status, err?.message);
+        if (err?.status !== 401) {
+          console.error('Notifications error:', err?.status, err?.message);
+        }
         this.notifications = [];
         this.unreadCount = 0;
       },
@@ -349,10 +348,8 @@ isAdmin = false;
     this.loadingClientComplaints = true;
     this.feedbackFacade.getMyComplaints().subscribe({
       next: (data: any) => {
-        console.log('[DEBUG] raw complaints response:', data);
         const payload = data?.data ?? data?.result ?? data?.content ?? data;
         const baseList = Array.isArray(payload) ? payload : [];
-        console.log('[DEBUG] parsed complaints:', baseList);
         if (!baseList.length) {
           this.clientComplaints = [];
           this.complaints = [];
@@ -384,9 +381,11 @@ isAdmin = false;
         }
       },
       error: (err) => {
-        console.error('[FeedbackList] my complaints error:', err);
+        if (err?.status !== 401) {
+          console.error('[FeedbackList] my complaints error:', err);
+        }
         this.clientComplaints = [];
-        this.error = `My complaints request failed (${err?.status ?? 'no-status'}).`;
+        this.error = err?.status === 401 ? 'Session expired. Please login again.' : `My complaints request failed (${err?.status ?? 'no-status'}).`;
         this.loadingClientComplaints = false;
       },
     });
@@ -396,7 +395,6 @@ isAdmin = false;
     this.loadingClientFeedbacks = true;
     this.feedbackFacade.getMyFeedbacks().subscribe({
       next: (data: any) => {
-        console.log('[DEBUG] raw feedbacks response:', data);
         let result: any[] = [];
         if (Array.isArray(data)) {
           result = data;
@@ -410,12 +408,13 @@ isAdmin = false;
           const firstArray = Object.values(data).find(v => Array.isArray(v));
           result = (firstArray as any[]) ?? [];
         }
-        console.log('[DEBUG] parsed feedbacks count:', result.length);
         this.clientFeedbacks = result;
         this.loadingClientFeedbacks = false;
       },
       error: (err) => {
-        console.error('[DEBUG] feedbacks error status:', err?.status);
+        if (err?.status !== 401) {
+          console.error('[DEBUG] feedbacks error status:', err?.status);
+        }
         this.clientFeedbacks = [];
         this.loadingClientFeedbacks = false;
       },
@@ -554,7 +553,7 @@ isAdmin = false;
     if (action === 'responses') this.goToResponses();
     if (action === 'stats') this.goToStats();
     if (action === 'manageComplaints') {
-      this.showManageComplaints();
+      this.router.navigate(['/dashboard/feedback/complaints']);
     }
   }
 
@@ -573,47 +572,6 @@ isAdmin = false;
     return this.feedbackStars(this.clientAverageRating);
   }
 
-  calculateClientMissingScore(): void {
-    const amount = Number(this.creditAmountInput);
-    if (!Number.isFinite(amount) || amount <= 0) {
-      this.eligibilityCalcError = 'Please enter a valid credit amount.';
-      return;
-    }
-
-    const anchorComplaintId = this.clientComplaints[0]?.id;
-    if (!anchorComplaintId) {
-      this.eligibilityCalcError = 'Create at least one complaint to calculate your current score.';
-      return;
-    }
-
-    this.eligibilityCalcError = '';
-    this.isCalculatingEligibility = true;
-    this.feedbackFacade.getCreditEligibility(anchorComplaintId).subscribe({
-      next: (payload: any) => {
-        const currentScore = Number(payload?.currentScore);
-        this.clientCurrentScore = Number.isFinite(currentScore) ? currentScore : 50.0;
-        this.clientRequiredScore = this.computeRequiredScoreForAmount(amount);
-        this.clientMissingScore = Math.max(0, this.clientRequiredScore - this.clientCurrentScore);
-        this.clientPreEligible = this.clientMissingScore <= 0;
-        this.isCalculatingEligibility = false;
-      },
-      error: () => {
-        this.isCalculatingEligibility = false;
-        this.eligibilityCalcError = 'Unable to calculate eligibility right now.';
-      },
-    });
-  }
-
-  private computeRequiredScoreForAmount(amount: number): number {
-    if (amount <= 0) return 40.0;
-    if (amount <= 300) return 35.0;
-    if (amount <= 500) return 40.0;
-    if (amount <= 1000) return 50.0;
-    if (amount <= 2000) return 60.0;
-    if (amount <= 3500) return 70.0;
-    if (amount <= 5000) return 80.0;
-    return 85.0;
-  }
 
   loadAiReport(): void {
     this.aiReportLoading = true;

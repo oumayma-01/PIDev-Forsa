@@ -9,13 +9,18 @@
 }
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
   margin-bottom: 14px;
 }
 .card {
-  padding: 14px;
+  padding: 16px;
   font-weight: 600;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  line-height: 1.35;
+  font-size: 0.95rem;
 }
 .section {
   margin-bottom: 14px;

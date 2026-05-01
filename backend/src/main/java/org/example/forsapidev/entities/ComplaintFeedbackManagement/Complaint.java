@@ -1,5 +1,6 @@
 package org.example.forsapidev.entities.ComplaintFeedbackManagement;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
@@ -51,6 +52,7 @@ public class Complaint {
     @OneToMany(mappedBy = "complaint")
     private Set<Response> responses;
 
+    @JsonIgnore
     @OneToOne(mappedBy = "complaint")
     private Feedback feedback;
 

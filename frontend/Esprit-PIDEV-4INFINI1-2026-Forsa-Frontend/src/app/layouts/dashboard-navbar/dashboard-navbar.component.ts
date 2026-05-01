@@ -1,7 +1,7 @@
 import { Component, DestroyRef, HostListener, computed, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
+import { of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { ComplaintService } from '../../core/data/complaint.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -14,6 +14,7 @@ import { ForsaIconComponent } from '../../shared/ui/forsa-icon/forsa-icon.compon
 import type { ForsaIconName } from '../../shared/ui/forsa-icon/forsa-icon.types';
 import { CreditApiService } from '../../core/services/credit-api.service';
 import { GlobalNotificationService } from '../../core/services/global-notification.service';
+import { ComplaintNotificationService } from '../../core/data/complaint-notification.service';
 
 interface NotificationItem {
   id: string;
@@ -48,6 +49,7 @@ export class DashboardNavbarComponent {
   private readonly complaintApi = inject(ComplaintService);
   private readonly creditApi = inject(CreditApiService);
   private readonly globalNotifService = inject(GlobalNotificationService);
+  private readonly complaintNotifService = inject(ComplaintNotificationService);
   private readonly destroyRef = inject(DestroyRef);
   readonly profileMenuOpen = signal(false);
 
@@ -88,6 +90,7 @@ export class DashboardNavbarComponent {
   readonly notificationMenuOpen = signal(false);
   private readonly previousResponseCounts = new Map<number, number>();
   private pollId: ReturnType<typeof setInterval> | null = null;
+  private complaintNotifPollId: ReturnType<typeof setInterval> | null = null;
 
   private readonly baseNav: NavItem[] = [
     { label: 'Home', href: '/dashboard', icon: 'layout-dashboard' },
@@ -133,6 +136,9 @@ export class DashboardNavbarComponent {
       if (this.pollId) {
         clearInterval(this.pollId);
       }
+      if (this.complaintNotifPollId) {
+        clearInterval(this.complaintNotifPollId);
+      }
     });
 
     toObservable(this.auth.currentUser)
@@ -157,6 +163,7 @@ export class DashboardNavbarComponent {
       });
 
     this.startResponsePolling();
+    this.startComplaintNotificationsPolling();
   }
 
   private revokeCustomAvatar(): void {
@@ -189,18 +196,9 @@ export class DashboardNavbarComponent {
     this.complaintApi
       .getMyComplaints()
       .pipe(
-        switchMap((data: any) => {
+        map((data: any) => {
           const payload = data?.data ?? data?.result ?? data?.content ?? data;
-          const baseList = Array.isArray(payload) ? payload : [];
-          if (!baseList.length) return of([]);
-          return forkJoin(
-            baseList.map((c: any) =>
-              this.complaintApi.getById(c.id).pipe(
-                map((full: any) => full?.data ?? full?.result ?? full),
-                catchError(() => of(c)),
-              ),
-            ),
-          );
+          return Array.isArray(payload) ? payload : [];
         }),
         catchError((err) => {
           console.error('[Navbar] response polling error:', err);
@@ -245,6 +243,25 @@ export class DashboardNavbarComponent {
         }
       },
       error: () => {}
+    });
+  }
+
+  private startComplaintNotificationsPolling(): void {
+    this.pollComplaintNotifications();
+    this.complaintNotifPollId = setInterval(() => this.pollComplaintNotifications(), 8000);
+  }
+
+  private pollComplaintNotifications(): void {
+    this.complaintNotifService.getMyNotifications().pipe(
+      catchError(() => of([])),
+    ).subscribe((items: any[]) => {
+      const mapped = (Array.isArray(items) ? items : []).slice(0, 20).map((n: any) => ({
+        id: `complaint-notif-${n.id}`,
+        message: n?.message ?? n?.title ?? 'Complaint update',
+        type: 'complaint' as const,
+        actionRoute: n?.complaint?.id ? `/dashboard/feedback/complaint/${n.complaint.id}` : '/dashboard/feedback'
+      }));
+      this.localNotifications.set(mapped);
     });
   }
 

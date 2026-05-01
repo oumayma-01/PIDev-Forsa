@@ -150,17 +150,51 @@ public class FeedbackService implements IFeedbackService {
         User user = userRepository.findByUsername(username).orElse(null);
         if (user != null) f.setUser(user);
 
+        int rating = (f.getRating() == null) ? 3 : Math.max(1, Math.min(5, f.getRating()));
+        f.setRating(rating);
+
+        String ratingLevel = computeSatisfactionFromRating(rating);
+        String aiLevel;
         try {
-            String level = complaintAiAssistant.analyzeFeedbackSatisfaction(
-                    f.getRating(), f.getComment()
+            aiLevel = normalizeSatisfactionLevel(
+                    complaintAiAssistant.analyzeFeedbackSatisfaction(rating, f.getComment())
             );
-            f.setSatisfactionLevel(level);
         } catch (Exception e) {
-            int r = (f.getRating() == null) ? 3 : f.getRating();
-            f.setSatisfactionLevel(computeSatisfactionFromRating(r));
+            aiLevel = ratingLevel;
+        }
+
+        // Keep AI value only if it is close to the selected rating sentiment.
+        if (distance(aiLevel, ratingLevel) <= 1) {
+            f.setSatisfactionLevel(aiLevel);
+        } else {
+            f.setSatisfactionLevel(ratingLevel);
         }
 
         return feedbackRepository.save(f);
+    }
+
+    private String normalizeSatisfactionLevel(String raw) {
+        if (raw == null || raw.isBlank()) return "NEUTRAL";
+        String v = raw.trim().toUpperCase(Locale.ROOT);
+        return switch (v) {
+            case "VERY_SATISFIED", "SATISFIED", "NEUTRAL", "DISSATISFIED", "VERY_DISSATISFIED" -> v;
+            default -> "NEUTRAL";
+        };
+    }
+
+    private int levelRank(String level) {
+        return switch (normalizeSatisfactionLevel(level)) {
+            case "VERY_DISSATISFIED" -> 1;
+            case "DISSATISFIED" -> 2;
+            case "NEUTRAL" -> 3;
+            case "SATISFIED" -> 4;
+            case "VERY_SATISFIED" -> 5;
+            default -> 3;
+        };
+    }
+
+    private int distance(String a, String b) {
+        return Math.abs(levelRank(a) - levelRank(b));
     }
 
     private String computeSatisfactionFromRating(int rating) {

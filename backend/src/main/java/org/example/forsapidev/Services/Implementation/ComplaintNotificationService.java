@@ -6,6 +6,7 @@ import org.example.forsapidev.Repositories.ComplaintRepository;
 import org.example.forsapidev.Services.Interfaces.IComplaintNotificationService;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Complaint;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.ComplaintNotification;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,6 +17,18 @@ public class ComplaintNotificationService implements IComplaintNotificationServi
 
     private final ComplaintNotificationRepository notificationRepository;
     private final ComplaintRepository complaintRepository;
+    private final SimpMessagingTemplate messagingTemplate;
+
+    private void publishRealtime(ComplaintNotification notification) {
+        if (notification == null || notification.getRecipient() == null || notification.getRecipient().getUsername() == null) {
+            return;
+        }
+        messagingTemplate.convertAndSendToUser(
+                notification.getRecipient().getUsername(),
+                "/queue/complaint-notifications",
+                notification
+        );
+    }
 
     @Override
     public void notifyClientResponseAdded(Long complaintId, String responseMessage) {
@@ -31,7 +44,8 @@ public class ComplaintNotificationService implements IComplaintNotificationServi
                 "\" received a new response: " +
                 safeMessage.substring(0, Math.min(safeMessage.length(), 100)));
         notification.setType(ComplaintNotification.NotificationType.RESPONSE_ADDED);
-        notificationRepository.save(notification);
+        ComplaintNotification saved = notificationRepository.save(notification);
+        publishRealtime(saved);
     }
 
     @Override
@@ -46,7 +60,8 @@ public class ComplaintNotificationService implements IComplaintNotificationServi
         notification.setMessage("Your complaint \"" + complaint.getSubject() +
                 "\" has been closed.");
         notification.setType(ComplaintNotification.NotificationType.COMPLAINT_CLOSED);
-        notificationRepository.save(notification);
+        ComplaintNotification saved = notificationRepository.save(notification);
+        publishRealtime(saved);
     }
 
     @Override
@@ -61,7 +76,8 @@ public class ComplaintNotificationService implements IComplaintNotificationServi
         notification.setMessage("Your complaint \"" + complaint.getSubject() +
                 "\" status changed to: " + newStatus);
         notification.setType(ComplaintNotification.NotificationType.COMPLAINT_STATUS_CHANGED);
-        notificationRepository.save(notification);
+        ComplaintNotification saved = notificationRepository.save(notification);
+        publishRealtime(saved);
     }
 
     @Override

@@ -2,7 +2,6 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
-import { ComplaintCreditEligibility, ComplaintFinancialImpact } from '../../../core/data/complaint.service';
 import { ComplaintBackend, ComplaintResponse } from '../../../core/models/forsa.models';
 import { ForsaBadgeComponent } from '../../../shared/ui/forsa-badge/forsa-badge.component';
 import { ForsaButtonComponent } from '../../../shared/ui/forsa-button/forsa-button.component';
@@ -30,9 +29,7 @@ export class ComplaintDetailComponent implements OnInit {
   complaintId?: number;
   loading = false;
   error = '';
-  requiredScore: number | null = null;
-  creditEligibility: ComplaintCreditEligibility | null = null;
-  financialImpact: ComplaintFinancialImpact | null = null;
+  financialImpact: any = null;
   financialError = '';
 
   ngOnInit(): void {
@@ -156,43 +153,14 @@ export class ComplaintDetailComponent implements OnInit {
     });
   }
 
-  checkCreditEligibility(requiredScoreRaw?: string | number): void {
-    if (!this.complaintId) {
-      return;
-    }
-
-    const parsed = Number(requiredScoreRaw);
-    const requiredScore = Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
-    this.requiredScore = requiredScore ?? null;
-    this.financialError = '';
-    this.creditEligibility = null;
-
-    this.feedbackFacade.getCreditEligibility(this.complaintId, requiredScore).subscribe({
-      next: (payload: any) => {
-        this.creditEligibility = payload ?? null;
-        console.log('[ComplaintDetail] credit eligibility response:', payload);
-      },
-      error: (err) => {
-        console.error('[ComplaintDetail] credit eligibility error:', err);
-        this.financialError = 'Unable to fetch credit eligibility.';
-      },
-    });
-  }
-
   loadFinancialImpact(): void {
-    if (!this.complaintId) {
-      return;
-    }
-
+    if (!this.complaintId) return;
     this.financialError = '';
-    this.financialImpact = null;
     this.feedbackFacade.getFinancialImpactScore(this.complaintId).subscribe({
       next: (payload: any) => {
         this.financialImpact = payload ?? null;
-        console.log('[ComplaintDetail] financial impact response:', payload);
       },
-      error: (err) => {
-        console.error('[ComplaintDetail] financial impact error:', err);
+      error: () => {
         this.financialError = 'Unable to fetch financial impact score.';
       },
     });
@@ -204,6 +172,7 @@ export class ComplaintDetailComponent implements OnInit {
     return 'High';
   }
 
+
   goBack(): void {
     this.router.navigate(['/dashboard/feedback']);
   }
@@ -212,22 +181,6 @@ export class ComplaintDetailComponent implements OnInit {
     this.router.navigate(['/dashboard/feedback/response/add'], { queryParams: { complaintId: this.complaintId } });
   }
 
-  sendEligibilityResponse(): void {
-    if (!this.complaintId || !this.creditEligibility) {
-      return;
-    }
-    const ce = this.creditEligibility;
-    const message = ce.eligible
-      ? `Based on scoring, your profile is pre-eligible for this request (current score: ${ce.currentScore}, required: ${ce.requiredScore}). Final credit approval still depends on policy checks and document validation.`
-      : `Based on scoring, your profile currently needs +${ce.gap} points to reach pre-eligibility (current score: ${ce.currentScore}, required: ${ce.requiredScore}). Please improve your score, then request a new assessment.`;
-
-    this.router.navigate(['/dashboard/feedback/response/add'], {
-      queryParams: {
-        complaintId: this.complaintId,
-        prefillMessage: message,
-      },
-    });
-  }
 
   goToAddFeedback(): void {
     this.router.navigate(['/dashboard/feedback/feedback/add'], { queryParams: { complaintId: this.complaintId } });
