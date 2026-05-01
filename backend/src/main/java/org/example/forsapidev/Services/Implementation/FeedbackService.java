@@ -154,23 +154,45 @@ public class FeedbackService implements IFeedbackService {
         f.setRating(rating);
 
         String ratingLevel = computeSatisfactionFromRating(rating);
-        String aiLevel;
-        try {
-            aiLevel = normalizeSatisfactionLevel(
-                    complaintAiAssistant.analyzeFeedbackSatisfaction(rating, f.getComment())
-            );
-        } catch (Exception e) {
-            aiLevel = ratingLevel;
-        }
-
-        // Keep AI value only if it is close to the selected rating sentiment.
-        if (distance(aiLevel, ratingLevel) <= 1) {
-            f.setSatisfactionLevel(aiLevel);
-        } else {
-            f.setSatisfactionLevel(ratingLevel);
-        }
+        String finalLevel = resolveSatisfactionLevel(ratingLevel, rating, f.getComment());
+        f.setSatisfactionLevel(finalLevel);
 
         return feedbackRepository.save(f);
+    }
+
+    private String resolveSatisfactionLevel(String ratingLevel, int rating, String comment) {
+        String normalizedComment = comment == null ? "" : comment.trim();
+        if (normalizedComment.isBlank()) {
+            return ratingLevel;
+        }
+
+        String aiLevel = ratingLevel;
+        try {
+            aiLevel = normalizeSatisfactionLevel(
+                    complaintAiAssistant.analyzeFeedbackSatisfaction(rating, normalizedComment)
+            );
+        } catch (Exception ignored) {
+            return ratingLevel;
+        }
+
+        int gap = distance(aiLevel, ratingLevel);
+        if (gap == 0) {
+            return ratingLevel;
+        }
+        if (gap == 1) {
+            // close to user rating: accept AI nuance
+            return aiLevel;
+        }
+        if (gap >= 3) {
+            // too far from explicit user rating: keep rating-based level
+            return ratingLevel;
+        }
+
+        // gap == 2: allow AI only for mid ratings where comment sentiment can add nuance
+        if (rating == 3 || rating == 4) {
+            return aiLevel;
+        }
+        return ratingLevel;
     }
 
     private String normalizeSatisfactionLevel(String raw) {

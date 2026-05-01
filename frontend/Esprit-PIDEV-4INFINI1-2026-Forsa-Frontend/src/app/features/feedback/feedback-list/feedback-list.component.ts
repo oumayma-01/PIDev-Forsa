@@ -2,8 +2,7 @@ import { Component, OnDestroy, OnInit, effect, inject } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { ComplaintBackend, ComplaintResponse, Feedback } from '../../../core/models/forsa.models';
 import { ForsaBadgeComponent } from '../../../shared/ui/forsa-badge/forsa-badge.component';
@@ -86,7 +85,6 @@ isAdmin = false;
   readonly statuses = ['', 'OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'REJECTED'];
   readonly categories = ['', 'TECHNICAL', 'FINANCE', 'SUPPORT', 'FRAUD', 'ACCOUNT', 'CREDIT', 'OTHER'];
   private lastRoleSignature = '__init__';
-  private clientPollId: ReturnType<typeof setInterval> | null = null;
 
   private readonly roleSync = effect(() => {
     const roles = this.auth.currentUser()?.roles ?? [];
@@ -134,25 +132,10 @@ isAdmin = false;
     } else if (this.isClient) {
       this.loadClientData();
       this.loadNotifications();
-      this.startClientPolling();
     }
   }
 
-  ngOnDestroy(): void {
-    if (this.clientPollId) {
-      clearInterval(this.clientPollId);
-      this.clientPollId = null;
-    }
-  }
-
-  private startClientPolling(): void {
-    if (this.clientPollId) return;
-    this.clientPollId = setInterval(() => {
-      if (this.isClient) {
-        this.loadClientComplaints();
-      }
-    }, 30000);
-  }
+  ngOnDestroy(): void {}
 
   private buildRoleCards(): RoleCard[] {
     if (this.isClient) {
@@ -214,21 +197,10 @@ isAdmin = false;
   }
 
   loadNotifications(): void {
-    this.notificationService.getUnreadCount().subscribe({
-      next: (data) => {
-        const count = Number((data as any)?.count ?? 0);
-        this.unreadCount = Number.isFinite(count) ? count : 0;
-      },
-      error: () => {
-        this.unreadCount = 0;
-      },
-    });
     this.notificationService.getMyNotifications().subscribe({
       next: (data) => {
         this.notifications = Array.isArray(data) ? data : [];
-        if (!this.unreadCount) {
-          this.unreadCount = this.notifications.filter((n) => !n.isRead).length;
-        }
+        this.unreadCount = this.notifications.filter((n) => !n.isRead).length;
         console.log('Notifications loaded:', this.notifications.length, 'Unread:', this.unreadCount);
       },
       error: (err) => {
@@ -350,35 +322,9 @@ isAdmin = false;
       next: (data: any) => {
         const payload = data?.data ?? data?.result ?? data?.content ?? data;
         const baseList = Array.isArray(payload) ? payload : [];
-        if (!baseList.length) {
-          this.clientComplaints = [];
-          this.complaints = [];
-          this.loadingClientComplaints = false;
-          // do not return — allow UI to update
-        } else {
-          forkJoin(
-            baseList.map((c: any) =>
-              this.feedbackFacade.getComplaintById(c.id).pipe(
-                map((full: any) => {
-                  const fullPayload = full?.data ?? full?.result ?? full;
-                  return { ...c, responses: fullPayload?.responses ?? c?.responses ?? [] } as ClientComplaint;
-                }),
-                catchError(() => of({ ...c, responses: c?.responses ?? [] } as ClientComplaint)),
-              ),
-            ),
-          ).subscribe({
-            next: (fullList) => {
-              this.clientComplaints = fullList;
-              this.complaints = fullList;
-              this.loadingClientComplaints = false;
-            },
-            error: () => {
-              this.clientComplaints = baseList;
-              this.complaints = baseList;
-              this.loadingClientComplaints = false;
-            },
-          });
-        }
+        this.clientComplaints = baseList;
+        this.complaints = baseList;
+        this.loadingClientComplaints = false;
       },
       error: (err) => {
         if (err?.status !== 401) {
@@ -422,6 +368,11 @@ isAdmin = false;
   }
 
   private loadGlobalFeedbacksForRating(): void {
+    if (this.isClient) {
+      this.globalFeedbacks = this.clientFeedbacks;
+      this.globalRatingScopeLabel = 'your feedbacks';
+      return;
+    }
     this.feedbackFacade.getAllFeedbacks().subscribe({
       next: (data: any) => {
         const list = Array.isArray(data) ? data : [];

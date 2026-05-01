@@ -1,9 +1,9 @@
-import { Component, DestroyRef, HostListener, computed, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, HostListener, ViewChild, computed, inject, input, signal } from '@angular/core';
+import { OverlayModule } from '@angular/cdk/overlay';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
-import { ComplaintService } from '../../core/data/complaint.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ProfileService } from '../../core/services/profile.service';
 import { isNavPathAllowed } from '../../core/utils/nav-path-access';
@@ -38,18 +38,18 @@ function formatSpringAuthority(authority: string): string {
 @Component({
   selector: 'app-dashboard-navbar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, ForsaLogoComponent, ForsaInputDirective, ForsaBadgeComponent, ForsaIconComponent],
+  imports: [RouterLink, RouterLinkActive, OverlayModule, ForsaLogoComponent, ForsaInputDirective, ForsaBadgeComponent, ForsaIconComponent],
   templateUrl: './dashboard-navbar.component.html',
   styleUrl: './dashboard-navbar.component.css',
 })
 export class DashboardNavbarComponent {
+  @ViewChild('notificationButton', { read: ElementRef }) private notificationButtonRef?: ElementRef<HTMLButtonElement>;
   readonly showSidebarItems = input<boolean>(false);
   readonly auth = inject(AuthService);
   private readonly profileApi = inject(ProfileService);
-  private readonly complaintApi = inject(ComplaintService);
   private readonly creditApi = inject(CreditApiService);
   private readonly globalNotifService = inject(GlobalNotificationService);
-  private readonly complaintNotifService = inject(ComplaintNotificationService);
+  private readonly complaintNotificationService = inject(ComplaintNotificationService);
   private readonly destroyRef = inject(DestroyRef);
   readonly profileMenuOpen = signal(false);
 
@@ -87,10 +87,11 @@ export class DashboardNavbarComponent {
     return [...this.localNotifications(), ...global];
   });
   readonly responseNotificationCount = computed(() => this.notifications().length);
+  readonly nonComplaintNotificationCount = computed(
+    () => this.notifications().filter((n) => n.type !== 'complaint').length,
+  );
   readonly notificationMenuOpen = signal(false);
-  private readonly previousResponseCounts = new Map<number, number>();
   private pollId: ReturnType<typeof setInterval> | null = null;
-  private complaintNotifPollId: ReturnType<typeof setInterval> | null = null;
 
   private readonly baseNav: NavItem[] = [
     { label: 'Home', href: '/dashboard', icon: 'layout-dashboard' },
@@ -136,9 +137,6 @@ export class DashboardNavbarComponent {
       if (this.pollId) {
         clearInterval(this.pollId);
       }
-      if (this.complaintNotifPollId) {
-        clearInterval(this.complaintNotifPollId);
-      }
     });
 
     toObservable(this.auth.currentUser)
@@ -162,8 +160,10 @@ export class DashboardNavbarComponent {
         }
       });
 
-    this.startResponsePolling();
-    this.startComplaintNotificationsPolling();
+    if (this.isClient()) {
+      this.loadComplaintNotifications();
+    }
+    this.startGiftPolling();
   }
 
   private revokeCustomAvatar(): void {
@@ -186,49 +186,13 @@ export class DashboardNavbarComponent {
     return roles.includes('CLIENT') || roles.includes('ROLE_CLIENT');
   }
 
-  private startResponsePolling(): void {
-    this.pollResponses();
-    this.pollId = setInterval(() => this.pollResponses(), 10000);
+  private startGiftPolling(): void {
+    this.pollGifts();
+    this.pollId = setInterval(() => this.pollGifts(), 10000);
   }
 
-  private pollResponses(): void {
+  private pollGifts(): void {
     if (!this.isClient()) return;
-    this.complaintApi
-      .getMyComplaints()
-      .pipe(
-        map((data: any) => {
-          const payload = data?.data ?? data?.result ?? data?.content ?? data;
-          return Array.isArray(payload) ? payload : [];
-        }),
-        catchError((err) => {
-          console.error('[Navbar] response polling error:', err);
-          return of([]);
-        }),
-      )
-      .subscribe((complaints: any[]) => {
-        let hasNewResponse = false;
-        for (const c of complaints) {
-          const id = Number(c?.id);
-          if (!id) continue;
-          const currentCount = Array.isArray(c?.responses) ? c.responses.length : 0;
-          const prevCount = this.previousResponseCounts.get(id);
-          if (prevCount !== undefined && currentCount > prevCount) {
-            hasNewResponse = true;
-          }
-          this.previousResponseCounts.set(id, currentCount);
-        }
-        if (hasNewResponse) {
-          const msg = 'You received a new response to your complaint';
-          this.localNotifications.update(list => [{
-            id: `complaint-${Date.now()}`,
-            message: msg,
-            type: 'complaint'
-          }, ...list]);
-          alert(msg);
-        }
-      });
-
-    // Also poll for gifts
     this.creditApi.consumeMyGiftAwardNotification().subscribe({
       next: (res) => {
         if (res?.show) {
@@ -246,28 +210,31 @@ export class DashboardNavbarComponent {
     });
   }
 
-  private startComplaintNotificationsPolling(): void {
-    this.pollComplaintNotifications();
-    this.complaintNotifPollId = setInterval(() => this.pollComplaintNotifications(), 8000);
-  }
-
-  private pollComplaintNotifications(): void {
-    this.complaintNotifService.getMyNotifications().pipe(
-      catchError(() => of([])),
-    ).subscribe((items: any[]) => {
-      const mapped = (Array.isArray(items) ? items : []).slice(0, 20).map((n: any) => ({
-        id: `complaint-notif-${n.id}`,
-        message: n?.message ?? n?.title ?? 'Complaint update',
-        type: 'complaint' as const,
-        actionRoute: n?.complaint?.id ? `/dashboard/feedback/complaint/${n.complaint.id}` : '/dashboard/feedback'
-      }));
-      this.localNotifications.set(mapped);
+  toggleNotificationMenu(event: MouseEvent): void {
+    event.stopPropagation();
+    if (this.isClient()) {
+      this.loadComplaintNotifications();
+    }
+    this.notificationMenuOpen.update((open) => {
+      return !open;
     });
   }
 
-  toggleNotificationMenu(event: MouseEvent): void {
-    event.stopPropagation();
-    this.notificationMenuOpen.update((open) => !open);
+  private loadComplaintNotifications(): void {
+    this.complaintNotificationService.getMyNotifications().subscribe({
+      next: (items) => {
+        const mapped = (Array.isArray(items) ? items : []).map((n) => ({
+          id: `complaint-${n.id}`,
+          message: n.message || n.title || 'Complaint update',
+          type: 'complaint' as const,
+          actionRoute: n.complaint?.id ? `/dashboard/feedback/complaint/${n.complaint.id}` : '/dashboard/feedback',
+        }));
+        this.globalNotifService.notifications.set(mapped);
+      },
+      error: () => {
+        this.globalNotifService.notifications.set([]);
+      },
+    });
   }
 
   closeNotificationMenu(): void {
@@ -309,4 +276,5 @@ export class DashboardNavbarComponent {
       this.closeNotificationMenu();
     }
   }
+
 }

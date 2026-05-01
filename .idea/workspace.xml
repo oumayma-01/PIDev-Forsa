@@ -5,27 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c5c8d0da-e366-41ba-8b8f-ff4ab9b749fb" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Controllers/ComplaintController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Controllers/ComplaintController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Controllers/FeedbackController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Controllers/FeedbackController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Services/Implementation/ComplaintNotificationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Services/Implementation/ComplaintNotificationService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Services/Implementation/ComplaintService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Services/Implementation/ComplaintService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Config/RoleAccessDataInitializer.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Config/RoleAccessDataInitializer.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Services/Implementation/FeedbackService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Services/Implementation/FeedbackService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Services/Interfaces/IComplaintNotificationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Services/Interfaces/IComplaintNotificationService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Services/Interfaces/IComplaintService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Services/Interfaces/IComplaintService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/entities/ComplaintFeedbackManagement/Complaint.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/entities/ComplaintFeedbackManagement/Complaint.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/target/classes/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/backend/target/classes/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/app.routes.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/app.routes.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/feedback/complaint-detail/complaint-detail.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/feedback/complaint-detail/complaint-detail.component.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/feedback/complaint-detail/complaint-detail.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/feedback/complaint-detail/complaint-detail.component.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/feedback/feedback-list/feedback-list.component.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/feedback/feedback-list/feedback-list.component.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/feedback/feedback-list/feedback-list.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/feedback/feedback-list/feedback-list.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/entities/UserManagement/User.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/entities/UserManagement/User.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/feedback/feedback-list/feedback-list.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/feedback/feedback-list/feedback-list.component.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/feedback/feedback-stats/feedback-stats.component.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/feedback/feedback-stats/feedback-stats.component.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/layouts/dashboard-layout/dashboard-layout.component.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/layouts/dashboard-layout/dashboard-layout.component.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/layouts/dashboard-navbar/dashboard-navbar.component.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/layouts/dashboard-navbar/dashboard-navbar.component.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/layouts/dashboard-navbar/dashboard-navbar.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/layouts/dashboard-navbar/dashboard-navbar.component.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/layouts/dashboard-navbar/dashboard-navbar.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/layouts/dashboard-navbar/dashboard-navbar.component.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -45,7 +32,7 @@
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="1053" />
+    <option name="cachedIndexableFilesCount" value="1055" />
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -89,7 +76,7 @@
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "Spring Boot.ForsaPidevApplication.executor": "Run",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "fix/ui-complaints-layout",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
     "node.js.detected.package.eslint": "true",
@@ -98,7 +85,7 @@
     "nodejs_package_manager_path": "npm",
     "settings.editor.selected.configurable": "ml.llm.agents.accounts",
     "to.speed.mode.migration.done": "true",
-    "ts.external.directory.path": "C:\\Users\\nesma\\Desktop\\PIDEV\\PIDev-Forsa\\Frontend\\Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend\\node_modules\\typescript\\lib",
+    "ts.external.directory.path": "C:\\Users\\Admin\\IdeaProjects\\Esprit-PIDEV-4INFINI1-2026-Forsa7\\frontend\\Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend\\node_modules\\typescript\\lib",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -141,7 +128,7 @@
       <workItem from="1777642029180" duration="4788000" />
       <workItem from="1777646852510" duration="584000" />
       <workItem from="1777647458109" duration="72000" />
-      <workItem from="1777647540468" duration="5622000" />
+      <workItem from="1777647540468" duration="16703000" />
     </task>
     <servers />
   </component>
