@@ -1,8 +1,11 @@
-import { DecimalPipe, NgFor, NgIf } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 import { catchError, of } from 'rxjs';
 import { MOCK_PARTNERS } from '../../../core/data/mock-data';
-import type { Partner, PartnerStatus, PartnerType } from '../../../core/models/forsa.models';
+import type { ClientCashback, Partner, PartnerStatus, PartnerType } from '../../../core/models/forsa.models';
+import { AuthService } from '../../../core/services/auth.service';
 import { ForsaBadgeComponent } from '../../../shared/ui/forsa-badge/forsa-badge.component';
 import { ForsaButtonComponent } from '../../../shared/ui/forsa-button/forsa-button.component';
 import { ForsaCardComponent } from '../../../shared/ui/forsa-card/forsa-card.component';
@@ -18,8 +21,8 @@ import { PartnerService } from '../services/partner.service';
   styleUrl: './partenariat-list.component.css',
   imports: [
     DecimalPipe,
-    NgFor,
-    NgIf,
+    FormsModule,
+    RouterLink,
     ForsaBadgeComponent,
     ForsaButtonComponent,
     ForsaCardComponent,
@@ -30,15 +33,30 @@ import { PartnerService } from '../services/partner.service';
 })
 export class PartenariatListComponent implements OnInit {
   private readonly partnerService = inject(PartnerService);
+  private readonly router = inject(Router);
+  readonly auth = inject(AuthService);
 
-  /** Liste complète chargée depuis le backend (fallback sur mock si erreur). */
   readonly partners = signal<Partner[]>([]);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
+  readonly cashback = signal<ClientCashback | null>(null);
 
   readonly searchQuery = signal('');
   readonly statusFilter = signal<PartnerStatus | 'ALL'>('ALL');
   readonly typeFilter = signal<PartnerType | 'ALL'>('ALL');
+
+  readonly actionLoading = signal<number | null>(null);
+  readonly showSuspendFormId = signal<number | null>(null);
+  suspendReason = '';
+
+  get isAdmin(): boolean {
+    return this.auth.currentUser()?.roles?.includes('ROLE_ADMIN') ?? false;
+  }
+
+  get isClient(): boolean {
+    const roles = this.auth.currentUser()?.roles ?? [];
+    return roles.includes('ROLE_CLIENT') || roles.includes('CLIENT');
+  }
 
   readonly filteredPartners = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
@@ -48,25 +66,26 @@ export class PartenariatListComponent implements OnInit {
       if (st !== 'ALL' && p.status !== st) return false;
       if (ty !== 'ALL' && p.partnerType !== ty) return false;
       if (!q) return true;
-      const hay = `${p.businessName} ${p.city} ${p.registrationNumber} ${p.partnerType}`.toLowerCase();
-      return hay.includes(q);
+      return `${p.businessName} ${p.city} ${p.partnerType}`.toLowerCase().includes(q);
     });
   });
 
-  readonly stats = computed(() => {
+  readonly topRated = computed(() =>
+    [...this.partners()]
+      .filter((p) => p.status === 'ACTIVE' && (p.averageRating ?? 0) > 0)
+      .sort((a, b) => (b.averageRating ?? 0) - (a.averageRating ?? 0))
+      .slice(0, 5),
+  );
+
+  readonly adminStats = computed(() => {
     const list = this.partners();
     const active = list.filter((p) => p.status === 'ACTIVE').length;
-    const rated = list.filter((p) => p.averageRating != null && p.averageRating > 0);
-    const avg =
-      rated.length === 0 ? 0 : rated.reduce((s, p) => s + (p.averageRating ?? 0), 0) / rated.length;
-    const volume = list.reduce((s, p) => s + (p.totalAmountProcessed ?? 0), 0);
-    return { total: list.length, active, avgRating: avg, volume };
-  });
-
-  readonly avgRatingParts = computed(() => {
-    const a = this.stats().avgRating;
-    if (a > 0) return { text: a.toFixed(1), suffix: '/5' };
-    return { text: '-', suffix: '' };
+    const totalVolume = list.reduce((s, p) => s + (p.totalAmountProcessed ?? 0), 0);
+    const totalCommission = list.reduce(
+      (s, p) => s + (p.totalAmountProcessed ?? 0) * (p.commissionRate / 100),
+      0,
+    );
+    return { total: list.length, active, totalVolume, totalCommission };
   });
 
   readonly statusOptions: { value: PartnerStatus | 'ALL'; label: string }[] = [
@@ -87,24 +106,29 @@ export class PartenariatListComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    /* Chargement depuis le backend — fallback sur les données mock si indisponible. */
-    this.partnerService
-      .getAllPartners()
-      .pipe(catchError(() => of(MOCK_PARTNERS)))
-      .subscribe({
-        next: (data) => {
-          this.partners.set(data);
-          this.loading.set(false);
-        },
-        error: () => {
-          this.partners.set(MOCK_PARTNERS);
-          this.error.set('Backend unavailable — showing demo data.');
-          this.loading.set(false);
-        },
-      });
+    const load$ = this.isAdmin
+      ? this.partnerService.getAllPartners()
+      : this.partnerService.getActivePartners();
+
+    load$.pipe(catchError(() => of(MOCK_PARTNERS))).subscribe({
+      next: (data) => {
+        this.partners.set(data);
+        this.loading.set(false);
+      },
+    });
+
+    if (this.isClient) {
+      const uid = this.auth.currentUser()?.id;
+      if (uid) {
+        this.partnerService.getClientCashback(Number(uid)).subscribe({
+          next: (c) => this.cashback.set(c),
+          error: () => {},
+        });
+      }
+    }
   }
 
-  onPartnerFilterValue(value: string): void {
+  onSearch(value: string): void {
     this.searchQuery.set(value);
   }
 
@@ -116,23 +140,71 @@ export class PartenariatListComponent implements OnInit {
     this.typeFilter.set((ev.target as HTMLSelectElement).value as PartnerType | 'ALL');
   }
 
-  statusTone(status: PartnerStatus): 'success' | 'warning' | 'danger' | 'info' | 'muted' {
+  openDetail(id: number): void {
+    this.router.navigate(['/dashboard/partenariat', id]);
+  }
+
+  statusTone(status: PartnerStatus): 'success' | 'warning' | 'danger' | 'muted' {
     switch (status) {
-      case 'ACTIVE': return 'success';
-      case 'PENDING': return 'warning';
+      case 'ACTIVE':    return 'success';
+      case 'PENDING':   return 'warning';
       case 'SUSPENDED': return 'danger';
-      case 'REJECTED': return 'danger';
-      case 'CLOSED': return 'muted';
+      case 'REJECTED':  return 'danger';
+      case 'CLOSED':    return 'muted';
     }
   }
 
   badgeTone(badge: Partner['badge']): 'default' | 'secondary' | 'warning' | 'info' | 'muted' {
     switch (badge) {
       case 'DIAMOND': return 'info';
-      case 'GOLD': return 'warning';
-      case 'SILVER': return 'secondary';
-      case 'BRONZE': return 'default';
-      default: return 'muted';
+      case 'GOLD':    return 'warning';
+      case 'SILVER':  return 'secondary';
+      case 'BRONZE':  return 'default';
+      default:        return 'muted';
     }
+  }
+
+  // ── Admin actions ──────────────────────────────────────────────────────────
+
+  activatePartner(p: Partner): void {
+    this.actionLoading.set(p.id);
+    this.partnerService.activatePartner(p.id).subscribe({
+      next: (u) => { this.replacePartner(u); this.actionLoading.set(null); },
+      error: () => this.actionLoading.set(null),
+    });
+  }
+
+  openSuspendForm(id: number): void {
+    this.showSuspendFormId.set(id);
+    this.suspendReason = '';
+  }
+
+  cancelSuspend(): void {
+    this.showSuspendFormId.set(null);
+  }
+
+  confirmSuspend(p: Partner): void {
+    if (!this.suspendReason.trim()) return;
+    this.actionLoading.set(p.id);
+    this.partnerService.suspendPartner(p.id, this.suspendReason).subscribe({
+      next: (u) => {
+        this.replacePartner(u);
+        this.actionLoading.set(null);
+        this.showSuspendFormId.set(null);
+      },
+      error: () => this.actionLoading.set(null),
+    });
+  }
+
+  reactivatePartner(p: Partner): void {
+    this.actionLoading.set(p.id);
+    this.partnerService.reactivatePartner(p.id).subscribe({
+      next: (u) => { this.replacePartner(u); this.actionLoading.set(null); },
+      error: () => this.actionLoading.set(null),
+    });
+  }
+
+  private replacePartner(updated: Partner): void {
+    this.partners.update((list) => list.map((x) => (x.id === updated.id ? updated : x)));
   }
 }

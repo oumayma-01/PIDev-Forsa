@@ -38,6 +38,8 @@ export interface InsurancePolicy {
 
 
 
+// ── Partenariat module ────────────────────────────────────────────────────────
+
 /** Mirrors the backend `Partner` entity for `GET/POST /api/partners`. */
 export type PartnerType =
   | 'PHARMACIE'
@@ -89,6 +91,48 @@ export interface Partner {
   totalReviews?: number;
 }
 
+
+export interface PartnerReview {
+  id: number;
+  partnerId: number;
+  clientId: number;
+  clientName?: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
+}
+
+export type PartnerTransactionStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+
+export interface PartnerTransaction {
+  id: number;
+  partnerId: number;
+  partnerName?: string;
+  clientId: number;
+  clientName?: string;
+  amount: number;
+  cashbackAmount: number;
+  status: PartnerTransactionStatus;
+  qrCodeId?: string;
+  description?: string;
+  createdAt: string;
+  processedAt?: string;
+}
+
+export interface ClientCashback {
+  clientId: number;
+  availableBalance: number;
+  totalEarned: number;
+  totalRedeemed: number;
+}
+
+export interface PartnerAnalytics {
+  partnerId: number;
+  totalTransactions: number;
+  totalAmount: number;
+  totalCashbackPaid: number;
+  averageTransactionAmount: number;
+}
 
 // ── AI Score summary DTO (mirrors backend AIScoreSummaryDto + availableThreshold) ──
 
