@@ -1,0 +1,65 @@
+.form-nav { margin-bottom: 1.5rem; }
+.btn-ghost {
+  display: inline-flex; align-items: center; gap: .35rem;
+  padding: .4rem .75rem; border-radius: .65rem; border: none; background: transparent;
+  color: var(--color-muted-foreground); font-size: .875rem; font-weight: 500; cursor: pointer;
+  transition: color .15s, background .15s;
+}
+.btn-ghost:hover { color: var(--color-foreground); background: color-mix(in oklab, var(--color-muted) 40%, transparent); }
+
+.form-page { max-width: 860px; }
+.form-header { margin-bottom: 1.5rem; }
+.form-header h2 { margin: 0 0 .3rem; font-size: 1.4rem; font-weight: 700; }
+.form-sub { margin: 0; font-size: .875rem; color: var(--color-muted-foreground); }
+
+.loading-center { text-align: center; padding: 3rem 1rem; color: var(--color-muted-foreground); }
+.spinner { display: inline-block; width: 28px; height: 28px; border: 3px solid var(--color-border); border-top-color: var(--color-primary); border-radius: 50%; animation: spin .7s linear infinite; margin-bottom: .75rem; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.alert-error { padding: .75rem 1rem; border-radius: .75rem; background: #fee2e2; color: #b91c1c; font-size: .875rem; margin-bottom: 1.25rem; }
+
+form { display: flex; flex-direction: column; gap: 1.25rem; }
+
+.card-section { padding: 1.25rem 1.5rem; }
+.section-title { font-size: 1rem; font-weight: 700; margin: 0 0 1rem; }
+.optional { font-size: .8rem; font-weight: 400; color: var(--color-muted-foreground); }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.form-grid--4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 700px) { .form-grid, .form-grid--4 { grid-template-columns: 1fr; } }
+
+.field { display: flex; flex-direction: column; gap: .35rem; }
+.field-label { font-size: .82rem; font-weight: 600; color: var(--color-muted-foreground); }
+.req { color: #ef4444; }
+.field-error { font-size: .78rem; color: #ef4444; }
+
+.forsa-select {
+  height: 2.5rem; border-radius: .75rem; border: 1px solid var(--color-border);
+  background: var(--color-background); padding: 0 .85rem;
+  font-size: .875rem; color: var(--color-foreground); cursor: pointer;
+}
+.forsa-select--full { width: 100%; }
+.forsa-textarea {
+  width: 100%; padding: .5rem .75rem; border-radius: .75rem; border: 1px solid var(--color-border);
+  font-size: .875rem; resize: vertical; background: var(--color-background);
+}
+
+.form-actions {
+  display: flex; gap: .75rem; justify-content: flex-end; flex-wrap: wrap;
+  padding-top: .5rem;
+}
+.btn-primary {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .55rem 1.25rem; border-radius: .75rem; border: none;
+  background: var(--color-primary); color: var(--color-primary-foreground);
+  font-size: .875rem; font-weight: 600; cursor: pointer; transition: opacity .15s;
+}
+.btn-primary:hover { opacity: .88; }
+.btn-primary:disabled { opacity: .45; cursor: not-allowed; }
+.btn-outline {
+  display: inline-flex; align-items: center;
+  padding: .55rem 1.25rem; border-radius: .75rem;
+  border: 1px solid var(--color-border); background: transparent;
+  color: var(--color-foreground); font-size: .875rem; font-weight: 600;
+  cursor: pointer; transition: background .15s;
+}
+.btn-outline:hover { background: color-mix(in oklab, var(--color-muted) 40%, transparent); }

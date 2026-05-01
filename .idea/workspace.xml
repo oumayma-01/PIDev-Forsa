@@ -40,7 +40,7 @@
     &quot;url&quot;: &quot;https://github.com/ForsaPidev/Esprit-PIDEV-4INFINI1-2026-Forsa&quot;,
     &quot;accountId&quot;: &quot;78607999-887f-4c0f-bdf8-db911a42c6ab&quot;
   }
-}</component>
+}]]></component>
   <component name="McpProjectServerCommands">
     <commands />
     <urls />
@@ -109,6 +109,7 @@
       </set>
     </attachedChunks>
   </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="c5c8d0da-e366-41ba-8b8f-ff4ab9b749fb" name="Changes" comment="" />

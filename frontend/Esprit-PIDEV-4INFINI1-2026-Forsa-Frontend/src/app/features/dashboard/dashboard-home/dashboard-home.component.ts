@@ -28,7 +28,7 @@ export class DashboardHomeComponent implements OnInit, AfterViewInit {
         { label: 'User management', description: 'Manage accounts and activation status.', path: '/dashboard/users', icon: 'users' as ForsaIconName },
         { label: 'Role access', description: 'Control sidebar permissions per role.', path: '/dashboard/roles', icon: 'shield-check' as ForsaIconName },
         { label: 'Feedback queue', description: 'Review complaints and response workflow.', path: '/dashboard/feedback', icon: 'message-square' as ForsaIconName },
-        { label: 'AI credit score', description: 'Inspect AI score workflow and checks.', path: '/dashboard/ai-score', icon: 'brain' as ForsaIconName },
+        { label: 'Client AI scores', description: 'Real-time AI scores for all clients.', path: '/dashboard/scoring', icon: 'brain' as ForsaIconName },
       ];
     }
     return [

@@ -116,6 +116,9 @@ export class DashboardNavbarComponent {
     if (allow('/dashboard/roles')) {
       extras.push({ label: 'Role management', href: '/dashboard/roles', icon: 'shield' });
     }
+    if (allow('/dashboard/scoring')) {
+      extras.push({ label: 'Client scores', href: '/dashboard/scoring', icon: 'brain' });
+    }
 
     const dash = core.find((i) => i.href === '/dashboard');
     const withoutDashboard = core.filter((i) => i.href !== '/dashboard');

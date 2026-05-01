@@ -1,0 +1,173 @@
+<div class="form-nav">
+  <button class="btn-ghost" (click)="cancel()">
+    <app-forsa-icon name="arrow-left" [size]="16"></app-forsa-icon>
+    Back to partners
+  </button>
+</div>
+
+<div class="form-page">
+  <div class="form-header">
+    <h2>{{ isEdit() ? 'Edit partner' : 'New partner' }}</h2>
+    <p class="form-sub">{{ isEdit() ? 'Update the partner information below.' : 'Fill in the details to register a new partner in the network.' }}</p>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-center">
+      <div class="spinner"></div>
+      <p>Loading partner data…</p>
+    </div>
+  } @else {
+    @if (errorMessage()) {
+      <div class="alert-error">{{ errorMessage() }}</div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+
+      <!-- Business info -->
+      <app-forsa-card>
+        <div class="card-section">
+          <h3 class="section-title">Business information</h3>
+          <div class="form-grid">
+            <div class="field">
+              <label class="field-label">Business name <span class="req">*</span></label>
+              <input forsaInput formControlName="businessName" placeholder="e.g. Pharmacie Centrale" />
+              @if (hasError('businessName')) { <span class="field-error">Required</span> }
+            </div>
+            <div class="field">
+              <label class="field-label">Partner type <span class="req">*</span></label>
+              <select class="forsa-select forsa-select--full" formControlName="partnerType">
+                <option value="">Select type…</option>
+                @for (t of typeOptions; track t[0]) {
+                  <option [value]="t[0]">{{ t[1] }}</option>
+                }
+              </select>
+              @if (hasError('partnerType')) { <span class="field-error">Required</span> }
+            </div>
+            <div class="field">
+              <label class="field-label">Registration number <span class="req">*</span></label>
+              <input forsaInput formControlName="registrationNumber" placeholder="e.g. 1234567/A/M/000" />
+              @if (hasError('registrationNumber')) { <span class="field-error">Required</span> }
+            </div>
+            <div class="field">
+              <label class="field-label">Description</label>
+              <textarea class="forsa-textarea" formControlName="description" rows="2"
+                placeholder="Short description of the business…"></textarea>
+            </div>
+          </div>
+        </div>
+      </app-forsa-card>
+
+      <!-- Location -->
+      <app-forsa-card>
+        <div class="card-section">
+          <h3 class="section-title">Location & contact</h3>
+          <div class="form-grid">
+            <div class="field">
+              <label class="field-label">Address <span class="req">*</span></label>
+              <input forsaInput formControlName="address" placeholder="Street address" />
+              @if (hasError('address')) { <span class="field-error">Required</span> }
+            </div>
+            <div class="field">
+              <label class="field-label">City <span class="req">*</span></label>
+              <input forsaInput formControlName="city" placeholder="e.g. Tunis" />
+              @if (hasError('city')) { <span class="field-error">Required</span> }
+            </div>
+            <div class="field">
+              <label class="field-label">Business phone</label>
+              <input forsaInput formControlName="businessPhone" type="tel" placeholder="+216 XX XXX XXX" />
+            </div>
+            <div class="field">
+              <label class="field-label">Business email</label>
+              <input forsaInput formControlName="businessEmail" type="email" placeholder="contact@partner.tn" />
+              @if (hasError('businessEmail')) { <span class="field-error">Invalid email</span> }
+            </div>
+          </div>
+        </div>
+      </app-forsa-card>
+
+      <!-- Banking -->
+      <app-forsa-card>
+        <div class="card-section">
+          <h3 class="section-title">Banking information</h3>
+          <div class="form-grid">
+            <div class="field">
+              <label class="field-label">IBAN <span class="req">*</span></label>
+              <input forsaInput formControlName="iban" placeholder="TN59 XXXX XXXX XXXX XXXX XXXX" />
+              @if (hasError('iban')) { <span class="field-error">Required</span> }
+            </div>
+            <div class="field">
+              <label class="field-label">Bank name <span class="req">*</span></label>
+              <input forsaInput formControlName="bankName" placeholder="e.g. BIAT" />
+              @if (hasError('bankName')) { <span class="field-error">Required</span> }
+            </div>
+            <div class="field">
+              <label class="field-label">Account holder name <span class="req">*</span></label>
+              <input forsaInput formControlName="accountHolderName" placeholder="Full name on account" />
+              @if (hasError('accountHolderName')) { <span class="field-error">Required</span> }
+            </div>
+          </div>
+        </div>
+      </app-forsa-card>
+
+      <!-- Limits & commission -->
+      <app-forsa-card>
+        <div class="card-section">
+          <h3 class="section-title">Transaction limits & commission</h3>
+          <div class="form-grid form-grid--4">
+            <div class="field">
+              <label class="field-label">Max / transaction (TND) <span class="req">*</span></label>
+              <input forsaInput formControlName="maxTransactionAmount" type="number" min="1" />
+              @if (hasError('maxTransactionAmount')) { <span class="field-error">Must be ≥ 1</span> }
+            </div>
+            <div class="field">
+              <label class="field-label">Daily limit (TND) <span class="req">*</span></label>
+              <input forsaInput formControlName="dailyTransactionLimit" type="number" min="1" />
+              @if (hasError('dailyTransactionLimit')) { <span class="field-error">Must be ≥ 1</span> }
+            </div>
+            <div class="field">
+              <label class="field-label">Monthly limit (TND) <span class="req">*</span></label>
+              <input forsaInput formControlName="monthlyTransactionLimit" type="number" min="1" />
+              @if (hasError('monthlyTransactionLimit')) { <span class="field-error">Must be ≥ 1</span> }
+            </div>
+            <div class="field">
+              <label class="field-label">Commission rate (%) <span class="req">*</span></label>
+              <input forsaInput formControlName="commissionRate" type="number" min="0" max="100" step="0.1" />
+              @if (hasError('commissionRate')) { <span class="field-error">0–100%</span> }
+            </div>
+          </div>
+        </div>
+      </app-forsa-card>
+
+      <!-- Contact person -->
+      <app-forsa-card>
+        <div class="card-section">
+          <h3 class="section-title">Contact person <span class="optional">(optional)</span></h3>
+          <div class="form-grid">
+            <div class="field">
+              <label class="field-label">Full name</label>
+              <input forsaInput formControlName="contactPersonName" placeholder="e.g. Ahmed Ben Ali" />
+            </div>
+            <div class="field">
+              <label class="field-label">Phone</label>
+              <input forsaInput formControlName="contactPersonPhone" type="tel" placeholder="+216 XX XXX XXX" />
+            </div>
+            <div class="field">
+              <label class="field-label">Email</label>
+              <input forsaInput formControlName="contactPersonEmail" type="email" placeholder="contact@partner.tn" />
+              @if (hasError('contactPersonEmail')) { <span class="field-error">Invalid email</span> }
+            </div>
+          </div>
+        </div>
+      </app-forsa-card>
+
+      <!-- Form actions -->
+      <div class="form-actions">
+        <button type="button" class="btn-outline" (click)="cancel()">Cancel</button>
+        <button type="submit" class="btn-primary" [disabled]="saving()">
+          @if (saving()) { Saving… } @else { {{ isEdit() ? 'Save changes' : 'Create partner' }} }
+        </button>
+      </div>
+
+    </form>
+  }
+</div>
