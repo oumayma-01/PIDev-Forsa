@@ -17,7 +17,11 @@ export class DashboardLayoutComponent implements OnInit, AfterViewInit {
   private readonly el = inject(ElementRef);
   readonly isClient = computed(() => {
     const roles = this.auth.currentUser()?.roles ?? [];
-    return roles.some((role) => role.toUpperCase() === 'ROLE_CLIENT');
+    const hasPrivilegedRole = roles.some(role => {
+      const r = role.toUpperCase();
+      return r === 'ROLE_ADMIN' || r === 'ADMIN' || r === 'ROLE_AGENT' || r === 'AGENT';
+    });
+    return !hasPrivilegedRole;
   });
 
   /**

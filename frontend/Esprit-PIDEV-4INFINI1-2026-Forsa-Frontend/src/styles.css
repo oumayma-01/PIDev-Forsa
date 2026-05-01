@@ -4,6 +4,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Elegant custom Forsa cursor */
+html, body {
+  cursor: url('/cursor.svg') 4 2, auto;
+}
+
 /* Forsa brand tokens (logo: navy + teal → lime → gold) */
 :root {
   --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
