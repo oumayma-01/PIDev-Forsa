@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import type { AIScoreRequest, AIScoreResponse } from '../../../core/models/forsa.models';
+import type { AIScoreRequest, AIScoreResponse, AIScoreDto } from '../../../core/models/forsa.models';
 
 /** Résultat OCR retourné par Python pour un document. */
 export interface OcrResult {
@@ -52,8 +52,23 @@ export class AiScoreService {
   }
 
   /** Récupère le dernier score d'un client. */
-  getCurrentScore(clientId: number): Observable<AIScoreResponse> {
-    return this.http.get<AIScoreResponse>(`${this.apiUrl}/current/${clientId}`);
+  getCurrentScore(clientId: number): Observable<AIScoreDto> {
+    return this.http.get<AIScoreDto>(`${this.apiUrl}/current/${clientId}`);
+  }
+
+  /** Recalcule le score IA pour un client. */
+  recalculateScore(clientId: number): Observable<AIScoreDto> {
+    return this.http.post<AIScoreDto>(`${this.apiUrl}/recalculate/${clientId}`, {});
+  }
+
+  /** Active un booster STEG ou SONEDE et retourne le score mis à jour. */
+  activateBooster(clientId: number, type: 'STEG' | 'SONEDE'): Observable<AIScoreDto> {
+    return this.http.post<AIScoreDto>(`${this.apiUrl}/booster/${clientId}?type=${type}`, {});
+  }
+
+  /** Récupère les scores de tous les clients — pour le dashboard admin. */
+  getAllSummaries(): Observable<AIScoreDto[]> {
+    return this.http.get<AIScoreDto[]>(`${this.apiUrl}/summaries`);
   }
 
   /** Vérifie que le controller Spring Boot est actif. */

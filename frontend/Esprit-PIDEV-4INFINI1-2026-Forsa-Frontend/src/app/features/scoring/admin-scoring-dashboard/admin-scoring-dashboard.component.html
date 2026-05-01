@@ -1,0 +1,115 @@
+<div class="scoring-dash">
+
+  <div class="dash-head">
+    <div>
+      <h1 class="dash-title">Client AI Scores</h1>
+      <p class="dash-sub">Auto-refreshed every 30 seconds — live from the database.</p>
+    </div>
+    <div class="dash-head-right">
+      @if (lastRefresh()) {
+        <span class="last-refresh">Last update: {{ lastRefresh()! | date:'HH:mm:ss' }}</span>
+      }
+      <button class="btn-refresh" (click)="load()">↻ Refresh</button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="state-loading">
+      <span class="spinner"></span>
+      <p>Loading scores...</p>
+    </div>
+
+  } @else if (clients().length === 0) {
+    <div class="state-empty">
+      <p>No scores calculated yet.</p>
+      <p class="state-empty-hint">Scores appear after the first AI calculation for a client.</p>
+    </div>
+
+  } @else {
+    <div class="table-wrap">
+      <table class="score-table">
+        <thead>
+          <tr>
+            <th>Client</th>
+            <th>Score / 1000</th>
+            <th>Level</th>
+            <th>Credit Threshold</th>
+            <th>Active Loan</th>
+            <th>Boosters</th>
+            <th>Calculated at</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of clients(); track row.clientId) {
+            <tr [ngClass]="{ 'row--refreshing': row.refreshing }">
+
+              <td class="td-client">
+                <div class="client-avatar">{{ (row.clientName || 'Client ' + row.clientId).charAt(0).toUpperCase() }}</div>
+                <div>
+                  <div class="client-name">{{ row.clientName || 'Client #' + row.clientId }}</div>
+                  @if (row.clientEmail) {
+                    <div class="client-email">{{ row.clientEmail }}</div>
+                  }
+                </div>
+              </td>
+
+              <td class="td-score">
+                <span class="score-num">{{ row.score }}</span>
+                <div class="score-bar-track">
+                  <div class="score-bar-fill" [style.width.%]="scoreBar(row.score)"
+                       [ngClass]="levelClass(row.scoreLevel)"></div>
+                </div>
+              </td>
+
+              <td>
+                <span class="level-badge" [ngClass]="levelClass(row.scoreLevel)">
+                  {{ row.scoreLevel.replace('_', ' ') }}
+                </span>
+              </td>
+
+              <td class="td-threshold">
+                @if (row.hasActiveCredit) {
+                  <span class="blocked-label">Loan in progress</span>
+                } @else {
+                  <span class="threshold-val">{{ row.creditThreshold | number:'1.0-0' }} TND</span>
+                }
+              </td>
+
+              <td class="td-center">
+                @if (row.hasActiveCredit) {
+                  <span class="dot dot--red" title="Active loan"></span>
+                } @else {
+                  <span class="dot dot--green" title="No active loan"></span>
+                }
+              </td>
+
+              <td class="td-boosters">
+                @if (row.stegBoosterActive) {
+                  <span class="booster-chip">⚡ STEG</span>
+                }
+                @if (row.sonedeBoosterActive) {
+                  <span class="booster-chip">💧 SONEDE</span>
+                }
+                @if (!row.stegBoosterActive && !row.sonedeBoosterActive) {
+                  <span class="no-booster">—</span>
+                }
+              </td>
+
+              <td class="td-date">{{ formatDate(row.lastCalculatedAt) }}</td>
+
+              <td class="td-action">
+                <button class="btn-recalc" (click)="recalculate(row)" [disabled]="row.refreshing"
+                        title="Recalculate score">
+                  @if (row.refreshing) { ⏳ } @else { ↻ }
+                </button>
+              </td>
+
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+</div>

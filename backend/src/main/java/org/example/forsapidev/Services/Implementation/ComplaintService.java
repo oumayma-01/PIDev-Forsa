@@ -9,12 +9,10 @@ import org.example.forsapidev.Repositories.ResponseRepository;
 import org.example.forsapidev.Repositories.UserRepository;
 import org.example.forsapidev.Services.Interfaces.IComplaintService;
 import org.example.forsapidev.Services.Interfaces.IComplaintNotificationService;
-import org.example.forsapidev.Services.Interfaces.IScoringAggregationService;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Category;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Complaint;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Priority;
 import org.example.forsapidev.entities.ComplaintFeedbackManagement.Response;
-import org.example.forsapidev.entities.ScoringManagement.ScoreResult;
 import org.example.forsapidev.entities.UserManagement.User;
 import org.example.forsapidev.openai.ComplaintAiAssistant;
 import org.springframework.stereotype.Service;
@@ -38,7 +36,6 @@ public class ComplaintService implements IComplaintService {
     private final UserRepository userRepository;
     private final ResponseRepository responseRepository;
     private final FeedbackRepository feedbackRepository;
-    private final IScoringAggregationService scoringAggregationService;
     private final IComplaintNotificationService notificationService;
 
     @Override
@@ -266,21 +263,8 @@ public class ComplaintService implements IComplaintService {
         double currentScore;
         boolean fallbackUsed = false;
 
-        if (clientId == null) {
-            currentScore = 50.0;
-            fallbackUsed = true;
-        } else {
-            try {
-                ScoreResult scoreResult = scoringAggregationService.getOrCalculateScore(clientId);
-                currentScore = scoreResult.getFinalScore() != null ? scoreResult.getFinalScore() : 50.0;
-                if (scoreResult.getFinalScore() == null) {
-                    fallbackUsed = true;
-                }
-            } catch (Exception e) {
-                currentScore = 50.0;
-                fallbackUsed = true;
-            }
-        }
+        currentScore = 50.0;
+        fallbackUsed = true;
 
         double gap = Math.max(0.0, required - currentScore);
         boolean eligible = currentScore >= required;
@@ -328,15 +312,6 @@ public class ComplaintService implements IComplaintService {
         }
 
         double clientScore = 50.0;
-        if (complaint.getUser() != null) {
-            try {
-                ScoreResult score = scoringAggregationService.getOrCalculateScore(complaint.getUser().getId());
-                if (score.getFinalScore() != null) {
-                    clientScore = score.getFinalScore();
-                }
-            } catch (Exception ignored) {
-            }
-        }
 
         double amountScore = amountScore(amount);
         double priorityScore = priorityScore(complaint.getPriority());
@@ -345,9 +320,9 @@ public class ComplaintService implements IComplaintService {
 
         double impactScore = round2(
                 (amountScore * 0.40) +
-                (priorityScore * 0.25) +
-                (clientRiskScore * 0.20) +
-                (ageScore * 0.15)
+                        (priorityScore * 0.25) +
+                        (clientRiskScore * 0.20) +
+                        (ageScore * 0.15)
         );
 
         String riskLevel;
