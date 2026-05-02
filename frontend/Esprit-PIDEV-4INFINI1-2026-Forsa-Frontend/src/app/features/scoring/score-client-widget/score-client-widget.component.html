@@ -36,7 +36,7 @@
           </div>
           <p class="threshold-value blocked">0 TND</p>
         } @else {
-          <p class="threshold-value">{{ (score()!.availableThreshold ?? 0) | number:'1.0-0' }} TND</p>
+          <p class="threshold-value">{{ score()!.availableThreshold | number:'1.0-0' }} TND</p>
           <div class="threshold-bar-track">
             <div class="threshold-bar-fill" [style.width.%]="thresholdPercent"></div>
           </div>

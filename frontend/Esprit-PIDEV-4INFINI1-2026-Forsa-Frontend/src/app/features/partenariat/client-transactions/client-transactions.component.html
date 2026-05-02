@@ -1,10 +1,10 @@
 <div class="page-nav">
   <button class="btn-ghost" routerLink="/dashboard/partenariat">
-    <app-forsa-icon name="arrow-left" [size]="16"></app-forsa-icon>
+    <app-forsa-icon name="chevron-left" [size]="16"></app-forsa-icon>
     Back to partners
   </button>
   <button class="btn-primary" routerLink="/dashboard/partenariat/scan">
-    <app-forsa-icon name="qr-code" [size]="16"></app-forsa-icon>
+    <app-forsa-icon name="shield" [size]="16"></app-forsa-icon>
     New transaction
   </button>
 </div>
@@ -64,7 +64,7 @@
       </div>
     } @else if (transactions().length === 0) {
       <div class="empty-state">
-        <app-forsa-icon name="shopping-bag" [size]="40"></app-forsa-icon>
+        <app-forsa-icon name="credit-card" [size]="40"></app-forsa-icon>
         <p>No transactions yet.</p>
         <p class="empty-hint">Visit a partner store and scan their QR code to get started.</p>
         <button class="btn-primary" routerLink="/dashboard/partenariat/scan">Scan my first QR code</button>

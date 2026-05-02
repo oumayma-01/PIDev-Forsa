@@ -48,7 +48,7 @@
     <app-forsa-card>
       <div class="stat card-pad-md">
         <div class="stat__top">
-          <div class="stat__icon stat__icon--comm"><app-forsa-icon name="percent" [size]="22"></app-forsa-icon></div>
+          <div class="stat__icon stat__icon--comm"><app-forsa-icon name="bar-chart-3" [size]="22"></app-forsa-icon></div>
         </div>
         <p class="stat__label">Commission revenue</p>
         <h3 class="stat__value">{{ adminStats().totalCommission | number:'1.0-0' }}<span class="stat__suffix"> TND</span></h3>
@@ -141,21 +141,21 @@
                       <button class="btn-icon btn-icon--ok" title="Activate"
                         [disabled]="actionLoading() === p.id"
                         (click)="activatePartner(p); $event.stopPropagation()">
-                        <app-forsa-icon name="check" [size]="15"></app-forsa-icon>
+                        <app-forsa-icon name="check-circle-2" [size]="15"></app-forsa-icon>
                       </button>
                     }
                     @if (p.status === 'ACTIVE') {
                       <button class="btn-icon btn-icon--warn" title="Suspend"
                         [disabled]="actionLoading() === p.id"
                         (click)="openSuspendForm(p.id); $event.stopPropagation()">
-                        <app-forsa-icon name="pause-circle" [size]="15"></app-forsa-icon>
+                        <app-forsa-icon name="x-circle" [size]="15"></app-forsa-icon>
                       </button>
                     }
                     @if (p.status === 'SUSPENDED') {
                       <button class="btn-icon btn-icon--ok" title="Reactivate"
                         [disabled]="actionLoading() === p.id"
                         (click)="reactivatePartner(p); $event.stopPropagation()">
-                        <app-forsa-icon name="play-circle" [size]="15"></app-forsa-icon>
+                        <app-forsa-icon name="refresh-cw" [size]="15"></app-forsa-icon>
                       </button>
                     }
                   </div>
@@ -190,7 +190,7 @@
     </div>
     <div class="header-actions">
       <button class="btn-primary" [routerLink]="['/dashboard/partenariat/scan']">
-        <app-forsa-icon name="qr-code" [size]="16"></app-forsa-icon>
+        <app-forsa-icon name="shield" [size]="16"></app-forsa-icon>
         Scan QR
       </button>
       <button class="btn-outline" [routerLink]="['/dashboard/partenariat/my-transactions']">
@@ -236,7 +236,7 @@
   @if (topRated().length > 0) {
     <section class="section-block">
       <h3 class="section-title">
-        <app-forsa-icon name="star" [size]="18"></app-forsa-icon>
+        <app-forsa-icon name="heart" [size]="18"></app-forsa-icon>
         Top rated partners
       </h3>
       <div class="top-rated-row">
@@ -245,10 +245,10 @@
             <div class="top-card__type">{{ p.partnerType | partnerTypeLabel }}</div>
             <div class="top-card__name">{{ p.businessName }}</div>
             <div class="top-card__city">
-              <app-forsa-icon name="map-pin" [size]="12"></app-forsa-icon> {{ p.city }}
+              <app-forsa-icon name="home" [size]="12"></app-forsa-icon> {{ p.city }}
             </div>
             <div class="top-card__rating">
-              <app-forsa-icon name="star" [size]="13"></app-forsa-icon>
+              <app-forsa-icon name="heart" [size]="13"></app-forsa-icon>
               {{ p.averageRating | number:'1.1-1' }}
               <span class="text-muted sm">({{ p.totalReviews ?? 0 }})</span>
             </div>
@@ -269,7 +269,7 @@
         <div class="partner-card" (click)="openDetail(p.id)">
           <div class="partner-card__header">
             <div class="partner-card__icon">
-              <app-forsa-icon name="store" [size]="22"></app-forsa-icon>
+              <app-forsa-icon name="home" [size]="22"></app-forsa-icon>
             </div>
             @if (p.badge) {
               <app-forsa-badge [tone]="badgeTone(p.badge)" size="xs">{{ p.badge }}</app-forsa-badge>
@@ -278,11 +278,11 @@
           <div class="partner-card__name">{{ p.businessName }}</div>
           <div class="partner-card__type text-muted sm">{{ p.partnerType | partnerTypeLabel }}</div>
           <div class="partner-card__city text-muted sm">
-            <app-forsa-icon name="map-pin" [size]="12"></app-forsa-icon> {{ p.city }}
+            <app-forsa-icon name="home" [size]="12"></app-forsa-icon> {{ p.city }}
           </div>
           @if (p.averageRating && p.averageRating > 0) {
             <div class="partner-card__rating">
-              <app-forsa-icon name="star" [size]="13"></app-forsa-icon>
+              <app-forsa-icon name="heart" [size]="13"></app-forsa-icon>
               {{ p.averageRating | number:'1.1-1' }}
               <span class="text-muted sm">({{ p.totalReviews ?? 0 }})</span>
             </div>
