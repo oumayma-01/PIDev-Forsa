@@ -3,6 +3,10 @@
     <h2>Responses</h2>
     <p>Manage complaint responses</p>
   </div>
+  <app-forsa-button variant="ghost" (clicked)="goBack()">
+    <app-forsa-icon name="chevron-left" [size]="16" />
+    Back
+  </app-forsa-button>
   @if (isAdminOrAgent) {
     <app-forsa-button (clicked)="goToAdd()">
       <app-forsa-icon name="plus" [size]="16" />

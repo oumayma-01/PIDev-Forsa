@@ -14,7 +14,7 @@ import { LandingPageComponent } from './features/landing/landing-page.component'
 import { WalletOverviewComponent } from './features/wallet/wallet-overview/wallet-overview.component';
 import { PartenariatListComponent } from './features/partenariat/partenariat-list/partenariat-list.component';
 import { AdminScoringDashboardComponent } from './features/scoring/admin-scoring-dashboard/admin-scoring-dashboard.component';
-import { ClientScorePageComponent } from './features/scoring/client-score-page/client-score-page.component';
+import { ScoreRequestComponent } from './features/scoring/score-request/score-request.component';
 import { DashboardLayoutComponent } from './layouts/dashboard-layout/dashboard-layout.component';
 
 export const routes: Routes = [
@@ -83,7 +83,12 @@ export const routes: Routes = [
           {
             path: 'complaints',
             loadComponent: () =>
-              import('./features/feedback/feedback-list/feedback-list.component').then((m) => m.FeedbackListComponent),
+              import('./features/feedback/complaint-management/complaints-management.component').then((m) => m.ComplaintsManagementComponent),
+          },
+          {
+            path: 'feedbacks',
+            loadComponent: () =>
+              import('./features/feedback/feedbacks-view/feedbacks-view.component').then((m) => m.FeedbacksViewComponent),
           },
           {
             path: 'notifications',
@@ -144,8 +149,8 @@ export const routes: Routes = [
         ],
       },
       { path: 'partenariat', component: PartenariatListComponent },
-      { path: 'ai-score', component: ClientScorePageComponent },
-      { path: 'scoring', component: AdminScoringDashboardComponent, canMatch: [adminGuard] },
+      { path: 'scoring', component: AdminScoringDashboardComponent },
+      { path: 'ai-score', component: ScoreRequestComponent },
       { path: 'ai', component: RiskAnalysisComponent },
       {
         path: 'users',

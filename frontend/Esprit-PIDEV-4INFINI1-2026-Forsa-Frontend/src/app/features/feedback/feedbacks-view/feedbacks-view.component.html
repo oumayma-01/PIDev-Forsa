@@ -1,0 +1,37 @@
+<div class="page-toolbar">
+  <div class="page-head">
+    <h2>Feedbacks View</h2>
+    <p>All user feedback</p>
+  </div>
+  <app-forsa-button variant="ghost" (clicked)="goBack()">
+    <app-forsa-icon name="chevron-left" [size]="16" />
+    Back
+  </app-forsa-button>
+</div>
+
+@if (error) { <div class="fb-error">{{ error }}</div> }
+@if (loading) { <div class="fb-loading"><p>Loading...</p></div> }
+
+<div class="fb-list">
+  @for (item of items; track item.id) {
+    <app-forsa-card class="fb-card">
+      <div class="fb-inner card-pad-lg">
+        <div class="fb-headline">
+          <h4>{{ item.rating }}/5</h4>
+          <app-forsa-badge tone="info">{{ item.satisfactionLevel || 'NEUTRAL' }}</app-forsa-badge>
+        </div>
+        <p class="text-muted">{{ item.comment || 'No comment' }}</p>
+        @if (isAdmin || isAgent) {
+          <p class="text-muted">
+            <app-forsa-icon name="users" [size]="12" />
+            {{ feedbackAuthor(item) }}
+          </p>
+        }
+        <p class="text-muted">{{ item.createdAt | date:'yyyy-MM-dd HH:mm' }}</p>
+        @if (isAdmin) {
+          <app-forsa-button size="sm" variant="ghost" (clicked)="deleteFeedback(item.id!)">Delete</app-forsa-button>
+        }
+      </div>
+    </app-forsa-card>
+  }
+</div>

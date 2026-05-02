@@ -261,18 +261,14 @@ public class ComplaintService implements IComplaintService {
                     ChronoUnit.DAYS.between(complaint.getCreatedAt().toInstant(), Instant.now()));
         }
 
-        double clientScore = 50.0;
-
         double amountScore = amountScore(amount);
         double priorityScore = priorityScore(complaint.getPriority());
         double ageScore = Math.min(100.0, daysSinceCreation * 1.67);
-        double clientRiskScore = Math.max(0.0, 100.0 - clientScore);
 
         double impactScore = round2(
-                (amountScore * 0.40) +
-                        (priorityScore * 0.25) +
-                        (clientRiskScore * 0.20) +
-                        (ageScore * 0.15)
+                (amountScore   * 0.50) +
+                        (priorityScore * 0.35) +
+                        (ageScore      * 0.15)
         );
 
         String riskLevel;
