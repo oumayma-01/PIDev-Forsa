@@ -55,7 +55,7 @@ public class FeedbackController {
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
-    @PreAuthorize("hasRole('CLIENT')")
+    @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
     @DeleteMapping("/remove-feedback/{feedback-id}")
     public ResponseEntity<Void> removeFeedback(
             @PathVariable("feedback-id") Long fId) {

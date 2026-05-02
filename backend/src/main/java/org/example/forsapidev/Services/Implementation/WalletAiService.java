@@ -20,13 +20,13 @@ public class WalletAiService {
 
     private static final Logger log = LoggerFactory.getLogger(WalletAiService.class);
 
-    @Value("${wallet.ai.url}")
+    @Value("${wallet.ai.url:https://api.groq.com/openai/v1/chat/completions}")
     private String apiUrl;
 
-    @Value("${wallet.ai.key}")
+    @Value("${wallet.ai.key:${GROQ_API_KEY:}}")
     private String apiKey;
 
-    @Value("${wallet.ai.model}")
+    @Value("${wallet.ai.model:llama-3.3-70b-versatile}")
     private String model;
 
     private final HttpClient httpClient = HttpClient.newBuilder()
@@ -37,6 +37,10 @@ public class WalletAiService {
 
     public String askAI(String systemPrompt, String userMessage) {
         try {
+            if (apiKey == null || apiKey.isBlank()) {
+                throw new RuntimeException("Wallet AI key is not configured (wallet.ai.key / GROQ_API_KEY).");
+            }
+
             String requestBody = mapper.writeValueAsString(Map.of(
                     "model", model,
                     "messages", List.of(
