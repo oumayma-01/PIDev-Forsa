@@ -83,9 +83,12 @@ public class ComplaintAiAssistant {
     }
 
     public String analyzeFeedbackSatisfaction(Integer rating, String comment) {
-        String system = "You are a classifier. Reply ONLY with one value among: "
-                + "VERY_SATISFIED, SATISFIED, NEUTRAL, DISSATISFIED, VERY_DISSATISFIED. "
-                + "No additional text.";
+        String system = "You are a strict feedback sentiment classifier. "
+                + "Return ONLY one label: VERY_SATISFIED, SATISFIED, NEUTRAL, DISSATISFIED, VERY_DISSATISFIED. "
+                + "Hard rule: rating=5 => VERY_SATISFIED or SATISFIED; rating=4 => SATISFIED or VERY_SATISFIED; "
+                + "rating=3 => NEUTRAL (or SATISFIED/DISSATISFIED only if comment is explicit); "
+                + "rating=2 => DISSATISFIED or VERY_DISSATISFIED; rating=1 => VERY_DISSATISFIED or DISSATISFIED. "
+                + "Never output any explanation.";
         String user = "Feedback:\n"
                 + "rating=" + rating + "\n"
                 + "comment=" + (comment == null ? "" : comment) + "\n"
@@ -108,6 +111,26 @@ public class ComplaintAiAssistant {
         if (rating == 3)     return "NEUTRAL";
         if (rating == 4)     return "SATISFIED";
         return "VERY_SATISFIED";
+    }
+
+    public String detectFeedbackSentiment(String comment) {
+        String text = comment == null ? "" : comment.trim();
+        if (text.isBlank()) return "NEUTRAL";
+
+        String system = "You are a strict sentiment detector for customer feedback comments. "
+                + "Return ONLY one label: POSITIVE, NEUTRAL, NEGATIVE. "
+                + "No explanation, no extra words.";
+        String user = "Comment: " + text + "\nReturn the sentiment label.";
+
+        try {
+            String out = client.chat(system, user).toUpperCase().trim();
+            if (out.contains("POSITIVE")) return "POSITIVE";
+            if (out.contains("NEGATIVE")) return "NEGATIVE";
+            if (out.contains("NEUTRAL")) return "NEUTRAL";
+        } catch (Exception e) {
+            log.warn("detectFeedbackSentiment AI failed, fallback neutral: {}", e.getMessage());
+        }
+        return "NEUTRAL";
     }
 
     public String generateInsightsFromReport(String reportJsonLikeText) {
