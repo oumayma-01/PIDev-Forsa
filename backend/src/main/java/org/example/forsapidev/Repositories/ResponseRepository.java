@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface ResponseRepository extends JpaRepository<Response, Long> {
     List<Response> findByComplaintId(Long complaintId);
+    void deleteByComplaintId(Long complaintId);
 }
