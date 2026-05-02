@@ -96,10 +96,6 @@ export class ComplaintService {
     });
   }
 
-  assignToUser(complaintId: number, userId: number): Observable<ComplaintBackend> {
-    return this.http.post<ComplaintBackend>(`${this.baseUrl}/${complaintId}/assign/${userId}`, {});
-  }
-
   getCreditEligibility(complaintId: number, requiredScore?: number): Observable<ComplaintCreditEligibility> {
     const hasManualOverride = Number.isFinite(requiredScore) && (requiredScore as number) > 0;
     const url = hasManualOverride

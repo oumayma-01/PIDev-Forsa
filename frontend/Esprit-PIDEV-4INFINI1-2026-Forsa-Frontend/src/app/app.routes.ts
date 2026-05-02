@@ -83,7 +83,12 @@ export const routes: Routes = [
           {
             path: 'complaints',
             loadComponent: () =>
-              import('./features/feedback/feedback-list/feedback-list.component').then((m) => m.FeedbackListComponent),
+              import('./features/feedback/complaints-management/complaints-management.component').then((m) => m.ComplaintsManagementComponent),
+          },
+          {
+            path: 'feedbacks',
+            loadComponent: () =>
+              import('./features/feedback/feedbacks-view/feedbacks-view.component').then((m) => m.FeedbacksViewComponent),
           },
           {
             path: 'notifications',
