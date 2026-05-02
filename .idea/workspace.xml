@@ -6,6 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="47e49299-a848-4420-95ca-6e30d41b2c01" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/shared/ui/forsa-icon/forsa-icon.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/shared/ui/forsa-icon/forsa-icon.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/shared/ui/forsa-icon/forsa-icon.types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/shared/ui/forsa-icon/forsa-icon.types.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -79,7 +81,7 @@
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "Spring Boot.ForsaPidevApplication.executor": "Run",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "WalletLina",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "C:/Users/nesma/Desktop/PIDEV/PIDev-Forsa/Backend/.env",
     "node.js.detected.package.eslint": "true",
