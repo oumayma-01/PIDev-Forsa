@@ -2,7 +2,6 @@ package org.example.forsapidev.Services.Implementation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.forsapidev.DTO.AccountTypeAdviceDTO;
-import org.example.forsapidev.DTO.AdaptiveInterestResultDTO;
 import org.example.forsapidev.DTO.BankVaultDTO;
 import org.example.forsapidev.DTO.WalletForecastDTO;
 import org.example.forsapidev.DTO.WalletStatisticsDTO;
@@ -10,14 +9,16 @@ import org.example.forsapidev.Repositories.*;
 import org.example.forsapidev.Services.Interfaces.AccountService;
 import org.example.forsapidev.entities.UserManagement.User;
 import org.example.forsapidev.entities.WalletManagement.*;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class AccountServiceImpl implements AccountService {
@@ -144,10 +145,14 @@ public class AccountServiceImpl implements AccountService {
         account.setOwner(user);
         account.setAccountHolderName(user.getUsername());
         account.setType(requestedType);
-        account.setStatus(AccountStatus.BLOCKED); // Tous les comptes commencent bloqués
+        if (requestedType == AccountType.SAVINGS) {
+            account.setStatus(AccountStatus.ACTIVE);
+        } else {
+            account.setStatus(AccountStatus.BLOCKED);
+        }
 
         Account saved = accountRepo.save(account);
-        logActivity(wallet, "Account created of type: " + requestedType + " (BLOCKED by default)");
+        logActivity(wallet, "Account created of type: " + requestedType + " (" + saved.getStatus() + ")");
         return saved;
     }
 
@@ -158,10 +163,15 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public List<Account> getAccountsByOwner(Long ownerId) {
-        return accountRepo.findAll().stream()
-                .filter(a -> a.getWallet() != null
-                        && ownerId.equals(a.getWallet().getOwnerId()))
-                .toList();
+        // Merge by account id: legacy rows may only have owner on Account, or only ownerId on Wallet.
+        Map<Long, Account> merged = new LinkedHashMap<>();
+        for (Account a : accountRepo.findByOwner_Id(ownerId)) {
+            merged.put(a.getId(), a);
+        }
+        for (Account a : accountRepo.findByWallet_OwnerId(ownerId)) {
+            merged.put(a.getId(), a);
+        }
+        return new ArrayList<>(merged.values());
     }
 
     @Override
@@ -326,9 +336,8 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    @Scheduled(cron = "0 0 0 1 * ?")
     public void applyMonthlyInterest() {
-        System.out.println("Applying monthly interest to all active INVESTMENT accounts...");
+        System.out.println("Applying monthly interest to all active INVESTMENT accounts (manual trigger)...");
 
         for (Account account : accountRepo.findAll()) {
             if (account.getType() == AccountType.INVESTMENT
@@ -389,11 +398,6 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public WalletForecastDTO forecastBalance(Long accountId, int days) {
-        return null;
-    }
-
-    @Override
-    public AdaptiveInterestResultDTO applyAdaptiveInterest(Long accountId) {
         return null;
     }
 

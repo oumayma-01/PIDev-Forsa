@@ -9,7 +9,6 @@ import type {
   WalletStatisticsDTO,
   WalletForecastDTO,
   AccountTypeAdviceDTO,
-  AdaptiveInterestResultDTO,
   BankVaultDTO,
 } from '../models/wallet.models';
 
@@ -102,9 +101,5 @@ export class AccountService {
 
   getAccountTypeAdvice(accountId: number): Observable<AccountTypeAdviceDTO> {
     return this.http.get<AccountTypeAdviceDTO>(`${this.base}/${accountId}/account-type-advice`);
-  }
-
-  applyAdaptiveInterest(accountId: number): Observable<AdaptiveInterestResultDTO> {
-    return this.http.post<AdaptiveInterestResultDTO>(`${this.base}/${accountId}/adaptive-interest`, null);
   }
 }
