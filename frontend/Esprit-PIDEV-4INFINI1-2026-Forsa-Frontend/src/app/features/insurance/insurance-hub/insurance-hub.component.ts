@@ -45,7 +45,7 @@ export class InsuranceHubComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('claimsTrendChart') claimsTrendCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('productRevenueChart') productRevenueCanvas!: ElementRef<HTMLCanvasElement>;
   
-  private charts: Chart[] = [];
+  private charts: any[] = [];
   private refreshSub?: Subscription;
 
   constructor() {

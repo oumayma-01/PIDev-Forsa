@@ -21,6 +21,10 @@
             <app-forsa-icon name="message-square" [size]="18" />
             <span>Feedback queue</span>
           </button>
+          <button class="btn-outline" (click)="seedFinanceDemoData()">
+            <app-forsa-icon name="sparkles" [size]="18" />
+            <span>Seed chart demo data</span>
+          </button>
         } @else {
           <button class="btn-outline" routerLink="/dashboard/insurance">
             <app-forsa-icon name="shield" [size]="18" />
@@ -79,47 +83,28 @@
         </app-forsa-card>
       </section>
 
+      <section class="ops-section-title">
+        <h3>Operations overview</h3>
+        <p>Core user and platform actions in one place.</p>
+      </section>
+
       <section class="ops-main-grid">
-        <app-forsa-card>
+        <app-forsa-card class="overview-card">
           <div class="panel-head">
             <h3>User distribution</h3>
-            <p>Role balance across the platform.</p>
+            <p>Pie split by role.</p>
           </div>
-          <div class="mix-list">
-            <div class="mix-row">
-              <div class="mix-label">
-                <span class="dot client"></span>
-                <span>Clients</span>
-              </div>
-              <div class="mix-track">
-                <div class="mix-fill client" [style.width.%]="percentOf(s.totalClients, s.totalUsers)"></div>
-              </div>
-              <span class="mix-value">{{ s.totalClients }}</span>
-            </div>
-            <div class="mix-row">
-              <div class="mix-label">
-                <span class="dot agent"></span>
-                <span>Agents</span>
-              </div>
-              <div class="mix-track">
-                <div class="mix-fill agent" [style.width.%]="percentOf(s.totalAgents, s.totalUsers)"></div>
-              </div>
-              <span class="mix-value">{{ s.totalAgents }}</span>
-            </div>
-            <div class="mix-row">
-              <div class="mix-label">
-                <span class="dot admin"></span>
-                <span>Administrators</span>
-              </div>
-              <div class="mix-track">
-                <div class="mix-fill admin" [style.width.%]="percentOf(s.totalAdmins, s.totalUsers)"></div>
-              </div>
-              <span class="mix-value">{{ s.totalAdmins }}</span>
-            </div>
+          <div class="chart-wrap chart-wrap--small">
+            <canvas
+              baseChart
+              [type]="'pie'"
+              [data]="userDistributionChartData(s)"
+              [options]="userDistributionChartOptions"
+            ></canvas>
           </div>
         </app-forsa-card>
 
-        <app-forsa-card>
+        <app-forsa-card class="overview-card">
           <div class="panel-head">
             <h3>Quick actions</h3>
             <p>Fast entry points for daily operations.</p>
@@ -142,7 +127,7 @@
       </section>
 
       <section class="ops-system">
-        <app-forsa-card>
+        <app-forsa-card class="overview-card">
           <div class="panel-head">
             <h3>System health</h3>
             <p>Live status for critical platform services.</p>
@@ -163,6 +148,93 @@
           </div>
         </app-forsa-card>
       </section>
+
+      @if (isAdmin && adminFinance(); as af) {
+        <section class="ops-section-title">
+          <h3>Financial analytics</h3>
+          <p>Executive metrics and advanced insurance/credit visualizations.</p>
+        </section>
+
+        <section class="ops-finance-grid">
+          <app-forsa-card class="finance-card finance-card--kpis">
+            <div class="panel-head">
+              <h3>Financial KPIs</h3>
+              <p>Insurance and credit formulas used for executive visibility.</p>
+            </div>
+            <div class="finance-kpis">
+              <div class="finance-kpi"><span>Premium collected</span><strong>{{ af.kpis.totalPremiumCollected | number:'1.0-2' }}</strong></div>
+              <div class="finance-kpi"><span>Claims paid</span><strong>{{ af.kpis.totalClaimsPaid | number:'1.0-2' }}</strong></div>
+              <div class="finance-kpi"><span>Loss ratio</span><strong>{{ af.kpis.lossRatioPct | number:'1.1-2' }}%</strong></div>
+              <div class="finance-kpi"><span>Claim frequency</span><strong>{{ af.kpis.claimFrequencyPct | number:'1.1-2' }}%</strong></div>
+              <div class="finance-kpi"><span>Credit approval rate</span><strong>{{ af.kpis.creditApprovalRatePct | number:'1.1-2' }}%</strong></div>
+              <div class="finance-kpi"><span>PAR (risk portfolio)</span><strong>{{ af.kpis.portfolioAtRiskPct | number:'1.1-2' }}%</strong></div>
+              <div class="finance-kpi"><span>Weighted avg interest</span><strong>{{ af.kpis.weightedAverageInterestRatePct | number:'1.1-2' }}%</strong></div>
+              <div class="finance-kpi"><span>Solvency margin</span><strong>{{ af.kpis.solvencyMarginPct | number:'1.1-2' }}%</strong></div>
+            </div>
+          </app-forsa-card>
+
+          <app-forsa-card class="finance-card finance-card--wide">
+            <div class="panel-head">
+              <h3>Revenue vs claims trend</h3>
+              <p>Line chart over the latest 6 months.</p>
+            </div>
+            <div class="chart-wrap">
+              <canvas
+                baseChart
+                [type]="'line'"
+                [data]="revenueChartData"
+                [options]="revenueChartOptions"
+              ></canvas>
+            </div>
+          </app-forsa-card>
+
+          <app-forsa-card class="finance-card">
+            <div class="panel-head">
+              <h3>Insurance status split</h3>
+              <p>Doughnut chart by policy status.</p>
+            </div>
+            <div class="chart-wrap">
+              <canvas
+                baseChart
+                [type]="'doughnut'"
+                [data]="insuranceChartData"
+                [options]="insuranceChartOptions"
+              ></canvas>
+            </div>
+          </app-forsa-card>
+
+          <app-forsa-card class="finance-card">
+            <div class="panel-head">
+              <h3>Credit pipeline split</h3>
+              <p>Horizontal bar chart by credit status.</p>
+            </div>
+            <div class="chart-wrap">
+              <canvas
+                baseChart
+                [type]="'bar'"
+                [data]="creditChartData"
+                [options]="creditChartOptions"
+              ></canvas>
+            </div>
+          </app-forsa-card>
+
+          <app-forsa-card class="finance-card">
+            <div class="panel-head">
+              <h3>Wallet flow composition</h3>
+              <p>Polar area chart by transaction type.</p>
+            </div>
+            <div class="chart-wrap">
+              <canvas
+                baseChart
+                [type]="'polarArea'"
+                [data]="walletChartData"
+                [options]="walletChartOptions"
+              ></canvas>
+            </div>
+          </app-forsa-card>
+        </section>
+      }
+
     } @else {
       <div class="loading-stats">
         <div class="spinner"></div>

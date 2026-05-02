@@ -236,7 +236,8 @@
 .ops-hero,
 .ops-kpi-grid,
 .ops-main-grid,
-.ops-system {
+.ops-system,
+.ops-section-title {
   max-width: 1200px;
   margin-inline: auto;
   padding-inline: 1rem;
@@ -408,6 +409,23 @@
   margin-bottom: 1rem;
 }
 
+.ops-section-title {
+  margin-top: 0.4rem;
+  margin-bottom: 0.65rem;
+}
+
+.ops-section-title h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--forsa-navy-deep);
+}
+
+.ops-section-title p {
+  margin: 0.2rem 0 0;
+  color: var(--color-muted-foreground);
+  font-size: 0.85rem;
+}
+
 .panel-head {
   padding: 1rem 1rem 0.25rem;
 }
@@ -561,6 +579,69 @@
   margin-bottom: 1.2rem;
 }
 
+.ops-finance-grid {
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: 1rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+  align-items: stretch;
+}
+
+.overview-card,
+.finance-card {
+  height: 100%;
+}
+
+.finance-card--kpis,
+.finance-card--wide {
+  grid-column: 1 / -1;
+}
+
+.finance-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+  padding: 0.3rem 1rem 1rem;
+}
+
+.finance-kpi {
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.finance-kpi span {
+  font-size: 0.8rem;
+  color: var(--color-muted-foreground);
+}
+
+.finance-kpi strong {
+  font-size: 1.05rem;
+  color: var(--forsa-navy-deep);
+}
+
+.chart-wrap {
+  padding: 0.4rem 1rem 1rem;
+  min-height: 270px;
+  border-radius: 0.9rem;
+  background: linear-gradient(180deg, color-mix(in oklab, var(--color-muted) 35%, transparent), transparent 38%);
+}
+
+.chart-wrap canvas {
+  width: 100% !important;
+  height: 250px !important;
+}
+
+.chart-wrap--small canvas {
+  height: 220px !important;
+}
+
 .health-overview {
   display: flex;
   flex-direction: column;
@@ -624,6 +705,15 @@
 @media (max-width: 1000px) {
   .ops-main-grid {
     grid-template-columns: 1fr;
+  }
+
+  .ops-finance-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .finance-card--kpis,
+  .finance-card--wide {
+    grid-column: auto;
   }
 }
 
