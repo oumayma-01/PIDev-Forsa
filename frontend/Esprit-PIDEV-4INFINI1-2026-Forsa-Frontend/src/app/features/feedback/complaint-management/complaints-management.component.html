@@ -1,0 +1,61 @@
+<div class="page-toolbar">
+  <div class="page-head">
+    <h2>Complaint Management</h2>
+    <p>Manage all complaints</p>
+  </div>
+  <app-forsa-button variant="ghost" (clicked)="goBack()">
+    <app-forsa-icon name="chevron-left" [size]="16" />
+    Back
+  </app-forsa-button>
+</div>
+
+<app-forsa-card class="filters">
+  <div class="filters-inner">
+    <select class="fb-filter forsa-input" forsaInput [(ngModel)]="statusFilter" (ngModelChange)="applyFilters()">
+      @for (status of statuses; track status) {
+        <option [value]="status">{{ status || 'All Statuses' }}</option>
+      }
+    </select>
+    <select class="fb-filter forsa-input" forsaInput [(ngModel)]="categoryFilter" (ngModelChange)="applyFilters()">
+      @for (category of categories; track category) {
+        <option [value]="category">{{ category || 'All Categories' }}</option>
+      }
+    </select>
+  </div>
+</app-forsa-card>
+
+@if (error) { <div class="fb-error">{{ error }}</div> }
+@if (loading) { <div class="fb-loading"><p>Loading...</p></div> }
+
+<div class="fb-list">
+  @for (item of filteredItems; track item.id) {
+    <app-forsa-card class="fb-card">
+      <div class="fb-inner card-pad-lg">
+        <h4>{{ item.subject }}</h4>
+        <p class="text-muted">{{ item.description }}</p>
+        <div class="fb-meta">
+          <span class="category-badge">By: {{ complaintAuthor(item) }}</span>
+          <app-forsa-badge [tone]="item.status === 'OPEN' ? 'info' : item.status === 'IN_PROGRESS' ? 'warning' : item.status === 'RESOLVED' ? 'success' : 'danger'">{{ item.status }}</app-forsa-badge>
+          <span class="category-badge">{{ item.category }}</span>
+        </div>
+        @if (item.id && impactScoreByComplaint[item.id] !== undefined) {
+          <div class="impact-line">
+            Financial Impact Score: <strong>{{ impactScoreByComplaint[item.id] | number:'1.0-2' }}</strong>
+          </div>
+        }
+        <div class="actions-row">
+          <app-forsa-button size="sm" variant="ghost" (clicked)="viewDetails(item.id!)">View Details</app-forsa-button>
+          <app-forsa-button size="sm" variant="outline" (clicked)="addResponse(item.id!)">Add Response</app-forsa-button>
+          <app-forsa-button size="sm" variant="ghost" (clicked)="closeComplaint(item.id!)">Close Complaint</app-forsa-button>
+          <app-forsa-button size="sm" variant="outline" (clicked)="generateAiResponse(item.id!)">Generate AI Response</app-forsa-button>
+          @if (isAdmin) {
+            <app-forsa-button size="sm" variant="ghost" (clicked)="deleteComplaint(item.id!)">Delete</app-forsa-button>
+          }
+        </div>
+        @if (item.id && aiResponseByComplaint[item.id]) {
+          <div class="ai-response">{{ aiResponseByComplaint[item.id] }}</div>
+        }
+      </div>
+    </app-forsa-card>
+  }
+</div>

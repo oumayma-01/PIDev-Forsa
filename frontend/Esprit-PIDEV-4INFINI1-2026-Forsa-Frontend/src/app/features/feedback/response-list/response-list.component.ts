@@ -71,6 +71,9 @@ export class ResponseListComponent implements OnInit {
   goToAdd(): void {
     this.router.navigate(['/dashboard/feedback/response/add']);
   }
+  goBack(): void {
+    this.router.navigate(['/dashboard/feedback']);
+  }
 
   goToEdit(id: number): void {
     this.router.navigate(['/dashboard/feedback/response', id]);

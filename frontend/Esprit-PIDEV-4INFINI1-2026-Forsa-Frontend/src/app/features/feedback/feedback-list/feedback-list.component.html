@@ -95,19 +95,19 @@
             <div class="client-actions">
               @if (item.status === 'OPEN' && !item.responses?.length) {
                 <app-forsa-button size="sm" variant="ghost"
-                  (clicked)="goToEditComplaint(item.id!)">
+                                  (clicked)="goToEditComplaint(item.id!)">
                   Edit
                 </app-forsa-button>
               }
               @if (item.status === 'OPEN') {
                 <app-forsa-button size="sm" variant="outline"
-                  (clicked)="deleteComplaint(item.id!)">
+                                  (clicked)="deleteComplaint(item.id!)">
                   Cancel Complaint
                 </app-forsa-button>
               }
               @if (canAddFeedback(item)) {
                 <app-forsa-button size="sm" variant="outline"
-                  (clicked)="goToAddFeedback(item.id!)">
+                                  (clicked)="goToAddFeedback(item.id!)">
                   Add Feedback
                 </app-forsa-button>
               }
@@ -197,6 +197,60 @@
   </button>
 }
 
+@if (showFeedbacksList && isAdminOrAgent) {
+  <button class="back-btn" (click)="goBackFromFeedbacks()">
+    ← Back
+  </button>
+  <div class="fb-list">
+    @for (item of globalFeedbacks; track item.id) {
+      <app-forsa-card class="fb-card">
+        <div class="fb-inner card-pad-lg">
+          <div class="fb-main">
+            <div class="fb-ico">
+              <app-forsa-icon name="heart" [size]="24" />
+            </div>
+            <div>
+              <div class="fb-headline">
+                <h4>{{ feedbackStars(item.rating) }}</h4>
+                <app-forsa-badge tone="info">{{ item.rating }}/5</app-forsa-badge>
+              </div>
+              <p class="text-muted fb-desc">{{ item.comment || 'No comment' }}</p>
+              <div class="fb-meta">
+                @if (isAdmin || isAgent) {
+                  <span>
+                    <app-forsa-icon name="users" [size]="12" />
+                    {{ feedbackAuthor(item) }}
+                  </span>
+                }
+                <span>{{ item.satisfactionLevel || 'NEUTRAL' }}</span>
+                <span>{{ item.createdAt | date:'yyyy-MM-dd HH:mm' }}</span>
+              </div>
+            </div>
+          </div>
+          @if (isAdmin) {
+            <div class="fb-side">
+              <app-forsa-button
+                variant="ghost"
+                size="sm"
+                (clicked)="deleteFeedback(item.id!)"
+              >
+                <app-forsa-icon name="trash-2" [size]="16" />
+                Delete
+              </app-forsa-button>
+            </div>
+          }
+        </div>
+      </app-forsa-card>
+    }
+    @if (!loading && globalFeedbacks.length === 0) {
+      <div class="fb-empty">
+        <app-forsa-icon name="heart" [size]="48" />
+        <p>No feedbacks yet.</p>
+      </div>
+    }
+  </div>
+}
+
 @if (showComplaintsList && isAdminOrAgent) {
   <app-forsa-card class="filters">
     <div class="filters-inner">
@@ -232,6 +286,10 @@
               </div>
               <p class="text-muted fb-desc">{{ item.description }}</p>
               <div class="fb-meta">
+                <span>
+                  <app-forsa-icon name="users" [size]="12" />
+                  {{ complaintAuthor(item) }}
+                </span>
                 <span>
                   <app-forsa-icon name="clock" [size]="12" />
                   Submitted on {{ item.createdAt | date:'yyyy-MM-dd' }}
@@ -270,14 +328,6 @@
               >
                 <app-forsa-icon name="pencil" [size]="16" />
                 Edit
-              </app-forsa-button>
-              <app-forsa-button
-                variant="ghost"
-                size="sm"
-                (clicked)="openAssignDialog(item.id!)"
-              >
-                <app-forsa-icon name="check-circle-2" [size]="16" />
-                Assign
               </app-forsa-button>
             }
 
@@ -319,36 +369,5 @@
         <p>No complaints yet.</p>
       </div>
     }
-  </div>
-}
-
-@if (selectedAssignComplaintId !== null) {
-  <div class="assign-overlay">
-    <app-forsa-card class="assign-dialog">
-      <div class="section-pad">
-        <div class="section-head">
-          <h3>Assign Complaint #{{ selectedAssignComplaintId }}</h3>
-        </div>
-        @if (loadingAgents) {
-          <p class="muted">Loading available agents...</p>
-        } @else {
-          <select class="fb-filter forsa-input assign-select" forsaInput [(ngModel)]="selectedAgentId">
-            <option [ngValue]="null">Select an agent</option>
-            @for (agent of availableAgents; track agent.id) {
-              <option [ngValue]="agent.id">{{ agentLabel(agent) }}</option>
-            }
-          </select>
-          @if (availableAgents.length === 0) {
-            <p class="muted">No available agents found.</p>
-          }
-        }
-        <div class="assign-actions">
-          <app-forsa-button variant="outline" (clicked)="cancelAssignDialog()">Cancel</app-forsa-button>
-          <app-forsa-button (clicked)="confirmAssignComplaint()">
-            {{ assigningComplaint ? 'Assigning...' : 'Confirm Assign' }}
-          </app-forsa-button>
-        </div>
-      </div>
-    </app-forsa-card>
   </div>
 }
