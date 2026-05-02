@@ -63,10 +63,6 @@ public class Complaint {
     @OneToMany(mappedBy = "complaint")
     private Set<Response> responses;
 
-    @JsonIgnore
-    @OneToOne(mappedBy = "complaint")
-    private Feedback feedback;
-
     @PrePersist
     protected void onCreate() {
         createdAt = new Date();

@@ -113,13 +113,6 @@ public class ComplaintController {
 
     // ========== Affectation et réponses ==========
 
-    @PostMapping("/{complaintId}/assign/{userId}")
-    @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
-    public Complaint affectComplaintToUser(@PathVariable Long complaintId,
-                                           @PathVariable Long userId) {
-        return complaintService.affectComplaintToUser(complaintId, userId);
-    }
-
     @PostMapping("/{complaintId}/responses")
     @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
     public Response addResponseAndUpdateStatus(@PathVariable Long complaintId,
