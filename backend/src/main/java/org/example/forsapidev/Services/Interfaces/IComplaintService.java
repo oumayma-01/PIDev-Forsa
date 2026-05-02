@@ -25,6 +25,8 @@ public interface IComplaintService {
     Map<String, Long> getStatsByCategory();
     Map<String, Long> getStatsByPriority();  // NOUVEAU
 
+    Complaint affectComplaintToUser(Long complaintId, Long userId);
+
     Response addResponseAndUpdateStatus(Long complaintId, Response r);
     void closeComplaintIfEligible(Long complaintId);
     Map<String, Object> getFinancialImpactByComplaint(Long complaintId);
