@@ -1,9 +1,9 @@
 import { Component, OnDestroy, OnInit, effect, inject } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { ActivatedRoute, Router } from '@angular/router';
+import { NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth.service';
 import { ComplaintBackend, ComplaintResponse, Feedback } from '../../../core/models/forsa.models';
 import { ForsaBadgeComponent } from '../../../shared/ui/forsa-badge/forsa-badge.component';
@@ -21,17 +21,16 @@ type RoleCard = {
   description: string;
   linkText: string;
   color: 'blue' | 'yellow' | 'green' | 'purple' | 'orange';
-  action: 'newComplaint' | 'newFeedback' | 'openChatbot' | 'manageComplaints' | 'responses' | 'stats';
+  action: 'newComplaint' | 'newFeedback' | 'openChatbot' | 'manageComplaints' | 'manageFeedbacks' | 'responses' | 'stats';
 };
 
 type ClientComplaint = ComplaintBackend & {
   feedback?: { id?: number } | null;
-  user?: { id?: number } | null;
+  user?: { id?: number; fullName?: string; name?: string; username?: string; login?: string; email?: string } | null;
   clientId?: number;
   responses?: ComplaintResponse[];
 };
 type ClientFeedback = Feedback & { user?: { id?: number } | null; clientId?: number; complaint?: { id?: number } };
-type AssignableAgent = { id: number; username?: string; firstName?: string; lastName?: string; email?: string };
 
 @Component({
   selector: 'app-feedback-list',
@@ -44,9 +43,10 @@ export class FeedbackListComponent implements OnInit, OnDestroy {
   private readonly feedbackFacade = inject(FeedbackFacadeService);
   readonly notificationService = inject(ComplaintNotificationService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(AuthService);
 
-items: ClientComplaint[] = [];
+  items: ClientComplaint[] = [];
   filteredItems: ClientComplaint[] = [];
   complaints: ClientComplaint[] = [];
   clientComplaints: ClientComplaint[] = [];
@@ -61,38 +61,26 @@ items: ClientComplaint[] = [];
   statusFilter = '';
   categoryFilter = '';
   pageDescription = 'Manage complaints and responses.';
-isAdmin = false;
+  isAdmin = false;
   isAgent = false;
   isClient = false;
   isAdminOrAgent = false;
   showComplaintsSection = false;
   showComplaintsList = false;
+  showFeedbacksList = false;
   roleCards: RoleCard[] = [];
   notifications: ComplaintNotification[] = [];
   unreadCount = 0;
   showNotifications = false;
-  creditAmountInput: number | null = null;
-  clientCurrentScore: number | null = null;
-  clientRequiredScore: number | null = null;
-  clientMissingScore: number | null = null;
-  clientPreEligible: boolean | null = null;
-  eligibilityCalcError = '';
-  isCalculatingEligibility = false;
   aiReportText = '';
   aiReportLoading = false;
   aiReportError = '';
   globalFeedbacks: ClientFeedback[] = [];
   globalRatingScopeLabel = 'all users';
-  availableAgents: AssignableAgent[] = [];
-  selectedAssignComplaintId: number | null = null;
-  selectedAgentId: number | null = null;
-  loadingAgents = false;
-  assigningComplaint = false;
 
   readonly statuses = ['', 'OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'REJECTED'];
   readonly categories = ['', 'TECHNICAL', 'FINANCE', 'SUPPORT', 'FRAUD', 'ACCOUNT', 'CREDIT', 'OTHER'];
   private lastRoleSignature = '__init__';
-  private clientPollId: ReturnType<typeof setInterval> | null = null;
 
   private readonly roleSync = effect(() => {
     const roles = this.auth.currentUser()?.roles ?? [];
@@ -101,13 +89,13 @@ isAdmin = false;
 
   ngOnInit(): void {
     const roles = this.auth.currentUser()?.roles ?? [];
-    console.log('[DEBUG] roles:', this.auth.currentUser()?.roles);
     this.applyRoleContext(roles);
-    console.log('[DEBUG] isClient:', this.isClient);
     if (this.isClient) {
       this.loadClientData();
       this.loadNotifications();
     }
+    this.syncRouteView();
+    this.router.events.pipe(filter((e) => e instanceof NavigationEnd)).subscribe(() => this.syncRouteView());
   }
 
   private applyRoleContext(roles: string[]): void {
@@ -138,26 +126,10 @@ isAdmin = false;
     } else if (this.isClient) {
       this.loadClientData();
       this.loadNotifications();
-      this.startClientPolling();
     }
   }
 
-  ngOnDestroy(): void {
-    if (this.clientPollId) {
-      clearInterval(this.clientPollId);
-      this.clientPollId = null;
-    }
-  }
-
-  private startClientPolling(): void {
-    if (this.clientPollId) return;
-    this.clientPollId = setInterval(() => {
-      if (this.isClient) {
-        this.loadClientComplaints();
-        this.loadNotifications();
-      }
-    }, 10000);
-  }
+  ngOnDestroy(): void {}
 
   private buildRoleCards(): RoleCard[] {
     if (this.isClient) {
@@ -170,12 +142,14 @@ isAdmin = false;
     if (this.isAgent) {
       return [
         { icon: 'layout-dashboard', title: 'Complaints Management', description: 'View and manage all client complaints', linkText: 'Manage Complaints ->', color: 'blue', action: 'manageComplaints' },
+        { icon: 'heart', title: 'Feedbacks', description: 'View all feedbacks', linkText: 'View Feedbacks ->', color: 'yellow', action: 'manageFeedbacks' },
         { icon: 'send', title: 'Responses', description: 'Manage responses to complaints', linkText: 'Manage Responses ->', color: 'green', action: 'responses' },
         { icon: 'message-square', title: 'Virtual Assistant', description: 'Use AI chatbot for assistance', linkText: 'Open Chatbot ->', color: 'purple', action: 'openChatbot' },
       ];
     }
     return [
       { icon: 'layout-dashboard', title: 'Complaints Management', description: 'Full complaints management and oversight', linkText: 'Manage Complaints ->', color: 'blue', action: 'manageComplaints' },
+      { icon: 'heart', title: 'Feedbacks', description: 'View all submitted feedbacks', linkText: 'View Feedbacks ->', color: 'yellow', action: 'manageFeedbacks' },
       { icon: 'bar-chart-3', title: 'Statistics & Reports', description: 'View analytics, trends and performance metrics', linkText: 'View Stats ->', color: 'orange', action: 'stats' },
       { icon: 'send', title: 'Responses Management', description: 'Manage and improve responses with AI', linkText: 'Manage Responses ->', color: 'green', action: 'responses' },
       { icon: 'message-square', title: 'Virtual Assistant', description: 'AI-powered assistant for complaint handling', linkText: 'Open Chatbot ->', color: 'purple', action: 'openChatbot' },
@@ -185,19 +159,14 @@ isAdmin = false;
   loadComplaints(): void {
     this.loading = true;
     this.error = '';
-    console.log('Loading all complaints...');
     this.feedbackFacade.getAllComplaints().subscribe({
       next: (data: ComplaintBackend[]) => {
-        console.log('Complaints loaded:', data);
         this.items = data ?? [];
         this.filteredComplaints = [...(data ?? [])];
         this.applyFilters();
         this.loading = false;
       },
       error: (err) => {
-        console.error('Error loading complaints:', err);
-        console.error('Status:', err?.status);
-        console.error('URL:', err?.url);
         this.error = 'Error loading complaints. Please try again.';
         this.loading = false;
       },
@@ -205,103 +174,39 @@ isAdmin = false;
   }
 
   showManageComplaints(): void {
-    this.showComplaintsList = true;
-    this.loadComplaints();
+    this.router.navigate(['/dashboard/feedback/complaints']);
+  }
+
+  goBackFromComplaints(): void {
+    this.router.navigate(['/dashboard/feedback']);
+  }
+  goBackFromFeedbacks(): void {
+    this.router.navigate(['/dashboard/feedback']);
   }
 
   private loadClientData(): void {
-    console.log('[DEBUG] loadClientData called');
     this.loadClientComplaints();
     this.loadClientFeedbacks();
     this.loadGlobalFeedbacksForRating();
   }
 
   loadNotifications(): void {
-    this.notificationService.getUnreadCount().subscribe({
-      next: (data) => {
-        const count = Number((data as any)?.count ?? 0);
-        this.unreadCount = Number.isFinite(count) ? count : 0;
-      },
-      error: () => {
-        this.unreadCount = 0;
-      },
-    });
     this.notificationService.getMyNotifications().subscribe({
       next: (data) => {
         this.notifications = Array.isArray(data) ? data : [];
-        if (!this.unreadCount) {
-          this.unreadCount = this.notifications.filter((n) => !n.isRead).length;
-        }
+        this.unreadCount = this.notifications.filter((n) => !n.isRead).length;
         console.log('Notifications loaded:', this.notifications.length, 'Unread:', this.unreadCount);
       },
       error: (err) => {
-        console.error('Notifications error:', err?.status, err?.message);
+        if (err?.status !== 401) {
+          console.error('Notifications error:', err?.status, err?.message);
+        }
         this.notifications = [];
         this.unreadCount = 0;
       },
     });
   }
 
-  openAssignDialog(complaintId: number): void {
-    this.selectedAssignComplaintId = complaintId;
-    this.selectedAgentId = null;
-    this.error = '';
-    if (this.availableAgents.length > 0) return;
-    this.loadingAgents = true;
-    this.feedbackFacade.getAvailableAgents().subscribe({
-      next: (data: any[]) => {
-        this.availableAgents = (Array.isArray(data) ? data : [])
-          .map((a: any) => ({
-            id: Number(a?.id),
-            username: a?.username,
-            firstName: a?.firstName,
-            lastName: a?.lastName,
-            email: a?.email,
-          }))
-          .filter((a) => Number.isFinite(a.id) && a.id > 0);
-        this.loadingAgents = false;
-      },
-      error: () => {
-        this.loadingAgents = false;
-        this.error = 'Unable to load available agents.';
-      },
-    });
-  }
-
-  cancelAssignDialog(): void {
-    this.selectedAssignComplaintId = null;
-    this.selectedAgentId = null;
-  }
-
-  confirmAssignComplaint(): void {
-    if (!this.selectedAssignComplaintId) return;
-    const userId = Number(this.selectedAgentId);
-    if (!Number.isFinite(userId) || userId <= 0) {
-      this.error = 'Please select an agent.';
-      return;
-    }
-    this.assigningComplaint = true;
-    this.feedbackFacade.assignComplaint(this.selectedAssignComplaintId, userId).subscribe({
-      next: () => {
-        this.error = '';
-        this.assigningComplaint = false;
-        this.cancelAssignDialog();
-        this.loadComplaints();
-      },
-      error: () => {
-        this.assigningComplaint = false;
-        this.error = 'Unable to assign complaint.';
-      },
-    });
-  }
-
-  agentLabel(agent: AssignableAgent): string {
-    const fullName = `${agent.firstName ?? ''} ${agent.lastName ?? ''}`.trim();
-    if (fullName) return `${fullName} (#${agent.id})`;
-    if (agent.username) return `${agent.username} (#${agent.id})`;
-    if (agent.email) return `${agent.email} (#${agent.id})`;
-    return `Agent #${agent.id}`;
-  }
 
   toggleNotifications(): void {
     this.showNotifications = !this.showNotifications;
@@ -349,44 +254,18 @@ isAdmin = false;
     this.loadingClientComplaints = true;
     this.feedbackFacade.getMyComplaints().subscribe({
       next: (data: any) => {
-        console.log('[DEBUG] raw complaints response:', data);
         const payload = data?.data ?? data?.result ?? data?.content ?? data;
         const baseList = Array.isArray(payload) ? payload : [];
-        console.log('[DEBUG] parsed complaints:', baseList);
-        if (!baseList.length) {
-          this.clientComplaints = [];
-          this.complaints = [];
-          this.loadingClientComplaints = false;
-          // do not return — allow UI to update
-        } else {
-          forkJoin(
-            baseList.map((c: any) =>
-              this.feedbackFacade.getComplaintById(c.id).pipe(
-                map((full: any) => {
-                  const fullPayload = full?.data ?? full?.result ?? full;
-                  return { ...c, responses: fullPayload?.responses ?? c?.responses ?? [] } as ClientComplaint;
-                }),
-                catchError(() => of({ ...c, responses: c?.responses ?? [] } as ClientComplaint)),
-              ),
-            ),
-          ).subscribe({
-            next: (fullList) => {
-              this.clientComplaints = fullList;
-              this.complaints = fullList;
-              this.loadingClientComplaints = false;
-            },
-            error: () => {
-              this.clientComplaints = baseList;
-              this.complaints = baseList;
-              this.loadingClientComplaints = false;
-            },
-          });
-        }
+        this.clientComplaints = baseList;
+        this.complaints = baseList;
+        this.loadingClientComplaints = false;
       },
       error: (err) => {
-        console.error('[FeedbackList] my complaints error:', err);
+        if (err?.status !== 401) {
+          console.error('[FeedbackList] my complaints error:', err);
+        }
         this.clientComplaints = [];
-        this.error = `My complaints request failed (${err?.status ?? 'no-status'}).`;
+        this.error = err?.status === 401 ? 'Session expired. Please login again.' : `My complaints request failed (${err?.status ?? 'no-status'}).`;
         this.loadingClientComplaints = false;
       },
     });
@@ -396,7 +275,6 @@ isAdmin = false;
     this.loadingClientFeedbacks = true;
     this.feedbackFacade.getMyFeedbacks().subscribe({
       next: (data: any) => {
-        console.log('[DEBUG] raw feedbacks response:', data);
         let result: any[] = [];
         if (Array.isArray(data)) {
           result = data;
@@ -410,12 +288,13 @@ isAdmin = false;
           const firstArray = Object.values(data).find(v => Array.isArray(v));
           result = (firstArray as any[]) ?? [];
         }
-        console.log('[DEBUG] parsed feedbacks count:', result.length);
         this.clientFeedbacks = result;
         this.loadingClientFeedbacks = false;
       },
       error: (err) => {
-        console.error('[DEBUG] feedbacks error status:', err?.status);
+        if (err?.status !== 401) {
+          console.error('[DEBUG] feedbacks error status:', err?.status);
+        }
         this.clientFeedbacks = [];
         this.loadingClientFeedbacks = false;
       },
@@ -430,8 +309,8 @@ isAdmin = false;
         this.globalRatingScopeLabel = 'all users';
       },
       error: () => {
-        this.globalFeedbacks = this.clientFeedbacks;
-        this.globalRatingScopeLabel = 'your feedbacks';
+        this.globalFeedbacks = this.clientFeedbacks ?? [];
+        this.globalRatingScopeLabel = this.isClient ? 'your feedbacks' : 'all users';
       },
     });
   }
@@ -513,11 +392,23 @@ isAdmin = false;
     this.feedbackFacade.deleteFeedback(id).subscribe({
       next: () => {
         this.clientFeedbacks = this.clientFeedbacks.filter((f) => f.id !== id);
+        this.globalFeedbacks = this.globalFeedbacks.filter((f) => f.id !== id);
       },
       error: () => {
         // Keep local view unchanged when delete fails.
       },
     });
+  }
+
+  feedbackAuthor(item: ClientFeedback): string {
+    const source: any = item as any;
+    const user = source?.user ?? source?.client ?? source?.author ?? source?.createdBy;
+    const fullName = user?.fullName ?? user?.name;
+    const username = user?.username ?? user?.login;
+    const email = user?.email;
+    const id = user?.id ?? source?.clientId;
+
+    return fullName || username || email || (id ? `User #${id}` : 'Unknown user');
   }
 
   statusIcon(status: string): ForsaIconName {
@@ -547,15 +438,33 @@ isAdmin = false;
     this.router.navigate(['/dashboard/feedback/feedback/add'], { queryParams: { complaintId } });
   }
 
+  complaintAuthor(item: ClientComplaint): string {
+    const source: any = item as any;
+    const user = source?.user ?? source?.client ?? source?.author ?? source?.createdBy;
+    const fullName = user?.fullName ?? user?.name;
+    const username = user?.username ?? user?.login;
+    const email = user?.email;
+    const id = user?.id ?? source?.clientId;
+    return fullName || username || email || (id ? `User #${id}` : 'Unknown user');
+  }
+
   onRoleCardClick(action: RoleCard['action']): void {
     if (action === 'newComplaint') this.goToAdd();
     if (action === 'newFeedback') this.router.navigate(['/dashboard/feedback/feedback/add']);
     if (action === 'openChatbot') this.goToChatbot();
     if (action === 'responses') this.goToResponses();
     if (action === 'stats') this.goToStats();
+    if (action === 'manageFeedbacks') this.router.navigate(['/dashboard/feedback/feedbacks']);
     if (action === 'manageComplaints') {
-      this.showManageComplaints();
+      this.router.navigate(['/dashboard/feedback/complaints']);
     }
+  }
+  private syncRouteView(): void {
+    const path = this.route.snapshot.routeConfig?.path ?? '';
+    this.showComplaintsList = this.isAdminOrAgent && path === 'complaints';
+    this.showFeedbacksList = this.isAdminOrAgent && path === 'feedbacks';
+    if (this.showComplaintsList) this.loadComplaints();
+    if (this.showFeedbacksList) this.loadGlobalFeedbacksForRating();
   }
 
   feedbackStars(rating: number): string {
@@ -564,56 +473,16 @@ isAdmin = false;
   }
 
   get clientAverageRating(): number {
-    if (!this.globalFeedbacks.length) return 0;
-    const sum = this.globalFeedbacks.reduce((acc, item) => acc + Number(item.rating ?? 0), 0);
-    return Math.round((sum / this.globalFeedbacks.length) * 100) / 100;
+    const source = this.isClient ? this.clientFeedbacks : this.globalFeedbacks;
+    if (!source.length) return 0;
+    const sum = source.reduce((acc, item) => acc + Number(item.rating ?? 0), 0);
+    return Math.round((sum / source.length) * 100) / 100;
   }
 
   get clientAverageRatingStars(): string {
     return this.feedbackStars(this.clientAverageRating);
   }
 
-  calculateClientMissingScore(): void {
-    const amount = Number(this.creditAmountInput);
-    if (!Number.isFinite(amount) || amount <= 0) {
-      this.eligibilityCalcError = 'Please enter a valid credit amount.';
-      return;
-    }
-
-    const anchorComplaintId = this.clientComplaints[0]?.id;
-    if (!anchorComplaintId) {
-      this.eligibilityCalcError = 'Create at least one complaint to calculate your current score.';
-      return;
-    }
-
-    this.eligibilityCalcError = '';
-    this.isCalculatingEligibility = true;
-    this.feedbackFacade.getCreditEligibility(anchorComplaintId).subscribe({
-      next: (payload: any) => {
-        const currentScore = Number(payload?.currentScore);
-        this.clientCurrentScore = Number.isFinite(currentScore) ? currentScore : 50.0;
-        this.clientRequiredScore = this.computeRequiredScoreForAmount(amount);
-        this.clientMissingScore = Math.max(0, this.clientRequiredScore - this.clientCurrentScore);
-        this.clientPreEligible = this.clientMissingScore <= 0;
-        this.isCalculatingEligibility = false;
-      },
-      error: () => {
-        this.isCalculatingEligibility = false;
-        this.eligibilityCalcError = 'Unable to calculate eligibility right now.';
-      },
-    });
-  }
-
-  private computeRequiredScoreForAmount(amount: number): number {
-    if (amount <= 0) return 40.0;
-    if (amount <= 300) return 35.0;
-    if (amount <= 500) return 40.0;
-    if (amount <= 1000) return 50.0;
-    if (amount <= 2000) return 60.0;
-    if (amount <= 3500) return 70.0;
-    if (amount <= 5000) return 80.0;
-    return 85.0;
-  }
 
   loadAiReport(): void {
     this.aiReportLoading = true;

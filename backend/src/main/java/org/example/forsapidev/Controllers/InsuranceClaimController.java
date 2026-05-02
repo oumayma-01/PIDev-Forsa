@@ -16,6 +16,12 @@ public class InsuranceClaimController {
     
     private final org.example.forsapidev.Repositories.InsurancePolicyRepository policyRepository;
     private final IInsuranceClaim insuranceClaimService;
+    private final org.example.forsapidev.Services.ClaimTemplateService claimTemplateService;
+
+    @GetMapping("/template/{policy-type}")
+    public org.example.forsapidev.Dto.ClaimTemplate getClaimTemplate(@PathVariable("policy-type") String policyType) {
+        return claimTemplateService.getTemplateForPolicyType(policyType);
+    }
 
     @GetMapping("/retrieve-all-insurance-claims")
     public List<InsuranceClaim> retrieveAllInsuranceClaims() {
@@ -54,7 +60,7 @@ public class InsuranceClaimController {
         insuranceClaimService.removeInsuranceClaim(claimId);
     }
 
-    @PutMapping("/modify-insurance-claim")
+    @PutMapping(value = "/modify-insurance-claim", consumes = "application/json", produces = "application/json")
     public InsuranceClaim modifyInsuranceClaim(@RequestBody InsuranceClaim claim) {
         InsuranceClaim insuranceClaim = insuranceClaimService.modifyInsuranceClaim(claim);
         return insuranceClaim;

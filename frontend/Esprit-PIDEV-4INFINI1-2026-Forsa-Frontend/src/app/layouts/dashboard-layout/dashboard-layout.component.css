@@ -1,7 +1,21 @@
+/* ═══════════════════════════════════════════════════════════════
+   DASHBOARD LAYOUT - Enhanced Shell
+   ═══════════════════════════════════════════════════════════════ */
+
 .shell {
   display: flex;
   min-height: 100vh;
-  background: color-mix(in oklab, var(--color-muted) 30%, transparent);
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 20%, color-mix(in oklab, var(--forsa-teal) 4%, transparent), transparent),
+    radial-gradient(ellipse 60% 50% at 90% 80%, color-mix(in oklab, var(--forsa-navy) 3%, transparent), transparent),
+    var(--color-background);
+}
+
+:host-context(.dark) .shell {
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 20%, rgba(42, 157, 143, 0.03), transparent),
+    radial-gradient(ellipse 60% 50% at 90% 80%, rgba(26, 74, 141, 0.04), transparent),
+    var(--color-background);
 }
 
 .shell__main {
@@ -9,10 +23,17 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  overflow: visible;
 }
 
 .shell__content {
   padding: 2rem;
   flex: 1;
   overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .shell__content {
+    padding: 1rem;
+  }
 }

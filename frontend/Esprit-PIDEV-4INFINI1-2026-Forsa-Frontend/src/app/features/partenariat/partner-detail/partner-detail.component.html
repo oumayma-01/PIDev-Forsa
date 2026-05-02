@@ -1,0 +1,289 @@
+<!-- Back nav -->
+<div class="detail-nav">
+  <button class="btn-ghost" (click)="goBack()">
+    <app-forsa-icon name="chevron-left" [size]="16"></app-forsa-icon>
+    Back to partners
+  </button>
+  @if (isAdmin && partner()) {
+    <div class="nav-actions">
+      <button class="btn-outline-sm" [routerLink]="['/dashboard/partenariat', partner()!.id, 'edit']">
+        <app-forsa-icon name="pencil" [size]="15"></app-forsa-icon>
+        Edit
+      </button>
+    </div>
+  }
+</div>
+
+@if (loading()) {
+  <div class="loading-center">
+    <div class="spinner"></div>
+    <p>Loading partner…</p>
+  </div>
+} @else if (!partner()) {
+  <div class="empty-state">
+    <app-forsa-icon name="alert-circle" [size]="32"></app-forsa-icon>
+    <p>Partner not found.</p>
+    <button class="btn-primary" (click)="goBack()">Go back</button>
+  </div>
+} @else {
+
+  <div class="detail-layout">
+
+    <!-- ── LEFT COLUMN ─────────────────────────────────────────────── -->
+    <div class="col-left">
+
+      <!-- Info card -->
+      <app-forsa-card>
+        <div class="card-pad">
+          <div class="partner-header">
+            <div class="partner-avatar">
+              <app-forsa-icon name="home" [size]="28"></app-forsa-icon>
+            </div>
+            <div>
+              <h2 class="partner-name">{{ partner()!.businessName }}</h2>
+              <p class="partner-type">{{ partner()!.partnerType | partnerTypeLabel }}</p>
+            </div>
+            <div class="partner-badge-status">
+              <app-forsa-badge [tone]="statusTone(partner()!.status)" size="sm">
+                {{ partner()!.status }}
+              </app-forsa-badge>
+              @if (partner()!.badge) {
+                <app-forsa-badge [tone]="badgeTone(partner()!.badge!)" size="sm">
+                  {{ partner()!.badge }}
+                </app-forsa-badge>
+              }
+            </div>
+          </div>
+
+          @if (partner()!.description) {
+            <p class="partner-desc">{{ partner()!.description }}</p>
+          }
+
+          <dl class="info-grid">
+            <div class="info-row">
+              <dt><app-forsa-icon name="home" [size]="14"></app-forsa-icon> Location</dt>
+              <dd>{{ partner()!.address }}, {{ partner()!.city }}</dd>
+            </div>
+            @if (partner()!.businessPhone) {
+              <div class="info-row">
+                <dt><app-forsa-icon name="users" [size]="14"></app-forsa-icon> Phone</dt>
+                <dd>{{ partner()!.businessPhone }}</dd>
+              </div>
+            }
+            @if (partner()!.businessEmail) {
+              <div class="info-row">
+                <dt><app-forsa-icon name="message-square" [size]="14"></app-forsa-icon> Email</dt>
+                <dd>{{ partner()!.businessEmail }}</dd>
+              </div>
+            }
+            <div class="info-row">
+              <dt><app-forsa-icon name="filter" [size]="14"></app-forsa-icon> Reg. number</dt>
+              <dd class="mono">{{ partner()!.registrationNumber }}</dd>
+            </div>
+            @if (partner()!.qrCodeId) {
+              <div class="info-row">
+                <dt><app-forsa-icon name="shield" [size]="14"></app-forsa-icon> QR code ID</dt>
+                <dd class="mono">{{ partner()!.qrCodeId }}</dd>
+              </div>
+            }
+          </dl>
+        </div>
+      </app-forsa-card>
+
+      <!-- Limits & commission card -->
+      <app-forsa-card>
+        <div class="card-pad">
+          <h3 class="section-title">Transaction limits</h3>
+          <div class="limits-grid">
+            <div class="limit-item">
+              <span class="limit-label">Max / transaction</span>
+              <span class="limit-val">{{ partner()!.maxTransactionAmount | number:'1.0-0' }} TND</span>
+            </div>
+            <div class="limit-item">
+              <span class="limit-label">Daily limit</span>
+              <span class="limit-val">{{ partner()!.dailyTransactionLimit | number:'1.0-0' }} TND</span>
+            </div>
+            <div class="limit-item">
+              <span class="limit-label">Monthly limit</span>
+              <span class="limit-val">{{ partner()!.monthlyTransactionLimit | number:'1.0-0' }} TND</span>
+            </div>
+            <div class="limit-item">
+              <span class="limit-label">Commission rate</span>
+              <span class="limit-val">{{ partner()!.commissionRate | number:'1.1-1' }}%</span>
+            </div>
+          </div>
+        </div>
+      </app-forsa-card>
+
+      <!-- Admin: status management -->
+      @if (isAdmin) {
+        <app-forsa-card>
+          <div class="card-pad">
+            <h3 class="section-title">Status management</h3>
+
+            @if (partner()!.status === 'PENDING' || partner()!.status === 'REJECTED') {
+              <button class="btn-action btn-action--ok" [disabled]="actionLoading()" (click)="activate()">
+                <app-forsa-icon name="check-circle-2" [size]="16"></app-forsa-icon>
+                Activate partner
+              </button>
+            }
+
+            @if (partner()!.status === 'ACTIVE') {
+              @if (!showSuspendForm) {
+                <button class="btn-action btn-action--warn" [disabled]="actionLoading()" (click)="showSuspendForm = true">
+                  <app-forsa-icon name="x-circle" [size]="16"></app-forsa-icon>
+                  Suspend partner
+                </button>
+              } @else {
+                <div class="suspend-block">
+                  <label class="field-label">Suspension reason</label>
+                  <textarea class="suspend-textarea" [(ngModel)]="suspendReason" rows="2"
+                    placeholder="Enter the reason…"></textarea>
+                  <div class="suspend-btns">
+                    <button class="btn-action btn-action--warn" [disabled]="!suspendReason.trim() || actionLoading()" (click)="suspend()">
+                      Confirm suspension
+                    </button>
+                    <button class="btn-ghost" (click)="showSuspendForm = false">Cancel</button>
+                  </div>
+                </div>
+              }
+            }
+
+            @if (partner()!.status === 'SUSPENDED') {
+              @if (partner()!.suspensionReason) {
+                <p class="suspension-reason">
+                  <strong>Suspended for:</strong> {{ partner()!.suspensionReason }}
+                </p>
+              }
+              <button class="btn-action btn-action--ok" [disabled]="actionLoading()" (click)="reactivate()">
+                <app-forsa-icon name="refresh-cw" [size]="16"></app-forsa-icon>
+                Reactivate partner
+              </button>
+            }
+
+            @if (partner()!.status === 'CLOSED') {
+              <p class="text-muted sm">This partner account is closed.</p>
+            }
+          </div>
+        </app-forsa-card>
+
+        <!-- Admin analytics -->
+        @if (analyticsLoading()) {
+          <div class="loading-row">Loading analytics…</div>
+        } @else if (analytics()) {
+          <app-forsa-card>
+            <div class="card-pad">
+              <h3 class="section-title">Analytics</h3>
+              <div class="analytics-grid">
+                <div class="analytic-item">
+                  <span class="analytic-label">Total transactions</span>
+                  <span class="analytic-val">{{ analytics()!.totalTransactions | number }}</span>
+                </div>
+                <div class="analytic-item">
+                  <span class="analytic-label">Total volume</span>
+                  <span class="analytic-val">{{ analytics()!.totalAmount | number:'1.0-0' }} TND</span>
+                </div>
+                <div class="analytic-item">
+                  <span class="analytic-label">Cashback paid</span>
+                  <span class="analytic-val">{{ analytics()!.totalCashbackPaid | number:'1.0-0' }} TND</span>
+                </div>
+                <div class="analytic-item">
+                  <span class="analytic-label">Avg. transaction</span>
+                  <span class="analytic-val">{{ analytics()!.averageTransactionAmount | number:'1.0-0' }} TND</span>
+                </div>
+              </div>
+            </div>
+          </app-forsa-card>
+        }
+      }
+
+      <!-- Client: scan CTA -->
+      @if (isClient) {
+        <app-forsa-card>
+          <div class="card-pad cta-block">
+            <app-forsa-icon name="shield" [size]="32"></app-forsa-icon>
+            <div>
+              <h3 class="cta-title">Pay at this partner</h3>
+              <p class="cta-desc">Scan the partner's QR code — Forsa pays, you repay with +10% over 3 months and earn cashback.</p>
+            </div>
+            <button class="btn-primary" [routerLink]="['/dashboard/partenariat/scan']">
+              Scan QR code
+            </button>
+          </div>
+        </app-forsa-card>
+      }
+
+    </div>
+
+    <!-- ── RIGHT COLUMN — REVIEWS ──────────────────────────────────── -->
+    <div class="col-right">
+      <app-forsa-card>
+        <div class="card-pad">
+          <h3 class="section-title">
+            <app-forsa-icon name="heart" [size]="18"></app-forsa-icon>
+            Reviews
+            @if (partner()!.averageRating && partner()!.averageRating! > 0) {
+              <span class="avg-rating">{{ partner()!.averageRating! | number:'1.1-1' }}/5</span>
+            }
+          </h3>
+
+          <!-- Client: add review form -->
+          @if (isClient) {
+            <div class="review-form">
+              <h4 class="review-form__title">Leave a review</h4>
+              <div class="stars-input">
+                @for (s of stars(5); track s) {
+                  <button class="star-btn" [class.star-btn--active]="s <= newReviewRating"
+                    (click)="newReviewRating = s">★</button>
+                }
+              </div>
+              <textarea class="review-textarea" [(ngModel)]="newReviewComment" rows="3"
+                placeholder="Share your experience (optional)…"></textarea>
+              <button class="btn-primary btn-sm-primary" [disabled]="reviewSubmitting()" (click)="submitReview()">
+                @if (reviewSubmitting()) { Submitting… } @else { Submit review }
+              </button>
+            </div>
+            <hr class="divider" />
+          }
+
+          <!-- Reviews list -->
+          @if (reviewsLoading()) {
+            <div class="loading-row">Loading reviews…</div>
+          } @else if (reviews().length === 0) {
+            <p class="empty-hint text-muted">No reviews yet.</p>
+          } @else {
+            <div class="reviews-list">
+              @for (r of reviews(); track r.id) {
+                <div class="review-item">
+                  <div class="review-item__header">
+                    <div class="reviewer-avatar">
+                      {{ (r.clientName ?? 'C').charAt(0).toUpperCase() }}
+                    </div>
+                    <div>
+                      <div class="reviewer-name">{{ r.clientName ?? 'Client' }}</div>
+                      <div class="review-stars">
+                        @for (s of stars(5); track s) {
+                          <span [class.star-on]="s <= r.rating" [class.star-off]="s > r.rating">★</span>
+                        }
+                        <span class="review-date">{{ r.createdAt | date:'dd/MM/yy' }}</span>
+                      </div>
+                    </div>
+                    @if (isAdmin) {
+                      <button class="btn-icon btn-icon--del" title="Delete review" (click)="deleteReview(r.id)">
+                        <app-forsa-icon name="trash-2" [size]="13"></app-forsa-icon>
+                      </button>
+                    }
+                  </div>
+                  @if (r.comment) {
+                    <p class="review-comment">{{ r.comment }}</p>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </app-forsa-card>
+    </div>
+
+  </div>
+}

@@ -14,4 +14,6 @@ public interface ComplaintNotificationRepository extends JpaRepository<Complaint
     List<ComplaintNotification> findByRecipientIdAndIsReadFalse(Long userId);
 
     long countByRecipientIdAndIsReadFalse(Long userId);
+
+    void deleteByComplaintId(Long complaintId);
 }

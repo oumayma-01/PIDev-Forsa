@@ -58,6 +58,7 @@ public class User {
     // Relationship: Many Policies belong to One User
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = true)  // null for test purposes
+    @JsonIgnore
     @JsonIgnoreProperties({"insurancePolicies", "password", "passwordHash"})
     private User user;
     public void setExpiryDate(Integer minutes){

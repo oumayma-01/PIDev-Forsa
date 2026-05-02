@@ -18,14 +18,25 @@ button {
   font-size: 0.875rem;
   line-height: 1.25rem;
   transition:
-    background 0.15s ease,
-    color 0.15s ease,
-    box-shadow 0.15s ease,
-    border-color 0.15s ease,
+    background 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
     opacity 0.15s ease;
   cursor: pointer;
   border: 1px solid transparent;
   text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+
+button:hover:not(:disabled) {
+  transform: scale(1.03);
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 button:disabled {
@@ -40,7 +51,8 @@ button:disabled {
 }
 
 .variant-default:hover {
-  filter: brightness(1.05);
+  filter: brightness(1.08);
+  box-shadow: 0 14px 30px -10px color-mix(in oklab, var(--color-primary) 55%, transparent);
 }
 
 .variant-outline {
@@ -51,6 +63,7 @@ button:disabled {
 
 .variant-outline:hover {
   background: color-mix(in oklab, var(--color-muted) 50%, transparent);
+  border-color: color-mix(in oklab, var(--color-primary) 30%, transparent);
 }
 
 .variant-ghost {
@@ -86,6 +99,10 @@ button:disabled {
 .variant-destructive {
   background: color-mix(in oklab, var(--color-destructive) 12%, transparent);
   color: var(--color-destructive);
+}
+
+.variant-destructive:hover {
+  background: color-mix(in oklab, var(--color-destructive) 18%, transparent);
 }
 
 .size-sm {

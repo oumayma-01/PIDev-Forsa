@@ -32,7 +32,7 @@ public interface InsuranceClaimRepository extends JpaRepository<InsuranceClaim, 
     List<Object[]> getMonthlyClaimTrends();
 
     // Top 10 highest claims
-    @Query("SELECT c.claimNumber, p.policyNumber, c.claimAmount, c.status, c.claimDate " +
+    @Query("SELECT c.id, c.claimNumber, p.policyNumber, c.claimAmount, c.status, c.claimDate " +
             "FROM InsuranceClaim c JOIN c.insurancePolicy p " +
             "ORDER BY c.claimAmount DESC")
     List<Object[]> getTopClaims();

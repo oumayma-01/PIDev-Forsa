@@ -61,4 +61,6 @@ export type ForsaIconName =
   | 'download'
   | 'gift'
   | 'x'
-  | 'bell-off';
+  | 'bell-off'
+  | 'refresh-cw'
+  | 'x-circle';

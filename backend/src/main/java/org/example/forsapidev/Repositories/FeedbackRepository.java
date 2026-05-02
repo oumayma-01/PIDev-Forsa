@@ -11,19 +11,9 @@ import java.util.Optional;
 @Repository
 public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
-    Optional<Feedback> findByComplaintId(Long complaintId);
-    List<Feedback> findByComplaintUserUsername(String username);
     List<Feedback> findByUserUsername(String username);
 
     @Query("select avg(f.rating) from Feedback f")
     Double avgRating();
 
-    @Query("""
-           select c.category, avg(f.rating)
-           from Feedback f
-           join f.complaint c
-           where f.rating is not null and c.category is not null
-           group by c.category
-           """)
-    List<Object[]> avgRatingByComplaintCategory();
 }

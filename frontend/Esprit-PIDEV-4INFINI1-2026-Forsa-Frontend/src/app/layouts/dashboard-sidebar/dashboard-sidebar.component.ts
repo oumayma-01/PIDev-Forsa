@@ -9,7 +9,7 @@ import type { ForsaIconName as SidebarNavIcon } from '../../shared/ui/forsa-icon
 interface NavItem {
   label: string;
   href: string;
-icon: SidebarNavIcon;
+  icon: SidebarNavIcon;
 }
 
 @Component({
@@ -29,10 +29,8 @@ export class DashboardSidebarCmp {
     { label: 'Digital Wallet', href: '/dashboard/wallet', icon: 'wallet' },
     { label: 'Insurance', href: '/dashboard/insurance', icon: 'shield-check' },
     { label: 'Partnerships', href: '/dashboard/partenariat', icon: 'users' },
-    { label: 'Credit scoring', href: '/dashboard/scoring', icon: 'sparkles' },
     { label: 'My AI score', href: '/dashboard/ai-score', icon: 'brain' },
     { label: 'Feedback', href: '/dashboard/feedback', icon: 'message-square' },
-    { label: 'AI Risk Analysis', href: '/dashboard/ai', icon: 'bar-chart-3' },
   ];
 
   /** Footer profile link uses the same rule as the "My profile" nav entry. */
@@ -42,6 +40,8 @@ export class DashboardSidebarCmp {
 
   readonly navItems: Signal<NavItem[]> = computed((): NavItem[] => {
     const paths = this.auth.currentUser()?.allowedNavPaths;
+    const roles = this.auth.currentUser()?.roles ?? [];
+    const isAgent = roles.includes('ROLE_AGENT');
     const allow = (href: string) => isNavPathAllowed(href, paths);
     const core = this.baseNav.filter((item) => allow(item.href));
 
@@ -51,6 +51,9 @@ export class DashboardSidebarCmp {
     }
     if (allow('/dashboard/roles')) {
       extras.push({ label: 'Role management', href: '/dashboard/roles', icon: 'shield' });
+    }
+    if (isAgent && allow('/dashboard/feedback/responses')) {
+      extras.push({ label: 'Response management', href: '/dashboard/feedback/responses', icon: 'send' });
     }
 
     const dash = core.find((i) => i.href === '/dashboard');

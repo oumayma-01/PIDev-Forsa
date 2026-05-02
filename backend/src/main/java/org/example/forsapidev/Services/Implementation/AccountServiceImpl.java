@@ -72,15 +72,21 @@ public class AccountServiceImpl implements AccountService {
         tx.setAmount(amount);
         tx.setDate(LocalDateTime.now());
         tx.setType(type);
+        tx.setStatus(TransactionStatus.COMPLETED);
         tx.setWallet(wallet);
         transactionRepo.save(tx);
     }
 
     private BankVault getOrCreateVault() {
-        return bankVaultRepo.findById(1L).orElseGet(() -> {
-            BankVault vault = new BankVault(BigDecimal.ZERO);
-            return bankVaultRepo.save(vault);
+        BankVault vault = bankVaultRepo.findById(1L).orElseGet(() -> {
+            BankVault newVault = new BankVault(BigDecimal.ZERO);
+            return bankVaultRepo.save(newVault);
         });
+        if (vault.getTotalFunds() == null) {
+            vault.setTotalFunds(BigDecimal.ZERO);
+            vault = bankVaultRepo.save(vault);
+        }
+        return vault;
     }
 
     private void increaseVault(BigDecimal amount) {
@@ -271,6 +277,9 @@ public class AccountServiceImpl implements AccountService {
             throw new RuntimeException("Account is blocked. Please contact an administrator.");
 
         Wallet wallet = account.getWallet();
+        if (wallet == null) throw new RuntimeException("Account has no associated wallet.");
+        if (wallet.getBalance() == null) wallet.setBalance(BigDecimal.ZERO);
+
         wallet.setBalance(wallet.getBalance().add(amount));
         walletRepo.save(wallet);
         increaseVault(amount);
@@ -289,6 +298,9 @@ public class AccountServiceImpl implements AccountService {
             throw new RuntimeException("Account is blocked. Please contact an administrator.");
 
         Wallet wallet = account.getWallet();
+        if (wallet == null) throw new RuntimeException("Account has no associated wallet.");
+        if (wallet.getBalance() == null) wallet.setBalance(BigDecimal.ZERO);
+
         if (wallet.getBalance().compareTo(amount) < 0)
             throw new RuntimeException("Insufficient balance");
 

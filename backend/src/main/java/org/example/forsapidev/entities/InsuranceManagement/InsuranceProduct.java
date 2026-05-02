@@ -1,5 +1,6 @@
 package org.example.forsapidev.entities.InsuranceManagement;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -35,7 +36,7 @@ public class InsuranceProduct {
 
     // RELATIONSHIP: One Product has Many Policies
     @OneToMany(mappedBy = "insuranceProduct", cascade = CascadeType.ALL)
-    @JsonManagedReference("product-policies")
+    @JsonIgnoreProperties("insuranceProduct")
     private Set<InsurancePolicy> policies;
 
     // CONSTRUCTORS

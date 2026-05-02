@@ -57,6 +57,8 @@ class AuthService implements IAuthService {
     AgentRegistryService agentRegistryService;
     @Autowired
     IRoleAccessService roleAccessService;
+    @Autowired
+    org.example.forsapidev.Services.Interfaces.AccountService accountService;
 
     @Value("${app.frontend.base-url:http://localhost:4200}")
     private String frontendBaseUrl;
@@ -233,6 +235,15 @@ class AuthService implements IAuthService {
         try {
             agentRegistryService.syncAgentForUser(user.getId());
         } catch (Exception ignored) {
+        }
+
+        // Automatiquement créer le Wallet (SAVINGS account) pour les CLIENTS lors de la validation
+        if (user.getRole() != null && user.getRole().getName() == ERole.CLIENT) {
+            try {
+                accountService.createAccount(user.getId(), "SAVINGS");
+            } catch (Exception e) {
+                // Si le compte existe déjà ou autre erreur, on ignore pour ne pas bloquer la validation
+            }
         }
 
         return ResponseEntity

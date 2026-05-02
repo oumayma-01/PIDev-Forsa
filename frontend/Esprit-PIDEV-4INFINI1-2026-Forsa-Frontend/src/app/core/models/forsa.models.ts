@@ -38,6 +38,8 @@ export interface InsurancePolicy {
 
 
 
+// ── Partenariat module ────────────────────────────────────────────────────────
+
 /** Mirrors the backend `Partner` entity for `GET/POST /api/partners`. */
 export type PartnerType =
   | 'PHARMACIE'
@@ -89,59 +91,65 @@ export interface Partner {
   totalReviews?: number;
 }
 
-/** Mirrors `RiskCategory` in scoring (ScoreResult.riskCategory). */
-export type RiskCategory = 'EXCELLENT' | 'GOOD' | 'MODERATE' | 'RISKY' | 'VERY_RISKY';
 
-/** Mirrors backend `ScoreResult` — POST/GET `/api/scoring/calculate|latest/{clientId}`. */
-export interface ScoreResult {
+export interface PartnerReview {
   id: number;
+  partnerId: number;
   clientId: number;
-  finalScore: number;
-  riskCategory: RiskCategory;
-  factor1Score: number;
-  factor2Score: number;
-  factor3Score: number;
-  factor4Score: number;
-  factor5Score: number;
-  factor1Contribution: number;
-  factor2Contribution: number;
-  factor3Contribution: number;
-  factor4Contribution: number;
-  factor5Contribution: number;
-  calculationDate: string;
-  calculationVersion: string;
-  calculatedBy: string;
-  aiExplanation?: string;
-  aiExplanationGeneratedAt?: string;
+  clientName?: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
 }
 
-/** Mirrors backend `RiskMetrics` — POST `/api/scoring/risk/{clientId}` (loanAmount, durationMonths). */
-export interface RiskMetrics {
+export type PartnerTransactionStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+
+export interface PartnerTransaction {
   id: number;
+  partnerId: number;
+  partnerName?: string;
   clientId: number;
-  loanId?: number;
-  scoreResultId: number;
-  probabilityOfDefault: number;
-  lossGivenDefault: number;
-  exposureAtDefault: number;
-  expectedLoss: number;
-  loanAmount: number;
-  loanDurationMonths: number;
-  personalizedInterestRate: number;
-  collateralValue: number;
-  seizeableIncome: number;
-  guarantorCapacity: number;
-  recoveryCosts: number;
-  calculationDate: string;
-  calculationVersion: string;
+  clientName?: string;
+  amount: number;
+  cashbackAmount: number;
+  status: PartnerTransactionStatus;
+  qrCodeId?: string;
+  description?: string;
+  createdAt: string;
+  processedAt?: string;
 }
 
-/** One demo row: latest score + sample loan risk (mock only). */
-export interface ScoringClientDemo {
+export interface ClientCashback {
   clientId: number;
-  clientName: string;
-  latestScore: ScoreResult;
-  sampleLoanRisk: RiskMetrics;
+  availableBalance: number;
+  totalEarned: number;
+  totalRedeemed: number;
+}
+
+export interface PartnerAnalytics {
+  partnerId: number;
+  totalTransactions: number;
+  totalAmount: number;
+  totalCashbackPaid: number;
+  averageTransactionAmount: number;
+}
+
+// ── AI Score summary DTO (mirrors backend AIScoreSummaryDto + availableThreshold) ──
+
+export interface AIScoreDto {
+  clientId: number;
+  clientName?: string;
+  clientEmail?: string;
+  score: number;
+  scoreLevel: AIScoreLevel;
+  creditThreshold: number;
+  availableThreshold: number;
+  hasActiveCredit: boolean;
+  lastCalculatedAt?: string | null;
+  stegBoosterActive: boolean;
+  stegBoosterExpiry?: string | null;
+  sonedeBoosterActive: boolean;
+  sonedeBoosterExpiry?: string | null;
 }
 
 // ── AI scoring (Python service, proxied via /api/ai-score/*) ─────────────────

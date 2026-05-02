@@ -248,14 +248,32 @@
   padding-top: 1.5rem;
   padding-bottom: 1.5rem;
   border-radius: var(--radius-2xl);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--glass-border);
   background:
     radial-gradient(circle at top right, color-mix(in oklab, var(--forsa-teal) 10%, transparent), transparent 45%),
     linear-gradient(180deg, color-mix(in oklab, white 72%, transparent), white);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1.25rem;
+  transition: box-shadow 0.3s ease;
+}
+
+:host-context(.dark) .ops-hero {
+  background:
+    radial-gradient(circle at top right, rgba(42, 157, 143, 0.08), transparent 45%),
+    var(--glass-bg);
+  border-color: var(--glass-border);
+}
+
+:host-context(.dark) .ops-hero__content h1 {
+  color: var(--color-foreground);
+}
+
+:host-context(.dark) .kpi-value {
+  color: var(--color-foreground);
 }
 
 .ops-hero__content h1 {
@@ -308,6 +326,11 @@
 
 .kpi-card {
   padding: 1rem 1.1rem;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
 }
 
 .kpi-head {
@@ -472,17 +495,37 @@
   align-items: center;
   gap: 0.78rem;
   padding: 0.72rem;
-  border-radius: var(--radius-lg);
+  border-radius: 0.75rem;
   text-decoration: none;
   color: inherit;
   border: 1px solid transparent;
-  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  transition:
+    background 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.25s ease,
+    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.25s ease;
 }
 
 .quick-action:hover {
   background: color-mix(in oklab, var(--forsa-navy) 4%, white);
   border-color: var(--color-border);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px color-mix(in oklab, var(--forsa-navy) 8%, transparent);
+}
+
+:host-context(.dark) .quick-action:hover {
+  background: rgba(42, 91, 168, 0.08);
+  border-color: rgba(77, 139, 214, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+:host-context(.dark) .quick-action__title {
+  color: var(--color-foreground);
+}
+
+:host-context(.dark) .quick-action__icon {
+  background: rgba(77, 139, 214, 0.15);
+  color: #6dadff;
 }
 
 .quick-action__icon {

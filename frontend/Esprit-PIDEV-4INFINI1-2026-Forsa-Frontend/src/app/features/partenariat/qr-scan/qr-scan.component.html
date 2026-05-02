@@ -1,0 +1,162 @@
+<div class="page-nav">
+  <button class="btn-ghost" routerLink="/dashboard/partenariat">
+    <app-forsa-icon name="chevron-left" [size]="16"></app-forsa-icon>
+    Back to partners
+  </button>
+</div>
+
+<div class="scan-page">
+
+  <!-- Success result -->
+  @if (result()) {
+    <div class="result-panel result-panel--success">
+      <div class="result-icon">
+        <app-forsa-icon name="check-circle-2" [size]="40"></app-forsa-icon>
+      </div>
+      <h2 class="result-title">Transaction confirmed!</h2>
+      <p class="result-sub">Your BNPL purchase has been registered.</p>
+
+      <div class="result-details">
+        <div class="result-row">
+          <span class="result-label">Amount paid</span>
+          <span class="result-value fw-bold">{{ result()!.amount | number:'1.2-2' }} TND</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Cashback earned</span>
+          <span class="result-value cashback-val">+{{ result()!.cashbackAmount | number:'1.2-2' }} TND</span>
+        </div>
+        @if (result()!.partnerName) {
+          <div class="result-row">
+            <span class="result-label">Partner</span>
+            <span class="result-value">{{ result()!.partnerName }}</span>
+          </div>
+        }
+        <div class="result-row">
+          <span class="result-label">Status</span>
+          <span class="result-value status-ok">{{ result()!.status }}</span>
+        </div>
+      </div>
+
+      <div class="result-info">
+        Forsa has paid the partner on your behalf. You will repay the amount
+        + 10% over 3 months via your wallet.
+      </div>
+
+      <div class="result-actions">
+        <button class="btn-primary" (click)="viewHistory()">
+          <app-forsa-icon name="history" [size]="16"></app-forsa-icon>
+          View my history
+        </button>
+        <button class="btn-outline" (click)="reset()">
+          <app-forsa-icon name="shield" [size]="16"></app-forsa-icon>
+          New transaction
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Scan form -->
+  @if (!result()) {
+    <div class="scan-layout">
+
+      <!-- Left: instructions -->
+      <div class="scan-instructions">
+        <div class="instructions-icon">
+          <app-forsa-icon name="shield" [size]="48"></app-forsa-icon>
+        </div>
+        <h2 class="instructions-title">Pay at a partner store</h2>
+        <ol class="instructions-list">
+          <li>
+            <div class="step-num">1</div>
+            <div>
+              <strong>Find the QR code</strong>
+              <p>Ask the partner cashier to show you the Forsa QR code displayed at the counter.</p>
+            </div>
+          </li>
+          <li>
+            <div class="step-num">2</div>
+            <div>
+              <strong>Enter the code & amount</strong>
+              <p>Type the QR code ID and the purchase amount in the form.</p>
+            </div>
+          </li>
+          <li>
+            <div class="step-num">3</div>
+            <div>
+              <strong>Confirm</strong>
+              <p>Forsa pays the partner instantly. You repay +10% in 3 monthly instalments.</p>
+            </div>
+          </li>
+          <li>
+            <div class="step-num">4</div>
+            <div>
+              <strong>Earn cashback</strong>
+              <p>Every purchase earns you cashback redeemable on future transactions.</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+
+      <!-- Right: form -->
+      <app-forsa-card class="scan-form-card">
+        <div class="card-pad">
+          <h3 class="form-title">Transaction details</h3>
+
+          @if (errorMessage()) {
+            <div class="alert-error">
+              <app-forsa-icon name="alert-circle" [size]="16"></app-forsa-icon>
+              {{ errorMessage() }}
+            </div>
+          }
+
+          <div class="form-fields">
+            <div class="field">
+              <label class="field-label">
+                <app-forsa-icon name="shield" [size]="14"></app-forsa-icon>
+                QR Code ID <span class="req">*</span>
+              </label>
+              <input forsaInput type="text" [(ngModel)]="qrCodeId"
+                placeholder="e.g. QR-PHARM-0042" autocomplete="off" />
+              <span class="field-hint">Found on the partner's QR code display</span>
+            </div>
+
+            <div class="field">
+              <label class="field-label">
+                <app-forsa-icon name="wallet" [size]="14"></app-forsa-icon>
+                Amount (TND) <span class="req">*</span>
+              </label>
+              <input forsaInput type="number" [(ngModel)]="amount"
+                min="1" step="0.001" placeholder="0.000" />
+            </div>
+
+            <div class="field">
+              <label class="field-label">
+                <app-forsa-icon name="message-square" [size]="14"></app-forsa-icon>
+                Description (optional)
+              </label>
+              <input forsaInput type="text" [(ngModel)]="description"
+                placeholder="e.g. Medication purchase" />
+            </div>
+
+            <button class="btn-submit" [disabled]="!canSubmit || submitting()" (click)="submit()">
+              @if (submitting()) {
+                <span class="spinner-sm"></span>
+                Processing…
+              } @else {
+                <app-forsa-icon name="send" [size]="16"></app-forsa-icon>
+                Confirm transaction
+              }
+            </button>
+          </div>
+
+          <p class="bnpl-note">
+            By confirming, you agree to repay the full amount + 10% commission
+            in 3 monthly instalments via your Forsa wallet.
+          </p>
+        </div>
+      </app-forsa-card>
+
+    </div>
+  }
+
+</div>

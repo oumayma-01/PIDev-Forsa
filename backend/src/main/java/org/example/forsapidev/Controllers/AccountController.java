@@ -51,27 +51,40 @@ public class AccountController {
 
     @SecurityRequirement(name = "Bearer Authentication")
     @PostMapping("/{id}/deposit")
-    public String deposit(@PathVariable Long id,
-                          @RequestParam BigDecimal amount) {
-        accountService.deposit(id, amount);
-        return "Deposit successful";
+    public org.springframework.http.ResponseEntity<?> deposit(@PathVariable("id") Long id,
+                                                              @RequestParam("amount") BigDecimal amount) {
+        try {
+            accountService.deposit(id, amount);
+            return org.springframework.http.ResponseEntity.ok(java.util.Map.of("message", "Deposit successful"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("message", "ERROR_DEPOSIT: " + e.getMessage()));
+        }
     }
 
     @SecurityRequirement(name = "Bearer Authentication")
     @PostMapping("/{id}/withdraw")
-    public String withdraw(@PathVariable Long id,
-                           @RequestParam BigDecimal amount) {
-        accountService.withdraw(id, amount);
-        return "Withdrawal successful";
+    public org.springframework.http.ResponseEntity<?> withdraw(@PathVariable("id") Long id,
+                           @RequestParam("amount") BigDecimal amount) {
+        try {
+            accountService.withdraw(id, amount);
+            return org.springframework.http.ResponseEntity.ok(java.util.Map.of("message", "Withdrawal successful"));
+        } catch (Exception e) {
+            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("message", "ERROR_WITHDRAW: " + e.getMessage()));
+        }
     }
 
     @SecurityRequirement(name = "Bearer Authentication")
     @PostMapping("/transfer")
-    public String transfer(@RequestParam Long fromAccountId,
-                           @RequestParam Long toAccountId,
-                           @RequestParam BigDecimal amount) {
-        accountService.transfer(fromAccountId, toAccountId, amount);
-        return "Transfer successful";
+    public org.springframework.http.ResponseEntity<?> transfer(@RequestParam("fromAccountId") Long fromAccountId,
+                           @RequestParam("toAccountId") Long toAccountId,
+                           @RequestParam("amount") BigDecimal amount) {
+        try {
+            accountService.transfer(fromAccountId, toAccountId, amount);
+            return org.springframework.http.ResponseEntity.ok(java.util.Map.of("message", "Transfer successful"));
+        } catch (Exception e) {
+            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("message", "ERROR_TRANSFER: " + e.getMessage()));
+        }
     }
 
     @SecurityRequirement(name = "Bearer Authentication")
@@ -117,9 +130,13 @@ public class AccountController {
     @SecurityRequirement(name = "Bearer Authentication")
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    public String deleteAccount(@PathVariable Long id) {
-        accountService.deleteAccount(id);
-        return "Account deleted successfully";
+    public org.springframework.http.ResponseEntity<?> deleteAccount(@PathVariable Long id) {
+        try {
+            accountService.deleteAccount(id);
+            return org.springframework.http.ResponseEntity.ok(java.util.Map.of("message", "Account deleted successfully"));
+        } catch (Exception e) {
+            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("message", "ERROR_DELETE: " + e.getMessage()));
+        }
     }
 
     @SecurityRequirement(name = "Bearer Authentication")
@@ -133,9 +150,13 @@ public class AccountController {
     @SecurityRequirement(name = "Bearer Authentication")
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/apply-interest")
-    public String applyMonthlyInterest() {
-        accountService.applyMonthlyInterest();
-        return "Monthly interest applied";
+    public org.springframework.http.ResponseEntity<?> applyMonthlyInterest() {
+        try {
+            accountService.applyMonthlyInterest();
+            return org.springframework.http.ResponseEntity.ok(java.util.Map.of("message", "Monthly interest applied"));
+        } catch (Exception e) {
+            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("message", "ERROR_INTEREST: " + e.getMessage()));
+        }
     }
 
     // ── AI endpoints ──────────────────────────────────────────────────────────
@@ -143,8 +164,8 @@ public class AccountController {
     @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping("/{id}/forecast")
     public WalletForecastDTO forecastBalance(
-            @PathVariable Long id,
-            @RequestParam(defaultValue = "30") int days) {
+            @PathVariable("id") Long id,
+            @RequestParam(value = "days", defaultValue = "30") int days) {
         return accountService.forecastBalance(id, days);
     }
 

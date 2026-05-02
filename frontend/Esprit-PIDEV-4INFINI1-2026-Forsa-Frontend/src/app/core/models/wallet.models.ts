@@ -66,3 +66,7 @@ export interface AccountTypeAdviceDTO {
 export interface BankVaultDTO {
   totalFunds: number;
 }
+
+export interface BankVaultDTO {
+  totalFunds: number;
+}

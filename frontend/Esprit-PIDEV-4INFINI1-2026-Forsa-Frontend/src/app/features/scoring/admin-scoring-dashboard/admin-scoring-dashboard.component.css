@@ -1,0 +1,175 @@
+.scoring-dash {
+  padding: 2rem 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ── Header ── */
+.dash-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.dash-title { font-size: 1.5rem; font-weight: 700; margin: 0 0 0.2rem; }
+.dash-sub   { color: #6b7280; font-size: 0.85rem; margin: 0; }
+.dash-head-right { display: flex; align-items: center; gap: 1rem; }
+.last-refresh { font-size: 0.78rem; color: #9ca3af; }
+.btn-refresh {
+  padding: 0.4rem 0.85rem;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.15s;
+}
+.btn-refresh:hover { background: #f3f4f6; }
+
+/* ── States ── */
+.state-loading, .state-empty {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: #6b7280;
+}
+.state-empty-hint { font-size: 0.82rem; color: #9ca3af; margin-top: 0.4rem; }
+.spinner {
+  display: inline-block;
+  width: 28px; height: 28px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #4f46e5;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin-bottom: 0.75rem;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Table ── */
+.table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid #e5e7eb; }
+.score-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.score-table thead tr {
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+.score-table th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+}
+.score-table tbody tr {
+  border-bottom: 1px solid #f3f4f6;
+  transition: background 0.15s;
+}
+.score-table tbody tr:last-child { border-bottom: none; }
+.score-table tbody tr:hover { background: #f9fafb; }
+.score-table td { padding: 0.75rem 1rem; vertical-align: middle; }
+.row--refreshing { opacity: 0.5; }
+
+/* ── Client cell ── */
+.td-client { display: flex; align-items: center; gap: 0.65rem; min-width: 160px; }
+.client-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: #4f46e5;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.client-name  { font-weight: 600; color: #111827; }
+.client-email { font-size: 0.75rem; color: #9ca3af; }
+
+/* ── Score cell ── */
+.td-score { min-width: 120px; }
+.score-num { font-size: 1.1rem; font-weight: 700; display: block; margin-bottom: 4px; }
+.score-bar-track {
+  height: 5px;
+  background: #e5e7eb;
+  border-radius: 99px;
+  overflow: hidden;
+}
+.score-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: #4f46e5;
+  transition: width 0.4s;
+}
+.score-bar-fill.badge--premium   { background: #7c3aed; }
+.score-bar-fill.badge--excellent { background: #2563eb; }
+.score-bar-fill.badge--very-good { background: #059669; }
+.score-bar-fill.badge--good      { background: #84cc16; }
+.score-bar-fill.badge--medium    { background: #f59e0b; }
+.score-bar-fill.badge--low       { background: #f97316; }
+.score-bar-fill.badge--very-low  { background: #ef4444; }
+
+/* ── Level badge ── */
+.level-badge {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 99px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.badge--premium   { background: #ede9fe; color: #5b21b6; }
+.badge--excellent { background: #dbeafe; color: #1d4ed8; }
+.badge--very-good { background: #d1fae5; color: #065f46; }
+.badge--good      { background: #ecfccb; color: #3f6212; }
+.badge--medium    { background: #fef3c7; color: #92400e; }
+.badge--low       { background: #ffedd5; color: #9a3412; }
+.badge--very-low  { background: #fee2e2; color: #991b1b; }
+
+/* ── Threshold ── */
+.td-threshold { min-width: 130px; }
+.threshold-val  { font-weight: 600; color: #059669; font-size: 0.95rem; }
+.blocked-label  { font-size: 0.78rem; color: #ef4444; font-style: italic; }
+
+/* ── Dot ── */
+.td-center { text-align: center; }
+.dot {
+  display: inline-block;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.dot--green { background: #22c55e; }
+.dot--red   { background: #ef4444; }
+
+/* ── Boosters ── */
+.booster-chip {
+  display: inline-block;
+  background: #ede9fe;
+  color: #5b21b6;
+  border-radius: 99px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  margin-right: 4px;
+}
+.no-booster { color: #d1d5db; }
+
+/* ── Date ── */
+.td-date { font-size: 0.78rem; color: #6b7280; white-space: nowrap; }
+
+/* ── Recalc button ── */
+.btn-recalc {
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  border-radius: 6px;
+  width: 32px; height: 32px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.btn-recalc:hover:not(:disabled) { background: #f3f4f6; }
+.btn-recalc:disabled { opacity: 0.5; cursor: not-allowed; }

@@ -36,13 +36,7 @@ public class FeedbackService implements IFeedbackService {
     @Override
     public List<Feedback> getFeedbacksByUsername(String username) {
         if (username == null || username.isBlank()) return Collections.emptyList();
-        List<Feedback> byUser = feedbackRepository.findByUserUsername(username);
-        List<Feedback> byComplaint = feedbackRepository.findByComplaintUserUsername(username);
-        // Merge both lists, avoid duplicates by id
-        Map<Long, Feedback> merged = new LinkedHashMap<>();
-        byUser.forEach(f -> merged.put(f.getId(), f));
-        byComplaint.forEach(f -> merged.put(f.getId(), f));
-        return new ArrayList<>(merged.values());
+        return feedbackRepository.findByUserUsername(username);
     }
 
     @Override
@@ -71,7 +65,6 @@ public class FeedbackService implements IFeedbackService {
         Feedback existing = feedbackRepository.findById(feedback.getId()).orElse(null);
         if (existing == null) return null;
         feedback.setUser(existing.getUser());
-        feedback.setComplaint(existing.getComplaint());
         feedback.setCreatedAt(existing.getCreatedAt());
         return feedbackRepository.save(feedback);
     }
@@ -150,17 +143,41 @@ public class FeedbackService implements IFeedbackService {
         User user = userRepository.findByUsername(username).orElse(null);
         if (user != null) f.setUser(user);
 
-        try {
-            String level = complaintAiAssistant.analyzeFeedbackSatisfaction(
-                    f.getRating(), f.getComment()
-            );
-            f.setSatisfactionLevel(level);
-        } catch (Exception e) {
-            int r = (f.getRating() == null) ? 3 : f.getRating();
-            f.setSatisfactionLevel(computeSatisfactionFromRating(r));
-        }
+        int rating = (f.getRating() == null) ? 3 : Math.max(1, Math.min(5, f.getRating()));
+        f.setRating(rating);
+
+        String ratingLevel = computeSatisfactionFromRating(rating);
+        String sentiment = complaintAiAssistant.detectFeedbackSentiment(f.getComment());
+        f.setSatisfactionLevel(resolveFinalSatisfaction(rating, ratingLevel, sentiment, f.getComment()));
 
         return feedbackRepository.save(f);
+    }
+
+    private String resolveFinalSatisfaction(int rating, String ratingLevel, String aiSentiment, String comment) {
+        // Keep hard consistency for explicit ratings except neutral rating (3),
+        // where text sentiment can reasonably disambiguate.
+        if (rating != 3) return ratingLevel;
+
+        String lexical = detectLexicalSentiment(comment);
+        String sentiment = (lexical != null && !lexical.isBlank()) ? lexical : (aiSentiment == null ? "NEUTRAL" : aiSentiment);
+        String normalized = sentiment.trim().toUpperCase(Locale.ROOT);
+        if ("NEGATIVE".equals(normalized)) return "DISSATISFIED";
+        if ("POSITIVE".equals(normalized)) return "SATISFIED";
+        return "NEUTRAL";
+    }
+
+    private String detectLexicalSentiment(String comment) {
+        if (comment == null || comment.isBlank()) return "NEUTRAL";
+        String c = comment.toLowerCase(Locale.ROOT);
+        String[] negatives = {"bad", "poor", "terrible", "awful", "horrible", "nul", "mauvais", "insatisf", "déçu", "decu"};
+        for (String token : negatives) {
+            if (c.contains(token)) return "NEGATIVE";
+        }
+        String[] positives = {"good", "great", "excellent", "perfect", "super", "bien", "satisf", "top"};
+        for (String token : positives) {
+            if (c.contains(token)) return "POSITIVE";
+        }
+        return "NEUTRAL";
     }
 
     private String computeSatisfactionFromRating(int rating) {

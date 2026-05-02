@@ -48,14 +48,14 @@ public class FeedbackController {
         return ResponseEntity.ok(FeedbackService.getFeedbacksByUsername(userDetails.getUsername()));
     }
 
-    @PreAuthorize("hasRole('CLIENT')")
+    @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
     @PostMapping("/add-feedback")
     public ResponseEntity<Feedback> addFeedback(@Valid @RequestBody Feedback f) {
         Feedback saved = FeedbackService.addFeedback(f);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
-    @PreAuthorize("hasRole('CLIENT')")
+    @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
     @DeleteMapping("/remove-feedback/{feedback-id}")
     public ResponseEntity<Void> removeFeedback(
             @PathVariable("feedback-id") Long fId) {
@@ -63,7 +63,7 @@ public class FeedbackController {
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
-    @PreAuthorize("hasRole('CLIENT')")
+    @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
     @PutMapping("/modify-feedback")
     public ResponseEntity<Feedback> modifyFeedback(@Valid @RequestBody Feedback f) {
         Feedback updated = FeedbackService.modifyFeedback(f);
@@ -112,7 +112,7 @@ public class FeedbackController {
                 .body(errors);
     }
 
-    @PreAuthorize("hasRole('CLIENT')")
+    @PreAuthorize("hasAnyRole('CLIENT','AGENT','ADMIN')")
     @PostMapping("/add-feedback-ai")
     public ResponseEntity<Feedback> addFeedbackWithAI(@Valid @RequestBody Feedback f) {
         Feedback saved = FeedbackService.addFeedbackWithAI(f);

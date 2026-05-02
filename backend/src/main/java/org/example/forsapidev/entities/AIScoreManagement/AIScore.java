@@ -61,4 +61,8 @@ public class AIScore {
 
     @Column(columnDefinition = "TEXT")
     private String aiExplanation;
+
+    private LocalDateTime stegBoosterExpiry;
+
+    private LocalDateTime sonedeBoosterExpiry;
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ElementRef, computed, inject, signal } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserAdminService } from '../../../core/services/user-admin.service';
 import { UserDashboardOverview } from '../../../core/models/user-admin.model';
@@ -7,6 +7,7 @@ import { ForsaIconComponent } from '../../../shared/ui/forsa-icon/forsa-icon.com
 import type { ForsaIconName } from '../../../shared/ui/forsa-icon/forsa-icon.types';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { gsap } from 'gsap';
 
 @Component({
   selector: 'app-dashboard-home',
@@ -15,9 +16,10 @@ import { CommonModule } from '@angular/common';
   templateUrl: './dashboard-home.component.html',
   styleUrl: './dashboard-home.component.css',
 })
-export class DashboardHomeComponent implements OnInit {
+export class DashboardHomeComponent implements OnInit, AfterViewInit {
   private readonly auth = inject(AuthService);
   private readonly userAdminService = inject(UserAdminService);
+  private readonly el = inject(ElementRef);
 
   readonly stats = signal<UserDashboardOverview | null>(null);
   readonly quickActions = computed(() => {
@@ -26,7 +28,7 @@ export class DashboardHomeComponent implements OnInit {
         { label: 'User management', description: 'Manage accounts and activation status.', path: '/dashboard/users', icon: 'users' as ForsaIconName },
         { label: 'Role access', description: 'Control sidebar permissions per role.', path: '/dashboard/roles', icon: 'shield-check' as ForsaIconName },
         { label: 'Feedback queue', description: 'Review complaints and response workflow.', path: '/dashboard/feedback', icon: 'message-square' as ForsaIconName },
-        { label: 'AI credit score', description: 'Inspect AI score workflow and checks.', path: '/dashboard/ai-score', icon: 'brain' as ForsaIconName },
+        { label: 'Client AI scores', description: 'Real-time AI scores for all clients.', path: '/dashboard/scoring', icon: 'brain' as ForsaIconName },
       ];
     }
     return [
@@ -93,6 +95,34 @@ export class DashboardHomeComponent implements OnInit {
       this.userAdminService.getDashboardOverview().subscribe({
         next: (res) => this.stats.set(res),
         error: () => console.error('Could not load dashboard stats'),
+      });
+    }
+  }
+
+  ngAfterViewInit(): void {
+    const root = this.el.nativeElement as HTMLElement;
+
+    // Staggered card entrance animation
+    const cards = root.querySelectorAll('app-forsa-card');
+    if (cards.length) {
+      gsap.from(Array.from(cards), {
+        y: 24,
+        opacity: 0,
+        duration: 0.5,
+        stagger: 0.1,
+        ease: 'power3.out',
+        delay: 0.2,
+      });
+    }
+
+    // Animate heading
+    const heading = root.querySelector('.page-head');
+    if (heading) {
+      gsap.from(heading, {
+        y: -15,
+        opacity: 0,
+        duration: 0.4,
+        ease: 'power2.out',
       });
     }
   }

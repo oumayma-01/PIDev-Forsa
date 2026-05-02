@@ -11,6 +11,8 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
       [attr.alt]="alt"
       [attr.width]="width ?? null"
       [attr.height]="height"
+      [style.width.px]="width"
+      [style.height.px]="height"
       class="forsa-logo-img forsa-logo--light"
       loading="eager"
       decoding="async"
@@ -20,6 +22,8 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
       [attr.alt]="alt"
       [attr.width]="width ?? null"
       [attr.height]="height"
+      [style.width.px]="width"
+      [style.height.px]="height"
       class="forsa-logo-img forsa-logo--dark"
       loading="eager"
       decoding="async"
@@ -35,6 +39,7 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
     .forsa-logo-img {
       width: auto;
       max-width: 100%;
+      max-height: 100%;
       object-fit: contain;
     }
   `,

@@ -13,7 +13,7 @@ import { InsuranceProductsComponent } from './features/insurance/insurance-produ
 import { LandingPageComponent } from './features/landing/landing-page.component';
 import { WalletOverviewComponent } from './features/wallet/wallet-overview/wallet-overview.component';
 import { PartenariatListComponent } from './features/partenariat/partenariat-list/partenariat-list.component';
-import { ScoringWorkbenchComponent } from './features/scoring/scoring-workbench/scoring-workbench.component';
+import { AdminScoringDashboardComponent } from './features/scoring/admin-scoring-dashboard/admin-scoring-dashboard.component';
 import { ScoreRequestComponent } from './features/scoring/score-request/score-request.component';
 import { DashboardLayoutComponent } from './layouts/dashboard-layout/dashboard-layout.component';
 
@@ -81,6 +81,21 @@ export const routes: Routes = [
               import('./features/feedback/feedback-list/feedback-list.component').then((m) => m.FeedbackListComponent),
           },
           {
+            path: 'complaints',
+            loadComponent: () =>
+              import('./features/feedback/complaint-management/complaints-management.component').then((m) => m.ComplaintsManagementComponent),
+          },
+          {
+            path: 'feedbacks',
+            loadComponent: () =>
+              import('./features/feedback/feedbacks-view/feedbacks-view.component').then((m) => m.FeedbacksViewComponent),
+          },
+          {
+            path: 'notifications',
+            loadComponent: () =>
+              import('./features/feedback/feedback-notifications/feedback-notifications.component').then((m) => m.FeedbackNotificationsComponent),
+          },
+          {
             path: 'complaint/add',
             loadComponent: () =>
               import('./features/feedback/complaint-form/complaint-form.component').then((m) => m.ComplaintFormComponent),
@@ -134,7 +149,7 @@ export const routes: Routes = [
         ],
       },
       { path: 'partenariat', component: PartenariatListComponent },
-      { path: 'scoring', component: ScoringWorkbenchComponent },
+      { path: 'scoring', component: AdminScoringDashboardComponent },
       { path: 'ai-score', component: ScoreRequestComponent },
       { path: 'ai', component: RiskAnalysisComponent },
       {

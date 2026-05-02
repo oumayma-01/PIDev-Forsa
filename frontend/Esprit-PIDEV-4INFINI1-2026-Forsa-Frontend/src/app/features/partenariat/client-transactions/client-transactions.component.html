@@ -1,0 +1,107 @@
+<div class="page-nav">
+  <button class="btn-ghost" routerLink="/dashboard/partenariat">
+    <app-forsa-icon name="chevron-left" [size]="16"></app-forsa-icon>
+    Back to partners
+  </button>
+  <button class="btn-primary" routerLink="/dashboard/partenariat/scan">
+    <app-forsa-icon name="shield" [size]="16"></app-forsa-icon>
+    New transaction
+  </button>
+</div>
+
+<div class="page-head page-head--inline">
+  <h2>My transactions & cashback</h2>
+  <p>Track your BNPL purchases at partner stores and manage your cashback balance.</p>
+</div>
+
+<!-- Cashback summary -->
+@if (!cashbackLoading()) {
+  <div class="cashback-grid">
+    <app-forsa-card>
+      <div class="cb-card card-pad">
+        <div class="cb-icon cb-icon--avail">
+          <app-forsa-icon name="wallet" [size]="22"></app-forsa-icon>
+        </div>
+        <p class="cb-label">Available cashback</p>
+        <p class="cb-val">{{ (cashback()?.availableBalance ?? 0) | number:'1.2-2' }} <span class="cb-currency">TND</span></p>
+        @if ((cashback()?.availableBalance ?? 0) > 0) {
+          <button class="btn-redeem" [disabled]="redeeming()" (click)="redeemCashback()">
+            @if (redeeming()) { Processing… } @else { Redeem now }
+          </button>
+        }
+      </div>
+    </app-forsa-card>
+    <app-forsa-card>
+      <div class="cb-card card-pad">
+        <div class="cb-icon cb-icon--earned">
+          <app-forsa-icon name="trending-up" [size]="22"></app-forsa-icon>
+        </div>
+        <p class="cb-label">Total earned</p>
+        <p class="cb-val">{{ (cashback()?.totalEarned ?? 0) | number:'1.2-2' }} <span class="cb-currency">TND</span></p>
+      </div>
+    </app-forsa-card>
+    <app-forsa-card>
+      <div class="cb-card card-pad">
+        <div class="cb-icon cb-icon--used">
+          <app-forsa-icon name="check-circle-2" [size]="22"></app-forsa-icon>
+        </div>
+        <p class="cb-label">Total redeemed</p>
+        <p class="cb-val">{{ (cashback()?.totalRedeemed ?? 0) | number:'1.2-2' }} <span class="cb-currency">TND</span></p>
+      </div>
+    </app-forsa-card>
+  </div>
+}
+
+<!-- Transaction history -->
+<app-forsa-card>
+  <div class="card-pad-lg table-wrap">
+    <h3 class="table-title">Transaction history</h3>
+
+    @if (loading()) {
+      <div class="loading-row">
+        <span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span>
+        Loading transactions…
+      </div>
+    } @else if (transactions().length === 0) {
+      <div class="empty-state">
+        <app-forsa-icon name="credit-card" [size]="40"></app-forsa-icon>
+        <p>No transactions yet.</p>
+        <p class="empty-hint">Visit a partner store and scan their QR code to get started.</p>
+        <button class="btn-primary" routerLink="/dashboard/partenariat/scan">Scan my first QR code</button>
+      </div>
+    } @else {
+      <table class="forsa-table">
+        <thead>
+          <tr>
+            <th>Partner</th>
+            <th>Date</th>
+            <th>Amount</th>
+            <th>Cashback</th>
+            <th>Description</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (tx of transactions(); track tx.id) {
+            <tr>
+              <td class="fw-semibold">{{ tx.partnerName ?? '—' }}</td>
+              <td class="text-muted sm">{{ tx.createdAt | date:'dd/MM/yy HH:mm' }}</td>
+              <td class="mono fw-semibold">{{ tx.amount | number:'1.2-2' }} TND</td>
+              <td class="mono cashback-cell">
+                @if (tx.cashbackAmount > 0) {
+                  +{{ tx.cashbackAmount | number:'1.2-2' }} TND
+                } @else {
+                  <span class="text-muted">—</span>
+                }
+              </td>
+              <td class="text-muted sm">{{ tx.description ?? '—' }}</td>
+              <td>
+                <app-forsa-badge [tone]="statusTone(tx.status)" size="xs">{{ tx.status }}</app-forsa-badge>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</app-forsa-card>

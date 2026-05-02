@@ -3,13 +3,18 @@ package org.example.forsapidev.Controllers;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.forsapidev.Repositories.AIScoreManagement.AIScoreRepository;
 import org.example.forsapidev.Services.aiScoring.AIAgentClient;
+import org.example.forsapidev.Services.aiScoring.AutoScoringService;
+import org.example.forsapidev.entities.AIScoreManagement.AIScore;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -21,6 +26,8 @@ import java.util.Map;
 public class AIScoreController {
 
     private final AIAgentClient aiAgentClient;
+    private final AutoScoringService autoScoringService;
+    private final AIScoreRepository aiScoreRepository;
 
     /**
      * Endpoint appelé par Angular avec les données du formulaire dans le body.
@@ -91,6 +98,73 @@ public class AIScoreController {
     @GetMapping("/health")
     public ResponseEntity<Map<String, String>> health() {
         return ResponseEntity.ok(Map.of("status", "ok", "service", "AI Score Controller"));
+    }
+
+    /**
+     * Retourne le dernier score IA d'un client.
+     * GET /api/ai-score/current/{clientId}
+     */
+    @GetMapping("/current/{clientId}")
+    public ResponseEntity<Map<String, Object>> getCurrentScore(@PathVariable Long clientId) {
+        return aiScoreRepository.findByClientId(clientId)
+                .map(s -> ResponseEntity.ok(toScoreDto(s)))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Recalcule et sauvegarde le score IA d'un client.
+     * POST /api/ai-score/recalculate/{clientId}
+     */
+    @PostMapping("/recalculate/{clientId}")
+    public ResponseEntity<Map<String, Object>> recalculateScore(@PathVariable Long clientId) {
+        AIScore saved = autoScoringService.calculateAndSave(clientId);
+        return ResponseEntity.ok(toScoreDto(saved));
+    }
+
+    /**
+     * Active un booster STEG ou SONEDE, puis recalcule le score.
+     * POST /api/ai-score/booster/{clientId}?type=STEG|SONEDE
+     */
+    @PostMapping("/booster/{clientId}")
+    public ResponseEntity<Map<String, Object>> activateBooster(
+            @PathVariable Long clientId,
+            @RequestParam String type) {
+        autoScoringService.activateBooster(clientId, type);
+        AIScore saved = autoScoringService.calculateAndSave(clientId);
+        return ResponseEntity.ok(toScoreDto(saved));
+    }
+
+    /**
+     * Retourne le résumé des scores de tous les clients — pour le dashboard admin.
+     * GET /api/ai-score/summaries
+     */
+    @GetMapping("/summaries")
+    public ResponseEntity<List<Map<String, Object>>> getAllSummaries() {
+        List<Map<String, Object>> list = aiScoreRepository.findAll().stream()
+                .map(this::toScoreDto)
+                .sorted((a, b) -> Integer.compare(
+                        (Integer) b.getOrDefault("score", 0),
+                        (Integer) a.getOrDefault("score", 0)))
+                .toList();
+        return ResponseEntity.ok(list);
+    }
+
+    private Map<String, Object> toScoreDto(AIScore s) {
+        Map<String, Object> dto = new HashMap<>();
+        dto.put("clientId", s.getClientId());
+        dto.put("score", s.getCurrentScore());
+        dto.put("scoreLevel", s.getScoreLevel() != null ? s.getScoreLevel().name() : "VERY_LOW");
+        dto.put("creditThreshold", s.getCreditThreshold() != null ? s.getCreditThreshold().doubleValue() : 0.0);
+        dto.put("availableThreshold", s.getAvailableThreshold() != null ? s.getAvailableThreshold().doubleValue() : 0.0);
+        dto.put("hasActiveCredit", Boolean.TRUE.equals(s.getHasActiveCredit()));
+        dto.put("lastCalculatedAt", s.getLastCalculatedAt() != null ? s.getLastCalculatedAt().toString() : null);
+        boolean stegActive = s.getStegBoosterExpiry() != null && s.getStegBoosterExpiry().isAfter(LocalDateTime.now());
+        boolean sonedeActive = s.getSonedeBoosterExpiry() != null && s.getSonedeBoosterExpiry().isAfter(LocalDateTime.now());
+        dto.put("stegBoosterActive", stegActive);
+        dto.put("stegBoosterExpiry", s.getStegBoosterExpiry() != null ? s.getStegBoosterExpiry().toString() : null);
+        dto.put("sonedeBoosterActive", sonedeActive);
+        dto.put("sonedeBoosterExpiry", s.getSonedeBoosterExpiry() != null ? s.getSonedeBoosterExpiry().toString() : null);
+        return dto;
     }
 
     /**

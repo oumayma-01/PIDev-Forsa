@@ -18,7 +18,7 @@ import { ClaimStatus } from '../../../shared/enums/insurance.enums';
   styleUrl: './claim-form.component.css',
 })
 export class ClaimFormComponent implements OnInit {
-  private readonly claimSvc = inject(InsuranceClaimService);
+  public readonly claimSvc = inject(InsuranceClaimService);
   private readonly policySvc = inject(InsurancePolicyService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
