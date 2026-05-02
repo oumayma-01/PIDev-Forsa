@@ -1,7 +1,6 @@
 package org.example.forsapidev.Services.Interfaces;
 
 import org.example.forsapidev.DTO.AccountTypeAdviceDTO;
-import org.example.forsapidev.DTO.AdaptiveInterestResultDTO;
 import org.example.forsapidev.DTO.BankVaultDTO;
 import org.example.forsapidev.DTO.WalletForecastDTO;
 import org.example.forsapidev.DTO.WalletStatisticsDTO;
@@ -50,8 +49,6 @@ public interface AccountService {
     BankVaultDTO getBankVault();
 
     WalletForecastDTO forecastBalance(Long accountId, int days);
-
-    AdaptiveInterestResultDTO applyAdaptiveInterest(Long accountId);
 
     AccountTypeAdviceDTO adviseAccountType(Long accountId);
 }

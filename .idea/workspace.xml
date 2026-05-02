@@ -10,6 +10,9 @@
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Repositories/ResponseRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Repositories/ResponseRepository.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Services/Implementation/ComplaintService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Services/Implementation/ComplaintService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/wallet/wallet-overview/wallet-overview.component.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/wallet/wallet-overview/wallet-overview.component.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/wallet/wallet-overview/wallet-overview.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/wallet/wallet-overview/wallet-overview.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/wallet/wallet-overview/wallet-overview.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/features/wallet/wallet-overview/wallet-overview.component.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -80,6 +83,32 @@
     "nodejs_package_manager_path": "npm",
     "ts.external.directory.path": "C:\\Users\\Admin\\IdeaProjects\\Esprit-PIDEV-4INFINI1-2026-Forsa11\\frontend\\Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend\\node_modules\\typescript\\lib",
     "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
+    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
+    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
+    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;Spring Boot.ForsaPidevApplication.executor&quot;: &quot;Run&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;WalletLina&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/nesma/Desktop/PIDEV/PIDev-Forsa/Backend/.env&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Facets&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;vcs.Subversion.SSH&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;C:\\Users\\Admin\\IdeaProjects\\Esprit-PIDEV-4INFINI1-2026-Forsa5\\frontend\\Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend\\node_modules\\typescript\\lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }]]></component>
   <component name="RecentsManager">
@@ -88,6 +117,7 @@
       <recent name="C:\Users\Admin\IdeaProjects\Esprit-PIDEV-4INFINI1-2026-Forsa11\backend" />
     </key>
   </component>
+}</component>
   <component name="RunManager">
     <configuration name="ForsaPidevApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
       <module name="ForsaPidev" />
@@ -126,8 +156,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.30387.90" />
-        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-IU-253.30387.90" />
+        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.32098.37" />
+        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-IU-253.32098.37" />
       </set>
     </attachedChunks>
   </component>
