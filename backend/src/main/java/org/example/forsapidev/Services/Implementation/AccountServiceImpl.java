@@ -1,6 +1,7 @@
 package org.example.forsapidev.Services.Implementation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.example.forsapidev.DTO.AccountJsonDTO;
 import org.example.forsapidev.DTO.AccountTypeAdviceDTO;
 import org.example.forsapidev.DTO.BankVaultDTO;
 import org.example.forsapidev.DTO.WalletForecastDTO;
@@ -51,8 +52,19 @@ public class AccountServiceImpl implements AccountService {
     // ── HELPERS ──────────────────────────────────────────────────────────────
 
     private Account findAccount(Long accountId) {
-        return accountRepo.findById(accountId)
+        return accountRepo.findByIdWithWalletAndTransactions(accountId)
                 .orElseThrow(() -> new RuntimeException("Account not found with id: " + accountId));
+    }
+
+    private List<Account> mergeAccountsForOwner(long ownerId) {
+        Map<Long, Account> merged = new LinkedHashMap<>();
+        for (Account a : accountRepo.findByOwner_Id(ownerId)) {
+            merged.put(a.getId(), a);
+        }
+        for (Account a : accountRepo.findByWallet_OwnerId(ownerId)) {
+            merged.put(a.getId(), a);
+        }
+        return new ArrayList<>(merged.values());
     }
 
     private Wallet findWallet(Long accountId) {
@@ -163,21 +175,20 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Account getAccount(Long accountId) {
         return findAccount(accountId);
     }
 
     @Override
     public List<Account> getAccountsByOwner(Long ownerId) {
-        // Merge by account id: legacy rows may only have owner on Account, or only ownerId on Wallet.
-        Map<Long, Account> merged = new LinkedHashMap<>();
-        for (Account a : accountRepo.findByOwner_Id(ownerId)) {
-            merged.put(a.getId(), a);
-        }
-        for (Account a : accountRepo.findByWallet_OwnerId(ownerId)) {
-            merged.put(a.getId(), a);
-        }
-        return new ArrayList<>(merged.values());
+        return mergeAccountsForOwner(ownerId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AccountJsonDTO> getAccountsByOwnerAsJson(Long ownerId) {
+        return AccountJsonDTO.fromList(mergeAccountsForOwner(ownerId), true);
     }
 
     @Override

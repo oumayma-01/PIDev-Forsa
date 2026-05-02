@@ -1,5 +1,6 @@
 package org.example.forsapidev.Services.Interfaces;
 
+import org.example.forsapidev.DTO.AccountJsonDTO;
 import org.example.forsapidev.DTO.AccountTypeAdviceDTO;
 import org.example.forsapidev.DTO.BankVaultDTO;
 import org.example.forsapidev.DTO.WalletForecastDTO;
@@ -21,6 +22,9 @@ public interface AccountService {
     Account getAccount(Long accountId);
 
     List<Account> getAccountsByOwner(Long ownerId);
+
+    /** Same data as {@link #getAccountsByOwner(Long)} but JSON-safe and loaded in one read transaction (transactions included). */
+    List<AccountJsonDTO> getAccountsByOwnerAsJson(Long ownerId);
 
     List<Account> getAllAccounts();
 
