@@ -141,11 +141,30 @@ export interface AIScoreDto {
   clientName?: string;
   clientEmail?: string;
   score: number;
+  /** Same as score when returned by Spring (additive field). */
+  currentScore?: number;
   scoreLevel: AIScoreLevel;
   creditThreshold: number;
   availableThreshold: number;
   hasActiveCredit: boolean;
   lastCalculatedAt?: string | null;
+  aiExplanation?: string | null;
+  stegBoosterActive: boolean;
+  stegBoosterExpiry?: string | null;
+  sonedeBoosterActive: boolean;
+  sonedeBoosterExpiry?: string | null;
+}
+
+/** Admin table row — GET /api/ai-score/all */
+export interface AIScoreSummaryDto {
+  clientId: number;
+  clientName: string;
+  clientEmail: string;
+  score: number;
+  scoreLevel: string;
+  creditThreshold: number | null;
+  hasActiveCredit: boolean;
+  lastCalculatedAt: string | null;
   stegBoosterActive: boolean;
   stegBoosterExpiry?: string | null;
   sonedeBoosterActive: boolean;

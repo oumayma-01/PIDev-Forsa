@@ -51,12 +51,12 @@ public class AIAgentClient {
             HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(body, headers);
             ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
 
-            log.info("OCR {} → {}", documentType, response.getBody());
+            log.info("verify-document {} → {}", documentType, response.getBody());
             return response.getBody();
 
         } catch (Exception e) {
-            log.error("Erreur OCR document {} : {}", documentType, e.getMessage());
-            throw new RuntimeException("Erreur OCR : " + e.getMessage());
+            log.error("verify-document error type={} : {}", documentType, e.getMessage());
+            throw new RuntimeException("Document verification failed: " + e.getMessage());
         }
     }
 

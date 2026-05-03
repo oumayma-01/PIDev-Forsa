@@ -100,12 +100,14 @@ export class DashboardNavbarComponent {
     { label: 'Digital Wallet', href: '/dashboard/wallet', icon: 'wallet' },
     { label: 'Insurance', href: '/dashboard/insurance', icon: 'shield-check' },
     { label: 'Partnerships', href: '/dashboard/partenariat', icon: 'users' },
-    { label: 'My AI score', href: '/dashboard/ai-score', icon: 'brain' },
+    { label: 'My score', href: '/dashboard/ai-score', icon: 'brain' },
     { label: 'Feedback', href: '/dashboard/feedback', icon: 'message-square' },
   ];
 
   readonly clientNavItems = computed(() => {
     const paths = this.auth.currentUser()?.allowedNavPaths;
+    const roles = this.auth.currentUser()?.roles ?? [];
+    const isAdmin = roles.includes('ROLE_ADMIN');
     const allow = (href: string) => isNavPathAllowed(href, paths);
     const core = this.baseNav.filter((item) => allow(item.href) && item.href !== '/dashboard/profile');
 
@@ -116,7 +118,9 @@ export class DashboardNavbarComponent {
     if (allow('/dashboard/roles')) {
       extras.push({ label: 'Role management', href: '/dashboard/roles', icon: 'shield' });
     }
-    if (allow('/dashboard/scoring')) {
+    // Route /dashboard/scoring uses adminGuard (ROLE_ADMIN only). Without this check,
+    // empty allowedNavPaths makes allow() true for everyone → link looks "broken" (redirect to home).
+    if (isAdmin && allow('/dashboard/scoring')) {
       extras.push({ label: 'Client scores', href: '/dashboard/scoring', icon: 'brain' });
     }
 

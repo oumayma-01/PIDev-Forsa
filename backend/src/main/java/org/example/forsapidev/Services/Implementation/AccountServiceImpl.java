@@ -333,6 +333,16 @@ public class AccountServiceImpl implements AccountService {
         Account from = findAccount(fromAccountId);
         Account to = findAccount(toAccountId);
 
+        // Only INVESTMENT↔INVESTMENT transfers. SAVINGS (or missing/unknown type) cannot send or receive transfer funds.
+        if (from.getType() != AccountType.INVESTMENT) {
+            throw new RuntimeException(
+                    "Transfers can only be sent from an investment account.");
+        }
+        if (to.getType() != AccountType.INVESTMENT) {
+            throw new RuntimeException(
+                    "This account cannot receive a transfer. Savings accounts only accept money via Add funds (when you are on that account), not via Send money. Enter an investment account ID.");
+        }
+
         if (from.getStatus() == AccountStatus.BLOCKED)
             throw new RuntimeException("Source account is blocked.");
         if (to.getStatus() == AccountStatus.BLOCKED)
@@ -406,7 +416,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public List<Activity> getActivities(Long accountId) {
-        return activityRepo.findByWallet_Id(findWallet(accountId).getId());
+        return activityRepo.findByWallet_IdOrderByTimestampDesc(findWallet(accountId).getId());
     }
 
     // ── BANK VAULT ───────────────────────────────────────────────────────────

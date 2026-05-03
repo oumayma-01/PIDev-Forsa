@@ -1,9 +1,9 @@
 import { DatePipe, DecimalPipe, NgClass } from '@angular/common';
 import { Component, OnDestroy, OnInit, signal } from '@angular/core';
-import type { AIScoreDto, AIScoreLevel } from '../../../core/models/forsa.models';
+import type { AIScoreDto, AIScoreLevel, AIScoreSummaryDto } from '../../../core/models/forsa.models';
 import { AiScoreService } from '../services/ai-score.service';
 
-interface ClientRow extends AIScoreDto {
+interface ClientRow extends AIScoreSummaryDto {
   refreshing: boolean;
 }
 
@@ -35,7 +35,7 @@ export class AdminScoringDashboardComponent implements OnInit, OnDestroy {
   load(): void {
     this.aiScore.getAllSummaries().subscribe({
       next: (list) => {
-        this.clients.set(list.map(c => ({ ...c, refreshing: false })));
+        this.clients.set(list.map((c) => ({ ...c, refreshing: false })));
         this.loading.set(false);
         this.lastRefresh.set(new Date());
       },
@@ -44,33 +44,63 @@ export class AdminScoringDashboardComponent implements OnInit, OnDestroy {
   }
 
   recalculate(row: ClientRow): void {
-    this.clients.update(list =>
-      list.map(c => c.clientId === row.clientId ? { ...c, refreshing: true } : c)
+    this.clients.update((list) =>
+      list.map((c) => (c.clientId === row.clientId ? { ...c, refreshing: true } : c)),
     );
     this.aiScore.recalculateScore(Number(row.clientId)).subscribe({
-      next: (updated) => {
-        this.clients.update(list =>
-          list.map(c => c.clientId === updated.clientId ? { ...updated, refreshing: false } : c)
+      next: (updated: AIScoreDto) => {
+        this.clients.update((list) =>
+          list.map((c) =>
+            c.clientId === updated.clientId
+              ? {
+                  ...c,
+                  refreshing: false,
+                  score: updated.score,
+                  scoreLevel: String(updated.scoreLevel),
+                  creditThreshold: updated.creditThreshold,
+                  hasActiveCredit: updated.hasActiveCredit,
+                  lastCalculatedAt: updated.lastCalculatedAt ?? null,
+                  stegBoosterActive: updated.stegBoosterActive,
+                  stegBoosterExpiry: updated.stegBoosterExpiry,
+                  sonedeBoosterActive: updated.sonedeBoosterActive,
+                  sonedeBoosterExpiry: updated.sonedeBoosterExpiry,
+                }
+              : c,
+          ),
         );
       },
       error: () => {
-        this.clients.update(list =>
-          list.map(c => c.clientId === row.clientId ? { ...c, refreshing: false } : c)
+        this.clients.update((list) =>
+          list.map((c) => (c.clientId === row.clientId ? { ...c, refreshing: false } : c)),
         );
       },
     });
   }
 
-  levelClass(level: AIScoreLevel): string {
-    switch (level) {
-      case 'PREMIUM':   return 'badge--premium';
-      case 'EXCELLENT': return 'badge--excellent';
-      case 'VERY_GOOD': return 'badge--very-good';
-      case 'GOOD':      return 'badge--good';
-      case 'MEDIUM':    return 'badge--medium';
-      case 'LOW':       return 'badge--low';
-      case 'VERY_LOW':  return 'badge--very-low';
+  levelClass(level: string): string {
+    const l = level as AIScoreLevel;
+    switch (l) {
+      case 'PREMIUM':
+        return 'badge--premium';
+      case 'EXCELLENT':
+        return 'badge--excellent';
+      case 'VERY_GOOD':
+        return 'badge--very-good';
+      case 'GOOD':
+        return 'badge--good';
+      case 'MEDIUM':
+        return 'badge--medium';
+      case 'LOW':
+        return 'badge--low';
+      case 'VERY_LOW':
+        return 'badge--very-low';
+      default:
+        return 'badge--medium';
     }
+  }
+
+  formatLevelLabel(level: string): string {
+    return level.replace(/_/g, ' ');
   }
 
   scoreBar(score: number): number {
@@ -80,8 +110,11 @@ export class AdminScoringDashboardComponent implements OnInit, OnDestroy {
   formatDate(iso: string | null | undefined): string {
     if (!iso) return '—';
     return new Date(iso).toLocaleString('fr-FR', {
-      day: '2-digit', month: '2-digit', year: '2-digit',
-      hour: '2-digit', minute: '2-digit',
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   }
 }

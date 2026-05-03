@@ -39,25 +39,31 @@ public class AutoScoringService {
         boolean stegActive = isActive(existing != null ? existing.getStegBoosterExpiry() : null);
         boolean sonedeActive = isActive(existing != null ? existing.getSonedeBoosterExpiry() : null);
 
+        Double avgIncomeRaw = features.getAvgMonthlyIncome();
+        double effectiveSalary = (avgIncomeRaw != null && avgIncomeRaw > 0) ? avgIncomeRaw : 500.0;
+
         int score;
         String explanation = "";
 
         try {
-            double avgIncome = features.getAvgMonthlyIncome() != null ? features.getAvgMonthlyIncome() : 0.0;
             Map<String, Object> python = aiAgentClient.calculateScore(
-                    clientId, avgIncome, stegActive, sonedeActive, false);
+                    clientId, effectiveSalary, stegActive, sonedeActive, false);
             score = ((Number) python.getOrDefault("score", 0)).intValue();
             Object expl = python.get("explanation");
             if (expl != null) explanation = expl.toString();
         } catch (Exception e) {
             log.warn("Python AI unreachable for client {}: {}", clientId, e.getMessage());
-            score = existing != null ? existing.getCurrentScore() : 0;
-            explanation = existing != null && existing.getAiExplanation() != null
-                    ? existing.getAiExplanation() : "";
+            if (existing != null) {
+                score = existing.getCurrentScore();
+                explanation = existing.getAiExplanation() != null ? existing.getAiExplanation() : "";
+            } else {
+                score = offlineFallbackScore(effectiveSalary, stegActive, sonedeActive);
+                explanation = "Score estimated locally (AI service unavailable).";
+            }
         }
 
         boolean hasActiveCredit = Boolean.TRUE.equals(features.getHasActiveCredit());
-        double threshold = computeThreshold(score, features.getAvgMonthlyIncome());
+        double threshold = computeThreshold(score, effectiveSalary);
         if (hasActiveCredit) threshold = 0.0;
 
         AIScore aiScore = existing != null ? existing : AIScore.builder()
@@ -145,13 +151,22 @@ public class AutoScoringService {
         return expiry != null && expiry.isAfter(LocalDateTime.now());
     }
 
-    private double computeThreshold(int score, Double avgIncome) {
-        if (avgIncome == null || avgIncome <= 0) return 0;
+    private double computeThreshold(int score, double monthlySalary) {
+        if (monthlySalary <= 0) return 0;
         double multiplier;
         if (score >= 800)      multiplier = 4.5;
         else if (score >= 600) multiplier = 2.5;
         else if (score >= 400) multiplier = 1.5;
         else                   multiplier = 0.0;
-        return avgIncome * multiplier;
+        return monthlySalary * multiplier;
+    }
+
+    /** When Python is down and there is no saved row yet — bounded 0–1000. */
+    private int offlineFallbackScore(double salary, boolean steg, boolean sonede) {
+        int pts = (int) Math.min(400, Math.round(Math.min(salary, 10_000) / 10_000.0 * 400));
+        if (steg) pts += 100;
+        if (sonede) pts += 100;
+        pts += 120;
+        return Math.min(1000, Math.max(200, pts));
     }
 }
