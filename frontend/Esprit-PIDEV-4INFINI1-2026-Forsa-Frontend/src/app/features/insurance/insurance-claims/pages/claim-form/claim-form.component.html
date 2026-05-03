@@ -74,9 +74,11 @@
           <label>Evidence</label>
           <div class="evidence-list" style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
             @for (file of (form.attachmentUrl.split(',')); track file) {
-              <a [href]="claimSvc.getAttachmentUrl(file)" target="_blank" class="evidence-link">
-                <app-forsa-icon name="history" [size]="14" /> {{ file }}
-              </a>
+              @if (file.trim()) {
+                <a href="javascript:void(0)" (click)="claimSvc.viewAttachment(file.trim())" class="evidence-link">
+                  <app-forsa-icon name="history" [size]="14" /> {{ file.trim() }}
+                </a>
+              }
             }
           </div>
         </div>
