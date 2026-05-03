@@ -1,7 +1,7 @@
 <!-- Back nav -->
 <div class="detail-nav">
   <button class="btn-ghost" (click)="goBack()">
-    <app-forsa-icon name="arrow-left" [size]="16"></app-forsa-icon>
+    <app-forsa-icon name="chevron-left" [size]="16"></app-forsa-icon>
     Back to partners
   </button>
   @if (isAdmin && partner()) {
@@ -37,7 +37,7 @@
         <div class="card-pad">
           <div class="partner-header">
             <div class="partner-avatar">
-              <app-forsa-icon name="store" [size]="28"></app-forsa-icon>
+              <app-forsa-icon name="home" [size]="28"></app-forsa-icon>
             </div>
             <div>
               <h2 class="partner-name">{{ partner()!.businessName }}</h2>
@@ -61,28 +61,28 @@
 
           <dl class="info-grid">
             <div class="info-row">
-              <dt><app-forsa-icon name="map-pin" [size]="14"></app-forsa-icon> Location</dt>
+              <dt><app-forsa-icon name="home" [size]="14"></app-forsa-icon> Location</dt>
               <dd>{{ partner()!.address }}, {{ partner()!.city }}</dd>
             </div>
             @if (partner()!.businessPhone) {
               <div class="info-row">
-                <dt><app-forsa-icon name="phone" [size]="14"></app-forsa-icon> Phone</dt>
+                <dt><app-forsa-icon name="users" [size]="14"></app-forsa-icon> Phone</dt>
                 <dd>{{ partner()!.businessPhone }}</dd>
               </div>
             }
             @if (partner()!.businessEmail) {
               <div class="info-row">
-                <dt><app-forsa-icon name="mail" [size]="14"></app-forsa-icon> Email</dt>
+                <dt><app-forsa-icon name="message-square" [size]="14"></app-forsa-icon> Email</dt>
                 <dd>{{ partner()!.businessEmail }}</dd>
               </div>
             }
             <div class="info-row">
-              <dt><app-forsa-icon name="hash" [size]="14"></app-forsa-icon> Reg. number</dt>
+              <dt><app-forsa-icon name="filter" [size]="14"></app-forsa-icon> Reg. number</dt>
               <dd class="mono">{{ partner()!.registrationNumber }}</dd>
             </div>
             @if (partner()!.qrCodeId) {
               <div class="info-row">
-                <dt><app-forsa-icon name="qr-code" [size]="14"></app-forsa-icon> QR code ID</dt>
+                <dt><app-forsa-icon name="shield" [size]="14"></app-forsa-icon> QR code ID</dt>
                 <dd class="mono">{{ partner()!.qrCodeId }}</dd>
               </div>
             }
@@ -131,7 +131,7 @@
             @if (partner()!.status === 'ACTIVE') {
               @if (!showSuspendForm) {
                 <button class="btn-action btn-action--warn" [disabled]="actionLoading()" (click)="showSuspendForm = true">
-                  <app-forsa-icon name="pause-circle" [size]="16"></app-forsa-icon>
+                  <app-forsa-icon name="x-circle" [size]="16"></app-forsa-icon>
                   Suspend partner
                 </button>
               } @else {
@@ -156,7 +156,7 @@
                 </p>
               }
               <button class="btn-action btn-action--ok" [disabled]="actionLoading()" (click)="reactivate()">
-                <app-forsa-icon name="play-circle" [size]="16"></app-forsa-icon>
+                <app-forsa-icon name="refresh-cw" [size]="16"></app-forsa-icon>
                 Reactivate partner
               </button>
             }
@@ -201,7 +201,7 @@
       @if (isClient) {
         <app-forsa-card>
           <div class="card-pad cta-block">
-            <app-forsa-icon name="qr-code" [size]="32"></app-forsa-icon>
+            <app-forsa-icon name="shield" [size]="32"></app-forsa-icon>
             <div>
               <h3 class="cta-title">Pay at this partner</h3>
               <p class="cta-desc">Scan the partner's QR code — Forsa pays, you repay with +10% over 3 months and earn cashback.</p>
@@ -220,7 +220,7 @@
       <app-forsa-card>
         <div class="card-pad">
           <h3 class="section-title">
-            <app-forsa-icon name="star" [size]="18"></app-forsa-icon>
+            <app-forsa-icon name="heart" [size]="18"></app-forsa-icon>
             Reviews
             @if (partner()!.averageRating && partner()!.averageRating! > 0) {
               <span class="avg-rating">{{ partner()!.averageRating! | number:'1.1-1' }}/5</span>

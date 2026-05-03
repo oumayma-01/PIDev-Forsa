@@ -1,15 +1,13 @@
 package org.example.forsapidev.Controllers;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.example.forsapidev.DTO.AccountJsonDTO;
 import org.example.forsapidev.DTO.AccountTypeAdviceDTO;
-import org.example.forsapidev.DTO.AdaptiveInterestResultDTO;
 import org.example.forsapidev.DTO.BankVaultDTO;
 import org.example.forsapidev.DTO.WalletForecastDTO;
 import org.example.forsapidev.DTO.WalletStatisticsDTO;
 import org.example.forsapidev.Services.Interfaces.AccountService;
-import org.example.forsapidev.entities.WalletManagement.Account;
 import org.example.forsapidev.entities.WalletManagement.Activity;
-import org.example.forsapidev.entities.WalletManagement.Transaction;
 import org.example.forsapidev.entities.WalletManagement.TransactionType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/accounts")
@@ -33,26 +32,21 @@ public class AccountController {
 
     @SecurityRequirement(name = "Bearer Authentication")
     @PostMapping("/create")
-    public org.springframework.http.ResponseEntity<?> createAccount(@RequestParam("ownerId") Long ownerId,
-                                                                    @RequestParam("type") String type) {
-        try {
-            return org.springframework.http.ResponseEntity.ok(accountService.createAccount(ownerId, type));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("message", "ERROR_CREATE: " + e.getMessage()));
-        }
+    public AccountJsonDTO createAccount(@RequestParam Long ownerId,
+                                        @RequestParam String type) {
+        return AccountJsonDTO.from(accountService.createAccount(ownerId, type));
     }
 
     @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping("/{id}")
-    public Account getAccount(@PathVariable Long id) {
-        return accountService.getAccount(id);
+    public AccountJsonDTO getAccount(@PathVariable Long id) {
+        return AccountJsonDTO.from(accountService.getAccount(id));
     }
 
     @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping("/owner/{ownerId}")
-    public List<Account> getAccountsByOwner(@PathVariable Long ownerId) {
-        return accountService.getAccountsByOwner(ownerId);
+    public List<AccountJsonDTO> getAccountsByOwner(@PathVariable Long ownerId) {
+        return AccountJsonDTO.fromList(accountService.getAccountsByOwner(ownerId));
     }
 
     @SecurityRequirement(name = "Bearer Authentication")
@@ -101,10 +95,12 @@ public class AccountController {
 
     @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping("/{id}/transactions/filter")
-    public List<Transaction> filterTransactions(
-            @PathVariable("id") Long id,
-            @RequestParam("type") TransactionType type) {
-        return accountService.filterTransactions(id, type);
+    public List<AccountJsonDTO.TransactionJsonDTO> filterTransactions(
+            @PathVariable Long id,
+            @RequestParam TransactionType type) {
+        return accountService.filterTransactions(id, type).stream()
+                .map(AccountJsonDTO.TransactionJsonDTO::from)
+                .collect(Collectors.toList());
     }
 
     @SecurityRequirement(name = "Bearer Authentication")
@@ -127,8 +123,8 @@ public class AccountController {
     @SecurityRequirement(name = "Bearer Authentication")
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/all")
-    public List<Account> getAllAccounts() {
-        return accountService.getAllAccounts();
+    public List<AccountJsonDTO> getAllAccounts() {
+        return AccountJsonDTO.fromList(accountService.getAllAccounts());
     }
 
     @SecurityRequirement(name = "Bearer Authentication")
@@ -146,9 +142,9 @@ public class AccountController {
     @SecurityRequirement(name = "Bearer Authentication")
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}/status")
-    public Account updateAccountStatus(@PathVariable("id") Long id,
-                                       @RequestParam("status") String status) {
-        return accountService.updateAccountStatus(id, status);
+    public AccountJsonDTO updateAccountStatus(@PathVariable Long id,
+                                              @RequestParam String status) {
+        return AccountJsonDTO.from(accountService.updateAccountStatus(id, status));
     }
 
     @SecurityRequirement(name = "Bearer Authentication")
@@ -171,12 +167,6 @@ public class AccountController {
             @PathVariable("id") Long id,
             @RequestParam(value = "days", defaultValue = "30") int days) {
         return accountService.forecastBalance(id, days);
-    }
-
-    @SecurityRequirement(name = "Bearer Authentication")
-    @PostMapping("/{id}/adaptive-interest")
-    public AdaptiveInterestResultDTO applyAdaptiveInterest(@PathVariable Long id) {
-        return accountService.applyAdaptiveInterest(id);
     }
 
     @SecurityRequirement(name = "Bearer Authentication")

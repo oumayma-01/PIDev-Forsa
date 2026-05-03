@@ -3,6 +3,7 @@ package org.example.forsapidev.Services.Implementation;
 import lombok.RequiredArgsConstructor;
 import org.example.forsapidev.Repositories.ComplaintRepository;
 import org.example.forsapidev.Repositories.FeedbackRepository;
+import org.example.forsapidev.Repositories.ComplaintNotificationRepository;
 import org.example.forsapidev.Repositories.ResponseRepository;
 import org.example.forsapidev.Repositories.UserRepository;
 import org.example.forsapidev.Services.Interfaces.IComplaintService;
@@ -14,6 +15,7 @@ import org.example.forsapidev.entities.ComplaintFeedbackManagement.Response;
 import org.example.forsapidev.entities.UserManagement.User;
 import org.example.forsapidev.openai.ComplaintAiAssistant;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -33,6 +35,7 @@ public class ComplaintService implements IComplaintService {
     private final ComplaintAiAssistant complaintAiAssistant;
     private final UserRepository userRepository;
     private final ResponseRepository responseRepository;
+    private final ComplaintNotificationRepository complaintNotificationRepository;
     private final FeedbackRepository feedbackRepository;
     private final IComplaintNotificationService notificationService;
 
@@ -63,7 +66,10 @@ public class ComplaintService implements IComplaintService {
     }
 
     @Override
+    @Transactional
     public void removeComplaint(Long complaintId) {
+        complaintNotificationRepository.deleteByComplaintId(complaintId);
+        responseRepository.deleteByComplaintId(complaintId);
         complaintRepository.deleteById(complaintId);
     }
 
@@ -261,18 +267,14 @@ public class ComplaintService implements IComplaintService {
                     ChronoUnit.DAYS.between(complaint.getCreatedAt().toInstant(), Instant.now()));
         }
 
-        double clientScore = 50.0;
-
         double amountScore = amountScore(amount);
         double priorityScore = priorityScore(complaint.getPriority());
         double ageScore = Math.min(100.0, daysSinceCreation * 1.67);
-        double clientRiskScore = Math.max(0.0, 100.0 - clientScore);
 
         double impactScore = round2(
-                (amountScore * 0.40) +
-                        (priorityScore * 0.25) +
-                        (clientRiskScore * 0.20) +
-                        (ageScore * 0.15)
+                (amountScore   * 0.50) +
+                        (priorityScore * 0.35) +
+                        (ageScore      * 0.15)
         );
 
         String riskLevel;

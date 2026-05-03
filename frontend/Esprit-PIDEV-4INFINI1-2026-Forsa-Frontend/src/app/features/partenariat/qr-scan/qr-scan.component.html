@@ -1,6 +1,6 @@
 <div class="page-nav">
   <button class="btn-ghost" routerLink="/dashboard/partenariat">
-    <app-forsa-icon name="arrow-left" [size]="16"></app-forsa-icon>
+    <app-forsa-icon name="chevron-left" [size]="16"></app-forsa-icon>
     Back to partners
   </button>
 </div>
@@ -48,7 +48,7 @@
           View my history
         </button>
         <button class="btn-outline" (click)="reset()">
-          <app-forsa-icon name="qr-code" [size]="16"></app-forsa-icon>
+          <app-forsa-icon name="shield" [size]="16"></app-forsa-icon>
           New transaction
         </button>
       </div>
@@ -62,7 +62,7 @@
       <!-- Left: instructions -->
       <div class="scan-instructions">
         <div class="instructions-icon">
-          <app-forsa-icon name="qr-code" [size]="48"></app-forsa-icon>
+          <app-forsa-icon name="shield" [size]="48"></app-forsa-icon>
         </div>
         <h2 class="instructions-title">Pay at a partner store</h2>
         <ol class="instructions-list">
@@ -112,7 +112,7 @@
           <div class="form-fields">
             <div class="field">
               <label class="field-label">
-                <app-forsa-icon name="qr-code" [size]="14"></app-forsa-icon>
+                <app-forsa-icon name="shield" [size]="14"></app-forsa-icon>
                 QR Code ID <span class="req">*</span>
               </label>
               <input forsaInput type="text" [(ngModel)]="qrCodeId"
@@ -122,7 +122,7 @@
 
             <div class="field">
               <label class="field-label">
-                <app-forsa-icon name="coins" [size]="14"></app-forsa-icon>
+                <app-forsa-icon name="wallet" [size]="14"></app-forsa-icon>
                 Amount (TND) <span class="req">*</span>
               </label>
               <input forsaInput type="number" [(ngModel)]="amount"
@@ -131,7 +131,7 @@
 
             <div class="field">
               <label class="field-label">
-                <app-forsa-icon name="file-text" [size]="14"></app-forsa-icon>
+                <app-forsa-icon name="message-square" [size]="14"></app-forsa-icon>
                 Description (optional)
               </label>
               <input forsaInput type="text" [(ngModel)]="description"

@@ -2,7 +2,8 @@ import { Component, OnDestroy, OnInit, effect, inject } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth.service';
 import { ComplaintBackend, ComplaintResponse, Feedback } from '../../../core/models/forsa.models';
 import { ForsaBadgeComponent } from '../../../shared/ui/forsa-badge/forsa-badge.component';
@@ -20,17 +21,16 @@ type RoleCard = {
   description: string;
   linkText: string;
   color: 'blue' | 'yellow' | 'green' | 'purple' | 'orange';
-  action: 'newComplaint' | 'newFeedback' | 'openChatbot' | 'manageComplaints' | 'responses' | 'stats';
+  action: 'newComplaint' | 'newFeedback' | 'openChatbot' | 'manageComplaints' | 'manageFeedbacks' | 'responses' | 'stats';
 };
 
 type ClientComplaint = ComplaintBackend & {
   feedback?: { id?: number } | null;
-  user?: { id?: number } | null;
+  user?: { id?: number; fullName?: string; name?: string; username?: string; login?: string; email?: string } | null;
   clientId?: number;
   responses?: ComplaintResponse[];
 };
 type ClientFeedback = Feedback & { user?: { id?: number } | null; clientId?: number; complaint?: { id?: number } };
-type AssignableAgent = { id: number; username?: string; firstName?: string; lastName?: string; email?: string };
 
 @Component({
   selector: 'app-feedback-list',
@@ -46,7 +46,7 @@ export class FeedbackListComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(AuthService);
 
-items: ClientComplaint[] = [];
+  items: ClientComplaint[] = [];
   filteredItems: ClientComplaint[] = [];
   complaints: ClientComplaint[] = [];
   clientComplaints: ClientComplaint[] = [];
@@ -61,12 +61,13 @@ items: ClientComplaint[] = [];
   statusFilter = '';
   categoryFilter = '';
   pageDescription = 'Manage complaints and responses.';
-isAdmin = false;
+  isAdmin = false;
   isAgent = false;
   isClient = false;
   isAdminOrAgent = false;
   showComplaintsSection = false;
   showComplaintsList = false;
+  showFeedbacksList = false;
   roleCards: RoleCard[] = [];
   notifications: ComplaintNotification[] = [];
   unreadCount = 0;
@@ -76,11 +77,6 @@ isAdmin = false;
   aiReportError = '';
   globalFeedbacks: ClientFeedback[] = [];
   globalRatingScopeLabel = 'all users';
-  availableAgents: AssignableAgent[] = [];
-  selectedAssignComplaintId: number | null = null;
-  selectedAgentId: number | null = null;
-  loadingAgents = false;
-  assigningComplaint = false;
 
   readonly statuses = ['', 'OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'REJECTED'];
   readonly categories = ['', 'TECHNICAL', 'FINANCE', 'SUPPORT', 'FRAUD', 'ACCOUNT', 'CREDIT', 'OTHER'];
@@ -98,10 +94,8 @@ isAdmin = false;
       this.loadClientData();
       this.loadNotifications();
     }
-    if (this.isAdminOrAgent && this.route.snapshot.routeConfig?.path === 'complaints') {
-      this.showComplaintsList = true;
-      this.loadComplaints();
-    }
+    this.syncRouteView();
+    this.router.events.pipe(filter((e) => e instanceof NavigationEnd)).subscribe(() => this.syncRouteView());
   }
 
   private applyRoleContext(roles: string[]): void {
@@ -148,12 +142,14 @@ isAdmin = false;
     if (this.isAgent) {
       return [
         { icon: 'layout-dashboard', title: 'Complaints Management', description: 'View and manage all client complaints', linkText: 'Manage Complaints ->', color: 'blue', action: 'manageComplaints' },
+        { icon: 'heart', title: 'Feedbacks', description: 'View all feedbacks', linkText: 'View Feedbacks ->', color: 'yellow', action: 'manageFeedbacks' },
         { icon: 'send', title: 'Responses', description: 'Manage responses to complaints', linkText: 'Manage Responses ->', color: 'green', action: 'responses' },
         { icon: 'message-square', title: 'Virtual Assistant', description: 'Use AI chatbot for assistance', linkText: 'Open Chatbot ->', color: 'purple', action: 'openChatbot' },
       ];
     }
     return [
       { icon: 'layout-dashboard', title: 'Complaints Management', description: 'Full complaints management and oversight', linkText: 'Manage Complaints ->', color: 'blue', action: 'manageComplaints' },
+      { icon: 'heart', title: 'Feedbacks', description: 'View all submitted feedbacks', linkText: 'View Feedbacks ->', color: 'yellow', action: 'manageFeedbacks' },
       { icon: 'bar-chart-3', title: 'Statistics & Reports', description: 'View analytics, trends and performance metrics', linkText: 'View Stats ->', color: 'orange', action: 'stats' },
       { icon: 'send', title: 'Responses Management', description: 'Manage and improve responses with AI', linkText: 'Manage Responses ->', color: 'green', action: 'responses' },
       { icon: 'message-square', title: 'Virtual Assistant', description: 'AI-powered assistant for complaint handling', linkText: 'Open Chatbot ->', color: 'purple', action: 'openChatbot' },
@@ -178,16 +174,14 @@ isAdmin = false;
   }
 
   showManageComplaints(): void {
-    this.showComplaintsList = true;
-    this.loadComplaints();
+    this.router.navigate(['/dashboard/feedback/complaints']);
   }
 
   goBackFromComplaints(): void {
-    if (this.route.snapshot.routeConfig?.path === 'complaints') {
-      this.router.navigate(['/dashboard/feedback']);
-      return;
-    }
-    this.showComplaintsList = false;
+    this.router.navigate(['/dashboard/feedback']);
+  }
+  goBackFromFeedbacks(): void {
+    this.router.navigate(['/dashboard/feedback']);
   }
 
   private loadClientData(): void {
@@ -213,66 +207,6 @@ isAdmin = false;
     });
   }
 
-  openAssignDialog(complaintId: number): void {
-    this.selectedAssignComplaintId = complaintId;
-    this.selectedAgentId = null;
-    this.error = '';
-    if (this.availableAgents.length > 0) return;
-    this.loadingAgents = true;
-    this.feedbackFacade.getAvailableAgents().subscribe({
-      next: (data: any[]) => {
-        this.availableAgents = (Array.isArray(data) ? data : [])
-          .map((a: any) => ({
-            id: Number(a?.id),
-            username: a?.username,
-            firstName: a?.firstName,
-            lastName: a?.lastName,
-            email: a?.email,
-          }))
-          .filter((a) => Number.isFinite(a.id) && a.id > 0);
-        this.loadingAgents = false;
-      },
-      error: () => {
-        this.loadingAgents = false;
-        this.error = 'Unable to load available agents.';
-      },
-    });
-  }
-
-  cancelAssignDialog(): void {
-    this.selectedAssignComplaintId = null;
-    this.selectedAgentId = null;
-  }
-
-  confirmAssignComplaint(): void {
-    if (!this.selectedAssignComplaintId) return;
-    const userId = Number(this.selectedAgentId);
-    if (!Number.isFinite(userId) || userId <= 0) {
-      this.error = 'Please select an agent.';
-      return;
-    }
-    this.assigningComplaint = true;
-    this.feedbackFacade.assignComplaint(this.selectedAssignComplaintId, userId).subscribe({
-      next: () => {
-        this.error = '';
-        this.assigningComplaint = false;
-        this.cancelAssignDialog();
-        this.loadComplaints();
-      },
-      error: () => {
-        this.assigningComplaint = false;
-        this.error = 'Unable to assign complaint.';
-      },
-    });
-  }
-
-  agentLabel(agent: AssignableAgent): string {
-    const fullName = `${agent.firstName ?? ''} ${agent.lastName ?? ''}`.trim();
-    if (fullName) return `${fullName} (#${agent.id})`;
-    if (agent.username) return `${agent.username} (#${agent.id})`;
-    if (agent.email) return `${agent.email} (#${agent.id})`;
-    return `Agent #${agent.id}`;
-  }
 
   toggleNotifications(): void {
     this.showNotifications = !this.showNotifications;
@@ -368,11 +302,6 @@ isAdmin = false;
   }
 
   private loadGlobalFeedbacksForRating(): void {
-    if (this.isClient) {
-      this.globalFeedbacks = this.clientFeedbacks;
-      this.globalRatingScopeLabel = 'your feedbacks';
-      return;
-    }
     this.feedbackFacade.getAllFeedbacks().subscribe({
       next: (data: any) => {
         const list = Array.isArray(data) ? data : [];
@@ -380,8 +309,8 @@ isAdmin = false;
         this.globalRatingScopeLabel = 'all users';
       },
       error: () => {
-        this.globalFeedbacks = this.clientFeedbacks;
-        this.globalRatingScopeLabel = 'your feedbacks';
+        this.globalFeedbacks = this.clientFeedbacks ?? [];
+        this.globalRatingScopeLabel = this.isClient ? 'your feedbacks' : 'all users';
       },
     });
   }
@@ -463,11 +392,23 @@ isAdmin = false;
     this.feedbackFacade.deleteFeedback(id).subscribe({
       next: () => {
         this.clientFeedbacks = this.clientFeedbacks.filter((f) => f.id !== id);
+        this.globalFeedbacks = this.globalFeedbacks.filter((f) => f.id !== id);
       },
       error: () => {
         // Keep local view unchanged when delete fails.
       },
     });
+  }
+
+  feedbackAuthor(item: ClientFeedback): string {
+    const source: any = item as any;
+    const user = source?.user ?? source?.client ?? source?.author ?? source?.createdBy;
+    const fullName = user?.fullName ?? user?.name;
+    const username = user?.username ?? user?.login;
+    const email = user?.email;
+    const id = user?.id ?? source?.clientId;
+
+    return fullName || username || email || (id ? `User #${id}` : 'Unknown user');
   }
 
   statusIcon(status: string): ForsaIconName {
@@ -497,15 +438,33 @@ isAdmin = false;
     this.router.navigate(['/dashboard/feedback/feedback/add'], { queryParams: { complaintId } });
   }
 
+  complaintAuthor(item: ClientComplaint): string {
+    const source: any = item as any;
+    const user = source?.user ?? source?.client ?? source?.author ?? source?.createdBy;
+    const fullName = user?.fullName ?? user?.name;
+    const username = user?.username ?? user?.login;
+    const email = user?.email;
+    const id = user?.id ?? source?.clientId;
+    return fullName || username || email || (id ? `User #${id}` : 'Unknown user');
+  }
+
   onRoleCardClick(action: RoleCard['action']): void {
     if (action === 'newComplaint') this.goToAdd();
     if (action === 'newFeedback') this.router.navigate(['/dashboard/feedback/feedback/add']);
     if (action === 'openChatbot') this.goToChatbot();
     if (action === 'responses') this.goToResponses();
     if (action === 'stats') this.goToStats();
+    if (action === 'manageFeedbacks') this.router.navigate(['/dashboard/feedback/feedbacks']);
     if (action === 'manageComplaints') {
       this.router.navigate(['/dashboard/feedback/complaints']);
     }
+  }
+  private syncRouteView(): void {
+    const path = this.route.snapshot.routeConfig?.path ?? '';
+    this.showComplaintsList = this.isAdminOrAgent && path === 'complaints';
+    this.showFeedbacksList = this.isAdminOrAgent && path === 'feedbacks';
+    if (this.showComplaintsList) this.loadComplaints();
+    if (this.showFeedbacksList) this.loadGlobalFeedbacksForRating();
   }
 
   feedbackStars(rating: number): string {
@@ -514,9 +473,10 @@ isAdmin = false;
   }
 
   get clientAverageRating(): number {
-    if (!this.globalFeedbacks.length) return 0;
-    const sum = this.globalFeedbacks.reduce((acc, item) => acc + Number(item.rating ?? 0), 0);
-    return Math.round((sum / this.globalFeedbacks.length) * 100) / 100;
+    const source = this.isClient ? this.clientFeedbacks : this.globalFeedbacks;
+    if (!source.length) return 0;
+    const sum = source.reduce((acc, item) => acc + Number(item.rating ?? 0), 0);
+    return Math.round((sum / source.length) * 100) / 100;
   }
 
   get clientAverageRatingStars(): string {

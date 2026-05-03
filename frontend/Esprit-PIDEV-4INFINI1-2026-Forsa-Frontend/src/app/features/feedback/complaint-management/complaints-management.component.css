@@ -1,0 +1,55 @@
+.filters-inner {
+  display: flex;
+  gap: 12px;
+}
+
+.fb-filter {
+  flex: 1 1 0;
+}
+
+.fb-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.fb-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.category-badge {
+  background: #eef1f4;
+  color: #556;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+}
+
+.fb-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.impact-line {
+  margin: 8px 0;
+  color: #2f3b4a;
+}
+
+.ai-response {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e7ecf2;
+}

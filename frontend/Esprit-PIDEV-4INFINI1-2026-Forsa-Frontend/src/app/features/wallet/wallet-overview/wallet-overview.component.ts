@@ -1,4 +1,5 @@
 import { DecimalPipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ForsaBadgeComponent } from '../../../shared/ui/forsa-badge/forsa-badge.component';
@@ -14,7 +15,6 @@ import type {
   WalletStatisticsDTO,
   WalletForecastDTO,
   AccountTypeAdviceDTO,
-  AdaptiveInterestResultDTO,
 } from '../../../core/models/wallet.models';
 
 @Component({
@@ -35,12 +35,13 @@ export class WalletOverviewComponent implements OnInit {
   // ── CLIENT state ─────────────────────────────────────────────────────────────
   account: Account | null = null;
   investmentAccount: Account | null = null;
+  /** Which wallet the client is viewing when they have both SAVINGS and INVESTMENT. */
+  clientWalletView: 'SAVINGS' | 'INVESTMENT' = 'SAVINGS';
   transactions: Transaction[] = [];
   activities: Activity[] = [];
   stats: WalletStatisticsDTO | null = null;
   forecast: WalletForecastDTO | null = null;
   advice: AccountTypeAdviceDTO | null = null;
-  adaptiveResult: AdaptiveInterestResultDTO | null = null;
 
   // ── ADMIN state ───────────────────────────────────────────────────────────────
   allAccounts: Account[] = [];
@@ -63,7 +64,6 @@ export class WalletOverviewComponent implements OnInit {
   loading = true;
   loadingForecast = false;
   loadingAdvice = false;
-  loadingAdaptive = false;
   loadingActivities = false;
   loadingAdminOp = false;
 
@@ -76,7 +76,6 @@ export class WalletOverviewComponent implements OnInit {
   showAdminCreateModal = false;
   showAdminDepositModal = false;
   showAdminWithdrawModal = false;
-  showActivitiesInHistory = false;
   showInvestmentCreateModal = false;
 
   // ── Form fields ───────────────────────────────────────────────────────────────
@@ -94,6 +93,8 @@ export class WalletOverviewComponent implements OnInit {
   // ── Feedback ──────────────────────────────────────────────────────────────────
   operationMessage = '';
   operationError = '';
+  /** Set when GET /accounts/owner/:id fails (e.g. JSON parse) — do not show "create account" in this state. */
+  clientAccountsLoadError: string | null = null;
 
   constructor(private readonly accountSvc: AccountService, private readonly auth: AuthService) {}
 
@@ -107,7 +108,7 @@ export class WalletOverviewComponent implements OnInit {
       this.loading = false;
       return;
     }
-    this.loadClientAccount();
+    this.loadClientAccounts();
   }
 
   // ── STAFF methods (ADMIN + AGENT) ────────────────────────────────────────────
@@ -181,8 +182,15 @@ export class WalletOverviewComponent implements OnInit {
     }
     this.loading = true;
     this.accountSvc.getAllAccounts().subscribe({
-      next: (list) => { this.allAccounts = list; this.loading = false; },
-      error: () => { this.loading = false; },
+      next: (list) => {
+        this.allAccounts = list;
+        this.loading = false;
+        this.operationError = '';
+      },
+      error: (err: HttpErrorResponse) => {
+        this.loading = false;
+        this.operationError = this.httpErrorMessage(err, 'Could not load accounts list.');
+      },
     });
   }
 
@@ -298,12 +306,17 @@ export class WalletOverviewComponent implements OnInit {
     if (!this.isAdmin) {
       return;
     }
+    this.operationError = '';
     this.accountSvc.applyMonthlyInterest().subscribe({
       next: () => {
-        this.operationMessage = 'Monthly interest applied to all active INVESTMENT accounts.';
+        this.operationMessage =
+          'Monthly interest run finished. Every ACTIVE INVESTMENT account with a positive balance was credited (vault updated).';
+        this.loadBankVault();
         this.loadAllAccounts();
       },
-      error: () => { this.operationError = 'No active INVESTMENT accounts found or request failed.'; },
+      error: (err: HttpErrorResponse) => {
+        this.operationError = this.httpErrorMessage(err, 'Could not apply monthly interest.');
+      },
     });
   }
 
@@ -322,39 +335,89 @@ export class WalletOverviewComponent implements OnInit {
 
   // ── CLIENT methods ────────────────────────────────────────────────────────────
 
-  private loadClientAccount(): void {
-    const user = this.auth.currentUser();
-    if (!user?.id) { this.loading = false; return; }
-    this.accountSvc.getAccountsByOwner(+user.id).subscribe({
-      next: (accounts) => {
-        const savings = accounts.find(a => a.type === 'SAVINGS');
-        const investment = accounts.find(a => a.type === 'INVESTMENT');
+  get hasClientWallet(): boolean {
+    return !!(this.account || this.investmentAccount);
+  }
 
-        if (savings) {
-          this.account = savings;
-          this.transactions = savings.wallet?.transactions ?? [];
-          this.loadStats();
-          this.loadActivitiesInternal();
-        } else if (this.isClient) {
-          // Auto-create SAVINGS wallet if missing for client
-          this.createType = 'SAVINGS';
-          this.submitCreate();
-        }
+  /** The account currently shown in the client hero (savings and/or investment switcher). */
+  get activeClientAccount(): Account | null {
+    if (this.clientWalletView === 'INVESTMENT' && this.investmentAccount) {
+      return this.investmentAccount;
+    }
+    return this.account;
+  }
 
-        if (investment) {
-          this.investmentAccount = investment;
-        }
-
-        this.loading = false;
-      },
-      error: (err) => { 
-        this.loading = false; 
-        this.operationError = err.error?.message || err.message || 'Failed to load your accounts. The server might be unreachable.'; 
+  selectClientWalletView(view: 'SAVINGS' | 'INVESTMENT'): void {
+    if (view === 'INVESTMENT' && !this.investmentAccount) return;
+    this.clientWalletView = view;
+    const acc = this.activeClientAccount;
+    if (!acc) return;
+    this.accountSvc.getAccount(acc.id).subscribe({
+      next: (fresh) => {
+        if (fresh.type === 'INVESTMENT') this.investmentAccount = fresh;
+        else this.account = fresh;
+        this.transactions = fresh.wallet?.transactions ?? [];
+        this.loadStats();
+        this.loadActivitiesInternal();
       },
     });
   }
 
-  get balance(): number { return this.account?.wallet?.balance ?? 0; }
+  /** Load client wallets from API (call again after fixing backend / connection). */
+  loadClientAccounts(): void {
+    const user = this.auth.currentUser();
+    if (!user?.id) {
+      this.loading = false;
+      return;
+    }
+    this.loading = true;
+    this.clientAccountsLoadError = null;
+    this.accountSvc.getAccountsByOwner(+user.id).subscribe({
+      next: (accounts) => {
+        const list = accounts ?? [];
+        const t = (a: Account) => String(a.type ?? '').toUpperCase();
+        const savings = list.find((a) => t(a) === 'SAVINGS');
+        const investment = list.find((a) => t(a) === 'INVESTMENT');
+        this.account = savings ?? null;
+        this.investmentAccount = investment ?? null;
+        this.operationError = '';
+        this.clientAccountsLoadError = null;
+
+        if (!this.account && this.isClient) {
+          this.createType = 'SAVINGS';
+          this.submitCreate();
+          this.loading = false;
+          return;
+        }
+
+        if (!this.account && this.investmentAccount) {
+          this.clientWalletView = 'INVESTMENT';
+        } else if (!this.investmentAccount) {
+          this.clientWalletView = 'SAVINGS';
+        }
+        if (this.clientWalletView === 'INVESTMENT' && !this.investmentAccount) {
+          this.clientWalletView = 'SAVINGS';
+        }
+
+        const active = this.activeClientAccount;
+        if (active) {
+          this.transactions = active.wallet?.transactions ?? [];
+          this.loadStats();
+        }
+
+        this.loading = false;
+      },
+      error: (err: HttpErrorResponse) => {
+        this.loading = false;
+        this.clientAccountsLoadError = this.httpErrorMessage(
+          err,
+          'Could not load your wallet accounts. If accounts already exist in the database, do not create duplicates — fix the API error and retry.',
+        );
+      },
+    });
+  }
+
+  get balance(): number { return this.activeClientAccount?.wallet?.balance ?? 0; }
 
   openCreateModal(): void { this.createType = 'SAVINGS'; this.operationError = ''; this.showCreateModal = true; }
   closeCreateModal(): void { this.showCreateModal = false; }
@@ -365,36 +428,39 @@ export class WalletOverviewComponent implements OnInit {
     const holderName = user.username ?? `User #${user.id}`;
     this.accountSvc.createAccount(+user.id, this.createType, holderName).subscribe({
       next: (acc) => {
-        if (this.createType === 'SAVINGS') {
-          this.account = acc;
-          this.transactions = [];
-          this.loadStats();
-        } else {
+        if (acc.type === 'INVESTMENT') {
           this.investmentAccount = acc;
+          this.clientWalletView = 'INVESTMENT';
+        } else {
+          this.account = acc;
+          this.clientWalletView = 'SAVINGS';
         }
+        this.transactions = acc.wallet?.transactions ?? [];
         this.showCreateModal = false;
         this.showInvestmentCreateModal = false;
         this.operationError = '';
-        this.operationMessage = `${acc.type} Wallet activated successfully!`;
+        this.operationMessage = `${acc.type} account created successfully!`;
+        this.loadStats();
       },
-      error: (err) => { 
-        console.error(err);
-        this.operationError = err.error?.message || err.message || 'Failed to activate wallet. Ensure you are logged in as a Client.'; 
+      error: (err: HttpErrorResponse) => {
+        this.operationError = this.httpErrorMessage(err, 'Account creation failed. Please try again.');
       },
     });
   }
 
   openInvestmentCreate(): void {
     this.createType = 'INVESTMENT';
+    this.operationError = '';
     this.showInvestmentCreateModal = true;
   }
 
   openDepositModal(): void { this.depositAmount = null; this.operationError = ''; this.showDepositModal = true; }
   closeDepositModal(): void { this.showDepositModal = false; }
   submitDeposit(): void {
-    if (!this.account || !this.depositAmount || this.depositAmount <= 0) return;
+    const acc = this.activeClientAccount;
+    if (!acc || !this.depositAmount || this.depositAmount <= 0) return;
     const amount = this.depositAmount;
-    this.accountSvc.deposit(this.account.id, amount).subscribe({
+    this.accountSvc.deposit(acc.id, amount).subscribe({
       next: () => { this.operationMessage = `Deposited $${amount.toFixed(2)}`; this.showDepositModal = false; this.refreshClientAccount(); },
       error: () => { this.operationError = 'Deposit failed.'; },
     });
@@ -403,9 +469,10 @@ export class WalletOverviewComponent implements OnInit {
   openWithdrawModal(): void { this.withdrawAmount = null; this.operationError = ''; this.showWithdrawModal = true; }
   closeWithdrawModal(): void { this.showWithdrawModal = false; }
   submitWithdraw(): void {
-    if (!this.account || !this.withdrawAmount || this.withdrawAmount <= 0) return;
+    const acc = this.activeClientAccount;
+    if (!acc || !this.withdrawAmount || this.withdrawAmount <= 0) return;
     const amount = this.withdrawAmount;
-    this.accountSvc.withdraw(this.account.id, amount).subscribe({
+    this.accountSvc.withdraw(acc.id, amount).subscribe({
       next: () => { this.operationMessage = `Withdrew $${amount.toFixed(2)}`; this.showWithdrawModal = false; this.refreshClientAccount(); },
       error: () => { this.operationError = 'Insufficient balance or account is blocked.'; },
     });
@@ -414,19 +481,21 @@ export class WalletOverviewComponent implements OnInit {
   openTransferModal(): void { this.transferToAccountId = null; this.transferAmount = null; this.operationError = ''; this.showTransferModal = true; }
   closeTransferModal(): void { this.showTransferModal = false; }
   submitTransfer(): void {
-    if (!this.account || !this.transferToAccountId || !this.transferAmount || this.transferAmount <= 0) return;
+    const acc = this.activeClientAccount;
+    if (!acc || !this.transferToAccountId || !this.transferAmount || this.transferAmount <= 0) return;
     const amount = this.transferAmount;
-    this.accountSvc.transfer(this.account.id, this.transferToAccountId, amount).subscribe({
+    this.accountSvc.transfer(acc.id, this.transferToAccountId, amount).subscribe({
       next: () => { this.operationMessage = `Transferred $${amount.toFixed(2)}`; this.showTransferModal = false; this.refreshClientAccount(); },
       error: () => { this.operationError = 'Transfer failed. Check the account ID and your balance.'; },
     });
   }
 
   openActivities(): void {
-    if (!this.account) return;
+    const acc = this.activeClientAccount;
+    if (!acc) return;
     this.showActivitiesModal = true;
     this.loadingActivities = true;
-    this.accountSvc.getActivities(this.account.id).subscribe({
+    this.accountSvc.getActivities(acc.id).subscribe({
       next: (a) => { this.activities = a; this.loadingActivities = false; },
       error: () => { this.loadingActivities = false; },
     });
@@ -434,29 +503,22 @@ export class WalletOverviewComponent implements OnInit {
   closeActivities(): void { this.showActivitiesModal = false; }
 
   loadForecast(): void {
-    if (!this.account) return;
+    const acc = this.activeClientAccount;
+    if (!acc) return;
     this.loadingForecast = true; this.forecast = null;
-    this.accountSvc.forecast(this.account.id, 30).subscribe({
+    this.accountSvc.forecast(acc.id, 30).subscribe({
       next: (f) => { this.forecast = f; this.loadingForecast = false; },
       error: () => { this.loadingForecast = false; },
     });
   }
 
   loadAdvice(): void {
-    if (!this.account) return;
+    const acc = this.activeClientAccount;
+    if (!acc) return;
     this.loadingAdvice = true; this.advice = null;
-    this.accountSvc.getAccountTypeAdvice(this.account.id).subscribe({
+    this.accountSvc.getAccountTypeAdvice(acc.id).subscribe({
       next: (a) => { this.advice = a; this.loadingAdvice = false; },
       error: () => { this.loadingAdvice = false; },
-    });
-  }
-
-  applyAdaptiveInterest(): void {
-    if (!this.account) return;
-    this.loadingAdaptive = true; this.adaptiveResult = null;
-    this.accountSvc.applyAdaptiveInterest(this.account.id).subscribe({
-      next: (r) => { this.adaptiveResult = r; this.loadingAdaptive = false; this.refreshClientAccount(); },
-      error: () => { this.operationError = 'Smart interest only applies to INVESTMENT accounts.'; this.loadingAdaptive = false; },
     });
   }
 
@@ -477,27 +539,38 @@ export class WalletOverviewComponent implements OnInit {
   formatDate(date: string): string { return date ? date.substring(0, 10) : ''; }
   clearMessage(): void { this.operationMessage = ''; this.operationError = ''; }
 
+  private httpErrorMessage(err: HttpErrorResponse, fallback: string): string {
+    const body = err.error;
+    if (typeof body === 'string' && body.trim()) return body;
+    if (body && typeof body.message === 'string') return body.message;
+    if (err.message) return err.message;
+    return fallback;
+  }
+
   private loadStats(): void {
-    if (!this.account) return;
-    this.accountSvc.getStatistics(this.account.id).subscribe({ next: (s) => (this.stats = s) });
+    const acc = this.activeClientAccount;
+    if (!acc) return;
+    this.accountSvc.getStatistics(acc.id).subscribe({ next: (s) => (this.stats = s) });
   }
 
   private refreshClientAccount(): void {
-    if (!this.account) return;
-    this.accountSvc.getAccount(this.account.id).subscribe({
+    const active = this.activeClientAccount;
+    if (!active) return;
+    this.accountSvc.getAccount(active.id).subscribe({
       next: (acc) => {
-        this.account = acc;
+        if (acc.type === 'INVESTMENT') this.investmentAccount = acc;
+        else this.account = acc;
         this.transactions = acc.wallet?.transactions ?? [];
         this.loadStats();
-        this.loadActivitiesInternal();
       },
     });
   }
 
   private loadActivitiesInternal(): void {
-    if (!this.account) return;
+    const acc = this.activeClientAccount;
+    if (!acc) return;
     this.loadingActivities = true;
-    this.accountSvc.getActivities(this.account.id).subscribe({
+    this.accountSvc.getActivities(acc.id).subscribe({
       next: (a) => {
         this.activities = a;
         this.loadingActivities = false;

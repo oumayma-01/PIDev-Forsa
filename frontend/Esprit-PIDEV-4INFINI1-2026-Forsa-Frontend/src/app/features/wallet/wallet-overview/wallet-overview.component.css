@@ -267,6 +267,30 @@
 @media (min-width: 768px) {
   .wallet-grid { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); align-items: stretch; }
 }
+.wallet-view-tabs {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.2rem;
+  margin-bottom: 0.75rem;
+  border-radius: 0.65rem;
+  background: color-mix(in oklab, var(--color-foreground, #0f172a) 6%, transparent);
+}
+.wallet-view-tab {
+  border: none;
+  cursor: pointer;
+  padding: 0.4rem 0.85rem;
+  border-radius: 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: transparent;
+  color: var(--color-muted-foreground, #64748b);
+}
+.wallet-view-tab--active {
+  background: var(--color-background, #fff);
+  color: var(--color-foreground, #0f172a);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
 .hero-card { box-shadow: 0 20px 45px -15px color-mix(in oklab, var(--color-primary) 45%, transparent); }
 .hero-inner {
   position: relative; overflow: hidden;
@@ -319,6 +343,10 @@
   color: var(--color-foreground);
 }
 .qa-btn:hover { border-color: var(--color-primary); background: color-mix(in oklab, var(--color-primary) 4%, transparent); transform: translateX(2px); }
+.qa-btn--primary {
+  border-color: color-mix(in oklab, var(--color-primary) 55%, transparent);
+  background: color-mix(in oklab, var(--color-primary) 12%, transparent);
+}
 
 .qa-ico {
   width: 2.25rem; height: 2.25rem;

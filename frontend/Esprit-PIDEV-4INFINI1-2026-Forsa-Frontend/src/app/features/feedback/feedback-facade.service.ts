@@ -3,8 +3,6 @@ import { Observable, map } from 'rxjs';
 import { ComplaintService } from '../../core/data/complaint.service';
 import { FeedbackService } from '../../core/data/feedback.service';
 import { ResponseService } from '../../core/data/response.service';
-import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../environments/environment';
 import {
   ComplaintBackend,
   ComplaintResponse,
@@ -16,8 +14,6 @@ export class FeedbackFacadeService {
   private readonly complaintService = inject(ComplaintService);
   private readonly feedbackService = inject(FeedbackService);
   private readonly responseService = inject(ResponseService);
-  private readonly http = inject(HttpClient);
-  private readonly apiBaseUrl = environment.apiBaseUrl;
 
   getAllComplaints(): Observable<ComplaintBackend[]> {
     return this.complaintService.getAll().pipe(map((data: any) => this.asList<ComplaintBackend>(data)));
@@ -71,22 +67,12 @@ export class FeedbackFacadeService {
     return this.complaintService.getFinancialImpactScore(complaintId).pipe(map((data: any) => this.unwrap<any>(data)));
   }
 
-  assignComplaint(complaintId: number, userId: number): Observable<ComplaintBackend> {
-    return this.complaintService.assignToUser(complaintId, userId).pipe(
-      map((data: any) => this.unwrap<ComplaintBackend>(data) as ComplaintBackend),
-    );
-  }
-
   getResponsesSummaryReport(): Observable<any> {
     return this.responseService.getSummaryReport().pipe(map((data: any) => this.unwrap<any>(data)));
   }
 
   getFeedbackTrends(months: number = 6): Observable<any[]> {
     return this.feedbackService.getTrendsReport(months).pipe(map((data: any) => this.asList<any>(data)));
-  }
-
-  getAvailableAgents(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiBaseUrl}/agents/available`).pipe(map((data: any) => this.asList<any>(data)));
   }
 
   private unwrap<T>(data: any): T | null {
