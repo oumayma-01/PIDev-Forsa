@@ -35,6 +35,15 @@ public class WalletAiService {
 
     private final ObjectMapper mapper = new ObjectMapper();
 
+    /** True when a real API key is present (env or properties), not an unresolved placeholder. */
+    public boolean isConfigured() {
+        if (apiKey == null || apiKey.isBlank()) {
+            return false;
+        }
+        String t = apiKey.trim();
+        return !t.startsWith("${") && t.length() > 8;
+    }
+
     public String askAI(String systemPrompt, String userMessage) {
         try {
             if (apiKey == null || apiKey.isBlank()) {

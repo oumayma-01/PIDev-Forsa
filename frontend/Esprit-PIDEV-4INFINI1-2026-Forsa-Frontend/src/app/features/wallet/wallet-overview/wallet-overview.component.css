@@ -267,6 +267,30 @@
 @media (min-width: 768px) {
   .wallet-grid { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); align-items: stretch; }
 }
+.wallet-view-tabs {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.2rem;
+  margin-bottom: 0.75rem;
+  border-radius: 0.65rem;
+  background: color-mix(in oklab, var(--color-foreground, #0f172a) 6%, transparent);
+}
+.wallet-view-tab {
+  border: none;
+  cursor: pointer;
+  padding: 0.4rem 0.85rem;
+  border-radius: 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: transparent;
+  color: var(--color-muted-foreground, #64748b);
+}
+.wallet-view-tab--active {
+  background: var(--color-background, #fff);
+  color: var(--color-foreground, #0f172a);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
 .hero-card { box-shadow: 0 20px 45px -15px color-mix(in oklab, var(--color-primary) 45%, transparent); }
 .hero-inner {
   position: relative; overflow: hidden;
@@ -319,6 +343,10 @@
   color: var(--color-foreground);
 }
 .qa-btn:hover { border-color: var(--color-primary); background: color-mix(in oklab, var(--color-primary) 4%, transparent); transform: translateX(2px); }
+.qa-btn--primary {
+  border-color: color-mix(in oklab, var(--color-primary) 55%, transparent);
+  background: color-mix(in oklab, var(--color-primary) 12%, transparent);
+}
 
 .qa-ico {
   width: 2.25rem; height: 2.25rem;
@@ -350,8 +378,40 @@
   margin-bottom: 1rem; flex-wrap: wrap;
 }
 .ai-result-icon { font-size: 2rem; flex-shrink: 0; }
-.ai-result-head > div { flex: 1; }
+.ai-result-head__body {
+  flex: 1;
+  min-width: 0;
+}
 .ai-result-head h3 { margin: 0 0 0.2rem; }
+
+.ai-result-head__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.ai-result-dismiss {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: 0.45rem;
+  background: color-mix(in oklab, var(--color-muted) 55%, transparent);
+  color: var(--color-muted-foreground);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.ai-result-dismiss:hover {
+  background: var(--color-muted);
+  color: var(--color-foreground);
+}
 
 .forecast-row {
   display: flex; align-items: center; gap: 1rem;
@@ -418,6 +478,16 @@
 .trail-content { margin-top: -0.2rem; }
 .trail-action { margin: 0; font-weight: 600; font-size: 0.88rem; }
 .trail-date   { margin: 0.1rem 0 0; font-size: 0.75rem; color: var(--color-muted-foreground); }
+
+.act-head--with-dismiss {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.act-head--with-dismiss > div:first-child { flex: 1; min-width: 0; }
+.act-head--with-dismiss h3 { margin: 0 0 0.2rem; }
 
 .act-list { display: flex; flex-direction: column; gap: 0.75rem; }
 .act-ico {
@@ -496,3 +566,101 @@
 .type-opt span   { font-size: 0.78rem; color: var(--color-muted-foreground); }
 
 .muted { color: var(--color-muted-foreground); font-size: 0.88rem; }
+
+/* Credit score tip (under Account Advice on Digital Wallet) */
+.credit-score-tip {
+  margin-top: 0.85rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.65rem;
+  border: 1px solid color-mix(in oklab, var(--color-primary) 22%, var(--color-border));
+  background: color-mix(in oklab, var(--color-primary) 6%, transparent);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--color-foreground);
+}
+.credit-score-tip--in-card {
+  margin-top: 1rem;
+}
+.credit-score-tip__title {
+  margin: 0 0 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted-foreground);
+}
+.credit-score-tip__list {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+.credit-score-tip__list li + li {
+  margin-top: 0.35rem;
+}
+.credit-score-tip a {
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.credit-score-tip__para {
+  margin: 0;
+}
+
+/* Same standing strip look as My score (shown inside Account Advice card). */
+.standing-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.65rem;
+  border: 1px solid var(--color-border);
+  background: color-mix(in oklab, var(--color-muted) 35%, transparent);
+}
+.standing-strip__main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+.standing-strip__eyebrow {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-muted-foreground);
+}
+.standing-strip__label {
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.standing-strip__points {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-muted-foreground);
+}
+.standing-strip--risk {
+  border-color: color-mix(in oklab, var(--color-destructive) 45%, var(--color-border));
+  background: color-mix(in oklab, var(--color-destructive) 8%, transparent);
+}
+.standing-strip--risk .standing-strip__label {
+  color: var(--color-destructive);
+}
+.standing-strip--mid {
+  border-color: color-mix(in oklab, #d97706 40%, var(--color-border));
+  background: color-mix(in oklab, #d97706 10%, transparent);
+}
+.standing-strip--mid .standing-strip__label {
+  color: #b45309;
+}
+.standing-strip--ok {
+  border-color: color-mix(in oklab, var(--color-emerald-500) 35%, var(--color-border));
+  background: color-mix(in oklab, var(--color-emerald-500) 8%, transparent);
+}
+.standing-strip--ok .standing-strip__label {
+  color: var(--color-emerald-600);
+}

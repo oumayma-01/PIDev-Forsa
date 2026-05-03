@@ -47,6 +47,19 @@ export class InsuranceClaimService {
     return this.http.get(`${this.base}/attachments/${fileName}`, { responseType: 'blob' });
   }
 
+  viewAttachment(fileName: string): void {
+    this.downloadAttachment(fileName).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank');
+      },
+      error: (err) => {
+        console.error('Error viewing attachment:', err);
+        alert('Could not load the attachment. Please ensure you are logged in.');
+      }
+    });
+  }
+
   getClaimTemplate(policyType: string): Observable<ClaimTemplate> {
     return this.http.get<ClaimTemplate>(`${this.base}/template/${policyType}`);
   }

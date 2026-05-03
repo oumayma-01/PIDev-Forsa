@@ -63,15 +63,6 @@ export interface AccountTypeAdviceDTO {
   reasoning: string;
 }
 
-export interface AdaptiveInterestResultDTO {
-  accountId: number;
-  previousBalance: number;
-  interestApplied: number;
-  newBalance: number;
-  rateUsed: number;
-  justification: string;
-}
-
 export interface BankVaultDTO {
   totalFunds: number;
 }

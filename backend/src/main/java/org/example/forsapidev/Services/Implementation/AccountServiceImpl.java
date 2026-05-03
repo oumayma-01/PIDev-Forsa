@@ -1,8 +1,8 @@
 package org.example.forsapidev.Services.Implementation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.example.forsapidev.DTO.AccountJsonDTO;
 import org.example.forsapidev.DTO.AccountTypeAdviceDTO;
-import org.example.forsapidev.DTO.AdaptiveInterestResultDTO;
 import org.example.forsapidev.DTO.BankVaultDTO;
 import org.example.forsapidev.DTO.WalletForecastDTO;
 import org.example.forsapidev.DTO.WalletStatisticsDTO;
@@ -10,14 +10,16 @@ import org.example.forsapidev.Repositories.*;
 import org.example.forsapidev.Services.Interfaces.AccountService;
 import org.example.forsapidev.entities.UserManagement.User;
 import org.example.forsapidev.entities.WalletManagement.*;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class AccountServiceImpl implements AccountService {
@@ -50,8 +52,19 @@ public class AccountServiceImpl implements AccountService {
     // ── HELPERS ──────────────────────────────────────────────────────────────
 
     private Account findAccount(Long accountId) {
-        return accountRepo.findById(accountId)
+        return accountRepo.findByIdWithWalletAndTransactions(accountId)
                 .orElseThrow(() -> new RuntimeException("Account not found with id: " + accountId));
+    }
+
+    private List<Account> mergeAccountsForOwner(long ownerId) {
+        Map<Long, Account> merged = new LinkedHashMap<>();
+        for (Account a : accountRepo.findByOwner_Id(ownerId)) {
+            merged.put(a.getId(), a);
+        }
+        for (Account a : accountRepo.findByWallet_OwnerId(ownerId)) {
+            merged.put(a.getId(), a);
+        }
+        return new ArrayList<>(merged.values());
     }
 
     private Wallet findWallet(Long accountId) {
@@ -150,7 +163,6 @@ public class AccountServiceImpl implements AccountService {
         account.setOwner(user);
         account.setAccountHolderName(user.getUsername());
         account.setType(requestedType);
-        // SAVINGS (Wallet) is ACTIVE by default, INVESTMENT remains BLOCKED until approved
         if (requestedType == AccountType.SAVINGS) {
             account.setStatus(AccountStatus.ACTIVE);
         } else {
@@ -158,20 +170,25 @@ public class AccountServiceImpl implements AccountService {
         }
 
         Account saved = accountRepo.save(account);
-        logActivity(wallet, "Account created of type: " + requestedType + " (BLOCKED by default)");
+        logActivity(wallet, "Account created of type: " + requestedType + " (" + saved.getStatus() + ")");
         return saved;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Account getAccount(Long accountId) {
         return findAccount(accountId);
     }
 
     @Override
     public List<Account> getAccountsByOwner(Long ownerId) {
-        return accountRepo.findAll().stream()
-                .filter(a -> a.getOwner() != null && a.getOwner().getId().equals(ownerId))
-                .toList();
+        return mergeAccountsForOwner(ownerId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AccountJsonDTO> getAccountsByOwnerAsJson(Long ownerId) {
+        return AccountJsonDTO.fromList(mergeAccountsForOwner(ownerId), true);
     }
 
     @Override
@@ -316,6 +333,16 @@ public class AccountServiceImpl implements AccountService {
         Account from = findAccount(fromAccountId);
         Account to = findAccount(toAccountId);
 
+        // Only INVESTMENT↔INVESTMENT transfers. SAVINGS (or missing/unknown type) cannot send or receive transfer funds.
+        if (from.getType() != AccountType.INVESTMENT) {
+            throw new RuntimeException(
+                    "Transfers can only be sent from an investment account.");
+        }
+        if (to.getType() != AccountType.INVESTMENT) {
+            throw new RuntimeException(
+                    "This account cannot receive a transfer. Savings accounts only accept money via Add funds (when you are on that account), not via Send money. Enter an investment account ID.");
+        }
+
         if (from.getStatus() == AccountStatus.BLOCKED)
             throw new RuntimeException("Source account is blocked.");
         if (to.getStatus() == AccountStatus.BLOCKED)
@@ -342,9 +369,8 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    @Scheduled(cron = "0 0 0 1 * ?")
     public void applyMonthlyInterest() {
-        System.out.println("Applying monthly interest to all active INVESTMENT accounts...");
+        System.out.println("Applying monthly interest to all active INVESTMENT accounts (manual trigger)...");
 
         for (Account account : accountRepo.findAll()) {
             if (account.getType() == AccountType.INVESTMENT
@@ -390,7 +416,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public List<Activity> getActivities(Long accountId) {
-        return activityRepo.findByWallet_Id(findWallet(accountId).getId());
+        return activityRepo.findByWallet_IdOrderByTimestampDesc(findWallet(accountId).getId());
     }
 
     // ── BANK VAULT ───────────────────────────────────────────────────────────
@@ -404,17 +430,123 @@ public class AccountServiceImpl implements AccountService {
     // ── IA ───────────────────────────────────────────────────────────────────
 
     @Override
+    @Transactional(readOnly = true)
     public WalletForecastDTO forecastBalance(Long accountId, int days) {
-        return null;
+        if (days <= 0) {
+            days = 30;
+        }
+        Account account = findAccount(accountId);
+        Wallet wallet = account.getWallet();
+        BigDecimal balance = wallet.getBalance() != null ? wallet.getBalance() : BigDecimal.ZERO;
+
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(30);
+        BigDecimal netLast30 = BigDecimal.ZERO;
+        int recentCount = 0;
+        List<Transaction> txs = wallet.getTransactions() != null ? wallet.getTransactions() : List.of();
+        for (Transaction t : txs) {
+            if (t.getDate() == null || t.getDate().isBefore(cutoff) || t.getAmount() == null) {
+                continue;
+            }
+            recentCount++;
+            switch (t.getType()) {
+                case DEPOSIT, TRANSFER_IN, INTEREST -> netLast30 = netLast30.add(t.getAmount());
+                case WITHDRAW, TRANSFER_OUT -> netLast30 = netLast30.subtract(t.getAmount());
+                default -> { }
+            }
+        }
+
+        BigDecimal dailyDrift = netLast30.divide(BigDecimal.valueOf(30), 4, RoundingMode.HALF_UP);
+        BigDecimal predicted = balance.add(dailyDrift.multiply(BigDecimal.valueOf(days)))
+                .setScale(2, RoundingMode.HALF_UP);
+        if (predicted.compareTo(BigDecimal.ZERO) < 0) {
+            predicted = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+
+        String trend;
+        if (predicted.compareTo(balance) > 0) {
+            trend = "increasing";
+        } else if (predicted.compareTo(balance) < 0) {
+            trend = "decreasing";
+        } else {
+            trend = "stable";
+        }
+
+        StringBuilder explanation = new StringBuilder();
+        explanation.append("Projection uses your last 30 days of flows (net ").append(netLast30.setScale(2, RoundingMode.HALF_UP))
+                .append("). ");
+        if (recentCount == 0) {
+            explanation.append("No recent movements in that window — forecast assumes flat balance.");
+        } else {
+            explanation.append(recentCount).append(" movement(s) counted; daily drift ~ ")
+                    .append(dailyDrift.setScale(2, RoundingMode.HALF_UP)).append(".");
+        }
+
+        if (walletAiService.isConfigured()) {
+            try {
+                String ai = walletAiService.askAI(
+                        "You help users understand a simple wallet forecast. Reply in 2 short sentences, plain language, no JSON.",
+                        "Current balance: " + balance + ". Predicted in " + days + " days: " + predicted
+                                + ". Trend label: " + trend + ". Net last 30 days: " + netLast30.setScale(2, RoundingMode.HALF_UP) + ".");
+                explanation.append(" ").append(ai.trim());
+            } catch (RuntimeException ignored) {
+                explanation.append(" (AI explanation unavailable.)");
+            }
+        }
+
+        return new WalletForecastDTO(balance, predicted, days, trend, explanation.toString().trim());
     }
 
     @Override
-    public AdaptiveInterestResultDTO applyAdaptiveInterest(Long accountId) {
-        return null;
-    }
-
-    @Override
+    @Transactional(readOnly = true)
     public AccountTypeAdviceDTO adviseAccountType(Long accountId) {
-        return null;
+        Account account = findAccount(accountId);
+        String current = account.getType() != null ? account.getType().name() : "UNKNOWN";
+        WalletStatisticsDTO st = getStatistics(accountId);
+        BigDecimal bal = st.getBalance() != null ? st.getBalance() : BigDecimal.ZERO;
+        int n = st.getNumberOfTransactions();
+
+        String recommended;
+        boolean change;
+        String reasoning;
+
+        if (account.getType() == AccountType.INVESTMENT) {
+            recommended = "INVESTMENT";
+            if (account.getStatus() == AccountStatus.BLOCKED) {
+                change = false;
+                reasoning = "Investment wallet is blocked until staff activates it. After activation, it can receive manual monthly interest runs.";
+            } else {
+                change = false;
+                reasoning = "You are already on an investment wallet suited for interest credits when the bank runs monthly interest.";
+            }
+        } else {
+            // SAVINGS
+            boolean heavyUse = n >= 8;
+            boolean cushion = bal.compareTo(new BigDecimal("500")) >= 0;
+            if (heavyUse && cushion) {
+                recommended = "INVESTMENT";
+                change = true;
+                reasoning = "You have steady activity and a solid balance; opening a separate INVESTMENT wallet can separate long-term funds from daily spending (subject to staff activation).";
+            } else {
+                recommended = "SAVINGS";
+                change = false;
+                reasoning = n < 5
+                        ? "Keep using SAVINGS until you have a clearer pattern of deposits and withdrawals."
+                        : "Your usage fits a primary SAVINGS wallet; consider INVESTMENT once balance and activity grow.";
+            }
+        }
+
+        if (walletAiService.isConfigured()) {
+            try {
+                String ai = walletAiService.askAI(
+                        "You advise on SAVINGS vs INVESTMENT for a demo digital wallet. One short paragraph, agree or refine the recommendation, no JSON.",
+                        "Account id " + accountId + ", type " + current + ", balance " + bal + ", tx count " + n
+                                + ". Draft recommendation: " + recommended + ", changeAdvised=" + change + ". Reason so far: " + reasoning);
+                reasoning = reasoning + " " + ai.trim();
+            } catch (RuntimeException ignored) {
+                reasoning = reasoning + " (AI add-on unavailable.)";
+            }
+        }
+
+        return new AccountTypeAdviceDTO(accountId, current, recommended, change, reasoning.trim());
     }
 }

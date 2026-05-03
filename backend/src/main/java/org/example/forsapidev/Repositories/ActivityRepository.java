@@ -8,4 +8,7 @@ import java.util.List;
 
 public interface ActivityRepository extends JpaRepository<Activity, Long> {
     List<Activity> findByWallet_Id(Long walletId);
+
+    /** Newest activity first (for wallet activity log UI). */
+    List<Activity> findByWallet_IdOrderByTimestampDesc(Long walletId);
 }

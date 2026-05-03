@@ -21,9 +21,8 @@ export class ScoreClientWidgetComponent implements OnInit, OnDestroy {
   score = signal<AIScoreDto | null>(null);
   loading = signal(true);
   error = signal(false);
-  showBoosterHub = signal(false);
-  ocrLoading = signal<'STEG' | 'SONEDE' | null>(null);
-  ocrMessage = signal<{ type: 'success' | 'error'; text: string } | null>(null);
+  docLoading = signal<'STEG' | 'SONEDE' | null>(null);
+  billMessage = signal<{ type: 'success' | 'error'; text: string } | null>(null);
 
   private refreshTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -39,29 +38,35 @@ export class ScoreClientWidgetComponent implements OnInit, OnDestroy {
     if (this.refreshTimer) clearInterval(this.refreshTimer);
   }
 
+  private clientId(): number | null {
+    const id = this.auth.currentUser()?.id as string | number | undefined;
+    if (id == null) return null;
+    if (typeof id === 'string' && id.trim() === '') return null;
+    return typeof id === 'number' ? id : Number(id);
+  }
+
   loadScore(): void {
-    const user = this.auth.currentUser();
-    if (!user?.id) { this.loading.set(false); return; }
+    const cid = this.clientId();
+    if (cid == null) {
+      this.loading.set(false);
+      return;
+    }
     this.loading.set(true);
     this.error.set(false);
-    this.aiScore.getCurrentScore(user.id).subscribe({
-      next: (s) => { this.score.set(s); this.loading.set(false); },
-      error: () => { this.error.set(true); this.loading.set(false); },
+    this.aiScore.getCurrentScore(cid).subscribe({
+      next: (s) => {
+        this.score.set(s);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.error.set(true);
+        this.loading.set(false);
+      },
     });
   }
 
-  recalculate(): void {
-    const user = this.auth.currentUser();
-    if (!user?.id) return;
-    this.loading.set(true);
-    this.aiScore.recalculateScore(user.id).subscribe({
-      next: (s) => { this.score.set(s); this.loading.set(false); },
-      error: () => { this.error.set(true); this.loading.set(false); },
-    });
-  }
-
-  triggerOcr(type: 'STEG' | 'SONEDE'): void {
-    if (this.ocrLoading()) return;
+  triggerBillUpload(type: 'STEG' | 'SONEDE'): void {
+    if (this.docLoading()) return;
     if (type === 'STEG') this.stegInputRef.nativeElement.click();
     else this.sonedeInputRef.nativeElement.click();
   }
@@ -70,38 +75,50 @@ export class ScoreClientWidgetComponent implements OnInit, OnDestroy {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
-    const user = this.auth.currentUser();
-    if (!user?.id) return;
+    const cid = this.clientId();
+    if (cid == null) return;
 
-    this.ocrLoading.set(type);
-    this.ocrMessage.set(null);
+    this.docLoading.set(type);
+    this.billMessage.set(null);
 
     this.aiScore.verifyDocument(file, type).subscribe({
       next: (result: OcrResult) => {
-        if (result.verified && result.paid_on_time) {
-          this.aiScore.activateBooster(user.id, type).subscribe({
+        const paidOnTime =
+          result.paid_on_time === true ||
+          (result as unknown as { paidOnTime?: boolean }).paidOnTime === true;
+        if (result.verified && paidOnTime) {
+          this.aiScore.activateBooster(cid, type).subscribe({
             next: (s) => {
               this.score.set(s);
-              this.ocrLoading.set(null);
-              this.ocrMessage.set({
+              this.docLoading.set(null);
+              this.billMessage.set({
                 type: 'success',
-                text: `Booster ${type} activé ! Votre seuil a été mis à jour.`,
+                text: 'Your bill was verified! Your credit limit has been updated.',
               });
             },
             error: () => {
-              this.ocrLoading.set(null);
-              this.ocrMessage.set({ type: 'error', text: 'Erreur lors de l\'activation du booster.' });
+              this.docLoading.set(null);
+              this.billMessage.set({
+                type: 'error',
+                text: 'Could not verify your bill. Please upload a clear photo.',
+              });
             },
           });
         } else {
-          this.ocrLoading.set(null);
-          this.ocrMessage.set({ type: 'error', text: `Document ${type} non valide ou facture non payée.` });
+          this.docLoading.set(null);
+          this.billMessage.set({
+            type: 'error',
+            text: 'Could not verify your bill. Please upload a clear photo.',
+          });
         }
         input.value = '';
       },
       error: () => {
-        this.ocrLoading.set(null);
-        this.ocrMessage.set({ type: 'error', text: 'Erreur lors de la vérification du document.' });
+        this.docLoading.set(null);
+        this.billMessage.set({
+          type: 'error',
+          text: 'Could not verify your bill. Please upload a clear photo.',
+        });
         input.value = '';
       },
     });
@@ -109,20 +126,45 @@ export class ScoreClientWidgetComponent implements OnInit, OnDestroy {
 
   get thresholdPercent(): number {
     const v = this.score()?.availableThreshold;
-    if (!v) return 0;
+    if (v == null || v <= 0) return 0;
     return Math.min((v / 10000) * 100, 100);
-  }
-
-  get boosterHint(): string | null {
-    const s = this.score();
-    if (!s || s.hasActiveCredit) return null;
-    if (!s.sonedeBoosterActive) return 'Scan your SONEDE bill to increase your credit threshold';
-    if (!s.stegBoosterActive) return 'Scan your STEG bill to increase your credit threshold';
-    return null;
   }
 
   formatExpiry(dateStr: string | null | undefined): string {
     if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+    return new Date(dateStr).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  }
+
+  /** Points 0–1000 from API (each client differs). */
+  clientNumericScore(): number {
+    const s = this.score();
+    if (!s) return 0;
+    const v = Number(s.currentScore ?? s.score ?? 0);
+    return Number.isFinite(v) ? Math.round(Math.min(1000, Math.max(0, v))) : 0;
+  }
+
+  /** Human label for AIScoreDto.scoreLevel — personalised per client. */
+  clientStandingLabel(): string {
+    const s = this.score();
+    const raw = String(s?.scoreLevel ?? 'VERY_LOW').toUpperCase();
+    const map: Record<string, string> = {
+      VERY_LOW: 'Very low',
+      LOW: 'Low',
+      MEDIUM: 'Medium',
+      GOOD: 'Good',
+      VERY_GOOD: 'Very good',
+      EXCELLENT: 'Excellent',
+      PREMIUM: 'Premium',
+    };
+    return map[raw] ?? raw.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
+  /** Visual band for standing strip. */
+  clientStandingToneClass(): string {
+    const s = this.score();
+    const lvl = String(s?.scoreLevel ?? '').toUpperCase();
+    if (['VERY_LOW', 'LOW'].includes(lvl)) return 'standing-strip standing-strip--risk';
+    if (lvl === 'MEDIUM') return 'standing-strip standing-strip--mid';
+    return 'standing-strip standing-strip--ok';
   }
 }

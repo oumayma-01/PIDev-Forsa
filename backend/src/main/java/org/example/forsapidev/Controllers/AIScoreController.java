@@ -7,6 +7,7 @@ import org.example.forsapidev.Repositories.AIScoreManagement.AIScoreRepository;
 import org.example.forsapidev.Services.aiScoring.AIAgentClient;
 import org.example.forsapidev.Services.aiScoring.AutoScoringService;
 import org.example.forsapidev.entities.AIScoreManagement.AIScore;
+import org.example.forsapidev.payload.response.AIScoreSummaryDto;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -77,7 +79,7 @@ public class AIScoreController {
     }
 
     /**
-     * Vérifie un document par OCR (CIN, STEG, SONEDE, SALARY).
+     * Vérifie un document (CIN, STEG, SONEDE, SALARY) via le service Python.
      * POST /api/ai-score/verify-document
      * Multipart : file=<image>, document_type=CIN|STEG|SONEDE|SALARY
      */
@@ -86,7 +88,7 @@ public class AIScoreController {
             @RequestParam("document_type") String documentType,
             @RequestParam("file") MultipartFile file) {
 
-        log.info("OCR demandé pour document type={} fichier={}", documentType, file.getOriginalFilename());
+        log.info("verify-document type={} file={}", documentType, file.getOriginalFilename());
         Map<String, Object> result = aiAgentClient.verifyDocument(documentType, file);
         return ResponseEntity.ok(result);
     }
@@ -106,9 +108,23 @@ public class AIScoreController {
      */
     @GetMapping("/current/{clientId}")
     public ResponseEntity<Map<String, Object>> getCurrentScore(@PathVariable Long clientId) {
-        return aiScoreRepository.findByClientId(clientId)
-                .map(s -> ResponseEntity.ok(toScoreDto(s)))
-                .orElse(ResponseEntity.notFound().build());
+        try {
+            Optional<AIScore> opt = aiScoreRepository.findByClientId(clientId);
+            if (opt.isPresent()) {
+                return ResponseEntity.ok(toScoreDto(opt.get()));
+            }
+            AIScore created = autoScoringService.calculateAndSave(clientId);
+            return ResponseEntity.ok(toScoreDto(created));
+        } catch (Exception e) {
+            log.error("getCurrentScore failed clientId=" + clientId, e);
+            try {
+                AIScore created = autoScoringService.calculateAndSave(clientId);
+                return ResponseEntity.ok(toScoreDto(created));
+            } catch (Exception e2) {
+                log.error("getCurrentScore retry failed clientId=" + clientId, e2);
+                return ResponseEntity.ok(minimalScoreDto(clientId));
+            }
+        }
     }
 
     /**
@@ -135,35 +151,70 @@ public class AIScoreController {
     }
 
     /**
-     * Retourne le résumé des scores de tous les clients — pour le dashboard admin.
-     * GET /api/ai-score/summaries
+     * POST /api/ai-score/boosters/{clientId}/activate?type=STEG|SONEDE
+     */
+    @PostMapping("/boosters/{clientId}/activate")
+    public ResponseEntity<Map<String, Object>> activateBoosterWithRecalc(
+            @PathVariable Long clientId,
+            @RequestParam String type) {
+        autoScoringService.activateBooster(clientId, type);
+        AIScore saved = autoScoringService.calculateAndSave(clientId);
+        return ResponseEntity.ok(toScoreDto(saved));
+    }
+
+    /**
+     * Liste admin avec nom + email client.
+     * GET /api/ai-score/all
+     */
+    @GetMapping("/all")
+    public ResponseEntity<List<AIScoreSummaryDto>> getAllScores() {
+        return ResponseEntity.ok(autoScoringService.getAllScoreSummaries());
+    }
+
+    /**
+     * GET /api/ai-score/summaries — alias de /all (compat).
      */
     @GetMapping("/summaries")
-    public ResponseEntity<List<Map<String, Object>>> getAllSummaries() {
-        List<Map<String, Object>> list = aiScoreRepository.findAll().stream()
-                .map(this::toScoreDto)
-                .sorted((a, b) -> Integer.compare(
-                        (Integer) b.getOrDefault("score", 0),
-                        (Integer) a.getOrDefault("score", 0)))
-                .toList();
-        return ResponseEntity.ok(list);
+    public ResponseEntity<List<AIScoreSummaryDto>> getAllSummaries() {
+        return ResponseEntity.ok(autoScoringService.getAllScoreSummaries());
     }
 
     private Map<String, Object> toScoreDto(AIScore s) {
         Map<String, Object> dto = new HashMap<>();
         dto.put("clientId", s.getClientId());
-        dto.put("score", s.getCurrentScore());
+        int sc = s.getCurrentScore() != null ? s.getCurrentScore() : 0;
+        dto.put("score", sc);
+        dto.put("currentScore", sc);
         dto.put("scoreLevel", s.getScoreLevel() != null ? s.getScoreLevel().name() : "VERY_LOW");
         dto.put("creditThreshold", s.getCreditThreshold() != null ? s.getCreditThreshold().doubleValue() : 0.0);
         dto.put("availableThreshold", s.getAvailableThreshold() != null ? s.getAvailableThreshold().doubleValue() : 0.0);
         dto.put("hasActiveCredit", Boolean.TRUE.equals(s.getHasActiveCredit()));
         dto.put("lastCalculatedAt", s.getLastCalculatedAt() != null ? s.getLastCalculatedAt().toString() : null);
+        dto.put("aiExplanation", s.getAiExplanation());
         boolean stegActive = s.getStegBoosterExpiry() != null && s.getStegBoosterExpiry().isAfter(LocalDateTime.now());
         boolean sonedeActive = s.getSonedeBoosterExpiry() != null && s.getSonedeBoosterExpiry().isAfter(LocalDateTime.now());
         dto.put("stegBoosterActive", stegActive);
         dto.put("stegBoosterExpiry", s.getStegBoosterExpiry() != null ? s.getStegBoosterExpiry().toString() : null);
         dto.put("sonedeBoosterActive", sonedeActive);
         dto.put("sonedeBoosterExpiry", s.getSonedeBoosterExpiry() != null ? s.getSonedeBoosterExpiry().toString() : null);
+        return dto;
+    }
+
+    private Map<String, Object> minimalScoreDto(long clientId) {
+        Map<String, Object> dto = new HashMap<>();
+        dto.put("clientId", clientId);
+        dto.put("score", 0);
+        dto.put("currentScore", 0);
+        dto.put("scoreLevel", "VERY_LOW");
+        dto.put("creditThreshold", 0.0);
+        dto.put("availableThreshold", 0.0);
+        dto.put("hasActiveCredit", false);
+        dto.put("lastCalculatedAt", null);
+        dto.put("aiExplanation", null);
+        dto.put("stegBoosterActive", false);
+        dto.put("stegBoosterExpiry", null);
+        dto.put("sonedeBoosterActive", false);
+        dto.put("sonedeBoosterExpiry", null);
         return dto;
     }
 

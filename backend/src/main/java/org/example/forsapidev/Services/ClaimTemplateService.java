@@ -1,6 +1,6 @@
 package org.example.forsapidev.Services;
 
-import org.example.forsapidev.Dto.ClaimTemplate;
+import org.example.forsapidev.DTO.ClaimTemplate;
 import org.springframework.stereotype.Service;
 import java.util.Arrays;
 import java.util.HashMap;

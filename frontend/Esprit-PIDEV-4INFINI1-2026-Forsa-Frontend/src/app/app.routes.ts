@@ -12,13 +12,12 @@ import { DashboardHomeComponent } from './features/dashboard/dashboard-home/dash
 import { InsuranceProductsComponent } from './features/insurance/insurance-products/insurance-products.component';
 import { LandingPageComponent } from './features/landing/landing-page.component';
 import { WalletOverviewComponent } from './features/wallet/wallet-overview/wallet-overview.component';
-import { PartenariatListComponent } from './features/partenariat/partenariat-list/partenariat-list.component';
 import { AdminScoringDashboardComponent } from './features/scoring/admin-scoring-dashboard/admin-scoring-dashboard.component';
+import { ClientScorePageComponent } from './features/scoring/client-score-page/client-score-page.component';
 import { ScoreRequestComponent } from './features/scoring/score-request/score-request.component';
 import { DashboardLayoutComponent } from './layouts/dashboard-layout/dashboard-layout.component';
 
 export const routes: Routes = [
-  /** `pathMatch: 'full'` avoids the empty path acting as a prefix for every URL. */
   { path: '', pathMatch: 'full', component: LandingPageComponent, canMatch: [guestGuard] },
   { path: 'login', component: LoginComponent, canMatch: [guestGuard] },
   { path: 'register', component: RegisterComponent, canMatch: [guestGuard] },
@@ -148,9 +147,13 @@ export const routes: Routes = [
           },
         ],
       },
-      { path: 'partenariat', component: PartenariatListComponent },
-      { path: 'scoring', component: AdminScoringDashboardComponent },
-      { path: 'ai-score', component: ScoreRequestComponent },
+      {
+        path: 'partenariat',
+        loadChildren: () =>
+          import('./features/partenariat/partenariat.routes').then((m) => m.partenariatRoutes),
+      },
+      { path: 'ai-score', component: ClientScorePageComponent },
+      { path: 'scoring', component: AdminScoringDashboardComponent, canMatch: [adminGuard] },
       { path: 'ai', component: RiskAnalysisComponent },
       {
         path: 'users',

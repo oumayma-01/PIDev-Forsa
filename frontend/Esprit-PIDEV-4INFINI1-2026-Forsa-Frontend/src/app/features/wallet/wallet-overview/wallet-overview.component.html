@@ -124,7 +124,7 @@
                   <div class="act-row">
                     <div class="act-left">
                       <span class="act-ico"><app-forsa-icon name="history" [size]="17" /></span>
-                      <div><p class="act-title">{{ act.action }}</p><p class="act-meta">{{ formatDate(act.timestamp) }}</p></div>
+                      <div><p class="act-title">{{ act.action }}</p><p class="act-meta">{{ act.timestamp | date:'dd/MM/yyyy HH:mm' }}</p></div>
                     </div>
                   </div>
                 }
@@ -373,22 +373,54 @@
   }
 }
 
-@if (!loading && isClient && !account) {
+<!-- ══════════════════════════════════════════════════════════════════════════════
+     CLIENT VIEW — Could not load accounts (do not offer "create" — may already exist)
+     ══════════════════════════════════════════════════════════════════════════════ -->
+@if (!loading && isClient && clientAccountsLoadError) {
+  <app-forsa-card>
+    <div class="card-pad-lg">
+      <h3>Wallet unavailable</h3>
+      <p class="op-err" style="margin: 0.75rem 0;">{{ clientAccountsLoadError }}</p>
+      <p class="text-muted sm">Accounts may already exist in the database. Creating again can fail with “already has an account”. Restart the backend after updates, then retry.</p>
+      <div style="margin-top: 1rem;">
+        <app-forsa-button (click)="loadClientAccounts()">
+          <app-forsa-icon name="history" [size]="16" /> Retry loading
+        </app-forsa-button>
+      </div>
+    </div>
+  </app-forsa-card>
+}
+
+<!-- ══════════════════════════════════════════════════════════════════════════════
+     CLIENT VIEW — No account (API returned empty list — safe to create first wallet)
+     ══════════════════════════════════════════════════════════════════════════════ -->
+@if (!loading && isClient && !hasClientWallet && !clientAccountsLoadError) {
   <div class="no-account-wrap">
     <div class="no-account-hero">
+      <div class="hero-float-icons">
+        <span class="float-icon fi-1">💳</span>
+        <span class="float-icon fi-2">📈</span>
+        <span class="float-icon fi-3">💰</span>
+      </div>
       <div class="no-account-content">
-        @if (operationError) {
-          <div class="no-acct-ico">⚠️</div>
-          <h2>Initialization Failed</h2>
-          <p>{{ operationError }}</p>
-          <app-forsa-button (click)="submitCreate()">
-             Retry Now
-          </app-forsa-button>
-        } @else {
-          <div class="ai-spinner">⏳</div>
-          <h2>Initializing Your Wallet</h2>
-          <p>Please wait while we set up your secure digital wallet...</p>
-        }
+        <div class="no-acct-ico">🏦</div>
+        <h2>Start Your Digital Wallet</h2>
+        <p>Create a wallet account to deposit, transfer money, earn interest, and get AI-powered financial insights.</p>
+        <div class="account-type-cards">
+          <div class="type-preview" [class.type-preview--selected]="createType === 'SAVINGS'" (click)="createType = 'SAVINGS'">
+            <span class="type-preview-icon">💵</span>
+            <strong>SAVINGS</strong>
+            <p>Everyday banking, instant access to your funds</p>
+          </div>
+          <div class="type-preview" [class.type-preview--selected]="createType === 'INVESTMENT'" (click)="createType = 'INVESTMENT'">
+            <span class="type-preview-icon">📈</span>
+            <strong>INVESTMENT</strong>
+            <p>Separate wallet for monthly interest (staff must activate the account)</p>
+          </div>
+        </div>
+        <app-forsa-button (click)="submitCreate()">
+          <app-forsa-icon name="plus" [size]="18" /> Create {{ createType }} Account
+        </app-forsa-button>
       </div>
     </div>
   </div>
@@ -397,7 +429,7 @@
 <!-- ══════════════════════════════════════════════════════════════════════════════
      CLIENT VIEW — Has account
      ══════════════════════════════════════════════════════════════════════════════ -->
-@if (!loading && isClient && account) {
+@if (!loading && isClient && hasClientWallet) {
   <div class="wallet-grid">
     <!-- Hero card -->
     <app-forsa-card class="hero-card" [noBorder]="true">
@@ -407,11 +439,19 @@
         </div>
         <div class="hero-top">
           <div>
+            @if (account && investmentAccount) {
+              <div class="wallet-view-tabs" role="tablist" aria-label="Wallet account">
+                <button type="button" class="wallet-view-tab" role="tab" [attr.aria-selected]="clientWalletView === 'SAVINGS'"
+                  [class.wallet-view-tab--active]="clientWalletView === 'SAVINGS'" (click)="selectClientWalletView('SAVINGS')">Savings</button>
+                <button type="button" class="wallet-view-tab" role="tab" [attr.aria-selected]="clientWalletView === 'INVESTMENT'"
+                  [class.wallet-view-tab--active]="clientWalletView === 'INVESTMENT'" (click)="selectClientWalletView('INVESTMENT')">Investment</button>
+              </div>
+            }
             <p class="hero-label">Available Balance</p>
             <h3 class="balance">${{ balance | number : '1.2-2' }}</h3>
             <div class="hero-badges">
-              <span class="hero-badge">{{ account.type }}</span>
-              <span class="hero-badge" [class.hero-badge--blocked]="account.status === 'BLOCKED'">{{ account.status }}</span>
+              <span class="hero-badge">{{ activeClientAccount?.type }}</span>
+              <span class="hero-badge" [class.hero-badge--blocked]="activeClientAccount?.status === 'BLOCKED'">{{ activeClientAccount?.status }}</span>
             </div>
           </div>
           <div class="ico-wrap"><app-forsa-icon name="credit-card" [size]="28" /></div>
@@ -423,9 +463,11 @@
           <app-forsa-button variant="secondary" extraClass="forsa-hero-wallet-ghost" (click)="openWithdrawModal()">
             <app-forsa-icon name="arrow-down-right" [size]="18" /> Withdraw
           </app-forsa-button>
-          <app-forsa-button variant="secondary" extraClass="forsa-hero-wallet-ghost" (click)="openTransferModal()">
-            <app-forsa-icon name="send" [size]="18" /> Send Money
-          </app-forsa-button>
+          @if (activeClientAccount?.type === 'INVESTMENT') {
+            <app-forsa-button variant="secondary" extraClass="forsa-hero-wallet-ghost" (click)="openTransferModal()">
+              <app-forsa-icon name="send" [size]="18" /> Send Money
+            </app-forsa-button>
+          }
         </div>
       </div>
     </app-forsa-card>
@@ -461,19 +503,16 @@
           </button>
           <button class="qa-btn" (click)="loadAdvice()">
             <span class="qa-ico qa-ico--purple">🤖</span>
-            <div class="qa-text"><strong>Account Advice</strong><span>SAVINGS vs INVESTMENT</span></div>
+            <div class="qa-text">
+              <strong>Account Advice</strong>
+              <span>Savings vs investment · How to raise your credit score</span>
+            </div>
             <span class="qa-arrow">›</span>
           </button>
-          @if (!investmentAccount) {
+          @if (!investmentAccount && account) {
             <button class="qa-btn qa-btn--primary" (click)="openInvestmentCreate()">
               <span class="qa-ico qa-ico--orange">📈</span>
-              <div class="qa-text"><strong>Open Investment Account</strong><span>Earn AI-adaptive interest</span></div>
-              <span class="qa-arrow">›</span>
-            </button>
-          } @else {
-            <button class="qa-btn" (click)="applyAdaptiveInterest()">
-              <span class="qa-ico qa-ico--orange">📈</span>
-              <div class="qa-text"><strong>Smart Interest</strong><span>AI adaptive rate (Investment)</span></div>
+              <div class="qa-text"><strong>Open Investment Account</strong><span>Second wallet; staff activates it for interest</span></div>
               <span class="qa-arrow">›</span>
             </button>
           }
@@ -488,13 +527,12 @@
   </div>
 
   <!-- AI loading -->
-  @if (loadingForecast || loadingAdvice || loadingAdaptive) {
+  @if (loadingForecast || loadingAdvice) {
     <app-forsa-card>
       <div class="card-pad-lg ai-loading">
         <span class="ai-spinner">⏳</span>
         @if (loadingForecast) { <p>Generating 30-day balance forecast with AI…</p> }
         @if (loadingAdvice) { <p>Analysing your account type with AI…</p> }
-        @if (loadingAdaptive) { <p>Computing smart interest rate with AI…</p> }
       </div>
     </app-forsa-card>
   }
@@ -505,13 +543,16 @@
       <div class="card-pad-lg">
         <div class="ai-result-head">
           <span class="ai-result-icon">🔮</span>
-          <div>
+          <div class="ai-result-head__body">
             <h3>Balance Forecast — Next {{ forecast.forecastDays }} Days</h3>
             <p class="text-muted sm">AI prediction based on your transaction history.</p>
           </div>
-          <app-forsa-badge [tone]="forecast.trend === 'increasing' ? 'success' : forecast.trend === 'decreasing' ? 'danger' : 'muted'">
-            {{ forecast.trend }}
-          </app-forsa-badge>
+          <div class="ai-result-head__actions">
+            <app-forsa-badge [tone]="forecast.trend === 'increasing' ? 'success' : forecast.trend === 'decreasing' ? 'danger' : 'muted'">
+              {{ forecast.trend }}
+            </app-forsa-badge>
+            <button type="button" class="ai-result-dismiss" (click)="dismissForecast()" title="Close" aria-label="Close forecast">✕</button>
+          </div>
         </div>
         <div class="forecast-row">
           <div class="forecast-col"><p class="fcast-label">Today</p><p class="fcast-val">${{ forecast.currentBalance | number : '1.2-2' }}</p></div>
@@ -534,13 +575,16 @@
       <div class="card-pad-lg">
         <div class="ai-result-head">
           <span class="ai-result-icon">🤖</span>
-          <div>
+          <div class="ai-result-head__body">
             <h3>Account Type Recommendation</h3>
             <p class="text-muted sm">Personalised advice based on your usage pattern.</p>
           </div>
-          <app-forsa-badge [tone]="advice.changeAdvised ? 'warning' : 'success'">
-            {{ advice.changeAdvised ? 'Switch advised' : 'You\'re good!' }}
-          </app-forsa-badge>
+          <div class="ai-result-head__actions">
+            <app-forsa-badge [tone]="advice.changeAdvised ? 'warning' : 'success'">
+              {{ advice.changeAdvised ? 'Switch advised' : 'You\'re good!' }}
+            </app-forsa-badge>
+            <button type="button" class="ai-result-dismiss" (click)="dismissAdvice()" title="Close" aria-label="Close account advice">✕</button>
+          </div>
         </div>
         <div class="forecast-row">
           <div class="forecast-col"><p class="fcast-label">Current</p><p class="fcast-val">{{ advice.currentType }}</p></div>
@@ -548,67 +592,71 @@
           <div class="forecast-col"><p class="fcast-label">Recommended</p><p class="fcast-val pos">{{ advice.recommendedType }}</p></div>
         </div>
         <p class="ai-explanation">{{ advice.reasoning }}</p>
-      </div>
-    </app-forsa-card>
-  }
 
-  <!-- Adaptive interest result -->
-  @if (adaptiveResult) {
-    <app-forsa-card>
-      <div class="card-pad-lg">
-        <div class="ai-result-head">
-          <span class="ai-result-icon">📈</span>
-          <div>
-            <h3>Smart Interest Applied</h3>
-            <p class="text-muted sm">AI-determined monthly interest rate.</p>
+        @if (isClient && creditAdviceScore) {
+          <div [ngClass]="accountAdviceCreditToneClass()">
+            <div class="standing-strip__main">
+              <span class="standing-strip__eyebrow">Your credit standing</span>
+              <span class="standing-strip__label">{{ accountAdviceCreditLabel() }}</span>
+            </div>
+            <span class="standing-strip__points">{{ accountAdviceCreditNumeric() }} / 1000</span>
           </div>
-          <app-forsa-badge tone="success">+{{ adaptiveResult.rateUsed | number : '1.2-2' }}%</app-forsa-badge>
-        </div>
-        <div class="forecast-row">
-          <div class="forecast-col"><p class="fcast-label">Before</p><p class="fcast-val">${{ adaptiveResult.previousBalance | number : '1.2-2' }}</p></div>
-          <div class="forecast-arrow">+</div>
-          <div class="forecast-col"><p class="fcast-label">Interest</p><p class="fcast-val pos">${{ adaptiveResult.interestApplied | number : '1.2-2' }}</p></div>
-          <div class="forecast-arrow">=</div>
-          <div class="forecast-col"><p class="fcast-label">New Balance</p><p class="fcast-val">${{ adaptiveResult.newBalance | number : '1.2-2' }}</p></div>
-        </div>
-        <p class="ai-explanation">{{ adaptiveResult.justification }}</p>
-      </div>
-    </app-forsa-card>
-  }
+        }
 
-  <div class="history-section">
-    <app-forsa-card>
-      <div class="card-pad-lg">
-        <div class="act-head">
-          <div>
-            <h3>Activity Log</h3>
-            <p class="text-muted sm">Full history of your wallet actions and transactions.</p>
-          </div>
-        </div>
-
-        <div class="act-list">
-          @if (loadingActivities) {
-            <div class="ai-loading"><span class="ai-spinner">⏳</span> Fetching activity log...</div>
-          } @else if (activities.length === 0) {
-            <div class="tx-empty"><span>📋</span><p>No activity recorded yet.</p></div>
-          } @else {
-            <div class="activity-trail">
-              @for (act of activities; track act.id) {
-                <div class="trail-item">
-                  <div class="trail-line"></div>
-                  <div class="trail-dot"></div>
-                  <div class="trail-content">
-                    <p class="trail-action">{{ act.action }}</p>
-                    <p class="trail-date">{{ formatDate(act.timestamp) }}</p>
-                  </div>
-                </div>
+        @if (isClient && creditAdviceLines.length > 0) {
+          <div class="credit-score-tip credit-score-tip--in-card">
+            <p class="credit-score-tip__title">Raise your credit score</p>
+            <ul class="credit-score-tip__list">
+              @for (line of creditAdviceLines; track $index) {
+                <li>{{ line }}</li>
               }
+            </ul>
+            <p class="credit-score-tip__para">
+              Upload bills and see your limit on <a routerLink="/dashboard/ai-score">My score</a>.
+            </p>
+          </div>
+        }
+      </div>
+    </app-forsa-card>
+  }
+
+  @if (showClientRecentActivity) {
+    <app-forsa-card>
+      <div class="card-pad-lg">
+        <div class="act-head act-head--with-dismiss">
+          <div>
+            <h3>Recent Activity</h3>
+            <p class="text-muted sm">Your latest financial movements.</p>
+          </div>
+          <button type="button" class="ai-result-dismiss" (click)="dismissClientRecentActivity()" title="Hide" aria-label="Hide recent activity">✕</button>
+        </div>
+        <div class="act-list">
+          @if (transactions.length === 0) {
+            <div class="tx-empty"><span>📭</span><p>No transactions yet. Make your first deposit!</p></div>
+          }
+          @for (tx of transactionsNewestFirst; track tx.id) {
+            <div class="act-row">
+              <div class="act-left">
+                <span class="act-ico" [class.dep]="isIncoming(tx)">
+                  @if (isIncoming(tx)) { <app-forsa-icon name="arrow-up-right" [size]="20" /> }
+                  @else { <app-forsa-icon name="arrow-down-right" [size]="20" /> }
+                </span>
+                <div>
+                  <p class="act-title">{{ txLabel(tx) }}</p>
+                  <p class="act-meta">{{ tx.date | date:'dd/MM/yyyy HH:mm' }}</p>
+                </div>
+              </div>
+              <div class="act-right">
+                <p class="act-amt" [class.dep]="isIncoming(tx)">
+                  {{ isIncoming(tx) ? '+' : '-' }}${{ tx.amount | number : '1.2-2' }}
+                </p>
+              </div>
             </div>
           }
         </div>
       </div>
     </app-forsa-card>
-  </div>
+  }
 }
 
 <!-- ══════════════════════════════════════════════════════════════════════════════
@@ -649,7 +697,10 @@
   <div class="modal-backdrop" (click)="closeTransferModal()">
     <div class="modal" (click)="$event.stopPropagation()">
       <div class="modal-head"><h3>→ Send Money</h3><button class="modal-close" (click)="closeTransferModal()">✕</button></div>
-      @if (operationError) { <p class="op-err">{{ operationError }}</p> }
+      @if (operationError) {
+        <p class="op-err" role="alert">{{ operationError }}</p>
+      }
+      <p class="modal-hint">Only <strong>investment</strong> accounts can send or receive transfers. Savings accounts cannot receive sent money — use <strong>Add funds</strong> on savings instead.</p>
       <p class="modal-hint">Available: <strong>${{ balance | number : '1.2-2' }}</strong></p>
       <label class="modal-label">Recipient Account ID</label>
       <input class="modal-input" type="number" min="1" placeholder="e.g. 5" [(ngModel)]="transferToAccountId" />
@@ -663,40 +714,20 @@
   </div>
 }
 
-@if (showActivitiesModal) {
-  <div class="modal-backdrop" (click)="closeActivities()">
-    <div class="modal modal--wide" (click)="$event.stopPropagation()">
-      <div class="modal-head"><h3>📋 Activity Log</h3><button class="modal-close" (click)="closeActivities()">✕</button></div>
-      @if (loadingActivities) { <p class="muted">Loading activities…</p> }
-      <div class="act-list">
-        @if (!loadingActivities && activities.length === 0) { <p class="muted">No activity recorded yet.</p> }
-        @for (act of activities; track act.id) {
-          <div class="act-row">
-            <div class="act-left">
-              <span class="act-ico"><app-forsa-icon name="history" [size]="17" /></span>
-              <div><p class="act-title">{{ act.action }}</p><p class="act-meta">{{ formatDate(act.timestamp) }}</p></div>
-            </div>
-          </div>
-        }
-      </div>
-    </div>
-  </div>
-}
-
 @if (showInvestmentCreateModal) {
   <div class="modal-backdrop" (click)="showInvestmentCreateModal = false">
     <div class="modal" (click)="$event.stopPropagation()">
       <div class="modal-head"><h3>📈 Open Investment Account</h3><button class="modal-close" (click)="showInvestmentCreateModal = false">✕</button></div>
-      <p>By opening an investment account, you can earn AI-adaptive monthly interest based on bank performance and market trends.</p>
+      <p>Open a separate investment wallet. You can fund it once an agent has approved and activated the account.</p>
       <div class="modal-hint">
         <ul>
-          <li>Monthly interest is automatically applied.</li>
-          <li>Account status will be BLOCKED until approved by an agent.</li>
+          <li>Monthly interest can be credited to this wallet once it is active.</li>
+          <li>Status stays <strong>BLOCKED</strong> until approved by bank staff.</li>
         </ul>
       </div>
       <div class="modal-actions">
         <app-forsa-button variant="outline" (click)="showInvestmentCreateModal = false">Cancel</app-forsa-button>
-        <app-forsa-button (click)="submitCreate()">Confirm & Open</app-forsa-button>
+        <app-forsa-button (click)="submitCreate()">Confirm &amp; open</app-forsa-button>
       </div>
     </div>
   </div>
@@ -722,7 +753,7 @@
         </label>
         <label class="type-opt" [class.selected]="adminCreateType === 'INVESTMENT'">
           <input type="radio" name="adminCreateType" value="INVESTMENT" [(ngModel)]="adminCreateType" />
-          <strong>📈 INVESTMENT</strong><span>Earns AI-adaptive monthly interest</span>
+          <strong>📈 INVESTMENT</strong><span>Eligible for monthly interest once active (admin runs “Apply Monthly Interest”)</span>
         </label>
       </div>
       <div class="modal-actions">

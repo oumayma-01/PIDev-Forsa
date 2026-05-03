@@ -1,5 +1,6 @@
 package org.example.forsapidev.entities.WalletManagement;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -15,7 +16,7 @@ public class Activity {
     private LocalDateTime timestamp;
 
     @ManyToOne
-    @com.fasterxml.jackson.annotation.JsonIgnore
+    @JsonIgnore
     private Wallet wallet;
 
     public Long getId() {
