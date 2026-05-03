@@ -1,6 +1,7 @@
 export type ForsaIconName =
   | 'arrow-left'
   | 'arrow-right'
+  | 'arrow-left'
   | 'arrow-up-right'
   | 'arrow-down-right'
   | 'shield'
@@ -63,4 +64,18 @@ export type ForsaIconName =
   | 'x'
   | 'bell-off'
   | 'refresh-cw'
-  | 'x-circle';
+  | 'x-circle'
+  | 'qr-code'
+  | 'store'
+  | 'map-pin'
+  | 'star'
+  | 'phone'
+  | 'mail'
+  | 'hash'
+  | 'percent'
+  | 'check'
+  | 'pause-circle'
+  | 'play-circle'
+  | 'shopping-bag'
+  | 'coins'
+  | 'file-text';

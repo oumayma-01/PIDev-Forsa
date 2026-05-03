@@ -7,7 +7,7 @@ target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.l
 
 ### Runtime uploads (profile avatars, health reports, etc.) ###
 uploads/
-
+.env
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
@@ -42,7 +42,7 @@ build/
 .vscode/extensions.json
 
 ### Environment secrets ###
-.env
+../.env
 src/main/resources/application-local.properties
 
 .ai/

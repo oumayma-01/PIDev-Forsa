@@ -4,24 +4,25 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="573d9679-e913-4887-80eb-5d8be345c3cc" name="Changes" comment="">
+    <list default="true" id="b40aeaa4-b7fc-4b19-ac53-384151ea25f7" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/backend/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Controllers/ComplaintController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Controllers/ComplaintController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Controllers/FeedbackController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Controllers/FeedbackController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Repositories/FeedbackRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Repositories/FeedbackRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Services/Implementation/FeedbackService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Services/Implementation/FeedbackService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Services/Implementation/WalletAiService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Services/Implementation/WalletAiService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Services/Interfaces/IComplaintService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/Services/Interfaces/IComplaintService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/entities/ComplaintFeedbackManagement/Complaint.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/entities/ComplaintFeedbackManagement/Complaint.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/entities/ComplaintFeedbackManagement/Feedback.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/entities/ComplaintFeedbackManagement/Feedback.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/openai/ComplaintAiAssistant.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/org/example/forsapidev/openai/ComplaintAiAssistant.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/app.component.spec.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend/src/app/app.component.spec.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
-  </component>
-  <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="1045" />
-  </component>
-  <component name="FileTemplateManagerImpl">
-    <option name="RECENT_TEMPLATES">
-      <list>
-        <option value="HTML File" />
-        <option value="TypeScript File" />
-      </list>
-    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -29,129 +30,79 @@
   <component name="GitHubPullRequestSearchHistory">{
   &quot;lastFilter&quot;: {
     &quot;state&quot;: &quot;OPEN&quot;,
-    &quot;assignee&quot;: &quot;mohamed15032003&quot;
+    &quot;assignee&quot;: &quot;EMNABH1&quot;
   }
 }</component>
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/ForsaPidev/Esprit-PIDEV-4INFINI1-2026-Forsa&quot;,
-    &quot;accountId&quot;: &quot;78607999-887f-4c0f-bdf8-db911a42c6ab&quot;
+    &quot;url&quot;: &quot;https://github.com/hmem-nasma/Esprit-PIDEV-4INFINI1-2026-Forsa&quot;,
+    &quot;accountId&quot;: &quot;4250a7ea-eb28-43e8-a6df-3626cc34ec1e&quot;
   }
 }</component>
-  <component name="MavenImportPreferences">
-    <option name="generalSettings">
-      <MavenGeneralSettings>
-        <option name="mavenHomeTypeForPersistence" value="WRAPPER" />
-      </MavenGeneralSettings>
-    </option>
-  </component>
-  <component name="McpProjectServerCommands">
-    <commands />
-    <urls />
-  </component>
   <component name="ProjectColorInfo">{
-  &quot;associatedIndex&quot;: 6
+  &quot;associatedIndex&quot;: 5
 }</component>
-  <component name="ProjectId" id="3DBLFbcssDwWOGtt2kqEf3t8ozr" />
+  <component name="ProjectId" id="3DAyBPlLkLa2Gpuqp9LWhqOvjaL" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "DefaultHtmlFileTemplate": "HTML File",
-    "Maven.ForsaPidev [clean].executor": "Run",
-    "Maven.ForsaPidev [install].executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RequestMappingsPanelOrder0": "0",
-    "RequestMappingsPanelOrder1": "1",
-    "RequestMappingsPanelWidth0": "75",
-    "RequestMappingsPanelWidth1": "75",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "Spring Boot.ForsaPidevApplication.executor": "Run",
-    "Spring Boot.Unnamed.executor": "Run",
-    "git-widget-placeholder": "main",
-    "ignore.virus.scanning.warn.message": "true",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/nesma/Desktop/PIDEV/PIDev-Forsa/Backend/.env",
-    "node.js.detected.package.eslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "Facets",
-    "project.structure.proportion": "0.15",
-    "project.structure.side.proportion": "0.2",
-    "settings.editor.selected.configurable": "vcs.Subversion.SSH",
-    "ts.external.directory.path": "C:\\Users\\nesma\\Desktop\\PIDEV\\PIDev-Forsa\\Frontend\\Esprit-PIDEV-4INFINI1-2026-Forsa-Frontend\\node_modules\\typescript\\lib",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
+    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
+    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
+    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;Spring Boot.ForsaPidevApplication.executor&quot;: &quot;Run&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;feature/partenariat&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="C:\Users\Admin\IdeaProjects\Esprit-PIDEV-4INFINI1-2026-Forsa12\backend" />
-      <recent name="C:\Users\Admin\IdeaProjects\Esprit-PIDEV-4INFINI1-2026-Forsa11\backend" />
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\user\Esprit-PIDEV-4INFINI1-2026-Forsa\backend" />
+      <recent name="C:\Users\user\Esprit-PIDEV-4INFINI1-2026-Forsa" />
     </key>
-  </component>
-  <component name="RunManager">
-    <configuration name="ForsaPidevApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
-      <module name="ForsaPidev" />
-      <option name="SPRING_BOOT_MAIN_CLASS" value="org.example.forsapidev.ForsaPidevApplication" />
-      <extension name="net.ashald.envfile">
-        <option name="IS_ENABLED" value="true" />
-        <option name="IS_SUBST" value="true" />
-        <option name="IS_PATH_MACRO_SUPPORTED" value="false" />
-        <option name="IS_IGNORE_MISSING_FILES" value="false" />
-        <option name="IS_ENABLE_EXPERIMENTAL_INTEGRATIONS" value="false" />
-        <ENTRIES>
-          <ENTRY IS_ENABLED="true" PARSER="runconfig" IS_EXECUTABLE="false" />
-          <ENTRY IS_ENABLED="true" PARSER="env" IS_EXECUTABLE="false" PATH="Backend/.env" />
-        </ENTRIES>
-      </extension>
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration default="true" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
-      <option name="SPRING_BOOT_MAIN_CLASS" />
-      <extension name="net.ashald.envfile">
-        <option name="IS_ENABLED" value="false" />
-        <option name="IS_SUBST" value="false" />
-        <option name="IS_PATH_MACRO_SUPPORTED" value="false" />
-        <option name="IS_IGNORE_MISSING_FILES" value="false" />
-        <option name="IS_ENABLE_EXPERIMENTAL_INTEGRATIONS" value="false" />
-        <ENTRIES>
-          <ENTRY IS_ENABLED="true" PARSER="runconfig" IS_EXECUTABLE="false" />
-        </ENTRIES>
-      </extension>
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.32098.37" />
-        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-IU-253.32098.37" />
+        <option value="bundled-jdk-9823dce3aa75-125ca727e0f0-intellij.indexing.shared.core-IU-243.23654.189" />
+        <option value="bundled-js-predefined-d6986cc7102b-822845ee3bb5-JavaScript-IU-243.23654.189" />
       </set>
     </attachedChunks>
   </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="573d9679-e913-4887-80eb-5d8be345c3cc" name="Changes" comment="" />
-      <created>1777750413481</created>
+      <changelist id="b40aeaa4-b7fc-4b19-ac53-384151ea25f7" name="Changes" comment="" />
+      <created>1777739036151</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1777750413481</updated>
-      <workItem from="1777750414912" duration="1974000" />
+      <updated>1777739036151</updated>
+      <workItem from="1777739038947" duration="645000" />
+      <workItem from="1777741223896" duration="341000" />
+      <workItem from="1777742048007" duration="1774000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="github-copilot-workspace">
+    <instructionFileLocations>
+      <option value=".github/instructions" />
+    </instructionFileLocations>
+    <promptFileLocations>
+      <option value=".github/prompts" />
+    </promptFileLocations>
   </component>
 </project>
