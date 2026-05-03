@@ -13,7 +13,7 @@ import java.util.List;
 @RequestMapping("/api/insurance-claim")
 @CrossOrigin(origins = "*")
 public class InsuranceClaimController {
-    
+
     private final org.example.forsapidev.Repositories.InsurancePolicyRepository policyRepository;
     private final IInsuranceClaim insuranceClaimService;
     private final org.example.forsapidev.Services.ClaimTemplateService claimTemplateService;
@@ -32,10 +32,14 @@ public class InsuranceClaimController {
     @GetMapping("/my-claims")
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('CLIENT')")
     public List<InsuranceClaim> retrieveMyClaims() {
-        org.springframework.security.core.Authentication authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) return null;
-        org.example.forsapidev.security.services.UserDetailsImpl userDetails = (org.example.forsapidev.security.services.UserDetailsImpl) authentication.getPrincipal();
-        // Since we don't have UserRepository here, we can just use the user ID from UserDetailsImpl
+        org.springframework.security.core.Authentication authentication = org.springframework.security.core.context.SecurityContextHolder
+                .getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated())
+            return null;
+        org.example.forsapidev.security.services.UserDetailsImpl userDetails = (org.example.forsapidev.security.services.UserDetailsImpl) authentication
+                .getPrincipal();
+        // Since we don't have UserRepository here, we can just use the user ID from
+        // UserDetailsImpl
         return insuranceClaimService.retrieveMyClaims(userDetails.getId());
     }
 
@@ -67,16 +71,31 @@ public class InsuranceClaimController {
     }
 
     @PostMapping("/upload-attachment")
-    public String uploadAttachment(@RequestParam("file") org.springframework.web.multipart.MultipartFile file) throws java.io.IOException {
+    public String uploadAttachment(@RequestParam("file") org.springframework.web.multipart.MultipartFile file)
+            throws java.io.IOException {
         return insuranceClaimService.uploadAttachment(file);
     }
 
     @GetMapping("/attachments/{filename}")
     @org.springframework.web.bind.annotation.ResponseBody
-    public org.springframework.http.ResponseEntity<org.springframework.core.io.Resource> getAttachment(@PathVariable String filename) {
+    public org.springframework.http.ResponseEntity<org.springframework.core.io.Resource> getAttachment(
+            @PathVariable String filename) {
         org.springframework.core.io.Resource file = insuranceClaimService.getAttachment(filename);
+        String contentType = null;
+        try {
+            contentType = java.nio.file.Files.probeContentType(java.nio.file.Paths.get(file.getURI()));
+        } catch (java.io.IOException e) {
+            // Fallback
+        }
+        if (contentType == null) {
+            contentType = "application/octet-stream";
+        }
+
         return org.springframework.http.ResponseEntity.ok()
-                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")
+                .contentType(org.springframework.http.MediaType
+                        .parseMediaType(contentType != null ? contentType : "application/octet-stream"))
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                        "inline; filename=\"" + file.getFilename() + "\"")
                 .body(file);
     }
 }
