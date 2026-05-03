@@ -1,6 +1,6 @@
 <div class="catalog-container">
   <div class="header-section">
-    <button routerLink="/dashboard/insurance" class="back-btn glass-btn">
+    <button type="button" routerLink="/dashboard/insurance" class="back-btn">
       <app-forsa-icon name="chevron-left" [size]="16"></app-forsa-icon> Back to Hub
     </button>
     <h1>Our Insurance Products</h1>
@@ -84,7 +84,7 @@
       </div>
 
       @if (comparisonResult.bestValueProduct) {
-        <div class="recommendation-panel glass-panel">
+        <div class="recommendation-panel">
           <app-forsa-icon name="sparkles" [size]="24" class="rec-ico"></app-forsa-icon>
           <div class="rec-content">
             <h3>Top Recommendation</h3>
@@ -94,26 +94,60 @@
       }
     </div>
   } @else {
-    <!-- Filter Bar -->
-    <div class="filter-bar glass-panel">
-      <div class="filter-group search">
-        <app-forsa-icon name="search" [size]="18"></app-forsa-icon>
-        <input type="text" [(ngModel)]="searchTerm" placeholder="Search by name or description...">
-      </div>
-      <div class="filter-group">
-        <app-forsa-icon name="filter" [size]="16"></app-forsa-icon>
-        <select [(ngModel)]="selectedType">
-          <option value="">All Categories</option>
-          @for (type of productTypes; track type) {
-            <option [value]="type">{{ type }}</option>
-          }
-        </select>
-      </div>
-      <div class="filter-group price">
-        <app-forsa-icon name="wallet" [size]="16"></app-forsa-icon>
-        <input type="number" [(ngModel)]="minPrice" placeholder="Min TND">
-        <span>-</span>
-        <input type="number" [(ngModel)]="maxPrice" placeholder="Max TND">
+    <!-- Filters: labeled fields + Forsa inputs (mobile-first grid) -->
+    <div class="catalog-filters glass-panel">
+      <div class="catalog-filters__inner">
+        <div class="catalog-field catalog-field--search">
+          <label class="catalog-label" for="ins-prod-search">Search</label>
+          <div class="catalog-control">
+            <span class="catalog-control__icon" aria-hidden="true"><app-forsa-icon name="search" [size]="18" /></span>
+            <input
+              id="ins-prod-search"
+              type="text"
+              class="forsa-input"
+              [(ngModel)]="searchTerm"
+              placeholder="Name or description…"
+              autocomplete="off" />
+          </div>
+        </div>
+        <div class="catalog-field">
+          <label class="catalog-label" for="ins-prod-type">Category</label>
+          <div class="catalog-control">
+            <span class="catalog-control__icon" aria-hidden="true"><app-forsa-icon name="filter" [size]="16" /></span>
+            <select id="ins-prod-type" class="forsa-input" [(ngModel)]="selectedType">
+              <option value="">All categories</option>
+              @for (type of productTypes; track type) {
+                <option [value]="type">{{ type }}</option>
+              }
+            </select>
+          </div>
+        </div>
+        <div class="catalog-field catalog-field--price">
+          <span class="catalog-label">Premium (TND)</span>
+          <div class="catalog-price-row">
+            <div class="catalog-control catalog-control--no-icon">
+              <input
+                type="number"
+                class="forsa-input"
+                [(ngModel)]="minPrice"
+                placeholder="Min"
+                min="0"
+                step="1"
+                aria-label="Minimum premium in TND" />
+            </div>
+            <span class="catalog-price-sep" aria-hidden="true">–</span>
+            <div class="catalog-control catalog-control--no-icon">
+              <input
+                type="number"
+                class="forsa-input"
+                [(ngModel)]="maxPrice"
+                placeholder="Max"
+                min="0"
+                step="1"
+                aria-label="Maximum premium in TND" />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 

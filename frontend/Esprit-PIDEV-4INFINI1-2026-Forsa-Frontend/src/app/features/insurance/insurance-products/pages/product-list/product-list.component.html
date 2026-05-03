@@ -37,7 +37,7 @@
         <div class="prod-body">
           <div class="prod-header">
             <div class="prod-ico" [attr.data-tone]="typeTone(p.policyType)">
-              <app-forsa-icon [name]="$any(typeIcon(p.policyType))" [size]="22" />
+              <app-forsa-icon [name]="typeIcon(p.policyType)" [size]="22" />
             </div>
             <div class="prod-meta">
               <h3>{{ p.productName }}</h3>

@@ -10,6 +10,8 @@
 .th-actions { text-align:right; }
 .row-actions { display:flex; justify-content:flex-end; gap:.25rem; }
 .row-actions a { text-decoration:none; }
+.claim-type-cell { display:inline-flex; align-items:center; gap:0.35rem; }
+.claim-type-ico { flex-shrink:0; opacity:0.85; }
 :host ::ng-deep .btn-danger { color:var(--color-destructive) !important; }
 .state-box { display:flex; flex-direction:column; align-items:center; gap:1rem; padding:5rem 1rem; color:var(--color-muted-foreground); }
 .state-error { color:var(--color-destructive); }

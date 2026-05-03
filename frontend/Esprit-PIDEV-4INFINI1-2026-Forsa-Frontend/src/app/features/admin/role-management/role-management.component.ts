@@ -9,6 +9,11 @@ import { RoleAdminService } from '../../../core/services/role-admin.service';
 import { ForsaBadgeComponent } from '../../../shared/ui/forsa-badge/forsa-badge.component';
 import { ForsaButtonComponent } from '../../../shared/ui/forsa-button/forsa-button.component';
 import { ForsaCardComponent } from '../../../shared/ui/forsa-card/forsa-card.component';
+import { ForsaDataTableComponent } from '../../../shared/ui/forsa-data-table/forsa-data-table.component';
+import type {
+  ForsaDataTablePageEvent,
+  ForsaTableColumn,
+} from '../../../shared/ui/forsa-data-table/forsa-data-table.types';
 import { ForsaIconComponent } from '../../../shared/ui/forsa-icon/forsa-icon.component';
 
 interface NavAccessRow {
@@ -21,7 +26,13 @@ interface NavAccessRow {
 @Component({
   selector: 'app-role-management',
   standalone: true,
-  imports: [ForsaBadgeComponent, ForsaButtonComponent, ForsaCardComponent, ForsaIconComponent],
+  imports: [
+    ForsaBadgeComponent,
+    ForsaButtonComponent,
+    ForsaCardComponent,
+    ForsaDataTableComponent,
+    ForsaIconComponent,
+  ],
   templateUrl: './role-management.component.html',
   styleUrl: './role-management.component.css',
 })
@@ -41,6 +52,19 @@ export class RoleManagementComponent implements OnInit {
   readonly dialogSaving = signal(false);
   readonly dialogBanner = signal<{ tone: 'ok' | 'err'; text: string } | null>(null);
 
+  readonly roleTableColumns: ForsaTableColumn[] = [
+    { key: 'id', label: 'ID' },
+    { key: 'role', label: 'Role' },
+    { key: 'label', label: 'Label' },
+    { key: 'description', label: 'Description' },
+    { key: 'users', label: 'Users', align: 'right' },
+    { key: 'actions', label: 'Actions', align: 'right', width: '11rem' },
+  ];
+
+  rolePageIndex = 0;
+  rolePageSize = 10;
+  readonly rolePageSizeOptions: number[] = [5, 10, 25, 50];
+
   ngOnInit(): void {
     this.refresh();
   }
@@ -51,6 +75,7 @@ export class RoleManagementComponent implements OnInit {
     this.rolesApi.listRoles().subscribe({
       next: (rows) => {
         this.roles.set(rows);
+        this.rolePageIndex = 0;
         this.loading.set(false);
       },
       error: (e) => {
@@ -58,6 +83,17 @@ export class RoleManagementComponent implements OnInit {
         this.banner.set({ tone: 'err', text: e.error?.message ?? 'Could not load roles.' });
       },
     });
+  }
+
+  get rolesPaged(): RoleWithStats[] {
+    const list = this.roles();
+    const start = this.rolePageIndex * this.rolePageSize;
+    return list.slice(start, start + this.rolePageSize);
+  }
+
+  onRoleTablePage(ev: ForsaDataTablePageEvent): void {
+    this.rolePageIndex = ev.pageIndex;
+    this.rolePageSize = ev.pageSize;
   }
 
   openEditAccess(role: RoleWithStats): void {

@@ -150,8 +150,8 @@
         <button class="btn-text" routerLink="/dashboard/insurance/claims">View All Detailed Logs</button>
       </div>
 
-      <div class="table-container">
-        <table class="premium-table">
+      <div class="table-container table-container--scroll">
+        <table class="premium-table premium-table--scroll-x">
           <thead>
             <tr>
               <th>Claim #</th>
@@ -163,7 +163,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (c of data()?.topClaims; track c.id) {
+            @for (c of data()?.topClaims ?? []; track $index) {
               <tr class="table-row">
                 <td class="td-number"><span>{{ c.claimNumber }}</span></td>
                 <td class="td-policy">{{ c.policyNumber }}</td>

@@ -1,8 +1,16 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
 .forsa-client-dash {
   padding: 3rem 2rem;
   max-width: 1200px;
   margin: 0 auto;
   font-family: var(--font-sans);
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
 }
 
 .dash-header {
@@ -24,9 +32,26 @@
 
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
   gap: 2rem;
   margin-bottom: 5rem;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .forsa-client-dash {
+    padding: 1.5rem 1rem;
+  }
+  .cards-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+    margin-bottom: 3rem;
+  }
+  .premium-card {
+    padding: 1.75rem 1.25rem;
+  }
 }
 
 .premium-card {

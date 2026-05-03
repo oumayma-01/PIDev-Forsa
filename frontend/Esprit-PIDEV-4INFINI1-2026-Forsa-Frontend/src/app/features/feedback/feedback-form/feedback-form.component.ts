@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { FeedbackService } from '../../../core/data/feedback.service';
 import { Feedback, SatisfactionLevel } from '../../../core/models/forsa.models';
+import { ForsaBadgeComponent } from '../../../shared/ui/forsa-badge/forsa-badge.component';
 import { ForsaButtonComponent } from '../../../shared/ui/forsa-button/forsa-button.component';
 import { ForsaCardComponent } from '../../../shared/ui/forsa-card/forsa-card.component';
 import { ForsaIconComponent } from '../../../shared/ui/forsa-icon/forsa-icon.component';
@@ -16,6 +17,7 @@ import { ForsaInputDirective } from '../../../shared/directives/forsa-input.dire
   imports: [
     CommonModule,
     FormsModule,
+    ForsaBadgeComponent,
     ForsaButtonComponent,
     ForsaCardComponent,
     ForsaIconComponent,
@@ -46,6 +48,17 @@ export class FeedbackFormComponent implements OnInit {
     'DISSATISFIED',
     'VERY_DISSATISFIED',
   ];
+
+  satisfactionLabel(level: SatisfactionLevel | string): string {
+    const map: Record<string, string> = {
+      VERY_SATISFIED: 'Very satisfied',
+      SATISFIED: 'Satisfied',
+      NEUTRAL: 'Neutral',
+      DISSATISFIED: 'Dissatisfied',
+      VERY_DISSATISFIED: 'Very dissatisfied',
+    };
+    return map[level] ?? String(level);
+  }
 
   constructor(
     private feedbackService: FeedbackService,
@@ -94,11 +107,6 @@ export class FeedbackFormComponent implements OnInit {
     return Array.from({ length: 5 }, (_, i) => i + 1);
   }
 
-  getStarClass(star: number): string {
-    if (!this.feedback.rating) return '';
-    return star <= this.feedback.rating ? 'star-filled' : 'star-empty';
-  }
-
   save(): void {
     if (!this.feedback.rating || this.feedback.rating < 1 || this.feedback.rating > 5) {
       this.error = 'Rating must be between 1 and 5.';
@@ -114,8 +122,6 @@ export class FeedbackFormComponent implements OnInit {
       ...this.feedback,
       complaint: this.feedback.complaint ?? (this.complaintId ? { id: this.complaintId, subject: '', description: '' } : undefined),
     };
-    console.log('[FeedbackForm] submit payload:', payload);
-
     if (this.isEditMode) {
       const updatePayload: any = {
         ...this.feedback,

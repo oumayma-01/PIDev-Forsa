@@ -1,9 +1,14 @@
-import { DecimalPipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { DatePipe, DecimalPipe } from '@angular/common';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ForsaBadgeComponent } from '../../../shared/ui/forsa-badge/forsa-badge.component';
 import { ForsaButtonComponent } from '../../../shared/ui/forsa-button/forsa-button.component';
 import { ForsaCardComponent } from '../../../shared/ui/forsa-card/forsa-card.component';
+import { ForsaDataTableComponent } from '../../../shared/ui/forsa-data-table/forsa-data-table.component';
+import type {
+  ForsaDataTablePageEvent,
+  ForsaTableColumn,
+} from '../../../shared/ui/forsa-data-table/forsa-data-table.types';
 import { ForsaIconComponent } from '../../../shared/ui/forsa-icon/forsa-icon.component';
 import type { CreditRequestApi, CreditStatus, RepaymentScheduleApi, RepaymentStatus } from '../../../core/models/credit-api.model';
 import { AuthService } from '../../../core/services/auth.service';
@@ -13,10 +18,12 @@ import { CreditApiService } from '../../../core/services/credit-api.service';
   selector: 'app-credit-list',
   standalone: true,
   imports: [
+    DatePipe,
     DecimalPipe,
     ForsaBadgeComponent,
     ForsaButtonComponent,
     ForsaCardComponent,
+    ForsaDataTableComponent,
     ForsaIconComponent,
   ],
   templateUrl: './credit-list.component.html',
@@ -49,6 +56,32 @@ export class CreditListComponent {
   readonly statusFilter = signal<string>('');
   readonly dateStart = signal<string>('');
   readonly dateEnd = signal<string>('');
+
+  readonly creditStaffColumns: ForsaTableColumn[] = [
+    { key: 'id', label: 'ID', width: '4.5rem' },
+    { key: 'client', label: 'Client' },
+    { key: 'amount', label: 'Amount', align: 'right', width: '8rem' },
+    { key: 'duration', label: 'Duration', width: '6rem' },
+    { key: 'status', label: 'Status', width: '9rem' },
+    { key: 'date', label: 'Date', width: '9rem' },
+    { key: 'agent', label: 'Agent', width: '5rem' },
+    { key: 'actions', label: 'Actions', align: 'right', width: '8.5rem' },
+  ];
+
+  readonly repaymentColumns: ForsaTableColumn[] = [
+    { key: 'id', label: 'ID', width: '4rem' },
+    { key: 'due', label: 'Due date' },
+    { key: 'amount', label: 'Amount', align: 'right' },
+    { key: 'status', label: 'Status', width: '8rem' },
+  ];
+
+  readonly creditPageIndex = signal(0);
+  readonly creditPageSize = signal(10);
+  readonly creditPageSizeOptions: ReadonlyArray<number> = [5, 10, 25, 50];
+
+  readonly repaymentPageIndex = signal(0);
+  readonly repaymentPageSize = signal(10);
+  readonly repaymentPageSizeOptions: ReadonlyArray<number> = [5, 10, 25, 50];
 
   readonly filteredCredits = computed(() => {
     let list = this.credits() ?? [];
@@ -90,13 +123,68 @@ export class CreditListComponent {
     return list;
   });
 
+  readonly creditsPaged = computed(() => {
+    const list = this.filteredCredits();
+    const start = this.creditPageIndex() * this.creditPageSize();
+    return list.slice(start, start + this.creditPageSize());
+  });
+
+  readonly repaymentsPaged = computed(() => {
+    const list = this.repayments();
+    const start = this.repaymentPageIndex() * this.repaymentPageSize();
+    return list.slice(start, start + this.repaymentPageSize());
+  });
+
   readonly activeCredit = computed<CreditRequestApi | null>(() => {
     const list = this.credits() ?? [];
     return list.find((c) => c.status === 'ACTIVE' || c.status === 'APPROVED') ?? null;
   });
 
   constructor() {
+    effect(() => {
+      this.searchTerm();
+      this.statusFilter();
+      this.dateStart();
+      this.dateEnd();
+      untracked(() => this.creditPageIndex.set(0));
+    });
+    effect(
+      () => {
+        const total = this.filteredCredits().length;
+        const sz = this.creditPageSize();
+        const maxIdx = Math.max(0, Math.ceil(total / sz) - 1);
+        untracked(() => {
+          if (this.creditPageIndex() > maxIdx) {
+            this.creditPageIndex.set(maxIdx);
+          }
+        });
+      },
+      { allowSignalWrites: true },
+    );
+    effect(
+      () => {
+        const total = this.repayments().length;
+        const sz = this.repaymentPageSize();
+        const maxIdx = Math.max(0, Math.ceil(total / sz) - 1);
+        untracked(() => {
+          if (this.repaymentPageIndex() > maxIdx) {
+            this.repaymentPageIndex.set(maxIdx);
+          }
+        });
+      },
+      { allowSignalWrites: true },
+    );
     void this.load();
+  }
+
+  onCreditTablePage(ev: ForsaDataTablePageEvent): void {
+    this.creditPageIndex.set(ev.pageIndex);
+    this.creditPageSize.set(ev.pageSize);
+  }
+
+  onRepaymentTablePage(ev: ForsaDataTablePageEvent): void {
+    this.repaymentPageIndex.set(ev.pageIndex);
+    this.repaymentPageSize.set(ev.pageSize);
   }
 
   async load(): Promise<void> {
@@ -123,6 +211,7 @@ export class CreditListComponent {
       this.inflight = this.api.listMyCredits().subscribe({
         next: (list) => {
           this.loading.set(false);
+          this.creditPageIndex.set(0);
           this.credits.set(list ?? []);
 
           this.api.consumeMyGiftAwardNotification().subscribe({
@@ -161,6 +250,7 @@ export class CreditListComponent {
     this.inflight = this.api.listAllCredits().subscribe({
       next: (list) => {
         this.loading.set(false);
+        this.creditPageIndex.set(0);
         this.credits.set(list ?? []);
       },
       error: (err) => {
@@ -210,6 +300,7 @@ export class CreditListComponent {
     this.api.getRepaymentsForCredit(creditId).subscribe({
       next: (list) => {
         this.repaymentsLoading.set(false);
+        this.repaymentPageIndex.set(0);
         this.repayments.set(list ?? []);
       },
       error: (err) => {

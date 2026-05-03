@@ -39,7 +39,7 @@
     </div>
     <div class="filter-group">
       <label>Status:</label>
-      <select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)" class="filter-select">
+      <select title="Filter by policy status" [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)" class="forsa-input filter-select">
         <option value="ALL">All Statuses</option>
         <option [value]="PolicyStatus.ACTIVE">Active</option>
         <option [value]="PolicyStatus.PENDING">Pending Review</option>
@@ -53,25 +53,23 @@
   </div>
 
   <app-forsa-card [overflowHidden]="true">
-    <div class="table-wrap">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Policy #</th>
-            <th>Product</th>
-            <th>Status</th>
-            <th>Premium</th>
-            <th>Coverage</th>
-            <th>Start</th>
-            <th>End</th>
-            <th>Risk</th>
-            <th class="th-actions">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (p of filteredPolicies(); track p.id) {
+    <div class="card-pad-lg table-wrap">
+      <app-forsa-data-table
+        [embedded]="true"
+        [columns]="policyTableColumns"
+        [rows]="pagedPolicies()"
+        [totalCount]="filteredPolicies().length"
+        [pageIndex]="policyTablePageIndex()"
+        [pageSize]="policyTablePageSize()"
+        [pageSizeOptions]="policyTablePageSizeOptions"
+        (pageChange)="onPolicyTablePage($event)"
+        emptyTitle="No policies match your filters"
+        emptyDescription="Try another search term or status."
+        ariaLabel="Insurance policies">
+        <ng-template #forsaTableBody let-rows>
+          @for (p of rows; track p.id) {
             <tr>
-              <td class="td-mono">{{ p.policyNumber ?? '—' }}</td>
+              <td class="mono">{{ p.policyNumber ?? '—' }}</td>
               <td>{{ p.insuranceProduct?.productName ?? '—' }}</td>
               <td>
                 <app-forsa-badge [tone]="statusTone(p.status)">
@@ -79,19 +77,21 @@
                   {{ p.status }}
                 </app-forsa-badge>
               </td>
-              <td>{{ (p.finalPremium ?? p.premiumAmount) | number:'1.2-2' }} TND</td>
-              <td>{{ p.coverageLimit | number:'1.0-0' }} TND</td>
-              <td>{{ p.startDate | date:'dd/MM/yyyy' }}</td>
-              <td>{{ p.endDate | date:'dd/MM/yyyy' }}</td>
+              <td class="right">{{ (p.finalPremium ?? p.premiumAmount) | number : '1.2-2' }} TND</td>
+              <td class="right">{{ p.coverageLimit | number : '1.0-0' }} TND</td>
+              <td>{{ p.startDate | date : 'dd/MM/yyyy' }}</td>
+              <td>{{ p.endDate | date : 'dd/MM/yyyy' }}</td>
               <td>
                 @if (p.riskCategory) {
                   <app-forsa-badge
                     [tone]="p.riskCategory === 'LOW_RISK' ? 'success' : p.riskCategory === 'HIGH_RISK' ? 'danger' : 'warning'">
                     {{ p.riskCategory }}
                   </app-forsa-badge>
-                } @else { — }
+                } @else {
+                  —
+                }
               </td>
-              <td>
+              <td class="right">
                 <div class="row-actions">
                   <a [routerLink]="['/dashboard/insurance/policies', p.id]">
                     <app-forsa-button variant="ghost" size="sm">
@@ -99,25 +99,37 @@
                     </app-forsa-button>
                   </a>
                   @if (p.status === 'PENDING') {
-                    <app-forsa-button variant="ghost" size="sm" extraClass="btn-success"
-                      [disabled]="reviewingId() === p.id" (click)="approve(p.id!)">
+                    <app-forsa-button
+                      variant="ghost"
+                      size="sm"
+                      extraClass="btn-success"
+                      [disabled]="reviewingId() === p.id"
+                      (click)="approve(p.id!)">
                       <app-forsa-icon name="check-circle-2" [size]="14" />
                     </app-forsa-button>
-                    <app-forsa-button variant="ghost" size="sm" extraClass="btn-danger"
-                      [disabled]="reviewingId() === p.id" (click)="reject(p.id!)">
+                    <app-forsa-button
+                      variant="ghost"
+                      size="sm"
+                      extraClass="btn-danger"
+                      [disabled]="reviewingId() === p.id"
+                      (click)="reject(p.id!)">
                       <app-forsa-icon name="alert-circle" [size]="14" />
                     </app-forsa-button>
                   }
-                  <app-forsa-button variant="ghost" size="sm" extraClass="btn-danger"
-                    [disabled]="deletingId() === p.id" (click)="delete(p.id!)">
+                  <app-forsa-button
+                    variant="ghost"
+                    size="sm"
+                    extraClass="btn-danger"
+                    [disabled]="deletingId() === p.id"
+                    (click)="delete(p.id!)">
                     <app-forsa-icon name="shield-alert" [size]="14" />
                   </app-forsa-button>
                 </div>
               </td>
             </tr>
           }
-        </tbody>
-      </table>
+        </ng-template>
+      </app-forsa-data-table>
     </div>
   </app-forsa-card>
 }

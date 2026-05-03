@@ -5,6 +5,7 @@ import { ForsaBadgeComponent } from '../../../../../shared/ui/forsa-badge/forsa-
 import { ForsaButtonComponent } from '../../../../../shared/ui/forsa-button/forsa-button.component';
 import { ForsaCardComponent } from '../../../../../shared/ui/forsa-card/forsa-card.component';
 import { ForsaIconComponent } from '../../../../../shared/ui/forsa-icon/forsa-icon.component';
+import type { ForsaIconName } from '../../../../../shared/ui/forsa-icon/forsa-icon.types';
 import { InsuranceProductService } from '../../../shared/services/insurance-product.service';
 import { InsuranceProduct } from '../../../shared/models/insurance.models';
 
@@ -43,19 +44,41 @@ export class ProductListComponent implements OnInit {
     });
   }
 
-  typeIcon(type: string): string {
-    const map: Record<string, string> = {
-      HEALTH: 'heart', LIFE: 'shield-check', PROPERTY: 'home',
-      ACCIDENT: 'zap', CROP: 'leaf', LIVESTOCK: 'dog', BUSINESS: 'briefcase',
+  /**
+   * Maps API {@link InsuranceProduct.policyType} to a {@link ForsaIconName} that exists in {@link ForsaIconComponent}.
+   * Previous keys like `leaf`, `dog`, `briefcase`, `package` had no SVG — icons looked missing.
+   */
+  typeIcon(type: string | undefined | null): ForsaIconName {
+    const key = (type ?? '').toUpperCase().trim();
+    const map: Record<string, ForsaIconName> = {
+      HEALTH: 'heart',
+      LIFE: 'shield-check',
+      PROPERTY: 'home',
+      ACCIDENT: 'zap',
+      CROP: 'sparkles',
+      LIVESTOCK: 'users',
+      BUSINESS: 'store',
+      AUTO: 'car',
+      VEHICLE: 'car',
+      MOTOR: 'car',
     };
-    return map[type] ?? 'package';
+    return map[key] ?? 'shield';
   }
 
-  typeTone(type: string): string {
+  typeTone(type: string | undefined | null): string {
+    const key = (type ?? '').toUpperCase().trim();
     const map: Record<string, string> = {
-      HEALTH: 'rose', LIFE: 'emerald', PROPERTY: 'amber',
-      ACCIDENT: 'info', CROP: 'emerald', LIVESTOCK: 'amber', BUSINESS: 'blue',
+      HEALTH: 'rose',
+      LIFE: 'emerald',
+      PROPERTY: 'amber',
+      ACCIDENT: 'info',
+      CROP: 'emerald',
+      LIVESTOCK: 'amber',
+      BUSINESS: 'blue',
+      AUTO: 'info',
+      VEHICLE: 'info',
+      MOTOR: 'info',
     };
-    return map[type] ?? 'default';
+    return map[key] ?? 'default';
   }
 }

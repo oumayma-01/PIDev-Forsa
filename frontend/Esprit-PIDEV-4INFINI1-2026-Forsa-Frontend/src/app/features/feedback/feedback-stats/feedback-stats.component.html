@@ -182,8 +182,10 @@
           <div class="rating-bar-bg">
             <div class="rating-bar-fill" [style.width.%]="(item.avgRating / 5) * 100" [style.background]="satisfactionColor(item.group)"></div>
           </div>
-          <span>{{ ratingStars(item.avgRating) }}</span>
-          <strong>{{ item.avgRating | number:'1.1-1' }}</strong>
+          <div class="rating-row-meta">
+            <span class="rating-stars">{{ ratingStars(item.avgRating) }}</span>
+            <strong class="rating-score">{{ item.avgRating | number:'1.1-1' }}</strong>
+          </div>
         </div>
       }
     </div>

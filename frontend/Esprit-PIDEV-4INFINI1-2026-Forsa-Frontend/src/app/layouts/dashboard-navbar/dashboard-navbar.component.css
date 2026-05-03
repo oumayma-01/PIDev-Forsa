@@ -14,7 +14,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 2rem;
+  padding: 0 max(2rem, env(safe-area-inset-right)) 0 max(2rem, env(safe-area-inset-left));
+  padding-top: env(safe-area-inset-top);
+  min-height: calc(4rem + env(safe-area-inset-top));
   gap: 1rem;
   transition: background 0.3s ease, box-shadow 0.3s ease;
 }
@@ -30,7 +32,7 @@
   align-items: center;
   gap: 0.4rem;
   overflow-x: auto;
-  padding: 0.6rem 2rem;
+  padding: 0.6rem max(2rem, env(safe-area-inset-right)) 0.6rem max(2rem, env(safe-area-inset-left));
   border-bottom: 1px solid var(--glass-border);
   background: var(--glass-bg);
   -webkit-backdrop-filter: blur(12px);
@@ -604,4 +606,75 @@
 .role-badge {
   text-transform: capitalize;
   pointer-events: none;
+}
+
+.shell-nav-toggle {
+  flex-shrink: 0;
+  margin-inline-end: 0.15rem;
+}
+
+.shell-nav-toggle__label {
+  max-width: 3.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 1023px) {
+  .navbar {
+    padding-inline: max(0.75rem, env(safe-area-inset-right)) max(0.75rem, env(safe-area-inset-left));
+    gap: 0.35rem;
+  }
+
+  .navbar__actions {
+    gap: 0.2rem;
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  .text-btn__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  .text-btn {
+    position: relative;
+  }
+
+  .shell-nav-toggle .shell-nav-toggle__label {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: nowrap;
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .role-wrap {
+    display: none;
+  }
+
+  .divider {
+    display: none;
+  }
+
+  .client-nav {
+    padding-inline: max(0.75rem, env(safe-area-inset-right)) max(0.75rem, env(safe-area-inset-left));
+  }
+}
+
+@media (max-width: 380px) {
+  .shell-nav-toggle__label {
+    display: none;
+  }
 }

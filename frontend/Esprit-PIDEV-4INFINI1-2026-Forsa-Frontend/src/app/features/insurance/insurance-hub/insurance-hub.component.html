@@ -172,26 +172,28 @@
                 <h3>Top Performing Products</h3>
                 <button class="btn-text" routerLink="products">View All</button>
               </div>
-              <table class="forsa-table">
-                <thead>
-                  <tr>
-                    <th>Product Name</th>
-                    <th>Policies</th>
-                    <th>Revenue</th>
-                    <th>Trend</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (prod of data.popularProducts; track prod.productName) {
+              <div class="hub-table-scroll hub-table-scroll--datatable">
+                <table class="forsa-table forsa-table--scroll-x forsa-table--hub-4col">
+                  <thead>
                     <tr>
-                      <td><strong>{{ prod.productName }}</strong></td>
-                      <td>{{ prod.policyCount }}</td>
-                      <td>{{ prod.totalRevenue | number:'1.2-2' }} TND</td>
-                      <td><app-forsa-icon name="trending-up" [size]="14" class="text-success" /></td>
+                      <th>Product Name</th>
+                      <th>Policies</th>
+                      <th>Revenue</th>
+                      <th>Trend</th>
                     </tr>
-                  }
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    @for (prod of data.popularProducts; track prod.productName) {
+                      <tr>
+                        <td><strong>{{ prod.productName }}</strong></td>
+                        <td>{{ prod.policyCount }}</td>
+                        <td>{{ prod.totalRevenue | number:'1.2-2' }} TND</td>
+                        <td><app-forsa-icon name="trending-up" [size]="14" class="text-success" /></td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             <!-- Claims Overview -->
@@ -218,7 +220,7 @@
                       <span>{{ st.count }}</span>
                     </div>
                     <div class="bar-bg">
-                      <div class="bar-fill" [style.width.%]="(st.count / data.claimsAnalytics.totalClaims) * 100"></div>
+                      <div class="bar-fill" [style.width.%]="safeStatusBarPct(st.count, data.claimsAnalytics.totalClaims)"></div>
                     </div>
                   </div>
                 }
@@ -233,32 +235,34 @@
                 <h3>Recent High-Value Claims</h3>
                 <button class="btn-text" routerLink="claims">View All Claims</button>
               </div>
-              <table class="forsa-table">
-                <thead>
-                  <tr>
-                    <th>Claim #</th>
-                    <th>Policy #</th>
-                    <th>Date</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (claim of data.claimsAnalytics.topClaims; track claim.id) {
+              <div class="hub-table-scroll hub-table-scroll--datatable">
+                <table class="forsa-table forsa-table--scroll-x forsa-table--hub-5col">
+                  <thead>
                     <tr>
-                      <td><strong>{{ claim.claimNumber }}</strong></td>
-                      <td>{{ claim.policyNumber }}</td>
-                      <td>{{ claim.claimDate | date:'shortDate' }}</td>
-                      <td class="text-bold">{{ claim.claimAmount | number:'1.2-2' }} TND</td>
-                      <td>
-                        <span class="status-badge" [attr.data-status]="claim.status">
-                          {{ claim.status }}
-                        </span>
-                      </td>
+                      <th>Claim #</th>
+                      <th>Policy #</th>
+                      <th>Date</th>
+                      <th>Amount</th>
+                      <th>Status</th>
                     </tr>
-                  }
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    @for (claim of data.claimsAnalytics.topClaims; track $index) {
+                      <tr>
+                        <td><strong>{{ claim.claimNumber }}</strong></td>
+                        <td>{{ claim.policyNumber }}</td>
+                        <td>{{ claim.claimDate | date:'shortDate' }}</td>
+                        <td class="text-bold">{{ claim.claimAmount | number:'1.2-2' }} TND</td>
+                        <td>
+                          <span class="status-badge" [attr.data-status]="claim.status">
+                            {{ claim.status }}
+                          </span>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         }
@@ -268,8 +272,8 @@
 
   <!-- CLIENT COMMAND CENTER -->
   @if (!isAdminOrAgent) {
-    <div class="dashboard-wrapper">
-      <header class="dashboard-header">
+    <div class="dashboard-wrapper client-insurance-home">
+      <header class="dashboard-header client-insurance-home__header">
         <div class="header-content">
           <h1>My Insurance Portfolio</h1>
           <p>Manage your coverage, file claims, and track payments.</p>

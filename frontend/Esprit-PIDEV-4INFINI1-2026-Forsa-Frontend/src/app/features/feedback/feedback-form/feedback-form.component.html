@@ -1,103 +1,116 @@
-<div class="page-toolbar">
-  <div class="page-head">
-    <h2>{{ isEditMode ? 'Edit Feedback' : 'Share Your Feedback' }}</h2>
-    <p>{{ isEditMode ? 'Update your feedback' : 'Help us improve our services' }}</p>
-  </div>
-</div>
-
-@if (error) {
-  <div class="form-error">{{ error }}</div>
-}
-
-@if (loading && isEditMode) {
-  <div class="form-loading">
-    <app-forsa-icon name="zap" [size]="20" />
-    Loading feedback...
-  </div>
-}
-
-<app-forsa-card>
-  <div class="card-pad-lg">
-    <!-- Star Rating -->
-    <div class="form-group">
-      <label class="forsa-label">Rating *</label>
-      <div class="star-rating">
-        @for (star of getRatingStars(5); track star) {
-          <button
-            class="star-btn"
-            [class]="getStarClass(star)"
-            (click)="setRating(star)"
-            type="button"
-          >
-            <app-forsa-icon name="heart" [size]="32" />
-          </button>
-        }
-      </div>
-      <p class="rating-text">{{ feedback.rating || 0 }} / 5</p>
+<div class="fb-form-page">
+  <div class="page-toolbar">
+    <div class="page-head">
+      <h1 class="fb-form-title">{{ isEditMode ? 'Edit feedback' : 'Share your feedback' }}</h1>
+      <p class="page-head__lede">
+        {{
+          isEditMode
+            ? 'Update your rating or comment.'
+            : 'A quick rating helps us improve the service.'
+        }}
+      </p>
     </div>
+  </div>
 
-    <!-- Comment -->
-    <div class="form-group">
-      <label class="forsa-label">Comment (max 500 characters)</label>
-      <textarea
-        forsaInput
-        [(ngModel)]="feedback.comment"
-        placeholder="Tell us what you think (optional)"
-        rows="5"
-      ></textarea>
-      <p class="char-count">{{ (feedback.comment || '').length }} / 500</p>
+  @if (error) {
+    <div class="form-error" role="alert">{{ error }}</div>
+  }
+
+  @if (loading && isEditMode) {
+    <div class="form-loading" role="status">
+      <app-forsa-icon name="refresh-cw" [size]="18" class="fb-spin" />
+      Loading…
     </div>
+  }
 
-    <!-- Satisfaction Level — hidden if useAI -->
-    @if (!useAI || isEditMode) {
+  <app-forsa-card class="fb-form-card">
+    <div class="card-pad-lg">
       <div class="form-group">
-        <label class="forsa-label">How satisfied are you?</label>
-        <select forsaInput [(ngModel)]="feedback.satisfactionLevel">
-          @for (level of satisfactionLevels; track level) {
-            <option [value]="level">{{ level }}</option>
+        <div class="rating-label-row">
+          <label class="forsa-label" id="rating-label">Rating <span aria-hidden="true">*</span></label>
+          <app-forsa-badge tone="info" size="xs" aria-hidden="true">{{ feedback.rating || 0 }} / 5</app-forsa-badge>
+        </div>
+        <div class="star-rating" role="group" aria-labelledby="rating-label">
+          @for (star of getRatingStars(5); track star) {
+            <button
+              title="Rate {{ star }} out of 5"
+              class="star-btn"
+              [class.star-filled]="star <= (feedback.rating || 0)"
+              [class.star-empty]="star > (feedback.rating || 0)"
+              (click)="setRating(star)"
+              type="button"
+              [attr.aria-label]="'Rate ' + star + ' out of 5'"
+              [attr.aria-pressed]="star <= (feedback.rating || 0)">
+              <app-forsa-icon name="star" [size]="34" />
+            </button>
           }
-        </select>
+        </div>
+        <p class="rating-hint text-muted sm">Click the stars to choose from 1 to 5.</p>
       </div>
-    }
 
-    <!-- Anonymous toggle -->
-    <div class="form-group">
-      <label class="checkbox-label">
-        <input type="checkbox" [(ngModel)]="feedback.isAnonymous" />
-        <span>Submit as anonymous</span>
-      </label>
-    </div>
+      <div class="form-group">
+        <label class="forsa-label" for="fb-comment">Comment <span class="optional">(optional, max 500)</span></label>
+        <textarea
+          id="fb-comment"
+          forsaInput
+          [(ngModel)]="feedback.comment"
+          placeholder="Tell us what worked well or what we should improve…"
+          rows="5"
+          maxlength="500"
+          [attr.aria-invalid]="(feedback.comment || '').length > 500"></textarea>
+        <p class="char-count" [class.char-count--warn]="(feedback.comment || '').length > 450">
+          {{ (feedback.comment || '').length }} / 500
+        </p>
+      </div>
 
-    <!-- Use AI toggle — add mode only -->
-    @if (!isEditMode) {
-      <div class="form-ai-toggle">
-        <label class="ai-label">
-          <input type="checkbox" [(ngModel)]="useAI" />
-          <app-forsa-icon name="sparkles" [size]="16" />
-          <span>Use AI to determine satisfaction level</span>
+      @if (!useAI || isEditMode) {
+        <div class="form-group">
+          <label class="forsa-label" for="fb-satisfaction">Satisfaction level</label>
+          <select id="fb-satisfaction" forsaInput [(ngModel)]="feedback.satisfactionLevel">
+            @for (level of satisfactionLevels; track level) {
+              <option [value]="level">{{ satisfactionLabel(level) }}</option>
+            }
+          </select>
+        </div>
+      }
+
+      <div class="form-group form-group--inline">
+        <label class="checkbox-label">
+          <input type="checkbox" [(ngModel)]="feedback.isAnonymous" />
+          <span>Submit anonymously</span>
         </label>
       </div>
-    }
 
-    <!-- Actions -->
-    <div class="form-actions">
-      @if (isEditMode) {
-        <app-forsa-button variant="outline" (clicked)="remove()">
-          Delete
-        </app-forsa-button>
+      @if (!isEditMode) {
+        <div class="form-ai-toggle">
+          <label class="ai-label">
+            <input type="checkbox" [(ngModel)]="useAI" title="Use AI to infer satisfaction from your comment" />
+            <app-forsa-icon name="sparkles" [size]="16" aria-hidden="true" />
+            <span>Use AI to infer satisfaction from your comment</span>
+          </label>
+        </div>
       }
-      <app-forsa-button variant="outline" (clicked)="cancel()">
-        Cancel
-      </app-forsa-button>
-      <app-forsa-button (clicked)="save()" [disabled]="loading">
-        @if (loading) {
-          <app-forsa-icon name="zap" [size]="16" />
-          Saving...
-        } @else {
-          <app-forsa-icon name="check-circle-2" [size]="16" />
-          {{ isEditMode ? 'Update Feedback' : 'Submit Feedback' }}
+
+      <div class="form-actions">
+        @if (isEditMode) {
+          <app-forsa-button type="button" variant="destructive" (clicked)="remove()">
+            <app-forsa-icon name="trash-2" [size]="16" />
+            Delete
+          </app-forsa-button>
         }
-      </app-forsa-button>
+        <div class="form-actions__end">
+          <app-forsa-button type="button" variant="outline" (clicked)="cancel()">Cancel</app-forsa-button>
+          <app-forsa-button type="button" (clicked)="save()" [disabled]="loading">
+            @if (loading) {
+              <app-forsa-icon name="refresh-cw" [size]="16" class="fb-spin" />
+              Saving…
+            } @else {
+              <app-forsa-icon name="check-circle-2" [size]="16" />
+              {{ isEditMode ? 'Update' : 'Submit feedback' }}
+            }
+          </app-forsa-button>
+        </div>
+      </div>
     </div>
-  </div>
-</app-forsa-card>
+  </app-forsa-card>
+</div>

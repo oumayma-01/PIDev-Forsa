@@ -67,19 +67,18 @@
     } @else if (filteredUsers().length === 0) {
       <p class="text-muted">No users match your search or filters.</p>
     } @else {
-      <table class="forsa-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Username</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Status</th>
-            <th class="right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (u of paginatedUsers(); track u.id) {
+      <app-forsa-data-table
+        [embedded]="true"
+        [columns]="userTableColumns"
+        [rows]="paginatedUsers()"
+        [totalCount]="filteredUsers().length"
+        [pageIndex]="pageIndex()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="pageSizeOptions"
+        (pageChange)="onDataTablePage($event)"
+        ariaLabel="Users">
+        <ng-template #forsaTableBody let-rows>
+          @for (u of rows; track u.id) {
             <tr>
               <td class="mono">{{ u.id }}</td>
               <td class="fw-semibold">{{ u.username }}</td>
@@ -97,8 +96,7 @@
                     variant="ghost"
                     size="sm"
                     [disabled]="rowBusy(u)"
-                    (clicked)="toggleRowMenu(u.id)"
-                  >
+                    (clicked)="toggleRowMenu(u.id)">
                     <app-forsa-icon name="more-vertical" [size]="16" />
                     More
                   </app-forsa-button>
@@ -116,8 +114,7 @@
                         type="button"
                         class="um-row-menu__item um-row-menu__item--danger"
                         role="menuitem"
-                        (click)="openDeleteConfirm(u)"
-                      >
+                        (click)="openDeleteConfirm(u)">
                         <app-forsa-icon name="trash-2" [size]="16" />
                         Delete
                       </button>
@@ -127,57 +124,8 @@
               </td>
             </tr>
           }
-        </tbody>
-      </table>
-
-      <div class="um-pagination">
-        <div class="um-pagination__left">
-          <span class="um-pagination__meta text-muted sm">
-            @if (paginationInfo().total === 0) {
-              No results
-            } @else {
-              Showing {{ paginationInfo().start }}–{{ paginationInfo().end }} of {{ paginationInfo().total }}
-            }
-          </span>
-          <label class="um-pagination__size">
-            <span class="sr-only">Rows per page</span>
-            <select
-              class="um-filter forsa-input um-filter--narrow"
-              [ngModel]="pageSize()"
-              (ngModelChange)="onPageSizeChange($event)"
-            >
-              @for (n of pageSizeOptions; track n) {
-                <option [ngValue]="n">{{ n }} / page</option>
-              }
-            </select>
-          </label>
-        </div>
-        <div class="um-pagination__right">
-          <span class="um-pagination__pages text-muted sm">
-            Page {{ paginationInfo().page }} of {{ paginationInfo().totalPages }}
-          </span>
-          <app-forsa-button
-            type="button"
-            variant="outline"
-            size="sm"
-            [disabled]="paginationInfo().page <= 1"
-            (clicked)="goPrevPage()"
-            aria-label="Previous page"
-          >
-            <app-forsa-icon name="chevron-left" [size]="16" />
-          </app-forsa-button>
-          <app-forsa-button
-            type="button"
-            variant="outline"
-            size="sm"
-            [disabled]="paginationInfo().page >= paginationInfo().totalPages"
-            (clicked)="goNextPage()"
-            aria-label="Next page"
-          >
-            <app-forsa-icon name="chevron-right" [size]="16" />
-          </app-forsa-button>
-        </div>
-      </div>
+        </ng-template>
+      </app-forsa-data-table>
     }
   </div>
 </app-forsa-card>

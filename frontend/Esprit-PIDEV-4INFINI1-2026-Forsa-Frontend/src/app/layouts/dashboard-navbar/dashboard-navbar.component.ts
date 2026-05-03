@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, HostListener, ViewChild, computed, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, HostListener, ViewChild, computed, inject, input, output, signal } from '@angular/core';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { RouterLink, RouterLinkActive } from '@angular/router';
@@ -45,6 +45,10 @@ function formatSpringAuthority(authority: string): string {
 export class DashboardNavbarComponent {
   @ViewChild('notificationButton', { read: ElementRef }) private notificationButtonRef?: ElementRef<HTMLButtonElement>;
   readonly showSidebarItems = input<boolean>(false);
+  /** Admin / agent narrow layout: show hamburger to open the off-canvas sidebar. */
+  readonly showMobileNavToggle = input(false);
+  readonly mobileDrawerOpen = input(false);
+  readonly mobileNavToggle = output<void>();
   readonly auth = inject(AuthService);
   private readonly profileApi = inject(ProfileService);
   private readonly creditApi = inject(CreditApiService);
@@ -186,6 +190,11 @@ export class DashboardNavbarComponent {
   toggleDark(): void {
     this.isDark = !this.isDark;
     document.documentElement.classList.toggle('dark', this.isDark);
+  }
+
+  toggleMobileNav(event: MouseEvent): void {
+    event.stopPropagation();
+    this.mobileNavToggle.emit();
   }
 
   private isClient(): boolean {

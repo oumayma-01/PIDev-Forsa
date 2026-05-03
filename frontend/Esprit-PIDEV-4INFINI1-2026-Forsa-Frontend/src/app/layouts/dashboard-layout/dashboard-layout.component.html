@@ -1,9 +1,22 @@
-<div class="shell">
-  @if (!isClient()) {
-    <app-dashboard-sidebar />
+<div class="shell" [class.shell--nav-drawer-open]="mobileDrawerOpen() && isNarrowView()">
+  @if (!isClient() || isNarrowView()) {
+    <app-dashboard-sidebar [drawerOpen]="mobileDrawerOpen() && isNarrowView()" />
+  }
+  @if (isNarrowView() && mobileDrawerOpen()) {
+    <button
+      type="button"
+      class="shell__nav-backdrop"
+      aria-label="Close menu"
+      (click)="closeMobileDrawer()"
+    ></button>
   }
   <div class="shell__main">
-    <app-dashboard-navbar [showSidebarItems]="isClient()" />
+    <app-dashboard-navbar
+      [showSidebarItems]="isClient()"
+      [showMobileNavToggle]="showMobileNavToggle()"
+      [mobileDrawerOpen]="mobileDrawerOpen()"
+      (mobileNavToggle)="toggleMobileDrawer()"
+    />
     <main class="shell__content">
       <router-outlet />
     </main>

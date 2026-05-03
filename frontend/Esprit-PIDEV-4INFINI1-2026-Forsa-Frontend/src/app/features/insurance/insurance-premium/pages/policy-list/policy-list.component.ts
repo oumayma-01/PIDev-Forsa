@@ -1,9 +1,14 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, computed, effect, inject, OnInit, signal, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { ForsaBadgeComponent } from '../../../../../shared/ui/forsa-badge/forsa-badge.component';
 import { ForsaButtonComponent } from '../../../../../shared/ui/forsa-button/forsa-button.component';
 import { ForsaCardComponent } from '../../../../../shared/ui/forsa-card/forsa-card.component';
+import { ForsaDataTableComponent } from '../../../../../shared/ui/forsa-data-table/forsa-data-table.component';
+import type {
+  ForsaDataTablePageEvent,
+  ForsaTableColumn,
+} from '../../../../../shared/ui/forsa-data-table/forsa-data-table.types';
 import { ForsaIconComponent } from '../../../../../shared/ui/forsa-icon/forsa-icon.component';
 import { InsurancePolicyService } from '../../../shared/services/insurance-policy.service';
 import { InsurancePolicy } from '../../../shared/models/insurance.models';
@@ -15,7 +20,17 @@ import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-policy-list',
   standalone: true,
-  imports: [RouterLink, DatePipe, DecimalPipe, TitleCasePipe, ForsaBadgeComponent, ForsaButtonComponent, ForsaCardComponent, ForsaIconComponent, FormsModule],
+  imports: [
+    RouterLink,
+    DatePipe,
+    DecimalPipe,
+    FormsModule,
+    ForsaBadgeComponent,
+    ForsaButtonComponent,
+    ForsaCardComponent,
+    ForsaDataTableComponent,
+    ForsaIconComponent,
+  ],
   templateUrl: './policy-list.component.html',
   styleUrl: './policy-list.component.css',
 })
@@ -33,27 +48,83 @@ export class PolicyListComponent implements OnInit {
   filteredPolicies = computed(() => {
     const term = this.searchTerm().toLowerCase();
     const status = this.statusFilter();
-    
-    return this.policies().filter(p => {
-      const matchesSearch = !term || 
-        p.policyNumber?.toLowerCase().includes(term) || 
+
+    return this.policies().filter((p) => {
+      const matchesSearch =
+        !term ||
+        p.policyNumber?.toLowerCase().includes(term) ||
         p.user?.username?.toLowerCase().includes(term);
-        
+
       const matchesStatus = status === 'ALL' || p.status === status;
-      
+
       return matchesSearch && matchesStatus;
     });
   });
 
+  readonly policyTablePageIndex = signal(0);
+  readonly policyTablePageSize = signal(10);
+  /** Mutable array for strict template binding to {@link ForsaDataTableComponent}. */
+  policyTablePageSizeOptions: number[] = [5, 10, 25, 50];
+
+  readonly policyTableColumns: ForsaTableColumn[] = [
+    { key: 'policyNumber', label: 'Policy #', width: '9rem' },
+    { key: 'product', label: 'Product' },
+    { key: 'status', label: 'Status', width: '10rem' },
+    { key: 'premium', label: 'Premium', align: 'right', width: '8rem' },
+    { key: 'coverage', label: 'Coverage', align: 'right', width: '8rem' },
+    { key: 'start', label: 'Start', width: '7rem' },
+    { key: 'end', label: 'End', width: '7rem' },
+    { key: 'risk', label: 'Risk', width: '9rem' },
+    { key: 'actions', label: 'Actions', align: 'right', width: '10rem' },
+  ];
+
+  readonly pagedPolicies = computed(() => {
+    const list = this.filteredPolicies();
+    const start = this.policyTablePageIndex() * this.policyTablePageSize();
+    return list.slice(start, start + this.policyTablePageSize());
+  });
+
   PolicyStatus = PolicyStatus; // Expose to template
 
-  ngOnInit(): void { this.load(); }
+  constructor() {
+    effect(() => {
+      this.searchTerm();
+      this.statusFilter();
+      untracked(() => this.policyTablePageIndex.set(0));
+    });
+    effect(
+      () => {
+        const total = this.filteredPolicies().length;
+        const sz = this.policyTablePageSize();
+        const maxIdx = Math.max(0, Math.ceil(total / sz) - 1);
+        untracked(() => {
+          if (this.policyTablePageIndex() > maxIdx) {
+            this.policyTablePageIndex.set(maxIdx);
+          }
+        });
+      },
+      { allowSignalWrites: true },
+    );
+  }
+
+  ngOnInit(): void {
+    this.load();
+  }
+
+  onPolicyTablePage(ev: ForsaDataTablePageEvent): void {
+    this.policyTablePageIndex.set(ev.pageIndex);
+    this.policyTablePageSize.set(ev.pageSize);
+  }
 
   load(): void {
     this.loading.set(true);
     this.error.set(null);
     this.svc.getAll().subscribe({
-      next: (data) => { this.policies.set(data); this.loading.set(false); },
+      next: (data) => {
+        this.policies.set(data);
+        this.policyTablePageIndex.set(0);
+        this.loading.set(false);
+      },
       error: (e) => { this.error.set(e.message ?? 'Failed to load policies.'); this.loading.set(false); },
     });
   }

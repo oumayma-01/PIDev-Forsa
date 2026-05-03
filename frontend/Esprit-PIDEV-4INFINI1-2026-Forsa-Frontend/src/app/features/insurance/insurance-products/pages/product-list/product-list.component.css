@@ -32,6 +32,12 @@
 .prod-ico[data-tone='blue'],
 .prod-ico[data-tone='info']    { background: var(--color-blue-100); color: var(--color-blue-600); }
 
+/* Unknown policy types: still show a visible chip behind the fallback shield icon */
+.prod-ico[data-tone='default'] {
+  background: color-mix(in oklab, var(--color-muted) 65%, transparent);
+  color: var(--color-muted-foreground);
+}
+
 .prod-meta h3 { margin: 0 0 0.3rem; font-size: 1rem; }
 
 .prod-desc { margin: 0; font-size: 0.85rem; line-height: 1.5; min-height: 2.5rem; }

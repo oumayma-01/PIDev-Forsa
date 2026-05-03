@@ -39,8 +39,8 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  flex: 1;
-  min-width: 280px;
+  flex: 1 1 200px;
+  min-width: 0;
   background: var(--color-secondary);
   padding: 0.5rem 1rem;
   border-radius: 10px;
@@ -78,21 +78,12 @@
   letter-spacing: 0.05em;
 }
 
-.filter-select {
-  padding: 0.5rem 1rem;
-  border-radius: 10px;
-  border: 1px solid var(--color-border);
-  background: var(--color-secondary);
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--color-foreground);
+select.filter-select.forsa-input {
+  min-width: 10rem;
+  max-width: 100%;
   cursor: pointer;
-  outline: none;
-  transition: all 0.2s;
+  font-weight: 600;
 }
-
-.filter-select:hover { border-color: var(--color-muted-foreground); }
-.filter-select:focus { border-color: var(--color-primary); background: var(--color-card); }
 
 .filter-stats {
   font-size: 0.8125rem;
@@ -104,5 +95,34 @@
 @media (max-width: 640px) {
   .filters-panel { flex-direction: column; align-items: stretch; }
   .filter-group { flex-direction: column; align-items: flex-start; }
-  .filter-select { width: 100%; }
+  select.filter-select.forsa-input {
+    width: 100%;
+    min-width: 0;
+  }
+  .filter-stats { text-align: center; width: 100%; }
+
+  .page-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .page-head > div:first-child {
+    text-align: center;
+  }
+
+  .page-head > a {
+    display: block;
+    width: 100%;
+  }
+
+  :host ::ng-deep .page-head > a app-forsa-button {
+    display: flex;
+    width: 100%;
+  }
+
+  :host ::ng-deep .page-head > a app-forsa-button button {
+    width: 100%;
+    box-sizing: border-box;
+  }
 }
