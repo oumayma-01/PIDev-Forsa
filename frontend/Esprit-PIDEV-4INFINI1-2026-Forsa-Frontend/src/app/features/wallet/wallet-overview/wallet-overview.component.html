@@ -124,7 +124,7 @@
                   <div class="act-row">
                     <div class="act-left">
                       <span class="act-ico"><app-forsa-icon name="history" [size]="17" /></span>
-                      <div><p class="act-title">{{ act.action }}</p><p class="act-meta">{{ formatDate(act.timestamp) }}</p></div>
+                      <div><p class="act-title">{{ act.action }}</p><p class="act-meta">{{ act.timestamp | date:'dd/MM/yyyy HH:mm' }}</p></div>
                     </div>
                   </div>
                 }
@@ -463,9 +463,11 @@
           <app-forsa-button variant="secondary" extraClass="forsa-hero-wallet-ghost" (click)="openWithdrawModal()">
             <app-forsa-icon name="arrow-down-right" [size]="18" /> Withdraw
           </app-forsa-button>
-          <app-forsa-button variant="secondary" extraClass="forsa-hero-wallet-ghost" (click)="openTransferModal()">
-            <app-forsa-icon name="send" [size]="18" /> Send Money
-          </app-forsa-button>
+          @if (activeClientAccount?.type === 'INVESTMENT') {
+            <app-forsa-button variant="secondary" extraClass="forsa-hero-wallet-ghost" (click)="openTransferModal()">
+              <app-forsa-icon name="send" [size]="18" /> Send Money
+            </app-forsa-button>
+          }
         </div>
       </div>
     </app-forsa-card>
@@ -501,7 +503,10 @@
           </button>
           <button class="qa-btn" (click)="loadAdvice()">
             <span class="qa-ico qa-ico--purple">🤖</span>
-            <div class="qa-text"><strong>Account Advice</strong><span>SAVINGS vs INVESTMENT</span></div>
+            <div class="qa-text">
+              <strong>Account Advice</strong>
+              <span>Savings vs investment · How to raise your credit score</span>
+            </div>
             <span class="qa-arrow">›</span>
           </button>
           @if (!investmentAccount && account) {
@@ -538,13 +543,16 @@
       <div class="card-pad-lg">
         <div class="ai-result-head">
           <span class="ai-result-icon">🔮</span>
-          <div>
+          <div class="ai-result-head__body">
             <h3>Balance Forecast — Next {{ forecast.forecastDays }} Days</h3>
             <p class="text-muted sm">AI prediction based on your transaction history.</p>
           </div>
-          <app-forsa-badge [tone]="forecast.trend === 'increasing' ? 'success' : forecast.trend === 'decreasing' ? 'danger' : 'muted'">
-            {{ forecast.trend }}
-          </app-forsa-badge>
+          <div class="ai-result-head__actions">
+            <app-forsa-badge [tone]="forecast.trend === 'increasing' ? 'success' : forecast.trend === 'decreasing' ? 'danger' : 'muted'">
+              {{ forecast.trend }}
+            </app-forsa-badge>
+            <button type="button" class="ai-result-dismiss" (click)="dismissForecast()" title="Close" aria-label="Close forecast">✕</button>
+          </div>
         </div>
         <div class="forecast-row">
           <div class="forecast-col"><p class="fcast-label">Today</p><p class="fcast-val">${{ forecast.currentBalance | number : '1.2-2' }}</p></div>
@@ -567,13 +575,16 @@
       <div class="card-pad-lg">
         <div class="ai-result-head">
           <span class="ai-result-icon">🤖</span>
-          <div>
+          <div class="ai-result-head__body">
             <h3>Account Type Recommendation</h3>
             <p class="text-muted sm">Personalised advice based on your usage pattern.</p>
           </div>
-          <app-forsa-badge [tone]="advice.changeAdvised ? 'warning' : 'success'">
-            {{ advice.changeAdvised ? 'Switch advised' : 'You\'re good!' }}
-          </app-forsa-badge>
+          <div class="ai-result-head__actions">
+            <app-forsa-badge [tone]="advice.changeAdvised ? 'warning' : 'success'">
+              {{ advice.changeAdvised ? 'Switch advised' : 'You\'re good!' }}
+            </app-forsa-badge>
+            <button type="button" class="ai-result-dismiss" (click)="dismissAdvice()" title="Close" aria-label="Close account advice">✕</button>
+          </div>
         </div>
         <div class="forecast-row">
           <div class="forecast-col"><p class="fcast-label">Current</p><p class="fcast-val">{{ advice.currentType }}</p></div>
@@ -581,42 +592,71 @@
           <div class="forecast-col"><p class="fcast-label">Recommended</p><p class="fcast-val pos">{{ advice.recommendedType }}</p></div>
         </div>
         <p class="ai-explanation">{{ advice.reasoning }}</p>
+
+        @if (isClient && creditAdviceScore) {
+          <div [ngClass]="accountAdviceCreditToneClass()">
+            <div class="standing-strip__main">
+              <span class="standing-strip__eyebrow">Your credit standing</span>
+              <span class="standing-strip__label">{{ accountAdviceCreditLabel() }}</span>
+            </div>
+            <span class="standing-strip__points">{{ accountAdviceCreditNumeric() }} / 1000</span>
+          </div>
+        }
+
+        @if (isClient && creditAdviceLines.length > 0) {
+          <div class="credit-score-tip credit-score-tip--in-card">
+            <p class="credit-score-tip__title">Raise your credit score</p>
+            <ul class="credit-score-tip__list">
+              @for (line of creditAdviceLines; track $index) {
+                <li>{{ line }}</li>
+              }
+            </ul>
+            <p class="credit-score-tip__para">
+              Upload bills and see your limit on <a routerLink="/dashboard/ai-score">My score</a>.
+            </p>
+          </div>
+        }
       </div>
     </app-forsa-card>
   }
 
-  <!-- Transactions -->
-  <app-forsa-card>
-    <div class="card-pad-lg">
-      <div class="act-head">
-        <div><h3>Recent Activity</h3><p class="text-muted sm">Your latest financial movements.</p></div>
-      </div>
-      <div class="act-list">
-        @if (transactions.length === 0) {
-          <div class="tx-empty"><span>📭</span><p>No transactions yet. Make your first deposit!</p></div>
-        }
-        @for (tx of transactions; track tx.id) {
-          <div class="act-row">
-            <div class="act-left">
-              <span class="act-ico" [class.dep]="isIncoming(tx)">
-                @if (isIncoming(tx)) { <app-forsa-icon name="arrow-up-right" [size]="20" /> }
-                @else { <app-forsa-icon name="arrow-down-right" [size]="20" /> }
-              </span>
-              <div>
-                <p class="act-title">{{ txLabel(tx) }}</p>
-                <p class="act-meta">{{ formatDate(tx.date) }}</p>
+  @if (showClientRecentActivity) {
+    <app-forsa-card>
+      <div class="card-pad-lg">
+        <div class="act-head act-head--with-dismiss">
+          <div>
+            <h3>Recent Activity</h3>
+            <p class="text-muted sm">Your latest financial movements.</p>
+          </div>
+          <button type="button" class="ai-result-dismiss" (click)="dismissClientRecentActivity()" title="Hide" aria-label="Hide recent activity">✕</button>
+        </div>
+        <div class="act-list">
+          @if (transactions.length === 0) {
+            <div class="tx-empty"><span>📭</span><p>No transactions yet. Make your first deposit!</p></div>
+          }
+          @for (tx of transactionsNewestFirst; track tx.id) {
+            <div class="act-row">
+              <div class="act-left">
+                <span class="act-ico" [class.dep]="isIncoming(tx)">
+                  @if (isIncoming(tx)) { <app-forsa-icon name="arrow-up-right" [size]="20" /> }
+                  @else { <app-forsa-icon name="arrow-down-right" [size]="20" /> }
+                </span>
+                <div>
+                  <p class="act-title">{{ txLabel(tx) }}</p>
+                  <p class="act-meta">{{ tx.date | date:'dd/MM/yyyy HH:mm' }}</p>
+                </div>
+              </div>
+              <div class="act-right">
+                <p class="act-amt" [class.dep]="isIncoming(tx)">
+                  {{ isIncoming(tx) ? '+' : '-' }}${{ tx.amount | number : '1.2-2' }}
+                </p>
               </div>
             </div>
-            <div class="act-right">
-              <p class="act-amt" [class.dep]="isIncoming(tx)">
-                {{ isIncoming(tx) ? '+' : '-' }}${{ tx.amount | number : '1.2-2' }}
-              </p>
-            </div>
-          </div>
-        }
+          }
+        </div>
       </div>
-    </div>
-  </app-forsa-card>
+    </app-forsa-card>
+  }
 }
 
 <!-- ══════════════════════════════════════════════════════════════════════════════
@@ -657,7 +697,10 @@
   <div class="modal-backdrop" (click)="closeTransferModal()">
     <div class="modal" (click)="$event.stopPropagation()">
       <div class="modal-head"><h3>→ Send Money</h3><button class="modal-close" (click)="closeTransferModal()">✕</button></div>
-      @if (operationError) { <p class="op-err">{{ operationError }}</p> }
+      @if (operationError) {
+        <p class="op-err" role="alert">{{ operationError }}</p>
+      }
+      <p class="modal-hint">Only <strong>investment</strong> accounts can send or receive transfers. Savings accounts cannot receive sent money — use <strong>Add funds</strong> on savings instead.</p>
       <p class="modal-hint">Available: <strong>${{ balance | number : '1.2-2' }}</strong></p>
       <label class="modal-label">Recipient Account ID</label>
       <input class="modal-input" type="number" min="1" placeholder="e.g. 5" [(ngModel)]="transferToAccountId" />
@@ -685,26 +728,6 @@
       <div class="modal-actions">
         <app-forsa-button variant="outline" (click)="showInvestmentCreateModal = false">Cancel</app-forsa-button>
         <app-forsa-button (click)="submitCreate()">Confirm &amp; open</app-forsa-button>
-      </div>
-    </div>
-  </div>
-}
-
-@if (showActivitiesModal) {
-  <div class="modal-backdrop" (click)="closeActivities()">
-    <div class="modal modal--wide" (click)="$event.stopPropagation()">
-      <div class="modal-head"><h3>📋 Activity Log</h3><button class="modal-close" (click)="closeActivities()">✕</button></div>
-      @if (loadingActivities) { <p class="muted">Loading activities…</p> }
-      <div class="act-list">
-        @if (!loadingActivities && activities.length === 0) { <p class="muted">No activity recorded yet.</p> }
-        @for (act of activities; track act.id) {
-          <div class="act-row">
-            <div class="act-left">
-              <span class="act-ico"><app-forsa-icon name="history" [size]="17" /></span>
-              <div><p class="act-title">{{ act.action }}</p><p class="act-meta">{{ formatDate(act.timestamp) }}</p></div>
-            </div>
-          </div>
-        }
       </div>
     </div>
   </div>

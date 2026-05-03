@@ -1,13 +1,15 @@
-import { DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe, NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ForsaBadgeComponent } from '../../../shared/ui/forsa-badge/forsa-badge.component';
 import { ForsaButtonComponent } from '../../../shared/ui/forsa-button/forsa-button.component';
 import { ForsaCardComponent } from '../../../shared/ui/forsa-card/forsa-card.component';
 import { ForsaIconComponent } from '../../../shared/ui/forsa-icon/forsa-icon.component';
 import { AccountService } from '../../../core/services/account.service';
 import { AuthService } from '../../../core/services/auth.service';
+import type { AIScoreDto } from '../../../core/models/forsa.models';
 import type {
   Account,
   Activity,
@@ -16,11 +18,22 @@ import type {
   WalletForecastDTO,
   AccountTypeAdviceDTO,
 } from '../../../core/models/wallet.models';
+import { AiScoreService } from '../../scoring/services/ai-score.service';
 
 @Component({
   selector: 'app-wallet-overview',
   standalone: true,
-  imports: [DecimalPipe, FormsModule, ForsaBadgeComponent, ForsaButtonComponent, ForsaCardComponent, ForsaIconComponent],
+  imports: [
+    DatePipe,
+    DecimalPipe,
+    NgClass,
+    FormsModule,
+    RouterLink,
+    ForsaBadgeComponent,
+    ForsaButtonComponent,
+    ForsaCardComponent,
+    ForsaIconComponent,
+  ],
   templateUrl: './wallet-overview.component.html',
   styleUrl: './wallet-overview.component.css',
 })
@@ -38,10 +51,12 @@ export class WalletOverviewComponent implements OnInit {
   /** Which wallet the client is viewing when they have both SAVINGS and INVESTMENT. */
   clientWalletView: 'SAVINGS' | 'INVESTMENT' = 'SAVINGS';
   transactions: Transaction[] = [];
-  activities: Activity[] = [];
   stats: WalletStatisticsDTO | null = null;
   forecast: WalletForecastDTO | null = null;
   advice: AccountTypeAdviceDTO | null = null;
+  /** Latest credit score DTO — loaded with Account Advice for personalised “raise score” tips. */
+  creditAdviceScore: AIScoreDto | null = null;
+  creditAdviceLines: string[] = [];
 
   // ── ADMIN state ───────────────────────────────────────────────────────────────
   allAccounts: Account[] = [];
@@ -64,7 +79,8 @@ export class WalletOverviewComponent implements OnInit {
   loading = true;
   loadingForecast = false;
   loadingAdvice = false;
-  loadingActivities = false;
+  /** Client: wallet transaction list — shown only after opening Activity Log. */
+  showClientRecentActivity = false;
   loadingAdminOp = false;
 
   // ── Modals ────────────────────────────────────────────────────────────────────
@@ -72,7 +88,6 @@ export class WalletOverviewComponent implements OnInit {
   showDepositModal = false;
   showWithdrawModal = false;
   showTransferModal = false;
-  showActivitiesModal = false;
   showAdminCreateModal = false;
   showAdminDepositModal = false;
   showAdminWithdrawModal = false;
@@ -96,7 +111,11 @@ export class WalletOverviewComponent implements OnInit {
   /** Set when GET /accounts/owner/:id fails (e.g. JSON parse) — do not show "create account" in this state. */
   clientAccountsLoadError: string | null = null;
 
-  constructor(private readonly accountSvc: AccountService, private readonly auth: AuthService) {}
+  constructor(
+    private readonly accountSvc: AccountService,
+    private readonly auth: AuthService,
+    private readonly aiScore: AiScoreService,
+  ) {}
 
   async ngOnInit(): Promise<void> {
     await this.auth.ensureSessionFromApi();
@@ -143,7 +162,9 @@ export class WalletOverviewComponent implements OnInit {
       next: (acc) => {
         this.staffLookupAccount = acc;
         this.accountSvc.getStatistics(id).subscribe({ next: (s) => (this.staffLookupStats = s) });
-        this.accountSvc.getActivities(id).subscribe({ next: (a) => (this.staffLookupActivities = a) });
+        this.accountSvc.getActivities(id).subscribe({
+          next: (a) => (this.staffLookupActivities = this.sortActivitiesNewestFirst(a)),
+        });
         this.loadingStaffLookup = false;
       },
       error: (e) => {
@@ -366,7 +387,6 @@ export class WalletOverviewComponent implements OnInit {
         else this.account = fresh;
         this.transactions = fresh.wallet?.transactions ?? [];
         this.loadStats();
-        this.loadActivitiesInternal();
       },
     });
   }
@@ -427,6 +447,16 @@ export class WalletOverviewComponent implements OnInit {
 
   get balance(): number { return this.activeClientAccount?.wallet?.balance ?? 0; }
 
+  /** Client “Recent activity” (transactions): newest first. */
+  get transactionsNewestFirst(): Transaction[] {
+    return [...(this.transactions ?? [])].sort((a, b) => {
+      const ta = Date.parse(String(a.date ?? ''));
+      const tb = Date.parse(String(b.date ?? ''));
+      if (Number.isFinite(ta) && Number.isFinite(tb)) return tb - ta;
+      return Number(b.id) - Number(a.id);
+    });
+  }
+
   openCreateModal(): void { this.createType = 'SAVINGS'; this.operationError = ''; this.showCreateModal = true; }
   closeCreateModal(): void { this.showCreateModal = false; }
 
@@ -486,29 +516,100 @@ export class WalletOverviewComponent implements OnInit {
     });
   }
 
-  openTransferModal(): void { this.transferToAccountId = null; this.transferAmount = null; this.operationError = ''; this.showTransferModal = true; }
+  openTransferModal(): void {
+    const acc = this.activeClientAccount;
+    if (!acc || String(acc.type).toUpperCase() !== 'INVESTMENT') {
+      this.operationError = 'Transfers are only available on your investment account.';
+      return;
+    }
+    this.transferToAccountId = null;
+    this.transferAmount = null;
+    this.operationError = '';
+    this.showTransferModal = true;
+  }
   closeTransferModal(): void { this.showTransferModal = false; }
   submitTransfer(): void {
     const acc = this.activeClientAccount;
-    if (!acc || !this.transferToAccountId || !this.transferAmount || this.transferAmount <= 0) return;
+    if (!acc || String(acc.type).toUpperCase() !== 'INVESTMENT') {
+      this.operationError = 'Transfers are only available on your investment account.';
+      return;
+    }
+    if (!this.transferToAccountId || !this.transferAmount || this.transferAmount <= 0) return;
+    this.operationError = '';
     const amount = this.transferAmount;
-    this.accountSvc.transfer(acc.id, this.transferToAccountId, amount).subscribe({
-      next: () => { this.operationMessage = `Transferred $${amount.toFixed(2)}`; this.showTransferModal = false; this.refreshClientAccount(); },
-      error: () => { this.operationError = 'Transfer failed. Check the account ID and your balance.'; },
+    const toId = this.transferToAccountId;
+
+    // Resolve recipient type before POST so savings (or bad IDs) never hit transfer, even if backend were misconfigured.
+    this.accountSvc.getAccount(toId).subscribe({
+      next: (target) => {
+        const destType = String(target?.type ?? '').toUpperCase();
+        if (destType !== 'INVESTMENT') {
+          this.operationError =
+            destType === 'SAVINGS'
+              ? 'A savings account cannot receive transfers. Open the savings wallet and use Add funds, or enter an investment account ID.'
+              : 'Only an investment account can receive this transfer. Check the recipient account ID.';
+          return;
+        }
+        this.accountSvc.transfer(acc.id, toId, amount).subscribe({
+          next: () => {
+            this.operationMessage = `Transferred $${amount.toFixed(2)}`;
+            this.showTransferModal = false;
+            this.refreshClientAccount();
+          },
+          error: (err: HttpErrorResponse) => {
+            const text = this.readTransferErrorMessage(err);
+            this.operationError =
+              text ||
+              'Transfer could not be completed. You can only send to another investment account; savings accounts must be funded with Add funds.';
+          },
+        });
+      },
+      error: () => {
+        this.operationError =
+          'Could not load the recipient account. Check the account ID; only investment accounts can receive transfers.';
+      },
     });
+  }
+
+  /** Spring returns `{ message: "ERROR_TRANSFER: …" }` on 400; surface that text in the modal. */
+  private readTransferErrorMessage(err: HttpErrorResponse): string {
+    const body = err.error;
+    let raw = '';
+    if (body && typeof body === 'object' && 'message' in body) {
+      raw = String((body as { message?: unknown }).message ?? '').trim();
+    } else if (typeof body === 'string') {
+      const s = body.trim();
+      if (s.startsWith('{')) {
+        try {
+          const o = JSON.parse(s) as { message?: string };
+          raw = (o.message ?? '').trim();
+        } catch {
+          raw = s;
+        }
+      } else {
+        raw = s;
+      }
+    }
+    if (!raw) {
+      return err.status === 0 ? 'Network error. Check your connection and try again.' : '';
+    }
+    const prefix = 'ERROR_TRANSFER:';
+    if (raw.toUpperCase().startsWith(prefix)) {
+      return raw.slice(prefix.length).trim();
+    }
+    return raw;
   }
 
   openActivities(): void {
     const acc = this.activeClientAccount;
     if (!acc) return;
-    this.showActivitiesModal = true;
-    this.loadingActivities = true;
-    this.accountSvc.getActivities(acc.id).subscribe({
-      next: (a) => { this.activities = a; this.loadingActivities = false; },
-      error: () => { this.loadingActivities = false; },
-    });
+    this.showClientRecentActivity = true;
+    this.refreshClientAccount();
   }
-  closeActivities(): void { this.showActivitiesModal = false; }
+
+  dismissClientRecentActivity(): void {
+    this.showClientRecentActivity = false;
+  }
 
   loadForecast(): void {
     const acc = this.activeClientAccount;
@@ -520,14 +621,134 @@ export class WalletOverviewComponent implements OnInit {
     });
   }
 
+  dismissForecast(): void {
+    this.forecast = null;
+  }
+
+  dismissAdvice(): void {
+    this.advice = null;
+    this.creditAdviceScore = null;
+    this.creditAdviceLines = [];
+  }
+
   loadAdvice(): void {
     const acc = this.activeClientAccount;
     if (!acc) return;
-    this.loadingAdvice = true; this.advice = null;
+    this.loadingAdvice = true;
+    this.advice = null;
+    this.creditAdviceScore = null;
+    this.creditAdviceLines = [];
     this.accountSvc.getAccountTypeAdvice(acc.id).subscribe({
-      next: (a) => { this.advice = a; this.loadingAdvice = false; },
-      error: () => { this.loadingAdvice = false; },
+      next: (a) => {
+        this.advice = a;
+        const cid = this.walletClientId();
+        if (this.isClient && cid != null) {
+          this.aiScore.getCurrentScore(cid).subscribe({
+            next: (score) => {
+              this.creditAdviceScore = score;
+              this.creditAdviceLines = this.buildCreditAdviceLines(score);
+              this.loadingAdvice = false;
+            },
+            error: () => {
+              this.creditAdviceScore = null;
+              this.creditAdviceLines = this.fallbackCreditAdviceLines();
+              this.loadingAdvice = false;
+            },
+          });
+        } else {
+          this.loadingAdvice = false;
+        }
+      },
+      error: () => {
+        this.loadingAdvice = false;
+        this.creditAdviceScore = null;
+        this.creditAdviceLines = [];
+      },
     });
+  }
+
+  /** Standing label from score loaded with Account Advice. */
+  accountAdviceCreditLabel(): string {
+    const s = this.creditAdviceScore;
+    const raw = String(s?.scoreLevel ?? 'VERY_LOW').toUpperCase();
+    const map: Record<string, string> = {
+      VERY_LOW: 'Very low',
+      LOW: 'Low',
+      MEDIUM: 'Medium',
+      GOOD: 'Good',
+      VERY_GOOD: 'Very good',
+      EXCELLENT: 'Excellent',
+      PREMIUM: 'Premium',
+    };
+    return map[raw] ?? raw.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
+  accountAdviceCreditNumeric(): number {
+    const s = this.creditAdviceScore;
+    if (!s) return 0;
+    const v = Number(s.currentScore ?? s.score ?? 0);
+    return Number.isFinite(v) ? Math.round(Math.min(1000, Math.max(0, v))) : 0;
+  }
+
+  accountAdviceCreditToneClass(): string {
+    const s = this.creditAdviceScore;
+    const lvl = String(s?.scoreLevel ?? '').toUpperCase();
+    if (['VERY_LOW', 'LOW'].includes(lvl)) return 'standing-strip standing-strip--risk';
+    if (lvl === 'MEDIUM') return 'standing-strip standing-strip--mid';
+    return 'standing-strip standing-strip--ok';
+  }
+
+  private walletClientId(): number | null {
+    const id = this.auth.currentUser()?.id as string | number | undefined;
+    if (id == null) return null;
+    if (typeof id === 'string' && id.trim() === '') return null;
+    return typeof id === 'number' ? id : Number(id);
+  }
+
+  private buildCreditAdviceLines(s: AIScoreDto): string[] {
+    const lines: string[] = [];
+    const thr = Number(s.availableThreshold ?? 0);
+    const pts = Number(s.currentScore ?? s.score ?? 0);
+    const ptsRounded = Number.isFinite(pts) ? Math.round(Math.min(1000, Math.max(0, pts))) : 0;
+
+    if (s.hasActiveCredit) {
+      lines.push(
+        'You already have an active loan. Repay it on time first; then your borrowing limit can be calculated again.',
+      );
+      return lines;
+    }
+
+    if (thr <= 0) {
+      lines.push(
+        'Right now you are not offered a new borrowing amount (0 TND). That usually means your profile needs to be stronger before Forsa can extend credit.',
+      );
+      if (ptsRounded < 400) {
+        lines.push(
+          'Keep using your Digital Wallet (regular incoming funds help). When your profile crosses the eligibility band, a limit in TND can appear.',
+        );
+      }
+      if (!s.stegBoosterActive || !s.sonedeBoosterActive) {
+        lines.push(
+          'Open My score (link below) and upload STEG and SONEDE bills when they are paid on time — each verified bill can raise how much you may borrow.',
+        );
+      }
+    } else {
+      lines.push(
+        `You are eligible to borrow up to about ${Math.round(thr).toLocaleString('fr-FR')} TND, based on your current profile.`,
+      );
+      lines.push('Pay utilities on time and keep wallet activity steady to move toward a higher limit.');
+      if (!s.stegBoosterActive || !s.sonedeBoosterActive) {
+        lines.push('You can still upload STEG / SONEDE bills from My score for an extra boost if they verify successfully.');
+      }
+    }
+    return lines;
+  }
+
+  private fallbackCreditAdviceLines(): string[] {
+    return [
+      'Keep using your Digital Wallet with regular incoming funds.',
+      'Open My score to upload STEG or SONEDE bills (clear photo, paid on time) so your borrowing limit can be recalculated.',
+    ];
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -574,18 +795,13 @@ export class WalletOverviewComponent implements OnInit {
     });
   }
 
-  private loadActivitiesInternal(): void {
-    const acc = this.activeClientAccount;
-    if (!acc) return;
-    this.loadingActivities = true;
-    this.accountSvc.getActivities(acc.id).subscribe({
-      next: (a) => {
-        this.activities = a;
-        this.loadingActivities = false;
-      },
-      error: () => {
-        this.loadingActivities = false;
-      },
+  /** Activity log rows: newest first (matches API order; safe if older backend). */
+  private sortActivitiesNewestFirst(list: Activity[] | null | undefined): Activity[] {
+    return [...(list ?? [])].sort((a, b) => {
+      const ta = Date.parse(String(a.timestamp ?? ''));
+      const tb = Date.parse(String(b.timestamp ?? ''));
+      if (Number.isFinite(ta) && Number.isFinite(tb)) return tb - ta;
+      return String(b.timestamp ?? '').localeCompare(String(a.timestamp ?? ''));
     });
   }
 }

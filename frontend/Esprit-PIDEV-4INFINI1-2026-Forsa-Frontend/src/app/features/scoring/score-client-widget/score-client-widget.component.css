@@ -118,3 +118,68 @@
   display: flex; align-items: flex-start; gap: 0.4rem;
   margin: 0; font-size: 0.8rem; color: var(--color-muted-foreground); font-style: italic;
 }
+
+/* ── Standing (per-client level + points) ───────────────────────────────────── */
+.standing-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.65rem;
+  border: 1px solid var(--color-border);
+  background: color-mix(in oklab, var(--color-muted) 35%, transparent);
+}
+.standing-strip__main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+.standing-strip__eyebrow {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-muted-foreground);
+}
+.standing-strip__label {
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.standing-strip__points {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-muted-foreground);
+}
+.standing-strip--risk {
+  border-color: color-mix(in oklab, var(--color-destructive) 45%, var(--color-border));
+  background: color-mix(in oklab, var(--color-destructive) 8%, transparent);
+}
+.standing-strip--risk .standing-strip__label {
+  color: var(--color-destructive);
+}
+.standing-strip--mid {
+  border-color: color-mix(in oklab, #d97706 40%, var(--color-border));
+  background: color-mix(in oklab, #d97706 10%, transparent);
+}
+.standing-strip--mid .standing-strip__label {
+  color: #b45309;
+}
+.standing-strip--ok {
+  border-color: color-mix(in oklab, var(--color-emerald-500) 35%, var(--color-border));
+  background: color-mix(in oklab, var(--color-emerald-500) 8%, transparent);
+}
+.standing-strip--ok .standing-strip__label {
+  color: var(--color-emerald-600);
+}
+
+.widget-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--color-muted-foreground);
+}

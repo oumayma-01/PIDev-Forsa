@@ -21,6 +21,18 @@
 
         <h3 class="widget-title">Credit eligibility</h3>
 
+        <div [ngClass]="clientStandingToneClass()">
+          <div class="standing-strip__main">
+            <span class="standing-strip__eyebrow">Your standing</span>
+            <span class="standing-strip__label">{{ clientStandingLabel() }}</span>
+          </div>
+          <span class="standing-strip__points">{{ clientNumericScore() }} / 1000</span>
+        </div>
+
+        <p class="widget-hint">
+          For step-by-step tips on raising your score, open <strong>Digital Wallet</strong> → <strong>Account Advice</strong>.
+        </p>
+
         <p class="borrow-label">You can borrow</p>
 
         @if (score()!.hasActiveCredit) {

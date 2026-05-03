@@ -29,7 +29,7 @@ export class DashboardSidebarCmp {
     { label: 'Digital Wallet', href: '/dashboard/wallet', icon: 'wallet' },
     { label: 'Insurance', href: '/dashboard/insurance', icon: 'shield-check' },
     { label: 'Partnerships', href: '/dashboard/partenariat', icon: 'users' },
-    { label: 'My AI score', href: '/dashboard/ai-score', icon: 'brain' },
+    { label: 'My score', href: '/dashboard/ai-score', icon: 'brain' },
     { label: 'Feedback', href: '/dashboard/feedback', icon: 'message-square' },
   ];
 

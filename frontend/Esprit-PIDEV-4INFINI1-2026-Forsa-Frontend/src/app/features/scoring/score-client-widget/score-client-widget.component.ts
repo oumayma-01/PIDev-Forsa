@@ -134,4 +134,37 @@ export class ScoreClientWidgetComponent implements OnInit, OnDestroy {
     if (!dateStr) return '';
     return new Date(dateStr).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   }
+
+  /** Points 0–1000 from API (each client differs). */
+  clientNumericScore(): number {
+    const s = this.score();
+    if (!s) return 0;
+    const v = Number(s.currentScore ?? s.score ?? 0);
+    return Number.isFinite(v) ? Math.round(Math.min(1000, Math.max(0, v))) : 0;
+  }
+
+  /** Human label for AIScoreDto.scoreLevel — personalised per client. */
+  clientStandingLabel(): string {
+    const s = this.score();
+    const raw = String(s?.scoreLevel ?? 'VERY_LOW').toUpperCase();
+    const map: Record<string, string> = {
+      VERY_LOW: 'Very low',
+      LOW: 'Low',
+      MEDIUM: 'Medium',
+      GOOD: 'Good',
+      VERY_GOOD: 'Very good',
+      EXCELLENT: 'Excellent',
+      PREMIUM: 'Premium',
+    };
+    return map[raw] ?? raw.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
+  /** Visual band for standing strip. */
+  clientStandingToneClass(): string {
+    const s = this.score();
+    const lvl = String(s?.scoreLevel ?? '').toUpperCase();
+    if (['VERY_LOW', 'LOW'].includes(lvl)) return 'standing-strip standing-strip--risk';
+    if (lvl === 'MEDIUM') return 'standing-strip standing-strip--mid';
+    return 'standing-strip standing-strip--ok';
+  }
 }
