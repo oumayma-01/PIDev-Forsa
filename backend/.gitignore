@@ -42,7 +42,7 @@ build/
 .vscode/extensions.json
 
 ### Environment secrets ###
-.env
+../.env
 src/main/resources/application-local.properties
 
 .ai/
