@@ -56,17 +56,21 @@
 }
 .chip-expiry { font-weight: 400; opacity: 0.75; }
 
-/* ── OCR message ─────────────────────────────────────────────────────────────── */
-.ocr-msg {
+/* ── Bill verification message ───────────────────────────────────────────────── */
+.bill-msg {
   padding: 0.55rem 0.75rem; border-radius: 0.5rem; font-size: 0.82rem;
 }
-.ocr-msg--success {
+.bill-msg--success {
   background: color-mix(in oklab, var(--color-emerald-500) 10%, transparent);
   color: var(--color-emerald-500);
 }
-.ocr-msg--error {
+.bill-msg--error {
   background: color-mix(in oklab, var(--color-destructive) 10%, transparent);
   color: var(--color-destructive);
+}
+
+.upload-row {
+  display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.25rem;
 }
 
 /* ── Booster hub ─────────────────────────────────────────────────────────────── */

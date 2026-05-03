@@ -3,7 +3,7 @@
   @if (loading()) {
     <div class="state-center">
       <app-forsa-icon name="sparkles" [size]="24" />
-      <p>Loading your score...</p>
+      <p>Loading…</p>
     </div>
 
   } @else if (error()) {
@@ -19,15 +19,9 @@
     <app-forsa-card>
       <div class="card-pad-lg widget-body">
 
-        <div class="widget-header">
-          <h3 class="widget-title">Credit eligibility</h3>
-          <app-forsa-button (click)="recalculate()">
-            <app-forsa-icon name="zap" [size]="14" />
-            Recalculate
-          </app-forsa-button>
-        </div>
+        <h3 class="widget-title">Credit eligibility</h3>
 
-        <p class="borrow-label">Your credit threshold</p>
+        <p class="borrow-label">You can borrow</p>
 
         @if (score()!.hasActiveCredit) {
           <div class="blocked-notice">
@@ -42,121 +36,47 @@
           </div>
         }
 
-        <!-- Active boosters chips -->
         @if (score()!.stegBoosterActive || score()!.sonedeBoosterActive) {
           <div class="boosters-row">
-            @if (score()!.stegBoosterActive) {
-              <div class="booster-chip">
-                <app-forsa-icon name="zap" [size]="13" />
-                <span>STEG active</span>
-                @if (score()!.stegBoosterExpiry) {
-                  <span class="chip-expiry">(exp. {{ formatExpiry(score()!.stegBoosterExpiry) }})</span>
-                }
-              </div>
+            @if (score()!.stegBoosterActive && score()!.stegBoosterExpiry) {
+              <div class="booster-chip">STEG ✅ active until {{ formatExpiry(score()!.stegBoosterExpiry) }}</div>
             }
-            @if (score()!.sonedeBoosterActive) {
-              <div class="booster-chip">
-                <app-forsa-icon name="shield-check" [size]="13" />
-                <span>SONEDE active</span>
-                @if (score()!.sonedeBoosterExpiry) {
-                  <span class="chip-expiry">(exp. {{ formatExpiry(score()!.sonedeBoosterExpiry) }})</span>
-                }
-              </div>
+            @if (score()!.sonedeBoosterActive && score()!.sonedeBoosterExpiry) {
+              <div class="booster-chip">SONEDE ✅ active until {{ formatExpiry(score()!.sonedeBoosterExpiry) }}</div>
             }
           </div>
         }
 
-        <!-- OCR feedback message -->
-        @if (ocrMessage()) {
-          <div class="ocr-msg" [ngClass]="'ocr-msg--' + ocrMessage()!.type">
-            {{ ocrMessage()!.text }}
+        @if (billMessage()) {
+          <div class="bill-msg" [ngClass]="'bill-msg--' + billMessage()!.type">
+            {{ billMessage()!.text }}
           </div>
         }
 
-        <!-- Boost CTA -->
-        @if (!showBoosterHub()) {
-          <app-forsa-button (click)="showBoosterHub.set(true)">
-            <app-forsa-icon name="zap" [size]="15" />
-            Boost my threshold
-          </app-forsa-button>
-        }
-
-        <!-- Booster Hub panel -->
-        @if (showBoosterHub()) {
-          <div class="booster-hub">
-            <div class="hub-header">
-              <h4 class="hub-title">Booster Hub</h4>
-              <button class="hub-close" (click)="showBoosterHub.set(false)">
-                <app-forsa-icon name="x" [size]="16" />
-              </button>
-            </div>
-
-            <div class="hub-items">
-              <!-- STEG -->
-              <div class="hub-item">
-                <div class="hub-item-label">
-                  <app-forsa-icon name="zap" [size]="16" />
-                  <span>STEG bill</span>
-                </div>
-                @if (score()!.stegBoosterActive) {
-                  <div class="hub-item-active">
-                    <app-forsa-icon name="check-circle-2" [size]="15" />
-                    Active
-                  </div>
-                } @else {
-                  <app-forsa-button (click)="triggerOcr('STEG')">
-                    @if (ocrLoading() === 'STEG') {
-                      <app-forsa-icon name="sparkles" [size]="13" />
-                      Scanning...
-                    } @else {
-                      <app-forsa-icon name="plus" [size]="13" />
-                      Scan
-                    }
-                  </app-forsa-button>
-                }
-              </div>
-
-              <!-- SONEDE -->
-              <div class="hub-item">
-                <div class="hub-item-label">
-                  <app-forsa-icon name="shield-check" [size]="16" />
-                  <span>SONEDE bill</span>
-                </div>
-                @if (score()!.sonedeBoosterActive) {
-                  <div class="hub-item-active">
-                    <app-forsa-icon name="check-circle-2" [size]="15" />
-                    Active
-                  </div>
-                } @else {
-                  <app-forsa-button (click)="triggerOcr('SONEDE')">
-                    @if (ocrLoading() === 'SONEDE') {
-                      <app-forsa-icon name="sparkles" [size]="13" />
-                      Scanning...
-                    } @else {
-                      <app-forsa-icon name="plus" [size]="13" />
-                      Scan
-                    }
-                  </app-forsa-button>
-                }
-              </div>
-            </div>
-
-            <p class="hub-note">Scan → AI OCR → score boost — valid 3 months</p>
-          </div>
-        }
-
-        <!-- Improvement hint -->
-        @if (boosterHint) {
-          <p class="improvement-hint">
-            <app-forsa-icon name="sparkles" [size]="13" />
-            {{ boosterHint }}
-          </p>
-        }
+        <div class="upload-row">
+          @if (!score()!.stegBoosterActive) {
+            <app-forsa-button (click)="triggerBillUpload('STEG')" [disabled]="docLoading() !== null">
+              @if (docLoading() === 'STEG') {
+                <app-forsa-icon name="sparkles" [size]="13" /> Verifying…
+              } @else {
+                <app-forsa-icon name="plus" [size]="13" /> Upload STEG bill
+              }
+            </app-forsa-button>
+          }
+          @if (!score()!.sonedeBoosterActive) {
+            <app-forsa-button (click)="triggerBillUpload('SONEDE')" [disabled]="docLoading() !== null">
+              @if (docLoading() === 'SONEDE') {
+                <app-forsa-icon name="sparkles" [size]="13" /> Verifying…
+              } @else {
+                <app-forsa-icon name="plus" [size]="13" /> Upload SONEDE bill
+              }
+            </app-forsa-button>
+          }
+        </div>
 
       </div>
     </app-forsa-card>
 
-    <!-- Hidden file inputs for OCR -->
     <input #stegInput type="file" accept="image/*,application/pdf"
            style="display:none" (change)="onFileSelected($event, 'STEG')" />
     <input #sonedeInput type="file" accept="image/*,application/pdf"

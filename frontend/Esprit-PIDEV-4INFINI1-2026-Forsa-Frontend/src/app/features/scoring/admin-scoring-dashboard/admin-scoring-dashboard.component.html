@@ -64,15 +64,17 @@
 
               <td>
                 <span class="level-badge" [ngClass]="levelClass(row.scoreLevel)">
-                  {{ row.scoreLevel.replace('_', ' ') }}
+                  {{ formatLevelLabel(row.scoreLevel) }}
                 </span>
               </td>
 
               <td class="td-threshold">
                 @if (row.hasActiveCredit) {
                   <span class="blocked-label">Loan in progress</span>
-                } @else {
+                } @else if (row.creditThreshold != null) {
                   <span class="threshold-val">{{ row.creditThreshold | number:'1.0-0' }} TND</span>
+                } @else {
+                  <span class="threshold-val">—</span>
                 }
               </td>
 
