@@ -46,7 +46,7 @@ public class AccountController {
     @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping("/owner/{ownerId}")
     public List<AccountJsonDTO> getAccountsByOwner(@PathVariable Long ownerId) {
-        return AccountJsonDTO.fromList(accountService.getAccountsByOwner(ownerId));
+        return accountService.getAccountsByOwnerAsJson(ownerId);
     }
 
     @SecurityRequirement(name = "Bearer Authentication")
@@ -124,7 +124,7 @@ public class AccountController {
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/all")
     public List<AccountJsonDTO> getAllAccounts() {
-        return AccountJsonDTO.fromList(accountService.getAllAccounts());
+        return AccountJsonDTO.fromList(accountService.getAllAccounts(), false);
     }
 
     @SecurityRequirement(name = "Bearer Authentication")

@@ -22,6 +22,14 @@ public class AccountJsonDTO {
     public WalletJsonDTO wallet;
 
     public static AccountJsonDTO from(Account account) {
+        return from(account, true);
+    }
+
+    /**
+     * @param includeWalletTransactions false for list endpoints — avoids lazy-load issues
+     *                                  when JPA session is closed and keeps payloads small.
+     */
+    public static AccountJsonDTO from(Account account, boolean includeWalletTransactions) {
         if (account == null) {
             return null;
         }
@@ -30,17 +38,21 @@ public class AccountJsonDTO {
         dto.type = account.getType() != null ? account.getType().name() : null;
         dto.status = account.getStatus() != null ? account.getStatus().name() : null;
         dto.accountHolderName = account.getAccountHolderName();
-        dto.wallet = WalletJsonDTO.from(account.getWallet());
+        dto.wallet = WalletJsonDTO.from(account.getWallet(), includeWalletTransactions);
         return dto;
     }
 
     public static List<AccountJsonDTO> fromList(List<Account> accounts) {
+        return fromList(accounts, true);
+    }
+
+    public static List<AccountJsonDTO> fromList(List<Account> accounts, boolean includeWalletTransactions) {
         if (accounts == null) {
             return Collections.emptyList();
         }
         List<AccountJsonDTO> out = new ArrayList<>(accounts.size());
         for (Account a : accounts) {
-            out.add(from(a));
+            out.add(from(a, includeWalletTransactions));
         }
         return out;
     }
@@ -52,6 +64,10 @@ public class AccountJsonDTO {
         public List<TransactionJsonDTO> transactions;
 
         public static WalletJsonDTO from(Wallet w) {
+            return from(w, true);
+        }
+
+        public static WalletJsonDTO from(Wallet w, boolean includeTransactions) {
             if (w == null) {
                 return null;
             }
@@ -60,7 +76,7 @@ public class AccountJsonDTO {
             dto.ownerId = w.getOwnerId();
             dto.balance = w.getBalance();
             dto.transactions = new ArrayList<>();
-            if (w.getTransactions() != null) {
+            if (includeTransactions && w.getTransactions() != null) {
                 for (Transaction t : w.getTransactions()) {
                     dto.transactions.add(TransactionJsonDTO.from(t));
                 }

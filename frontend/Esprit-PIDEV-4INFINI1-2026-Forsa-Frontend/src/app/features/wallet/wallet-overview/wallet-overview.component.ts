@@ -203,6 +203,14 @@ export class WalletOverviewComponent implements OnInit {
     this.operationMessage = '';
     this.operationError = '';
     this.accountSvc.getStatistics(acc.id).subscribe({ next: (s) => (this.adminStats = s) });
+    // List payloads omit transactions; load full account for the detail panel.
+    this.accountSvc.getAccount(acc.id).subscribe({
+      next: (full) => {
+        if (this.adminSelectedAccount?.id === full.id) {
+          this.adminSelectedAccount = full;
+        }
+      },
+    });
   }
 
   openAdminCreate(): void {
