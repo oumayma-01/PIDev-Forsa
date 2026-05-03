@@ -420,12 +420,123 @@ public class AccountServiceImpl implements AccountService {
     // ── IA ───────────────────────────────────────────────────────────────────
 
     @Override
+    @Transactional(readOnly = true)
     public WalletForecastDTO forecastBalance(Long accountId, int days) {
-        return null;
+        if (days <= 0) {
+            days = 30;
+        }
+        Account account = findAccount(accountId);
+        Wallet wallet = account.getWallet();
+        BigDecimal balance = wallet.getBalance() != null ? wallet.getBalance() : BigDecimal.ZERO;
+
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(30);
+        BigDecimal netLast30 = BigDecimal.ZERO;
+        int recentCount = 0;
+        List<Transaction> txs = wallet.getTransactions() != null ? wallet.getTransactions() : List.of();
+        for (Transaction t : txs) {
+            if (t.getDate() == null || t.getDate().isBefore(cutoff) || t.getAmount() == null) {
+                continue;
+            }
+            recentCount++;
+            switch (t.getType()) {
+                case DEPOSIT, TRANSFER_IN, INTEREST -> netLast30 = netLast30.add(t.getAmount());
+                case WITHDRAW, TRANSFER_OUT -> netLast30 = netLast30.subtract(t.getAmount());
+                default -> { }
+            }
+        }
+
+        BigDecimal dailyDrift = netLast30.divide(BigDecimal.valueOf(30), 4, RoundingMode.HALF_UP);
+        BigDecimal predicted = balance.add(dailyDrift.multiply(BigDecimal.valueOf(days)))
+                .setScale(2, RoundingMode.HALF_UP);
+        if (predicted.compareTo(BigDecimal.ZERO) < 0) {
+            predicted = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+
+        String trend;
+        if (predicted.compareTo(balance) > 0) {
+            trend = "increasing";
+        } else if (predicted.compareTo(balance) < 0) {
+            trend = "decreasing";
+        } else {
+            trend = "stable";
+        }
+
+        StringBuilder explanation = new StringBuilder();
+        explanation.append("Projection uses your last 30 days of flows (net ").append(netLast30.setScale(2, RoundingMode.HALF_UP))
+                .append("). ");
+        if (recentCount == 0) {
+            explanation.append("No recent movements in that window — forecast assumes flat balance.");
+        } else {
+            explanation.append(recentCount).append(" movement(s) counted; daily drift ~ ")
+                    .append(dailyDrift.setScale(2, RoundingMode.HALF_UP)).append(".");
+        }
+
+        if (walletAiService.isConfigured()) {
+            try {
+                String ai = walletAiService.askAI(
+                        "You help users understand a simple wallet forecast. Reply in 2 short sentences, plain language, no JSON.",
+                        "Current balance: " + balance + ". Predicted in " + days + " days: " + predicted
+                                + ". Trend label: " + trend + ". Net last 30 days: " + netLast30.setScale(2, RoundingMode.HALF_UP) + ".");
+                explanation.append(" ").append(ai.trim());
+            } catch (RuntimeException ignored) {
+                explanation.append(" (AI explanation unavailable.)");
+            }
+        }
+
+        return new WalletForecastDTO(balance, predicted, days, trend, explanation.toString().trim());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public AccountTypeAdviceDTO adviseAccountType(Long accountId) {
-        return null;
+        Account account = findAccount(accountId);
+        String current = account.getType() != null ? account.getType().name() : "UNKNOWN";
+        WalletStatisticsDTO st = getStatistics(accountId);
+        BigDecimal bal = st.getBalance() != null ? st.getBalance() : BigDecimal.ZERO;
+        int n = st.getNumberOfTransactions();
+
+        String recommended;
+        boolean change;
+        String reasoning;
+
+        if (account.getType() == AccountType.INVESTMENT) {
+            recommended = "INVESTMENT";
+            if (account.getStatus() == AccountStatus.BLOCKED) {
+                change = false;
+                reasoning = "Investment wallet is blocked until staff activates it. After activation, it can receive manual monthly interest runs.";
+            } else {
+                change = false;
+                reasoning = "You are already on an investment wallet suited for interest credits when the bank runs monthly interest.";
+            }
+        } else {
+            // SAVINGS
+            boolean heavyUse = n >= 8;
+            boolean cushion = bal.compareTo(new BigDecimal("500")) >= 0;
+            if (heavyUse && cushion) {
+                recommended = "INVESTMENT";
+                change = true;
+                reasoning = "You have steady activity and a solid balance; opening a separate INVESTMENT wallet can separate long-term funds from daily spending (subject to staff activation).";
+            } else {
+                recommended = "SAVINGS";
+                change = false;
+                reasoning = n < 5
+                        ? "Keep using SAVINGS until you have a clearer pattern of deposits and withdrawals."
+                        : "Your usage fits a primary SAVINGS wallet; consider INVESTMENT once balance and activity grow.";
+            }
+        }
+
+        if (walletAiService.isConfigured()) {
+            try {
+                String ai = walletAiService.askAI(
+                        "You advise on SAVINGS vs INVESTMENT for a demo digital wallet. One short paragraph, agree or refine the recommendation, no JSON.",
+                        "Account id " + accountId + ", type " + current + ", balance " + bal + ", tx count " + n
+                                + ". Draft recommendation: " + recommended + ", changeAdvised=" + change + ". Reason so far: " + reasoning);
+                reasoning = reasoning + " " + ai.trim();
+            } catch (RuntimeException ignored) {
+                reasoning = reasoning + " (AI add-on unavailable.)";
+            }
+        }
+
+        return new AccountTypeAdviceDTO(accountId, current, recommended, change, reasoning.trim());
     }
 }
