@@ -1,6 +1,7 @@
 package org.example.forsapidev.Controllers;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.example.forsapidev.DTO.ClaimTemplate;
 import org.example.forsapidev.entities.InsuranceManagement.InsuranceClaim;
 import org.example.forsapidev.Services.Interfaces.IInsuranceClaim;
 import lombok.AllArgsConstructor;
@@ -19,7 +20,7 @@ public class InsuranceClaimController {
     private final org.example.forsapidev.Services.ClaimTemplateService claimTemplateService;
 
     @GetMapping("/template/{policy-type}")
-    public org.example.forsapidev.Dto.ClaimTemplate getClaimTemplate(@PathVariable("policy-type") String policyType) {
+    public ClaimTemplate getClaimTemplate(@PathVariable("policy-type") String policyType) {
         return claimTemplateService.getTemplateForPolicyType(policyType);
     }
 
