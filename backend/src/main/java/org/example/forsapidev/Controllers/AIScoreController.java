@@ -32,10 +32,9 @@ public class AIScoreController {
     private final AIScoreRepository aiScoreRepository;
 
     /**
-     * Endpoint appelé par Angular avec les données du formulaire dans le body.
      * POST /api/ai-score/calculate-body/{clientId}
-     * Body JSON : { monthlySalary, stegPaidOnTime, sondePaidOnTime, cinVerified }
-     * Retourne un JSON camelCase compatible avec l'interface Angular AIScoreResponse.
+     * Calls Python directly and returns the raw score response (camelCase).
+     * Used by the legacy score-request wizard for existing clients.
      */
     @PostMapping("/calculate-body/{clientId}")
     public ResponseEntity<Map<String, Object>> calculateScoreBody(
@@ -46,22 +45,19 @@ public class AIScoreController {
 
         Double salary  = body.get("monthlySalary") != null
                 ? Double.parseDouble(body.get("monthlySalary").toString()) : 0.0;
-        Boolean steg   = (Boolean) body.getOrDefault("stegPaidOnTime", false);
-        Boolean sonede = (Boolean) body.getOrDefault("sondePaidOnTime", false);
-        Boolean cin    = (Boolean) body.getOrDefault("cinVerified", false);
+        Boolean steg   = Boolean.TRUE.equals(body.get("stegPaidOnTime"));
+        Boolean sonede = Boolean.TRUE.equals(body.get("sondePaidOnTime"));
+        Boolean cin    = Boolean.TRUE.equals(body.get("cinVerified"));
 
-        // Appel Python → retourne snake_case
         Map<String, Object> pythonResult = aiAgentClient.calculateScore(
                 clientId, salary, steg, sonede, cin);
 
-        // Conversion snake_case → camelCase pour Angular
-        Map<String, Object> response = toCamelCase(pythonResult);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(toCamelCase(pythonResult));
     }
 
     /**
-     * Endpoint legacy avec @RequestParam (utile pour tester sur Swagger).
-     * POST /api/ai-score/calculate/{clientId}?monthlySalary=1500&stegPaidOnTime=true...
+     * POST /api/ai-score/calculate/{clientId}?monthlySalary=...
+     * Legacy endpoint with @RequestParam (Swagger testing).
      */
     @PostMapping("/calculate/{clientId}")
     public ResponseEntity<Map<String, Object>> calculateScore(
@@ -79,9 +75,8 @@ public class AIScoreController {
     }
 
     /**
-     * Vérifie un document (CIN, STEG, SONEDE, SALARY) via le service Python.
      * POST /api/ai-score/verify-document
-     * Multipart : file=<image>, document_type=CIN|STEG|SONEDE|SALARY
+     * OCR verification for CIN, STEG, SONEDE, or SALARY documents.
      */
     @PostMapping(value = "/verify-document", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map<String, Object>> verifyDocument(
@@ -94,7 +89,6 @@ public class AIScoreController {
     }
 
     /**
-     * Health check — vérifie que le controller est actif.
      * GET /api/ai-score/health
      */
     @GetMapping("/health")
@@ -103,8 +97,49 @@ public class AIScoreController {
     }
 
     /**
-     * Retourne le dernier score IA d'un client.
+     * GET /api/ai-score/status/{clientId}
+     * Returns {hasScore: boolean} plus the full score DTO when a score exists.
+     * Does NOT auto-create a score — safe for new-client detection.
+     */
+    @GetMapping("/status/{clientId}")
+    public ResponseEntity<Map<String, Object>> getScoreStatus(@PathVariable Long clientId) {
+        Map<String, Object> response = new HashMap<>();
+        Optional<AIScore> opt = aiScoreRepository.findByClientId(clientId);
+        if (opt.isPresent()) {
+            response.put("hasScore", true);
+            response.putAll(toScoreDto(opt.get()));
+        } else {
+            response.put("hasScore", false);
+        }
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * POST /api/ai-score/first-score/{clientId}
+     * New client first-time score: stores OCR salary, activates boosters if bills paid,
+     * then runs calculateAndSave.
+     * Body: {salary, stegPaidOnTime, sondePaidOnTime}
+     */
+    @PostMapping("/first-score/{clientId}")
+    public ResponseEntity<Map<String, Object>> firstScore(
+            @PathVariable Long clientId,
+            @RequestBody Map<String, Object> body) {
+
+        Double salary      = body.get("salary") != null
+                ? Double.parseDouble(body.get("salary").toString()) : 0.0;
+        Boolean stegPaid   = Boolean.TRUE.equals(body.get("stegPaidOnTime"));
+        Boolean sonedePaid = Boolean.TRUE.equals(body.get("sondePaidOnTime"));
+
+        log.info("First score for client {} — salary={} steg={} sonede={}",
+                clientId, salary, stegPaid, sonedePaid);
+
+        AIScore result = autoScoringService.initializeFirstScore(clientId, salary, stegPaid, sonedePaid);
+        return ResponseEntity.ok(toScoreDto(result));
+    }
+
+    /**
      * GET /api/ai-score/current/{clientId}
+     * Returns the last saved score. Auto-creates one if none exists (legacy behavior).
      */
     @GetMapping("/current/{clientId}")
     public ResponseEntity<Map<String, Object>> getCurrentScore(@PathVariable Long clientId) {
@@ -128,7 +163,6 @@ public class AIScoreController {
     }
 
     /**
-     * Recalcule et sauvegarde le score IA d'un client.
      * POST /api/ai-score/recalculate/{clientId}
      */
     @PostMapping("/recalculate/{clientId}")
@@ -138,15 +172,13 @@ public class AIScoreController {
     }
 
     /**
-     * Active un booster STEG ou SONEDE, puis recalcule le score.
      * POST /api/ai-score/booster/{clientId}?type=STEG|SONEDE
      */
     @PostMapping("/booster/{clientId}")
     public ResponseEntity<Map<String, Object>> activateBooster(
             @PathVariable Long clientId,
             @RequestParam String type) {
-        autoScoringService.activateBooster(clientId, type);
-        AIScore saved = autoScoringService.calculateAndSave(clientId);
+        AIScore saved = autoScoringService.activateBooster(clientId, type);
         return ResponseEntity.ok(toScoreDto(saved));
     }
 
@@ -157,14 +189,12 @@ public class AIScoreController {
     public ResponseEntity<Map<String, Object>> activateBoosterWithRecalc(
             @PathVariable Long clientId,
             @RequestParam String type) {
-        autoScoringService.activateBooster(clientId, type);
-        AIScore saved = autoScoringService.calculateAndSave(clientId);
+        AIScore saved = autoScoringService.activateBooster(clientId, type);
         return ResponseEntity.ok(toScoreDto(saved));
     }
 
     /**
-     * Liste admin avec nom + email client.
-     * GET /api/ai-score/all
+     * GET /api/ai-score/all — admin list sorted by score desc.
      */
     @GetMapping("/all")
     public ResponseEntity<List<AIScoreSummaryDto>> getAllScores() {
@@ -172,12 +202,14 @@ public class AIScoreController {
     }
 
     /**
-     * GET /api/ai-score/summaries — alias de /all (compat).
+     * GET /api/ai-score/summaries — alias for /all.
      */
     @GetMapping("/summaries")
     public ResponseEntity<List<AIScoreSummaryDto>> getAllSummaries() {
         return ResponseEntity.ok(autoScoringService.getAllScoreSummaries());
     }
+
+    // ── Private helpers ───────────────────────────────────────────────────────
 
     private Map<String, Object> toScoreDto(AIScore s) {
         Map<String, Object> dto = new HashMap<>();
@@ -191,10 +223,11 @@ public class AIScoreController {
         dto.put("hasActiveCredit", Boolean.TRUE.equals(s.getHasActiveCredit()));
         dto.put("lastCalculatedAt", s.getLastCalculatedAt() != null ? s.getLastCalculatedAt().toString() : null);
         dto.put("aiExplanation", s.getAiExplanation());
-        boolean stegActive = s.getStegBoosterExpiry() != null && s.getStegBoosterExpiry().isAfter(LocalDateTime.now());
+        dto.put("verifiedSalary", s.getVerifiedSalary() != null ? s.getVerifiedSalary().doubleValue() : null);
+        boolean stegActive   = s.getStegBoosterExpiry()   != null && s.getStegBoosterExpiry().isAfter(LocalDateTime.now());
         boolean sonedeActive = s.getSonedeBoosterExpiry() != null && s.getSonedeBoosterExpiry().isAfter(LocalDateTime.now());
-        dto.put("stegBoosterActive", stegActive);
-        dto.put("stegBoosterExpiry", s.getStegBoosterExpiry() != null ? s.getStegBoosterExpiry().toString() : null);
+        dto.put("stegBoosterActive",  stegActive);
+        dto.put("stegBoosterExpiry",  s.getStegBoosterExpiry()   != null ? s.getStegBoosterExpiry().toString()   : null);
         dto.put("sonedeBoosterActive", sonedeActive);
         dto.put("sonedeBoosterExpiry", s.getSonedeBoosterExpiry() != null ? s.getSonedeBoosterExpiry().toString() : null);
         return dto;
@@ -211,6 +244,7 @@ public class AIScoreController {
         dto.put("hasActiveCredit", false);
         dto.put("lastCalculatedAt", null);
         dto.put("aiExplanation", null);
+        dto.put("verifiedSalary", null);
         dto.put("stegBoosterActive", false);
         dto.put("stegBoosterExpiry", null);
         dto.put("sonedeBoosterActive", false);
@@ -219,9 +253,7 @@ public class AIScoreController {
     }
 
     /**
-     * Convertit la réponse Python (snake_case) en camelCase pour Angular.
-     * Python renvoie : client_id, score_level, credit_threshold, salary_verified, features{f8_steg_on_time, ...}
-     * Angular attend  : clientId, scoreLevel, creditThreshold, salaryVerified, features{...}
+     * Converts Python snake_case response to camelCase for Angular.
      */
     @SuppressWarnings("unchecked")
     private Map<String, Object> toCamelCase(Map<String, Object> python) {
@@ -233,11 +265,9 @@ public class AIScoreController {
         out.put("salaryVerified",  python.getOrDefault("salary_verified", 0.0));
         out.put("explanation",     python.getOrDefault("explanation", ""));
 
-        // Features compatibles Angular (f1_salary, f2_income_stability, etc.)
         Object features = python.get("features");
         out.put("features", features != null ? features : Map.of());
 
-        // Champs supplémentaires v3 (scoring intelligent)
         Object scoreDetails = python.get("score_details");
         out.put("scoreDetails", scoreDetails != null ? scoreDetails : Map.of());
         out.put("hasDbData", python.getOrDefault("has_db_data", false));

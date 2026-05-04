@@ -153,6 +153,13 @@ export interface AIScoreDto {
   stegBoosterExpiry?: string | null;
   sonedeBoosterActive: boolean;
   sonedeBoosterExpiry?: string | null;
+  /** Salary verified via OCR pay slip. */
+  verifiedSalary?: number | null;
+}
+
+/** Response from GET /api/ai-score/status/{clientId}. hasScore=false means no score row exists yet. */
+export interface ScoreStatusResponse extends Partial<AIScoreDto> {
+  hasScore: boolean;
 }
 
 /** Admin table row — GET /api/ai-score/all */
