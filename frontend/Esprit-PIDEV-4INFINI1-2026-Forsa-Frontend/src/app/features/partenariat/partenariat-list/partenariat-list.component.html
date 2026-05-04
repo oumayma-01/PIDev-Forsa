@@ -58,7 +58,7 @@
 
   <!-- Admin table -->
   <app-forsa-card>
-    <div class="card-pad-lg table-wrap">
+    <div class="card-pad-lg partner-card-body">
       <div class="table-head">
         <h3>Partner network</h3>
         <div class="table-actions">
@@ -68,12 +68,12 @@
               placeholder="Search name, city…" class="search__input"
               (forsaInputChange)="onSearch($event)" />
           </div>
-          <select class="forsa-select" [value]="statusFilter()" (change)="onStatusSelect($event)">
+          <select title="Filter by status" class="forsa-select" [value]="statusFilter()" (change)="onStatusSelect($event)">
             @for (o of statusOptions; track o.value) {
               <option [value]="o.value">{{ o.label }}</option>
             }
           </select>
-          <select class="forsa-select forsa-select--wide" [value]="typeFilter()" (change)="onTypeSelect($event)">
+          <select title="Filter by type" class="forsa-select forsa-select--wide" [value]="typeFilter()" (change)="onTypeSelect($event)">
             @for (o of typeOptions; track o.value) {
               <option [value]="o.value">{{ o.label }}</option>
             }
@@ -87,23 +87,24 @@
           Loading partners…
         </div>
       } @else {
-        <table class="forsa-table">
-          <thead>
-            <tr>
-              <th>Business</th>
-              <th>Type</th>
-              <th>City</th>
-              <th>Max / txn</th>
-              <th>Comm.</th>
-              <th>Volume</th>
-              <th>Badge</th>
-              <th>Status</th>
-              <th class="right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (p of filteredPartners(); track p.id) {
+        <div class="partner-table-scroll">
+          <table class="forsa-table partner-network-table partner-network-table--admin">
+            <thead>
               <tr>
+                <th>Business</th>
+                <th>Type</th>
+                <th>City</th>
+                <th>Max / txn</th>
+                <th>Comm.</th>
+                <th>Volume</th>
+                <th>Badge</th>
+                <th>Status</th>
+                <th class="right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of filteredPartners(); track p.id) {
+                <tr>
                 <td>
                   <div class="cell-main">
                     <span class="fw-semibold">{{ p.businessName }}</span>
@@ -173,6 +174,7 @@
             }
           </tbody>
         </table>
+        </div>
         @if (filteredPartners().length === 0) {
           <p class="empty-hint text-muted">No partners match the current filters.</p>
         }
@@ -226,7 +228,7 @@
         placeholder="Search partner name, city, type…" class="search__input"
         (forsaInputChange)="onSearch($event)" />
     </div>
-    <select class="forsa-select forsa-select--wide" [value]="typeFilter()" (change)="onTypeSelect($event)">
+    <select title="Filter by type" class="forsa-select forsa-select--wide" [value]="typeFilter()" (change)="onTypeSelect($event)">
       @for (o of typeOptions; track o.value) {
         <option [value]="o.value">{{ o.label }}</option>
       }
@@ -319,7 +321,7 @@
         placeholder="Search name, city…" class="search__input"
         (forsaInputChange)="onSearch($event)" />
     </div>
-    <select class="forsa-select forsa-select--wide" [value]="typeFilter()" (change)="onTypeSelect($event)">
+    <select title="Filter by type" class="forsa-select forsa-select--wide" [value]="typeFilter()" (change)="onTypeSelect($event)">
       @for (o of typeOptions; track o.value) {
         <option [value]="o.value">{{ o.label }}</option>
       }
@@ -327,27 +329,28 @@
   </div>
 
   <app-forsa-card>
-    <div class="card-pad-lg table-wrap">
+    <div class="card-pad-lg partner-card-body">
       @if (loading()) {
         <div class="loading-row">
           <span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span>
           Loading partners…
         </div>
       } @else {
-        <table class="forsa-table">
-          <thead>
-            <tr>
-              <th>Business</th>
-              <th>Type</th>
-              <th>City</th>
-              <th>Rating</th>
-              <th>Badge</th>
-              <th class="right">Details</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (p of filteredPartners(); track p.id) {
+        <div class="partner-table-scroll">
+          <table class="forsa-table partner-network-table partner-network-table--agent">
+            <thead>
               <tr>
+                <th>Business</th>
+                <th>Type</th>
+                <th>City</th>
+                <th>Rating</th>
+                <th>Badge</th>
+                <th class="right">Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of filteredPartners(); track p.id) {
+                <tr>
                 <td class="fw-semibold">{{ p.businessName }}</td>
                 <td class="text-muted">{{ p.partnerType | partnerTypeLabel }}</td>
                 <td>{{ p.city }}</td>
@@ -371,10 +374,11 @@
                     <app-forsa-icon name="eye" [size]="15"></app-forsa-icon>
                   </button>
                 </td>
-              </tr>
-            }
-          </tbody>
-        </table>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
         @if (filteredPartners().length === 0) {
           <p class="empty-hint text-muted">No partners match the current filters.</p>
         }

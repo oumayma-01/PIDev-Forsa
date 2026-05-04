@@ -6,8 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="b40aeaa4-b7fc-4b19-ac53-384151ea25f7" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/org/example/forsapidev/Controllers/InsuranceClaimController.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/org/example/forsapidev/Controllers/InsuranceClaimController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/org/example/forsapidev/Services/ClaimTemplateService.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/org/example/forsapidev/Services/ClaimTemplateService.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -46,7 +44,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
     "Spring Boot.ForsaPidevApplication.executor": "Run",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "dashboard-admin",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "C:/Users/nesma/Desktop/PIDEV/PIDev-Forsa",
     "node.js.detected.package.eslint": "true",

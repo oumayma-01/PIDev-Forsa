@@ -1,6 +1,6 @@
 <div class="portal-container">
   <div class="header-section">
-    <button routerLink="/dashboard/insurance" class="back-btn glass-btn">
+    <button type="button" routerLink="/dashboard/insurance" class="back-btn">
       <i class="fe fe-arrow-left"></i> Back to Hub
     </button>
     <h1>Premium Payments</h1>
@@ -11,7 +11,7 @@
     <div class="filter-controls">
       <div class="filter-group">
         <label for="policyFilter"><i class="fe fe-filter"></i> Filter by Policy:</label>
-        <select id="policyFilter" [(ngModel)]="selectedPolicy" (change)="filterByPolicy()" class="filter-select">
+        <select id="policyFilter" [(ngModel)]="selectedPolicy" (change)="filterByPolicy()" class="forsa-input filter-select">
           <option value="all">All Policies</option>
           <option *ngFor="let pol of policies" [value]="pol">{{ pol }}</option>
         </select>
@@ -34,36 +34,36 @@
   </div>
 
   <div *ngIf="!isLoading && payments.length > 0" class="payments-table-container glass-panel">
-    <table class="payments-table">
-      <thead>
-        <tr>
-          <th>Policy Ref</th>
-          <th>Due Date</th>
-          <th>Amount</th>
-          <th>Status</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let p of payments" [ngClass]="{'row-paid': p.status === 'PAID'}">
+    <app-forsa-data-table
+      [embedded]="true"
+      [columns]="paymentColumns"
+      [rows]="paymentsPaged"
+      [totalCount]="payments.length"
+      [pageIndex]="paymentPageIndex"
+      [pageSize]="paymentPageSize"
+      [pageSizeOptions]="paymentPageSizeOptions"
+      (pageChange)="onPaymentTablePage($event)"
+      ariaLabel="Premium payments">
+      <ng-template #forsaTableBody let-rows>
+        <tr *ngFor="let p of rows" [ngClass]="{ 'row-paid': p.status === 'PAID' }">
           <td>
             <strong>{{ p.insurancePolicy?.policyNumber || 'Processing Number' }}</strong>
           </td>
           <td>
             <div class="date-cell">
               <i class="fe fe-calendar"></i>
-              {{ p.dueDate | date:'mediumDate' }}
+              {{ p.dueDate | date : 'mediumDate' }}
             </div>
             <div class="paid-date text-success text-sm" *ngIf="p.paidDate">
-              Paid on {{ p.paidDate | date:'shortDate' }}
+              Paid on {{ p.paidDate | date : 'shortDate' }}
             </div>
           </td>
-          <td class="amount-cell">{{ p.amount | number:'1.2-2' }} TND</td>
+          <td class="amount-cell">{{ p.amount | number : '1.2-2' }} TND</td>
           <td>
             <span class="status-badge" [ngClass]="p.status | lowercase">{{ p.status }}</span>
           </td>
-          <td>
-            <button *ngIf="p.status !== 'PAID'" class="btn btn-primary btn-sm pay-btn pulse" (click)="payNow(p)">
+          <td class="right">
+            <button *ngIf="p.status !== 'PAID'" type="button" class="btn btn-primary btn-sm pay-btn pulse" (click)="payNow(p)">
               <i class="fe fe-credit-card"></i> Pay Now
             </button>
             <span *ngIf="p.status === 'PAID'" class="text-success fw-bold">
@@ -71,7 +71,7 @@
             </span>
           </td>
         </tr>
-      </tbody>
-    </table>
+      </ng-template>
+    </app-forsa-data-table>
   </div>
 </div>

@@ -1,8 +1,16 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
 .analytics-container {
   padding: 2.5rem;
   max-width: 1600px;
   margin: 0 auto;
   min-height: 100vh;
+  min-width: 0;
+  box-sizing: border-box;
+  width: 100%;
   background: #f8fafc;
 }
 
@@ -114,19 +122,27 @@
   box-shadow: 0 8px 20px rgba(30, 64, 175, 0.3);
 }
 
+:host {
+  display: block;
+  min-width: 0;
+}
+
 /* Stats Grid */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1.5rem;
   margin-bottom: 2.5rem;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .premium-stat-card {
-  background: white;
+  background: var(--color-card);
   padding: 1.75rem;
   border-radius: 1.5rem;
-  border: 1px solid #f1f5f9;
+  border: 1px solid var(--color-border);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
   position: relative;
@@ -167,23 +183,42 @@
 .amber .stat-icon { background: #fffbeb; color: #f59e0b; }
 .rose .stat-icon { background: #fef2f2; color: #ef4444; }
 
-.stat-label { font-size: 0.75rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.25rem; }
-.stat-value { font-size: 1.5rem; font-weight: 800; color: #0f172a; }
-.stat-value small { font-size: 0.875rem; color: #94a3b8; font-weight: 600; }
+.stat-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--color-muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--color-foreground);
+}
+.stat-value small {
+  font-size: 0.875rem;
+  color: var(--color-muted-foreground);
+  font-weight: 600;
+}
 
 /* Charts */
 .glass-panel {
-  background: white;
+  background: var(--color-card);
   border-radius: 1.5rem;
-  border: 1px solid #f1f5f9;
+  border: 1px solid var(--color-border);
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.03);
 }
 
 .main-chart-grid {
   display: grid;
-  grid-template-columns: 2.2fr 1fr;
+  grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr);
   gap: 1.5rem;
   margin-bottom: 1.5rem;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .chart-card { display: flex; flex-direction: column; }
@@ -221,9 +256,12 @@
 
 .secondary-grid {
   display: grid;
-  grid-template-columns: 1.5fr 1fr;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
   gap: 1.5rem;
   margin-bottom: 2.5rem;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .hero-info-card {
@@ -261,8 +299,25 @@
   border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
-/* Table Section */
-.table-section { overflow: hidden; margin-bottom: 4rem; }
+/* Table Section — allow horizontal scroll on narrow viewports */
+.table-section {
+  overflow-x: auto;
+  overflow-y: visible;
+  margin-bottom: 4rem;
+}
+
+.table-container {
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+.table-section.glass-panel {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
 
 .section-header {
   padding: 1.75rem 2rem;
@@ -270,6 +325,26 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.section-header .header-text {
+  min-width: 0;
+  flex: 1 1 12rem;
+}
+
+.section-header .btn-text {
+  flex-shrink: 0;
+}
+
+.table-section .table-container {
+  padding: 0 1rem 0.75rem;
+  box-sizing: border-box;
+}
+
+.table-container--scroll {
+  scrollbar-gutter: stable;
 }
 
 .btn-text {
@@ -287,7 +362,19 @@
 
 .btn-text:hover { background: #dbeafe; transform: translateY(-1px); }
 
-.premium-table { width: 100%; border-collapse: collapse; }
+.premium-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* Scrollable wide layout: full values visible via horizontal scroll */
+.premium-table--scroll-x {
+  width: max-content;
+  min-width: max(100%, 52rem);
+  max-width: none;
+  table-layout: auto;
+  direction: ltr;
+}
 
 .premium-table th {
   text-align: left;
@@ -299,9 +386,22 @@
   letter-spacing: 0.05em;
   background: #fcfdfe;
   border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+  white-space: nowrap;
 }
 
-.premium-table td { padding: 1.25rem 2rem; border-bottom: 1px solid #f1f5f9; font-size: 0.9375rem; color: #475569; }
+.premium-table td {
+  padding: 1.25rem 2rem;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.9375rem;
+  color: #475569;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.premium-table td.td-actions {
+  white-space: nowrap;
+}
 
 .td-number span { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--forsa-navy); }
 .td-policy { color: #64748b; font-weight: 500; }
@@ -382,11 +482,56 @@
 }
 
 @media (max-width: 1200px) {
-  .stats-grid { grid-template-columns: repeat(2, 1fr); }
-  .main-chart-grid, .secondary-grid { grid-template-columns: 1fr; }
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .main-chart-grid,
+  .secondary-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 768px) {
-  .dashboard-header { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
-  .stats-grid { grid-template-columns: 1fr; }
+  .analytics-container {
+    padding: 1.25rem 1rem;
+  }
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .premium-stat-card {
+    padding: 1.25rem;
+  }
+  .section-header {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1.25rem 1rem;
+  }
+  .section-header .btn-text {
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box;
+  }
+  .table-section .table-container {
+    margin-inline: 0;
+    padding: 0 0.75rem 0.65rem;
+  }
+  .premium-table th,
+  .premium-table td {
+    padding: 0.65rem 0.85rem;
+    font-size: 0.8125rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .analytics-container {
+    padding: 1rem 0.75rem;
+  }
+  .table-section .table-container {
+    padding-inline: 0.65rem;
+  }
 }

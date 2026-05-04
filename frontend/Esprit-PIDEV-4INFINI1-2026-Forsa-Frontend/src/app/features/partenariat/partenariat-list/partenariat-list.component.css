@@ -1,4 +1,16 @@
 /* ── Shared layout ─────────────────────────────────────────────────────────── */
+:host {
+  display: block;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+:host ::ng-deep app-forsa-card {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+}
+
 .alert-banner {
   display: flex; align-items: center; gap: .5rem;
   padding: .65rem 1rem; border-radius: .75rem; margin-bottom: 1rem;
@@ -8,6 +20,7 @@
 .page-toolbar {
   display: flex; align-items: flex-start; justify-content: space-between;
   flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;
+  min-width: 0;
 }
 .page-head--inline { margin-bottom: 0; max-width: 42rem; }
 .page-head--inline h2 { margin-bottom: .35rem; }
@@ -54,6 +67,7 @@
   display: grid; gap: 1.25rem;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   margin-bottom: 1.5rem;
+  min-width: 0;
 }
 .card-pad-md { padding: 1.1rem 1.25rem; }
 .card-pad-lg { padding: 1.25rem 1.5rem; }
@@ -70,17 +84,66 @@
 .stat__value  { margin: 0; font-size: 1.45rem; font-weight: 700; }
 .stat__suffix { font-size: .85rem; font-weight: 600; color: var(--color-muted-foreground); }
 
-/* ── Table ─────────────────────────────────────────────────────────────────── */
-.table-wrap { overflow-x: auto; }
+/* ── Table (scroll horizontal uniquement sur le tableau) ───────────────────── */
+.partner-card-body {
+  min-width: 0;
+}
+
+.partner-table-scroll {
+  min-width: 0;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-gutter: stable;
+}
+
+.partner-network-table {
+  width: max-content;
+  max-width: none;
+  min-width: 100%;
+  table-layout: auto;
+  direction: ltr;
+}
+
+.partner-network-table--admin {
+  min-width: max(100%, 58rem);
+}
+
+.partner-network-table--agent {
+  min-width: max(100%, 36rem);
+}
+
+.partner-network-table th,
+.partner-network-table td {
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.partner-network-table td.right {
+  white-space: nowrap;
+}
+
+.partner-network-table .suspend-form {
+  white-space: normal;
+  max-width: min(22rem, 85vw);
+}
+
 .table-head {
   display: flex; flex-wrap: wrap; align-items: center;
   justify-content: space-between; gap: 1rem; margin-bottom: 1rem;
+  min-width: 0;
 }
 .table-head h3 { margin: 0; font-size: 1.1rem; }
-.table-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.table-actions {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .5rem;
+  min-width: 0;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+}
 .field-search { position: relative; display: flex; align-items: center; color: var(--color-muted-foreground); }
 .field-search app-forsa-icon { position: absolute; left: .65rem; pointer-events: none; }
-.search__input { padding-left: 2.25rem !important; height: 2.25rem; min-width: 220px; }
+.search__input { padding-left: 2.25rem !important; height: 2.25rem; min-width: min(220px, 100%); }
 .forsa-select {
   height: 2.25rem; border-radius: .75rem; border: 1px solid transparent;
   background: color-mix(in oklab, var(--color-muted) 55%, transparent);
@@ -121,7 +184,11 @@
 }
 
 /* ── Filter bar ────────────────────────────────────────────────────────────── */
-.filter-bar { display: flex; flex-wrap: wrap; gap: .65rem; align-items: center; margin-bottom: 1.25rem; }
+.filter-bar {
+  display: flex; flex-wrap: wrap; gap: .65rem; align-items: center;
+  margin-bottom: 1.25rem;
+  min-width: 0;
+}
 
 /* ── Section block ─────────────────────────────────────────────────────────── */
 .section-block { margin-bottom: 1.5rem; }
@@ -172,3 +239,60 @@
   transition: background .15s;
 }
 .btn-card-cta:hover { background: color-mix(in oklab, var(--color-primary) 18%, transparent); }
+
+@media (max-width: 640px) {
+  .page-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .page-toolbar > .btn-primary {
+    width: 100%;
+    justify-content: center;
+    box-sizing: border-box;
+    min-height: 2.75rem;
+  }
+
+  .page-toolbar .header-actions {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 0.5rem;
+  }
+
+  .page-toolbar .header-actions .btn-primary,
+  .page-toolbar .header-actions .btn-outline {
+    width: 100%;
+    justify-content: center;
+    box-sizing: border-box;
+    min-height: 2.75rem;
+  }
+
+  .table-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .table-actions {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: stretch;
+  }
+  .table-actions .field-search {
+    width: 100%;
+    min-width: 0;
+  }
+  .table-actions .search__input {
+    width: 100%;
+    min-width: 0;
+  }
+  .table-actions .forsa-select,
+  .table-actions .forsa-select--wide {
+    width: 100%;
+    min-width: 0;
+  }
+  .card-pad-lg {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}

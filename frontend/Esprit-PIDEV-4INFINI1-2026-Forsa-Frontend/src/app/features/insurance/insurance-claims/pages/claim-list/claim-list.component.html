@@ -24,42 +24,40 @@
   </div>
 } @else {
   <app-forsa-card [overflowHidden]="true">
-    <div class="table-wrap">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Claim #</th>
-            <th>Policy</th>
-            <th>Type</th>
-            <th>Status</th>
-            <th>Claim Amount</th>
-            <th>Approved</th>
-            <th>Indemnif. Paid</th>
-            <th>Incident Date</th>
-            <th class="th-actions">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (c of claims(); track c.id) {
+    <div class="card-pad-lg table-wrap">
+      <app-forsa-data-table
+        [embedded]="true"
+        [columns]="claimTableColumns"
+        [rows]="pagedClaims()"
+        [totalCount]="claims().length"
+        [pageIndex]="claimTablePageIndex()"
+        [pageSize]="claimTablePageSize()"
+        [pageSizeOptions]="claimTablePageSizeOptions"
+        (pageChange)="onClaimTablePage($event)"
+        ariaLabel="Insurance claims">
+        <ng-template #forsaTableBody let-rows>
+          @for (c of rows; track c.id) {
             <tr>
-              <td class="td-mono">{{ c.claimNumber ?? '—' }}</td>
-              <td class="td-mono">{{ c.insurancePolicy?.policyNumber ?? '—' }}</td>
+              <td class="mono">{{ c.claimNumber ?? '—' }}</td>
+              <td class="mono">{{ c.insurancePolicy?.policyNumber ?? '—' }}</td>
               <td>
-                <div class="d-flex align-center gap-2">
+                <span class="claim-type-cell">
                   {{ c.accidentType ?? '—' }}
-                  <app-forsa-icon *ngIf="c.attachmentUrl" name="history" [size]="14" class="text-primary" />
-                </div>
+                  @if (c.attachmentUrl) {
+                    <app-forsa-icon name="file-text" [size]="14" class="text-primary claim-type-ico" />
+                  }
+                </span>
               </td>
               <td>
                 <app-forsa-badge [tone]="statusTone(c.status)">
                   <app-forsa-icon [name]="statusIcon(c.status)" [size]="12" />{{ c.status }}
                 </app-forsa-badge>
               </td>
-              <td>{{ (c.claimAmount ?? 0) | number:'1.2-2' }} TND</td>
-              <td>{{ (c.approvedAmount ?? 0) | number:'1.2-2' }} TND</td>
-              <td>{{ (c.indemnificationPaid ?? 0) | number:'1.2-2' }} TND</td>
-              <td>{{ c.incidentDate | date:'dd/MM/yyyy' }}</td>
-              <td>
+              <td class="right">{{ (c.claimAmount ?? 0) | number : '1.2-2' }} TND</td>
+              <td class="right">{{ (c.approvedAmount ?? 0) | number : '1.2-2' }} TND</td>
+              <td class="right">{{ (c.indemnificationPaid ?? 0) | number : '1.2-2' }} TND</td>
+              <td>{{ c.incidentDate | date : 'dd/MM/yyyy' }}</td>
+              <td class="right">
                 <div class="row-actions">
                   <a [routerLink]="['/dashboard/insurance/claims', c.id]">
                     <app-forsa-button variant="ghost" size="sm"><app-forsa-icon name="eye" [size]="14" /></app-forsa-button>
@@ -67,16 +65,20 @@
                   <a [routerLink]="['/dashboard/insurance/claims', c.id, 'edit']">
                     <app-forsa-button variant="ghost" size="sm"><app-forsa-icon name="settings" [size]="14" /></app-forsa-button>
                   </a>
-                  <app-forsa-button variant="ghost" size="sm" extraClass="btn-danger"
-                    [disabled]="deletingId() === c.id" (click)="delete(c.id!)">
+                  <app-forsa-button
+                    variant="ghost"
+                    size="sm"
+                    extraClass="btn-danger"
+                    [disabled]="deletingId() === c.id"
+                    (click)="delete(c.id!)">
                     <app-forsa-icon name="shield-alert" [size]="14" />
                   </app-forsa-button>
                 </div>
               </td>
             </tr>
           }
-        </tbody>
-      </table>
+        </ng-template>
+      </app-forsa-data-table>
     </div>
   </app-forsa-card>
 }

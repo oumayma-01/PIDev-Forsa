@@ -1,9 +1,17 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
 .forsa-insurance-portal {
   padding: 2rem;
   max-width: 1600px;
   margin: 0 auto;
   min-height: 100vh;
   background: transparent;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
 }
 
 /* Dashboard Layout */
@@ -55,6 +63,7 @@
   align-items: center;
   gap: 0.75rem;
   background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   padding: 0.5rem 1rem;
   border-radius: 99px;
@@ -203,6 +212,8 @@
   align-items: center;
   margin-bottom: 2rem;
   padding: 0.5rem 0;
+  position: relative;
+  z-index: 0;
 }
 
 .back-link {
@@ -274,6 +285,7 @@
 .refresh-pill.secondary {
   background: var(--glass-bg);
   color: var(--color-foreground);
+  -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
@@ -298,15 +310,19 @@
 
 .stats-grid.premium {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 1.5rem;
   margin: 0;
   position: relative;
   z-index: 2;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .stat-card.glass {
   background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
@@ -322,7 +338,7 @@
 .stat-card.glass:hover {
   background: color-mix(in oklab, var(--color-card) 50%, transparent);
   transform: translateY(-5px);
-  border-color: color-mix(in oklab, var(--forsa-teal) 30%, transparent);
+  border-color: color-mix(in oklab, var(--forsa-teal) 30%, transparent)
 }
 
 :host-context(.dark) .stat-card.glass {
@@ -406,8 +422,11 @@
 
 .admin-grid.modern {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
   gap: 2rem;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .admin-btn-modern {
@@ -526,10 +545,15 @@
   background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%) !important;
   color: #fff !important;
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  gap: 1.25rem;
   border-radius: 1.5rem;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
 }
 
 .revenue-hero .hero-amount { color: white !important; }
@@ -554,9 +578,12 @@
 /* Charts */
 .dashboard-charts {
   display: grid;
-  grid-template-columns: 2fr 1.2fr;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr);
   gap: 2rem;
   margin-bottom: 2.5rem;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .chart-container {
@@ -575,9 +602,12 @@
 /* Data Rows */
 .dashboard-data-row {
   display: grid;
-  grid-template-columns: 1.8fr 1.2fr;
+  grid-template-columns: minmax(0, 1.8fr) minmax(0, 1.2fr);
   gap: 2rem;
   margin-bottom: 4rem;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .glass-panel {
@@ -642,6 +672,50 @@
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
 }
 
+.hub-table-scroll {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+.data-table-card {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Padded scroll strip inside data cards (products + high-value claims) */
+.hub-table-scroll--datatable {
+  box-sizing: border-box;
+  padding: 0 1rem 0.75rem;
+  scrollbar-gutter: stable;
+}
+
+/* Horizontal scroll: table wider than card so full text stays readable */
+.data-table-card .forsa-table--scroll-x {
+  width: max-content;
+  max-width: none;
+  table-layout: auto;
+  direction: ltr;
+}
+
+.data-table-card .forsa-table--hub-4col {
+  min-width: max(100%, 34rem);
+}
+
+.data-table-card .forsa-table--hub-5col {
+  min-width: max(100%, 46rem);
+}
+
+.data-table-card .forsa-table--scroll-x th,
+.data-table-card .forsa-table--scroll-x td {
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
 .forsa-table {
   width: 100%;
   border-collapse: collapse;
@@ -687,14 +761,127 @@
 
 /* Responsive adjustments */
 @media (max-width: 1200px) {
-  .stats-grid { grid-template-columns: repeat(2, 1fr); }
-  .dashboard-charts, .dashboard-data-row { grid-template-columns: 1fr; }
+  .stats-grid,
+  .stats-grid.premium {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dashboard-charts,
+  .dashboard-data-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 768px) {
-  .stats-grid { grid-template-columns: 1fr; }
-  .dashboard-header { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
-  .hero-amount { font-size: 2.5rem; }
+  .stats-grid,
+  .stats-grid.premium {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+  .header-content,
+  .header-refresh {
+    min-width: 0;
+    width: 100%;
+  }
+  .header-refresh {
+    align-items: flex-start;
+  }
+  .hero-amount {
+    font-size: 2.5rem;
+  }
+  .glass-hero {
+    margin: -1.5rem -1.5rem 2.5rem -1.5rem;
+    padding: 2.5rem 1.25rem 4rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .forsa-insurance-portal {
+    padding: 1rem 0.75rem;
+  }
+  .glass-hero {
+    margin: -1rem -0.75rem 2rem -0.75rem;
+    padding: 2rem 1rem 3rem;
+  }
+  .dashboard-header h1 {
+    font-size: clamp(1.65rem, 7vw, 2.25rem);
+  }
+  .dashboard-header p {
+    font-size: 1rem;
+  }
+  .portal-nav {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  .back-link {
+    justify-content: center;
+  }
+  .portal-badge {
+    justify-content: center;
+    text-align: center;
+    flex-wrap: wrap;
+  }
+  .stat-card.glass {
+    padding: 1.25rem;
+  }
+  .stat-info .val {
+    font-size: clamp(1.5rem, 8vw, 2rem);
+  }
+  .revenue-hero {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    padding: 1.5rem 1.25rem;
+  }
+  .hero-trend {
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .admin-grid.modern,
+  .cards-wrapper,
+  .admin-grid {
+    grid-template-columns: 1fr;
+  }
+  .admin-btn-modern {
+    padding: 1.5rem;
+  }
+  .forsa-table th,
+  .forsa-table td {
+    padding: 0.65rem 0.85rem;
+  }
+  .card-head {
+    flex-wrap: wrap;
+    padding: 1rem 1.1rem;
+    gap: 0.65rem;
+  }
+  .claims-mini-stats {
+    grid-template-columns: 1fr;
+    padding: 1.25rem;
+  }
+  .hub-table-scroll--datatable {
+    padding: 0 0.75rem 0.65rem;
+  }
+  .data-table-card .card-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .data-table-card .card-head .btn-text {
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box;
+  }
+  .chart-container {
+    padding: 1.25rem;
+    min-height: 260px;
+  }
+  .p-card {
+    padding: 1.5rem;
+  }
 }
 
 /* Old Modules Styles Re-Integration */
@@ -727,8 +914,11 @@
 
 .admin-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
   gap: 1.5rem;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .admin-btn {
@@ -951,8 +1141,11 @@
 
 .cards-wrapper {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
   gap: 2rem;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .p-card {
@@ -1050,4 +1243,73 @@
   .process-steps { flex-direction: column; gap: 3rem; }
   .step-arrow { transform: rotate(90deg); }
   .portal-process { padding: 2rem; }
+}
+
+/* ── Client insurance home (front office) — modern hero + spacing ─────────── */
+.client-insurance-home {
+  max-width: 1200px;
+  margin-inline: auto;
+}
+
+.client-insurance-home__header {
+  text-align: center;
+  padding: 2.25rem 1.5rem 2.5rem;
+  margin-bottom: 2rem;
+  border-radius: 1.5rem;
+  border: 1px solid var(--glass-border);
+  background:
+    radial-gradient(ellipse 80% 80% at 50% 0%, color-mix(in oklab, var(--forsa-teal) 12%, transparent), transparent 55%),
+    var(--glass-bg);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--glass-shadow);
+}
+
+.client-insurance-home__header h1 {
+  font-size: clamp(1.65rem, 5vw, 2.35rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  margin: 0 0 0.5rem;
+  color: var(--color-foreground);
+}
+
+.client-insurance-home__header p {
+  margin: 0 auto;
+  max-width: 40rem;
+  color: var(--color-muted-foreground);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+@media (max-width: 640px) {
+  .client-insurance-home__header {
+    padding: 1.5rem 1.1rem;
+    margin-bottom: 1.5rem;
+  }
+  .portal-process {
+    margin: 2rem 0;
+    padding: 1.5rem 1.1rem;
+    border-radius: 1.25rem;
+  }
+  .process-header h2 {
+    font-size: clamp(1.25rem, 5vw, 1.75rem);
+  }
+  .process-header p {
+    font-size: 0.9375rem;
+    margin-bottom: 2rem;
+  }
+  .cards-wrapper {
+    gap: 1.25rem;
+  }
+  .p-card {
+    padding: 1.5rem 1.25rem;
+    border-radius: 1.25rem;
+  }
+  .p-card__icon {
+    width: 52px;
+    height: 52px;
+  }
+  .p-card__body h3 {
+    font-size: 1.2rem;
+  }
 }

@@ -1,4 +1,4 @@
-import { Component, computed, inject, type Signal } from '@angular/core';
+import { Component, Input, computed, inject, type Signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { isNavPathAllowed } from '../../core/utils/nav-path-access';
 import { AuthService as ForsaAuth } from '../../core/services/auth.service';
@@ -18,9 +18,15 @@ interface NavItem {
   imports: [RouterLink, RouterLinkActive, ForsaSidebarLogo, ForsaSidebarIcon],
   templateUrl: './dashboard-sidebar.component.html',
   styleUrl: './dashboard-sidebar.component.css',
+  host: {
+    '[class.sidebar-host--drawer-open]': 'drawerOpen',
+  },
 })
 export class DashboardSidebarCmp {
   private readonly auth = inject(ForsaAuth);
+
+  /** When true on narrow viewports, the sidebar panel is visible (off-canvas drawer). */
+  @Input() drawerOpen = false;
 
   private readonly baseNav: NavItem[] = [
     { label: 'Home', href: '/dashboard', icon: 'layout-dashboard' },
@@ -42,8 +48,11 @@ export class DashboardSidebarCmp {
     const paths = this.auth.currentUser()?.allowedNavPaths;
     const roles = this.auth.currentUser()?.roles ?? [];
     const isAgent = roles.includes('ROLE_AGENT');
+    const isClient = roles.includes('ROLE_CLIENT') || roles.includes('CLIENT');
     const allow = (href: string) => isNavPathAllowed(href, paths);
-    const core = this.baseNav.filter((item) => allow(item.href));
+    const core = this.baseNav.filter(
+      (item) => allow(item.href) && (!isClient || item.href !== '/dashboard/profile'),
+    );
 
     const extras: NavItem[] = [];
     if (allow('/dashboard/users')) {

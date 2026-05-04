@@ -3,6 +3,7 @@
    ═══════════════════════════════════════════════════════════════ */
 
 .shell {
+  position: relative;
   display: flex;
   min-height: 100vh;
   background:
@@ -18,6 +19,22 @@
     var(--color-background);
 }
 
+.shell__nav-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: color-mix(in oklab, var(--forsa-navy-deep) 45%, transparent);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:host-context(.dark) .shell__nav-backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+
 .shell__main {
   flex: 1;
   display: flex;
@@ -28,12 +45,24 @@
 
 .shell__content {
   padding: 2rem;
+  padding-left: max(2rem, env(safe-area-inset-left));
+  padding-right: max(2rem, env(safe-area-inset-right));
+  padding-bottom: max(2rem, env(safe-area-inset-bottom));
   flex: 1;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
   overflow-y: auto;
+  /* Stay below sticky header / profile dropdown so overlays from the navbar paint on top */
+  position: relative;
+  z-index: 0;
 }
 
 @media (max-width: 768px) {
   .shell__content {
     padding: 1rem;
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
 }

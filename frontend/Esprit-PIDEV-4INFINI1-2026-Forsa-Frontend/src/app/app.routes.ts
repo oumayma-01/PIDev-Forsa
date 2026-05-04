@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { adminGuard } from './core/guards/admin.guard';
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
+import { OfflinePageComponent } from './core/pwa/offline-page.component';
 import { RiskAnalysisComponent } from './features/ai/risk-analysis/risk-analysis.component';
 import { ForgotPasswordComponent } from './features/auth/forgot-password/forgot-password.component';
 import { LoginComponent } from './features/auth/login/login.component';
@@ -18,6 +19,7 @@ import { ScoreRequestComponent } from './features/scoring/score-request/score-re
 import { DashboardLayoutComponent } from './layouts/dashboard-layout/dashboard-layout.component';
 
 export const routes: Routes = [
+  { path: 'offline', component: OfflinePageComponent },
   { path: '', pathMatch: 'full', component: LandingPageComponent, canMatch: [guestGuard] },
   { path: 'login', component: LoginComponent, canMatch: [guestGuard] },
   { path: 'register', component: RegisterComponent, canMatch: [guestGuard] },

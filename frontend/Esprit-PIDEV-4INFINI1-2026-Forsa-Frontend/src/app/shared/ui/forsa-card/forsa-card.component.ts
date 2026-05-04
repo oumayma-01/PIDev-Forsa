@@ -7,8 +7,14 @@ import { Component, Input } from '@angular/core';
   styles: `
     :host {
       display: block;
+      min-width: 0;
+      max-width: 100%;
+      box-sizing: border-box;
     }
     div {
+      min-width: 0;
+      max-width: 100%;
+      box-sizing: border-box;
       background: var(--color-card);
       color: var(--color-card-foreground);
       border-radius: var(--radius-xl);

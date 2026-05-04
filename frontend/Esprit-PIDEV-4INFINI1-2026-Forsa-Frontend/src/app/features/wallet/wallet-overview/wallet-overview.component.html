@@ -184,107 +184,149 @@
       </div>
     </div>
 
-    <!-- Toolbar -->
-    <div class="admin-toolbar">
-      <div class="toolbar-left">
-        <input class="search-input" type="text" placeholder="Search by ID or holder…" [(ngModel)]="adminSearchTerm" />
-        <select class="filter-select" [(ngModel)]="adminTypeFilter" aria-label="Filter accounts by type">
-          <option value="">All Types</option>
-          <option value="SAVINGS">Savings</option>
-          <option value="INVESTMENT">Investment</option>
-        </select>
-        <select class="filter-select" [(ngModel)]="adminStatusFilter" aria-label="Filter accounts by status">
-          <option value="">All Status</option>
-          <option value="ACTIVE">Active</option>
-          <option value="BLOCKED">Blocked</option>
-        </select>
-      </div>
-      <div class="toolbar-right">
-        <app-forsa-button variant="outline" (click)="loadAllAccounts()">
-          <app-forsa-icon name="history" [size]="15" /> Refresh
-        </app-forsa-button>
-        <app-forsa-button variant="outline" (click)="openAdminCreate()">
-          <app-forsa-icon name="plus" [size]="15" /> New Account
-        </app-forsa-button>
-        <app-forsa-button (click)="applyMonthlyInterest()">
-          📈 Apply Monthly Interest
-        </app-forsa-button>
-      </div>
-    </div>
-
-    <div class="admin-layout">
+    <div class="admin-layout" [class.admin-layout--split]="!!adminSelectedAccount">
       <!-- Accounts table -->
-      <app-forsa-card class="table-card">
-        <div class="table-wrap">
-          @if (filteredAccounts.length === 0 && !loading) {
-            <div class="empty-state">
-              <div class="empty-ico">🏦</div>
-              <h3>No accounts found</h3>
-              <p>@if (allAccounts.length === 0) { No wallet accounts exist yet. Create the first one! } @else { No accounts match your filters. }</p>
-              @if (allAccounts.length === 0) {
-                <app-forsa-button (click)="openAdminCreate()">
-                  <app-forsa-icon name="plus" [size]="16" /> Create First Account
-                </app-forsa-button>
-              }
+      <app-forsa-card class="table-card" [overflowHidden]="true">
+        @if (allAccounts.length === 0) {
+          <div class="empty-state">
+            <div class="empty-ico">🏦</div>
+            <h3>No accounts found</h3>
+            <p>No wallet accounts exist yet. Create the first one!</p>
+            <app-forsa-button (click)="openAdminCreate()">
+              <app-forsa-icon name="plus" [size]="16" /> Create First Account
+            </app-forsa-button>
+          </div>
+        } @else {
+          <div class="card-pad-lg wallet-admin-card">
+          <div class="wallet-admin-toolbar">
+            <div class="wallet-admin-toolbar__filters">
+              <input
+                class="search-input wallet-admin-search"
+                type="text"
+                placeholder="Search by ID or holder…"
+                [(ngModel)]="adminSearchTerm"
+                (ngModelChange)="resetAdminAccountsPage()" />
+              <select
+                class="filter-select"
+                [(ngModel)]="adminTypeFilter"
+                (ngModelChange)="resetAdminAccountsPage()"
+                aria-label="Filter by type">
+                <option value="">All types</option>
+                <option value="SAVINGS">Savings</option>
+                <option value="INVESTMENT">Investment</option>
+              </select>
+              <select
+                class="filter-select"
+                [(ngModel)]="adminStatusFilter"
+                (ngModelChange)="resetAdminAccountsPage()"
+                aria-label="Filter by status">
+                <option value="">All statuses</option>
+                <option value="ACTIVE">Active</option>
+                <option value="BLOCKED">Blocked</option>
+              </select>
             </div>
-          } @else {
-            <table class="acct-table">
-              <thead>
-                <tr>
-                  <th>#ID</th>
-                  <th>Holder</th>
-                  <th>Type</th>
-                  <th>Status</th>
-                  <th>Balance</th>
-                  <th>Actions</th>
+            <div class="wallet-admin-toolbar__actions">
+              <app-forsa-button type="button" variant="outline" size="sm" (clicked)="loadAllAccounts()">
+                <app-forsa-icon name="history" [size]="15" /> Refresh
+              </app-forsa-button>
+              <app-forsa-button type="button" variant="outline" size="sm" (clicked)="openAdminCreate()">
+                <app-forsa-icon name="plus" [size]="15" /> New account
+              </app-forsa-button>
+              <app-forsa-button type="button" size="sm" (clicked)="applyMonthlyInterest()">
+                <app-forsa-icon name="trending-up" [size]="15" /> Monthly interest
+              </app-forsa-button>
+            </div>
+          </div>
+          <div class="table-head wallet-accounts-head">
+            <h3>Accounts</h3>
+          </div>
+          <div class="table-wrap">
+          <app-forsa-data-table
+            class="wallet-admin-table"
+            [embedded]="true"
+            [columns]="adminAccountTableColumns"
+            [rows]="adminAccountsPaged"
+            [totalCount]="filteredAccounts.length"
+            [pageIndex]="adminAccountsPageIndex"
+            [pageSize]="adminAccountsPageSize"
+            (pageChange)="onAdminAccountsPage($event)"
+            emptyTitle="No accounts match your filters"
+            emptyDescription="Try another search or change the type / status filters."
+            ariaLabel="Wallet accounts">
+            <ng-template #forsaTableBody let-rows>
+              @for (acc of rows; track acc.id) {
+                <tr
+                  class="acct-data-row"
+                  [class.selected-row]="adminSelectedAccount?.id === acc.id"
+                  (click)="selectAdminAccount(acc)">
+                  <td class="id-cell">#{{ acc.id }}</td>
+                  <td class="holder-cell">
+                    <div class="holder-avatar">{{ (acc.accountHolderName || 'U')[0].toUpperCase() }}</div>
+                    {{ acc.accountHolderName || '—' }}
+                  </td>
+                  <td>
+                    <span
+                      class="type-badge"
+                      [class.type-badge--savings]="acc.type === 'SAVINGS'"
+                      [class.type-badge--investment]="acc.type === 'INVESTMENT'">
+                      {{ acc.type }}
+                    </span>
+                  </td>
+                  <td>
+                    <app-forsa-badge [tone]="acc.status === 'ACTIVE' ? 'success' : 'danger'">
+                      {{ acc.status }}
+                    </app-forsa-badge>
+                  </td>
+                  <td class="amount-cell amount-cell--num">${{ acc.wallet.balance | number : '1.2-2' }}</td>
+                  <td class="wallet-acct-actions right" (click)="$event.stopPropagation()">
+                    <div class="wa-actions-cell">
+                      <app-forsa-button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        [disabled]="loadingAdminOp"
+                        (clicked)="toggleWalletActionsMenu(acc.id)">
+                        <app-forsa-icon name="more-vertical" [size]="16" />
+                        More
+                      </app-forsa-button>
+                      @if (openWalletActionsMenuAccountId() === acc.id) {
+                        <div class="wa-row-menu" role="menu" (click)="$event.stopPropagation()">
+                          <button type="button" class="wa-row-menu__item" role="menuitem" (click)="adminOpenDepositFromRowMenu(acc)">
+                            <app-forsa-icon name="arrow-down-right" [size]="16" />
+                            Deposit
+                          </button>
+                          <button type="button" class="wa-row-menu__item" role="menuitem" (click)="adminOpenWithdrawFromRowMenu(acc)">
+                            <app-forsa-icon name="arrow-up-right" [size]="16" />
+                            Withdraw
+                          </button>
+                          <button type="button" class="wa-row-menu__item" role="menuitem" (click)="adminToggleStatusFromRowMenu(acc)">
+                            @if (acc.status === 'ACTIVE') {
+                              <app-forsa-icon name="shield-alert" [size]="16" />
+                              Block
+                            } @else {
+                              <app-forsa-icon name="shield-check" [size]="16" />
+                              Unblock
+                            }
+                          </button>
+                          <button
+                            type="button"
+                            class="wa-row-menu__item wa-row-menu__item--danger"
+                            role="menuitem"
+                            (click)="adminDeleteAccountFromRowMenu(acc)">
+                            <app-forsa-icon name="trash-2" [size]="16" />
+                            Delete
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                @for (acc of filteredAccounts; track acc.id) {
-                  <tr [class.selected-row]="adminSelectedAccount?.id === acc.id" (click)="selectAdminAccount(acc)">
-                    <td class="id-cell">#{{ acc.id }}</td>
-                    <td class="holder-cell">
-                      <div class="holder-avatar">{{ (acc.accountHolderName || 'U')[0].toUpperCase() }}</div>
-                      {{ acc.accountHolderName || '—' }}
-                    </td>
-                    <td>
-                      <span class="type-badge"
-                        [class.type-badge--savings]="acc.type === 'SAVINGS'"
-                        [class.type-badge--investment]="acc.type === 'INVESTMENT'">
-                        {{ acc.type }}
-                      </span>
-                    </td>
-                    <td>
-                      <app-forsa-badge [tone]="acc.status === 'ACTIVE' ? 'success' : 'danger'">
-                        {{ acc.status }}
-                      </app-forsa-badge>
-                    </td>
-                    <td class="amount-cell">${{ acc.wallet.balance | number : '1.2-2' }}</td>
-                    <td class="actions-cell" (click)="$event.stopPropagation()">
-                      <button class="icon-btn icon-btn--green" title="Deposit"
-                        (click)="selectAdminAccount(acc); adminDepositAmount = null; operationError = ''; showAdminDepositModal = true">
-                        ↓ Deposit
-                      </button>
-                      <button class="icon-btn icon-btn--orange" title="Withdraw"
-                        (click)="selectAdminAccount(acc); adminWithdrawAmount = null; operationError = ''; showAdminWithdrawModal = true">
-                        ↑ Withdraw
-                      </button>
-                      <button class="icon-btn"
-                        [class.icon-btn--red]="acc.status === 'ACTIVE'"
-                        [class.icon-btn--green]="acc.status === 'BLOCKED'"
-                        (click)="toggleStatus(acc, $event)">
-                        {{ acc.status === 'ACTIVE' ? '🔒 Block' : '🔓 Unblock' }}
-                      </button>
-                      <button class="icon-btn icon-btn--danger" (click)="deleteAccount(acc, $event)">
-                        🗑 Delete
-                      </button>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          }
-        </div>
+              }
+            </ng-template>
+          </app-forsa-data-table>
+          </div>
+          </div>
+        }
       </app-forsa-card>
 
       <!-- Detail panel -->
@@ -540,7 +582,7 @@
   <!-- AI Forecast -->
   @if (forecast) {
     <app-forsa-card>
-      <div class="card-pad-lg">
+      <div class="card-pad-lg ai-insight-card">
         <div class="ai-result-head">
           <span class="ai-result-icon">🔮</span>
           <div class="ai-result-head__body">
@@ -554,9 +596,9 @@
             <button type="button" class="ai-result-dismiss" (click)="dismissForecast()" title="Close" aria-label="Close forecast">✕</button>
           </div>
         </div>
-        <div class="forecast-row">
+        <div class="forecast-row" role="group" aria-label="Balance comparison">
           <div class="forecast-col"><p class="fcast-label">Today</p><p class="fcast-val">${{ forecast.currentBalance | number : '1.2-2' }}</p></div>
-          <div class="forecast-arrow">→</div>
+          <div class="forecast-arrow" aria-hidden="true">→</div>
           <div class="forecast-col">
             <p class="fcast-label">In {{ forecast.forecastDays }} days</p>
             <p class="fcast-val" [class.pos]="forecast.predictedBalance >= forecast.currentBalance" [class.neg]="forecast.predictedBalance < forecast.currentBalance">
@@ -572,7 +614,7 @@
   <!-- AI Advice -->
   @if (advice) {
     <app-forsa-card>
-      <div class="card-pad-lg">
+      <div class="card-pad-lg ai-insight-card">
         <div class="ai-result-head">
           <span class="ai-result-icon">🤖</span>
           <div class="ai-result-head__body">
@@ -586,9 +628,9 @@
             <button type="button" class="ai-result-dismiss" (click)="dismissAdvice()" title="Close" aria-label="Close account advice">✕</button>
           </div>
         </div>
-        <div class="forecast-row">
+        <div class="forecast-row" role="group" aria-label="Account type comparison">
           <div class="forecast-col"><p class="fcast-label">Current</p><p class="fcast-val">{{ advice.currentType }}</p></div>
-          <div class="forecast-arrow">→</div>
+          <div class="forecast-arrow" aria-hidden="true">→</div>
           <div class="forecast-col"><p class="fcast-label">Recommended</p><p class="fcast-val pos">{{ advice.recommendedType }}</p></div>
         </div>
         <p class="ai-explanation">{{ advice.reasoning }}</p>

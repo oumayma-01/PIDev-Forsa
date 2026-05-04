@@ -484,6 +484,14 @@ export class FeedbackListComponent implements OnInit, OnDestroy {
   }
 
 
+  /** Short preview in list cards — full text on detail. */
+  truncateText(text: string | undefined | null, max = 160): string {
+    const s = (text ?? '').trim();
+    if (!s) return '';
+    if (s.length <= max) return s;
+    return s.slice(0, max - 1).trimEnd() + '…';
+  }
+
   loadAiReport(): void {
     this.aiReportLoading = true;
     this.aiReportError = '';

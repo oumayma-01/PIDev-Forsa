@@ -26,92 +26,99 @@
     </div>
 
   } @else {
-    <div class="table-wrap">
-      <table class="score-table">
-        <thead>
-          <tr>
-            <th>Client</th>
-            <th>Score / 1000</th>
-            <th>Level</th>
-            <th>Credit Threshold</th>
-            <th>Active Loan</th>
-            <th>Boosters</th>
-            <th>Calculated at</th>
-            <th></th>
+    <app-forsa-card>
+      <div class="card-pad-lg table-wrap">
+        <div class="table-head">
+          <h3>Scores</h3>
+        </div>
+    <app-forsa-data-table
+      class="scoring-admin-table"
+      [embedded]="true"
+      [columns]="scoringTableColumns"
+      [rows]="scoringClientsPaged"
+      [totalCount]="clients().length"
+      [pageIndex]="scoringPageIndex"
+      [pageSize]="scoringPageSize"
+      (pageChange)="onScoringPage($event)"
+      ariaLabel="Client AI scores">
+      <ng-template #forsaTableBody let-rows>
+        @for (row of rows; track row.clientId) {
+          <tr [ngClass]="{ 'row--refreshing': row.refreshing }">
+            <td class="td-client">
+              <div class="client-avatar">
+                {{ (row.clientName || 'Client ' + row.clientId).charAt(0).toUpperCase() }}
+              </div>
+              <div>
+                <div class="client-name">{{ row.clientName || 'Client #' + row.clientId }}</div>
+                @if (row.clientEmail) {
+                  <div class="client-email">{{ row.clientEmail }}</div>
+                }
+              </div>
+            </td>
+
+            <td class="td-score">
+              <span class="score-num">{{ row.score }}</span>
+              <div class="score-bar-track">
+                <div
+                  class="score-bar-fill"
+                  [style.width.%]="scoreBar(row.score)"
+                  [ngClass]="levelClass(row.scoreLevel)"></div>
+              </div>
+            </td>
+
+            <td>
+              <span class="level-badge" [ngClass]="levelClass(row.scoreLevel)">
+                {{ formatLevelLabel(row.scoreLevel) }}
+              </span>
+            </td>
+
+            <td class="td-threshold">
+              @if (row.hasActiveCredit) {
+                <span class="blocked-label">Loan in progress</span>
+              } @else if (row.creditThreshold != null) {
+                <span class="threshold-val">{{ row.creditThreshold | number : '1.0-0' }} TND</span>
+              } @else {
+                <span class="threshold-val">—</span>
+              }
+            </td>
+
+            <td class="td-center">
+              @if (row.hasActiveCredit) {
+                <span class="dot dot--red" title="Active loan"></span>
+              } @else {
+                <span class="dot dot--green" title="No active loan"></span>
+              }
+            </td>
+
+            <td class="td-boosters">
+              @if (row.stegBoosterActive) {
+                <span class="booster-chip">⚡ STEG</span>
+              }
+              @if (row.sonedeBoosterActive) {
+                <span class="booster-chip">💧 SONEDE</span>
+              }
+              @if (!row.stegBoosterActive && !row.sonedeBoosterActive) {
+                <span class="no-booster">—</span>
+              }
+            </td>
+
+            <td class="td-date">{{ formatDate(row.lastCalculatedAt) }}</td>
+
+            <td class="td-action">
+              <button class="btn-recalc" (click)="recalculate(row)" [disabled]="row.refreshing" title="Recalculate score">
+                @if (row.refreshing) {
+                  ⏳
+                } @else {
+                  ↻
+                }
+              </button>
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          @for (row of clients(); track row.clientId) {
-            <tr [ngClass]="{ 'row--refreshing': row.refreshing }">
-
-              <td class="td-client">
-                <div class="client-avatar">{{ (row.clientName || 'Client ' + row.clientId).charAt(0).toUpperCase() }}</div>
-                <div>
-                  <div class="client-name">{{ row.clientName || 'Client #' + row.clientId }}</div>
-                  @if (row.clientEmail) {
-                    <div class="client-email">{{ row.clientEmail }}</div>
-                  }
-                </div>
-              </td>
-
-              <td class="td-score">
-                <span class="score-num">{{ row.score }}</span>
-                <div class="score-bar-track">
-                  <div class="score-bar-fill" [style.width.%]="scoreBar(row.score)"
-                       [ngClass]="levelClass(row.scoreLevel)"></div>
-                </div>
-              </td>
-
-              <td>
-                <span class="level-badge" [ngClass]="levelClass(row.scoreLevel)">
-                  {{ formatLevelLabel(row.scoreLevel) }}
-                </span>
-              </td>
-
-              <td class="td-threshold">
-                @if (row.hasActiveCredit) {
-                  <span class="blocked-label">Loan in progress</span>
-                } @else if (row.creditThreshold != null) {
-                  <span class="threshold-val">{{ row.creditThreshold | number:'1.0-0' }} TND</span>
-                } @else {
-                  <span class="threshold-val">—</span>
-                }
-              </td>
-
-              <td class="td-center">
-                @if (row.hasActiveCredit) {
-                  <span class="dot dot--red" title="Active loan"></span>
-                } @else {
-                  <span class="dot dot--green" title="No active loan"></span>
-                }
-              </td>
-
-              <td class="td-boosters">
-                @if (row.stegBoosterActive) {
-                  <span class="booster-chip">⚡ STEG</span>
-                }
-                @if (row.sonedeBoosterActive) {
-                  <span class="booster-chip">💧 SONEDE</span>
-                }
-                @if (!row.stegBoosterActive && !row.sonedeBoosterActive) {
-                  <span class="no-booster">—</span>
-                }
-              </td>
-
-              <td class="td-date">{{ formatDate(row.lastCalculatedAt) }}</td>
-
-              <td class="td-action">
-                <button class="btn-recalc" (click)="recalculate(row)" [disabled]="row.refreshing"
-                        title="Recalculate score">
-                  @if (row.refreshing) { ⏳ } @else { ↻ }
-                </button>
-              </td>
-
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+        }
+      </ng-template>
+    </app-forsa-data-table>
+      </div>
+    </app-forsa-card>
   }
 
 </div>

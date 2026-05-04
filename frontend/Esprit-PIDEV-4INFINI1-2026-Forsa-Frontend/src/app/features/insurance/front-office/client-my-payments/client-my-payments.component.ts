@@ -4,13 +4,18 @@ import { RouterModule, Router } from '@angular/router';
 import { PremiumPaymentService } from '../../shared/services/premium-payment.service';
 import { PremiumPayment } from '../../shared/models/insurance.models';
 import { PaymentStatus } from '../../shared/enums/insurance.enums';
+import { ForsaDataTableComponent } from '../../../../shared/ui/forsa-data-table/forsa-data-table.component';
+import type {
+  ForsaDataTablePageEvent,
+  ForsaTableColumn,
+} from '../../../../shared/ui/forsa-data-table/forsa-data-table.types';
 
 import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-client-my-payments',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, ForsaDataTableComponent],
   templateUrl: './client-my-payments.component.html',
   styleUrls: ['./client-my-payments.component.css']
 })
@@ -24,9 +29,40 @@ export class ClientMyPaymentsComponent implements OnInit {
   selectedPolicy: string = 'all';
   isLoading = true;
 
+  paymentPageIndex = 0;
+  paymentPageSize = 10;
+  readonly paymentPageSizeOptions: ReadonlyArray<number> = [5, 10, 25, 50];
+
+  readonly paymentColumns: ForsaTableColumn[] = [
+    { key: 'policy', label: 'Policy Ref' },
+    { key: 'due', label: 'Due Date' },
+    { key: 'amount', label: 'Amount', align: 'right', width: '8.5rem' },
+    { key: 'status', label: 'Status', width: '8rem' },
+    { key: 'action', label: 'Action', align: 'right', width: '10rem' },
+  ];
+
+  get paymentsPaged(): PremiumPayment[] {
+    const start = this.paymentPageIndex * this.paymentPageSize;
+    return this.payments.slice(start, start + this.paymentPageSize);
+  }
+
   ngOnInit() {
     this.loadPayments();
     this.checkReturnStatus();
+  }
+
+  onPaymentTablePage(ev: ForsaDataTablePageEvent): void {
+    this.paymentPageIndex = ev.pageIndex;
+    this.paymentPageSize = ev.pageSize;
+  }
+
+  private clampPaymentPage(): void {
+    const total = this.payments.length;
+    const sz = Math.max(1, this.paymentPageSize);
+    const maxIdx = Math.max(0, Math.ceil(total / sz) - 1);
+    if (this.paymentPageIndex > maxIdx) {
+      this.paymentPageIndex = maxIdx;
+    }
   }
 
   checkReturnStatus() {
@@ -94,6 +130,8 @@ export class ClientMyPaymentsComponent implements OnInit {
         p.insurancePolicy?.policyNumber === this.selectedPolicy
       );
     }
+    this.paymentPageIndex = 0;
+    this.clampPaymentPage();
   }
 
   payNow(payment: PremiumPayment) {

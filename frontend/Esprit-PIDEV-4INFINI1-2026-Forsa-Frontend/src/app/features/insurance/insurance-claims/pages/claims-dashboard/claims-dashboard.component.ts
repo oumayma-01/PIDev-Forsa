@@ -42,7 +42,7 @@ export class ClaimsDashboardComponent implements OnInit, AfterViewInit, OnDestro
   error = signal<string | null>(null);
   lastUpdated = signal<Date>(new Date());
 
-  private charts: Chart[] = [];
+  private charts: any[] = [];
   private refreshSubscription?: Subscription;
 
   ngOnInit() {

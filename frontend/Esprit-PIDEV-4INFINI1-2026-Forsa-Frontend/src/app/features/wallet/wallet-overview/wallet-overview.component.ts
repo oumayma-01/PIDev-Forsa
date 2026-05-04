@@ -1,11 +1,16 @@
 import { DatePipe, DecimalPipe, NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ForsaBadgeComponent } from '../../../shared/ui/forsa-badge/forsa-badge.component';
 import { ForsaButtonComponent } from '../../../shared/ui/forsa-button/forsa-button.component';
 import { ForsaCardComponent } from '../../../shared/ui/forsa-card/forsa-card.component';
+import { ForsaDataTableComponent } from '../../../shared/ui/forsa-data-table/forsa-data-table.component';
+import type {
+  ForsaDataTablePageEvent,
+  ForsaTableColumn,
+} from '../../../shared/ui/forsa-data-table/forsa-data-table.types';
 import { ForsaIconComponent } from '../../../shared/ui/forsa-icon/forsa-icon.component';
 import { AccountService } from '../../../core/services/account.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -32,6 +37,7 @@ import { AiScoreService } from '../../scoring/services/ai-score.service';
     ForsaBadgeComponent,
     ForsaButtonComponent,
     ForsaCardComponent,
+    ForsaDataTableComponent,
     ForsaIconComponent,
   ],
   templateUrl: './wallet-overview.component.html',
@@ -65,6 +71,21 @@ export class WalletOverviewComponent implements OnInit {
   adminSearchTerm = '';
   adminTypeFilter: '' | 'SAVINGS' | 'INVESTMENT' = '';
   adminStatusFilter: '' | 'ACTIVE' | 'BLOCKED' = '';
+
+  /** Paginated admin accounts table */
+  adminAccountsPageIndex = 0;
+  adminAccountsPageSize = 10;
+  readonly adminAccountTableColumns: ForsaTableColumn[] = [
+    { key: 'id', label: '#ID', width: '5rem' },
+    { key: 'holder', label: 'Holder' },
+    { key: 'type', label: 'Type', width: '9.5rem' },
+    { key: 'status', label: 'Status', width: '8rem' },
+    { key: 'balance', label: 'Balance', align: 'right', width: '9rem' },
+    { key: 'actions', label: 'Actions', align: 'right', width: '10rem' },
+  ];
+
+  /** Row “More” menu (same pattern as user management). */
+  readonly openWalletActionsMenuAccountId = signal<number | null>(null);
 
   bankVaultTotal: number | null = null;
   loadingVault = false;
@@ -195,6 +216,66 @@ export class WalletOverviewComponent implements OnInit {
     });
   }
 
+  get adminAccountsPaged(): Account[] {
+    const list = this.filteredAccounts;
+    const start = this.adminAccountsPageIndex * this.adminAccountsPageSize;
+    return list.slice(start, start + this.adminAccountsPageSize);
+  }
+
+  onAdminAccountsPage(ev: ForsaDataTablePageEvent): void {
+    this.adminAccountsPageIndex = ev.pageIndex;
+    this.adminAccountsPageSize = ev.pageSize;
+    this.closeWalletActionsMenu();
+  }
+
+  @HostListener('document:click', ['$event'])
+  onWalletDocumentClick(ev: MouseEvent): void {
+    const t = ev.target;
+    const el = t instanceof Element ? t : t instanceof Node ? (t.parentElement ?? null) : null;
+    if (el?.closest('.wa-actions-cell')) {
+      return;
+    }
+    this.closeWalletActionsMenu();
+  }
+
+  toggleWalletActionsMenu(accountId: number): void {
+    this.openWalletActionsMenuAccountId.update((cur) => (cur === accountId ? null : accountId));
+  }
+
+  closeWalletActionsMenu(): void {
+    this.openWalletActionsMenuAccountId.set(null);
+  }
+
+  adminOpenDepositFromRowMenu(acc: Account): void {
+    this.closeWalletActionsMenu();
+    this.selectAdminAccount(acc);
+    this.adminDepositAmount = null;
+    this.operationError = '';
+    this.showAdminDepositModal = true;
+  }
+
+  adminOpenWithdrawFromRowMenu(acc: Account): void {
+    this.closeWalletActionsMenu();
+    this.selectAdminAccount(acc);
+    this.adminWithdrawAmount = null;
+    this.operationError = '';
+    this.showAdminWithdrawModal = true;
+  }
+
+  adminToggleStatusFromRowMenu(acc: Account): void {
+    this.closeWalletActionsMenu();
+    this.toggleStatus(acc);
+  }
+
+  adminDeleteAccountFromRowMenu(acc: Account): void {
+    this.closeWalletActionsMenu();
+    this.deleteAccount(acc);
+  }
+
+  resetAdminAccountsPage(): void {
+    this.adminAccountsPageIndex = 0;
+  }
+
   // ── ADMIN methods ─────────────────────────────────────────────────────────────
 
   loadAllAccounts(): void {
@@ -205,6 +286,7 @@ export class WalletOverviewComponent implements OnInit {
     this.accountSvc.getAllAccounts().subscribe({
       next: (list) => {
         this.allAccounts = list;
+        this.resetAdminAccountsPage();
         this.loading = false;
         this.operationError = '';
       },
@@ -298,11 +380,11 @@ export class WalletOverviewComponent implements OnInit {
     });
   }
 
-  toggleStatus(acc: Account, event: Event): void {
+  toggleStatus(acc: Account, event?: Event): void {
     if (!this.isAdmin) {
       return;
     }
-    event.stopPropagation();
+    event?.stopPropagation();
     const next = acc.status === 'ACTIVE' ? 'BLOCKED' : 'ACTIVE';
     this.accountSvc.updateAccountStatus(acc.id, next).subscribe({
       next: (updated) => {
@@ -315,11 +397,11 @@ export class WalletOverviewComponent implements OnInit {
     });
   }
 
-  deleteAccount(acc: Account, event: Event): void {
+  deleteAccount(acc: Account, event?: Event): void {
     if (!this.isAdmin) {
       return;
     }
-    event.stopPropagation();
+    event?.stopPropagation();
     if (!confirm(`Delete account #${acc.id}? This cannot be undone.`)) return;
     this.accountSvc.deleteAccount(acc.id).subscribe({
       next: () => {

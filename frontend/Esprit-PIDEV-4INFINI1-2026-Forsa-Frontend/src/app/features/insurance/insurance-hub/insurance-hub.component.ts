@@ -13,7 +13,7 @@ import { InsurancePolicy, PremiumPayment } from '../shared/models/insurance.mode
 import { InsuranceOverviewDTO } from '../shared/models/insurance-analytics.models';
 import { CommonModule } from '@angular/common';
 import { Chart } from 'chart.js/auto';
-import { interval, Subscription } from 'rxjs';
+import { interval, of, Subscription } from 'rxjs';
 import { startWith, switchMap, catchError } from 'rxjs/operators';
 import { GlobalNotificationService } from '../../../core/services/global-notification.service';
 
@@ -45,7 +45,7 @@ export class InsuranceHubComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('claimsTrendChart') claimsTrendCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('productRevenueChart') productRevenueCanvas!: ElementRef<HTMLCanvasElement>;
   
-  private charts: Chart[] = [];
+  private charts: any[] = [];
   private refreshSub?: Subscription;
 
   constructor() {
@@ -100,13 +100,16 @@ export class InsuranceHubComponent implements OnInit, OnDestroy, AfterViewInit {
               console.error('Hub: API error in polling', err);
               this.isLoadingAnalytics.set(false);
               this.analyticsError.set('Lost connection to analytics terminal. Retrying...');
-              return []; // Return empty so it doesn't emit data but stays alive
+              return of(null);
             })
           );
         })
       )
       .subscribe({
         next: (data) => {
+          if (data == null) {
+            return;
+          }
           console.log('Hub: Analytics data received', data);
           this.overview.set(data);
           this.isLoadingAnalytics.set(false);
@@ -192,6 +195,15 @@ export class InsuranceHubComponent implements OnInit, OnDestroy, AfterViewInit {
     } catch (err) {
       console.error('Hub: Chart initialization failed', err);
     }
+  }
+
+  /** Avoid NaN/Infinity when totalClaims is 0. */
+  safeStatusBarPct(count: number, totalClaims: number): number {
+    const t = Number(totalClaims);
+    if (!Number.isFinite(t) || t <= 0) return 0;
+    const c = Number(count);
+    if (!Number.isFinite(c) || c <= 0) return 0;
+    return Math.min(100, (c / t) * 100);
   }
 
   private checkReminders(): void {

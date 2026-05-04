@@ -1,0 +1,75 @@
+<div
+  class="fds"
+  [class.fds--embedded]="embedded"
+  role="region"
+  [attr.aria-label]="ariaLabel">
+  @if (loading) {
+    <div class="fds-state fds-state--loading">
+      <span class="fds-spinner" aria-hidden="true"></span>
+      <p>Loading…</p>
+    </div>
+  } @else if (totalCount === 0) {
+    <div class="fds-state fds-state--empty">
+      <p class="fds-empty-title">{{ emptyTitle }}</p>
+      @if (emptyDescription) {
+        <p class="fds-empty-desc">{{ emptyDescription }}</p>
+      }
+    </div>
+  } @else {
+    <div class="fds-scroll table-wrap">
+      <table class="forsa-table">
+        <thead>
+          <tr>
+            @for (col of columns; track col.key) {
+              <th [style.text-align]="thAlign(col)" [style.width]="col.width || null">{{ col.label }}</th>
+            }
+          </tr>
+        </thead>
+        @if (bodyTemplate) {
+          <tbody *ngTemplateOutlet="bodyTemplate; context: { $implicit: rows, rows: rows }"></tbody>
+        }
+      </table>
+    </div>
+
+    @if (showPagination) {
+      <div class="forsa-table-pagination" role="navigation" aria-label="Pagination">
+        <div class="forsa-table-pagination__left">
+          <span class="forsa-table-pagination__meta text-muted">
+            Showing <strong>{{ rangeStart }}–{{ rangeEnd }}</strong> of {{ totalCount }}
+          </span>
+          <label class="forsa-table-pagination__size">
+            <span class="fds-sr-only">Rows per page</span>
+            <select class="forsa-table-pagination__select" [value]="pageSize" (change)="onPageSizeSelect($event)">
+              @for (opt of pageSizeOptions; track opt) {
+                <option [value]="opt">{{ opt }} / page</option>
+              }
+            </select>
+          </label>
+        </div>
+        <div class="forsa-table-pagination__right">
+          <span class="forsa-table-pagination__pages text-muted">
+            Page {{ safePageIndex + 1 }} of {{ totalPages }}
+          </span>
+          <app-forsa-button
+            type="button"
+            variant="outline"
+            size="sm"
+            [disabled]="safePageIndex <= 0"
+            (clicked)="goPrev()"
+            aria-label="Previous page">
+            <app-forsa-icon name="chevron-left" [size]="16" />
+          </app-forsa-button>
+          <app-forsa-button
+            type="button"
+            variant="outline"
+            size="sm"
+            [disabled]="safePageIndex >= totalPages - 1"
+            (clicked)="goNext()"
+            aria-label="Next page">
+            <app-forsa-icon name="chevron-right" [size]="16" />
+          </app-forsa-button>
+        </div>
+      </div>
+    }
+  }
+</div>

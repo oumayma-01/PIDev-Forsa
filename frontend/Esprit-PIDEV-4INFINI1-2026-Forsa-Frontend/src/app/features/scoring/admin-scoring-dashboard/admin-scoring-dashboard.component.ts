@@ -1,6 +1,12 @@
 import { DatePipe, DecimalPipe, NgClass } from '@angular/common';
 import { Component, OnDestroy, OnInit, signal } from '@angular/core';
+import { ForsaCardComponent } from '../../../shared/ui/forsa-card/forsa-card.component';
 import type { AIScoreDto, AIScoreLevel, AIScoreSummaryDto } from '../../../core/models/forsa.models';
+import { ForsaDataTableComponent } from '../../../shared/ui/forsa-data-table/forsa-data-table.component';
+import type {
+  ForsaDataTablePageEvent,
+  ForsaTableColumn,
+} from '../../../shared/ui/forsa-data-table/forsa-data-table.types';
 import { AiScoreService } from '../services/ai-score.service';
 
 interface ClientRow extends AIScoreSummaryDto {
@@ -10,7 +16,7 @@ interface ClientRow extends AIScoreSummaryDto {
 @Component({
   selector: 'app-admin-scoring-dashboard',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, NgClass],
+  imports: [DatePipe, DecimalPipe, NgClass, ForsaCardComponent, ForsaDataTableComponent],
   templateUrl: './admin-scoring-dashboard.component.html',
   styleUrl: './admin-scoring-dashboard.component.css',
 })
@@ -18,6 +24,19 @@ export class AdminScoringDashboardComponent implements OnInit, OnDestroy {
   clients = signal<ClientRow[]>([]);
   loading = signal(true);
   lastRefresh = signal<Date | null>(null);
+
+  scoringPageIndex = 0;
+  scoringPageSize = 10;
+  readonly scoringTableColumns: ForsaTableColumn[] = [
+    { key: 'client', label: 'Client' },
+    { key: 'score', label: 'Score / 1000', width: '10rem' },
+    { key: 'level', label: 'Level', width: '8rem' },
+    { key: 'threshold', label: 'Credit threshold' },
+    { key: 'loan', label: 'Active loan', align: 'center', width: '6rem' },
+    { key: 'boosters', label: 'Boosters' },
+    { key: 'date', label: 'Calculated at', width: '9rem' },
+    { key: 'action', label: '', width: '3.25rem', align: 'right' },
+  ];
 
   private pollTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -36,11 +55,23 @@ export class AdminScoringDashboardComponent implements OnInit, OnDestroy {
     this.aiScore.getAllSummaries().subscribe({
       next: (list) => {
         this.clients.set(list.map((c) => ({ ...c, refreshing: false })));
+        this.scoringPageIndex = 0;
         this.loading.set(false);
         this.lastRefresh.set(new Date());
       },
       error: () => this.loading.set(false),
     });
+  }
+
+  get scoringClientsPaged(): ClientRow[] {
+    const list = this.clients();
+    const start = this.scoringPageIndex * this.scoringPageSize;
+    return list.slice(start, start + this.scoringPageSize);
+  }
+
+  onScoringPage(ev: ForsaDataTablePageEvent): void {
+    this.scoringPageIndex = ev.pageIndex;
+    this.scoringPageSize = ev.pageSize;
   }
 
   recalculate(row: ClientRow): void {

@@ -1,5 +1,25 @@
 <header class="navbar">
   <div class="navbar__left">
+    @if (showMobileNavToggle()) {
+      <button 
+      tabindex="0" aria-controls="dashboard-nav-drawer" aria-label="Open menu"
+      title="Open menu"
+      aria-expanded="false"
+        type="button"
+        class="shell-nav-toggle text-btn"
+        [attr.aria-label]="mobileDrawerOpen() ? 'Close menu' : 'Open menu'"
+        [attr.aria-expanded]="mobileDrawerOpen()"
+        aria-controls="dashboard-nav-drawer"
+        (click)="toggleMobileNav($event)"
+      >
+        @if (mobileDrawerOpen()) {
+          <app-forsa-icon name="x" [size]="20" />
+        } @else {
+          <app-forsa-icon name="more-horizontal" [size]="20" />
+        }
+        <span class="shell-nav-toggle__label text-btn__label">{{ mobileDrawerOpen() ? 'Close' : 'Menu' }}</span>
+      </button>
+    }
     <a routerLink="/" class="navbar__brand">
       <app-forsa-logo [height]="32" />
       <span class="navbar__brand-name">Forsa</span>
@@ -13,7 +33,7 @@
       } @else {
         <app-forsa-icon name="moon" [size]="18" />
       }
-      <span>{{ isDark ? 'Light mode' : 'Dark mode' }}</span>
+      <span class="text-btn__label">{{ isDark ? 'Light mode' : 'Dark mode' }}</span>
     </button>
 
     <div class="role-wrap">
@@ -23,7 +43,7 @@
     <div class="notification-container">
       <button #notificationButton cdkOverlayOrigin="cdkOverlayOrigin" #notificationOrigin="cdkOverlayOrigin" type="button" class="text-btn bell" (click)="toggleNotificationMenu($event)">
         <app-forsa-icon name="bell" [size]="18" />
-        <span>Notifications</span>
+        <span class="text-btn__label">Notifications</span>
         @if (nonComplaintNotificationCount() > 0) {
           <span class="notif-count">{{ nonComplaintNotificationCount() }}</span>
         }
@@ -43,7 +63,11 @@
         ]"
         (backdropClick)="closeNotificationMenu()"
       >
-        <div class="notification-dropdown" role="menu">
+        <div class="notification-dropdown" role="menu" tabindex="0" aria-label="Notification menu"
+        title="Notification menu"
+        aria-expanded="false"
+        aria-hidden="true"
+        >
           <div class="notification-header">
             <h3>Notifications</h3>
             @if (notifications().length > 0) {
@@ -126,7 +150,13 @@
                 My profile
               </a>
             }
-            <button type="button" class="profile-dropdown__item profile-dropdown__item--danger" role="menuitem" (click)="logout()">
+            <button
+              type="button"
+              class="profile-dropdown__item profile-dropdown__item--danger"
+              role="menuitem"
+              aria-label="Log out"
+              title="Log out"
+              (click)="logout()">
               <app-forsa-icon name="log-out" [size]="16" />
               Logout
             </button>
@@ -152,7 +182,7 @@
   </div>
 </header>
 
-@if (showSidebarItems()) {
+@if (showSidebarItems() && !showMobileNavToggle()) {
   <nav class="client-nav" aria-label="Client navigation menu">
     @for (item of clientNavItems(); track item.href) {
       <a

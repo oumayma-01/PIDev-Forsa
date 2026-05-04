@@ -18,6 +18,11 @@ import { UserAdminService } from '../../../core/services/user-admin.service';
 import { ForsaBadgeComponent } from '../../../shared/ui/forsa-badge/forsa-badge.component';
 import { ForsaButtonComponent } from '../../../shared/ui/forsa-button/forsa-button.component';
 import { ForsaCardComponent } from '../../../shared/ui/forsa-card/forsa-card.component';
+import { ForsaDataTableComponent } from '../../../shared/ui/forsa-data-table/forsa-data-table.component';
+import type {
+  ForsaDataTablePageEvent,
+  ForsaTableColumn,
+} from '../../../shared/ui/forsa-data-table/forsa-data-table.types';
 import { ForsaIconComponent } from '../../../shared/ui/forsa-icon/forsa-icon.component';
 import { ForsaInputDirective } from '../../../shared/directives/forsa-input.directive';
 import { ForsaPasswordFieldComponent } from '../../../shared/ui/forsa-password-field/forsa-password-field.component';
@@ -34,6 +39,7 @@ type StatusFilter = 'all' | 'active' | 'inactive';
     ForsaBadgeComponent,
     ForsaButtonComponent,
     ForsaCardComponent,
+    ForsaDataTableComponent,
     ForsaIconComponent,
     ForsaInputDirective,
     ForsaPasswordFieldComponent,
@@ -57,7 +63,17 @@ export class UserManagementComponent implements OnInit {
   readonly roleFilter = signal<'all' | ForsaRoleName>('all');
 
   readonly pageSize = signal(10);
-  readonly currentPage = signal(1);
+  /** Zero-based page index (same contract as {@link ForsaDataTableComponent}) */
+  readonly pageIndex = signal(0);
+
+  readonly userTableColumns: ForsaTableColumn[] = [
+    { key: 'id', label: 'ID' },
+    { key: 'username', label: 'Username' },
+    { key: 'email', label: 'Email' },
+    { key: 'role', label: 'Role' },
+    { key: 'status', label: 'Status' },
+    { key: 'actions', label: 'Actions', align: 'right' },
+  ];
 
   readonly filteredUsers = computed(() => {
     let list = this.users();
@@ -83,25 +99,15 @@ export class UserManagementComponent implements OnInit {
     return list;
   });
 
-  readonly paginationInfo = computed(() => {
-    const list = this.filteredUsers();
-    const sz = this.pageSize();
-    const total = list.length;
-    const totalPages = Math.max(1, Math.ceil(total / sz) || 1);
-    const page = Math.min(Math.max(1, this.currentPage()), totalPages);
-    const start = total === 0 ? 0 : (page - 1) * sz + 1;
-    const end = Math.min(page * sz, total);
-    return { total, totalPages, page, start, end };
-  });
-
   readonly paginatedUsers = computed(() => {
     const list = this.filteredUsers();
     const sz = this.pageSize();
     if (!list.length) {
       return [];
     }
-    const { page } = this.paginationInfo();
-    const start = (page - 1) * sz;
+    const totalPages = Math.max(1, Math.ceil(list.length / sz));
+    const idx = Math.min(this.pageIndex(), totalPages - 1);
+    const start = idx * sz;
     return list.slice(start, start + sz);
   });
 
@@ -132,21 +138,25 @@ export class UserManagementComponent implements OnInit {
     { value: 'ADMIN', label: 'Admin' },
   ];
 
-  readonly pageSizeOptions: readonly number[] = [5, 10, 25, 50];
+  /** Use `number[]` (not `readonly number[]`) so `[pageSizeOptions]` satisfies `ForsaDataTableComponent` under strict template checks (NG4). */
+  pageSizeOptions: number[] = [5, 10, 25, 50];
 
   constructor() {
     effect(() => {
       this.searchText();
       this.statusFilter();
       this.roleFilter();
-      untracked(() => this.currentPage.set(1));
+      untracked(() => this.pageIndex.set(0));
     });
     effect(
       () => {
-        const { page } = this.paginationInfo();
+        const list = this.filteredUsers();
+        const sz = this.pageSize();
+        const totalPages = Math.max(1, Math.ceil(list.length / sz) || 1);
+        const maxIdx = totalPages - 1;
         untracked(() => {
-          if (this.currentPage() !== page) {
-            this.currentPage.set(page);
+          if (this.pageIndex() > maxIdx) {
+            this.pageIndex.set(maxIdx);
           }
         });
       },
@@ -189,18 +199,9 @@ export class UserManagementComponent implements OnInit {
     this.roleFilter.set('all');
   }
 
-  onPageSizeChange(size: number): void {
-    this.pageSize.set(size);
-    this.currentPage.set(1);
-  }
-
-  goPrevPage(): void {
-    this.currentPage.update((c) => Math.max(1, c - 1));
-  }
-
-  goNextPage(): void {
-    const tp = this.paginationInfo().totalPages;
-    this.currentPage.update((c) => Math.min(tp, c + 1));
+  onDataTablePage(ev: ForsaDataTablePageEvent): void {
+    this.pageIndex.set(ev.pageIndex);
+    this.pageSize.set(ev.pageSize);
   }
 
   toggleRowMenu(userId: number): void {

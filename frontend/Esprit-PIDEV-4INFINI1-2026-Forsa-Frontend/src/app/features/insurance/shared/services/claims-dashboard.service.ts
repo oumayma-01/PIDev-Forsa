@@ -1,8 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
 import { ClaimsDashboardDTO } from '../models/claims-dashboard.models';
+import { normalizeClaimsDashboardDTO } from '../utils/analytics-payload-normalize';
 
 @Injectable({ providedIn: 'root' })
 export class ClaimsDashboardService {
@@ -10,6 +12,8 @@ export class ClaimsDashboardService {
   private readonly base = `${environment.apiBaseUrl}/claims-dashboard`;
 
   getAnalytics(): Observable<ClaimsDashboardDTO> {
-    return this.http.get<ClaimsDashboardDTO>(`${this.base}/analytics`);
+    return this.http
+      .get<ClaimsDashboardDTO>(`${this.base}/analytics`)
+      .pipe(map((body) => normalizeClaimsDashboardDTO(body)));
   }
 }

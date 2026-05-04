@@ -32,7 +32,13 @@
         <input type="text" placeholder="Search by username or ID..." [value]="searchTerm()" (input)="searchTerm.set($any($event.target).value)" />
       </div>
       <div class="filter-select">
-        <select [value]="statusFilter()" (change)="statusFilter.set($any($event.target).value)">
+        <label class="visually-hidden" for="credit-status-filter">Filter by credit status</label>
+        <select
+          id="credit-status-filter"
+          class="forsa-input filter-select"
+          title="Filter by credit status"
+          [value]="statusFilter()"
+          (change)="statusFilter.set($any($event.target).value)">
           <option value="">All Statuses</option>
           <option value="SUBMITTED">Submitted</option>
           <option value="UNDER_REVIEW">Under Review</option>
@@ -45,12 +51,26 @@
     <div class="filter-group">
       <div class="date-range">
         <div class="date-input">
-          <span>From:</span>
-          <input type="date" [value]="dateStart()" (change)="dateStart.set($any($event.target).value)" />
+          <label class="date-input__label" for="credit-filter-date-start">From</label>
+          <div class="date-input__cell">
+            <input
+              id="credit-filter-date-start"
+              type="date"
+              title="Filter credits from this date"
+              [value]="dateStart()"
+              (change)="dateStart.set($any($event.target).value)" />
+          </div>
         </div>
         <div class="date-input">
-          <span>To:</span>
-          <input type="date" [value]="dateEnd()" (change)="dateEnd.set($any($event.target).value)" />
+          <label class="date-input__label" for="credit-filter-date-end">To</label>
+          <div class="date-input__cell">
+            <input
+              id="credit-filter-date-end"
+              type="date"
+              title="Filter credits until this date"
+              [value]="dateEnd()"
+              (change)="dateEnd.set($any($event.target).value)" />
+          </div>
         </div>
       </div>
       <app-forsa-button variant="ghost" size="sm" (clicked)="searchTerm.set(''); statusFilter.set(''); dateStart.set(''); dateEnd.set('');">
@@ -69,7 +89,7 @@
       <div class="gift-toast__body">
         <p class="gift-toast__title">Congratulations!</p>
         <p class="gift-toast__message">
-          You have just earned a loyalty gift of {{ (giftAmount() ?? 500) | number: '1.2-2' }} DT thanks to your credits. Enjoy it!
+                   You have just earned a loyalty gift of {{ (giftAmount() ?? 500) | number: '1.2-2' }} DT thanks to your credits. Enjoy it!
         </p>
       </div>
       <app-forsa-button variant="ghost" size="sm" (clicked)="dismissGiftAlert()">Dismiss</app-forsa-button>
@@ -123,28 +143,29 @@
         }
 
         @if (repayments().length > 0) {
-          <table class="forsa-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Due date</th>
-                <th>Amount</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (r of repayments(); track r.id) {
+          <app-forsa-data-table
+            [embedded]="true"
+            [columns]="repaymentColumns"
+            [rows]="repaymentsPaged()"
+            [totalCount]="repayments().length"
+            [pageIndex]="repaymentPageIndex()"
+            [pageSize]="repaymentPageSize()"
+            [pageSizeOptions]="repaymentPageSizeOptions"
+            (pageChange)="onRepaymentTablePage($event)"
+            ariaLabel="Repayment schedule">
+            <ng-template #forsaTableBody let-rows>
+              @for (r of rows; track r.id) {
                 <tr>
                   <td class="mono">{{ r.id }}</td>
-                  <td>{{ r.dueDate }}</td>
-                  <td class="fw-semibold">{{ r.totalAmount | number: '1.2-2' }}</td>
+                  <td>{{ r.dueDate | date : 'dd/MM/yyyy' }}</td>
+                  <td class="fw-semibold right">{{ r.totalAmount | number : '1.2-2' }}</td>
                   <td>
                     <app-forsa-badge [tone]="repaymentTone(r.status)">{{ r.status }}</app-forsa-badge>
                   </td>
                 </tr>
               }
-            </tbody>
-          </table>
+            </ng-template>
+          </app-forsa-data-table>
         }
       }
     </div>
@@ -169,30 +190,33 @@
       }
 
       @if (credits().length > 0) {
-        <table class="forsa-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Client Name</th>
-              <th>Amount</th>
-              <th>Duration</th>
-              <th>Status</th>
-              <th>Date</th>
-              <th>Agent</th>
-              <th class="right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (c of filteredCredits(); track c.id) {
+        <app-forsa-data-table
+          [embedded]="true"
+          [columns]="creditStaffColumns"
+          [rows]="creditsPaged()"
+          [totalCount]="filteredCredits().length"
+          [pageIndex]="creditPageIndex()"
+          [pageSize]="creditPageSize()"
+          [pageSizeOptions]="creditPageSizeOptions"
+          (pageChange)="onCreditTablePage($event)"
+          ariaLabel="Credits">
+          <ng-template #forsaTableBody let-rows>
+            @for (c of rows; track c.id) {
               <tr>
                 <td class="mono">{{ c.id }}</td>
                 <td>{{ c.user?.username || ('#' + (c.user?.id ?? '—')) }}</td>
-                <td class="fw-semibold">{{ c.amountRequested | number: '1.2-2' }}</td>
+                <td class="fw-semibold">{{ c.amountRequested | number : '1.2-2' }}</td>
                 <td class="text-muted">{{ c.durationMonths ?? '-' }}</td>
                 <td>
                   <app-forsa-badge [tone]="statusTone(c.status)">{{ c.status ?? '—' }}</app-forsa-badge>
                 </td>
-                <td class="text-muted sm">{{ c.requestDate ?? '-' }}</td>
+                <td class="text-muted sm">
+                  @if (c.requestDate) {
+                    {{ c.requestDate | date : 'dd/MM/yyyy HH:mm' }}
+                  } @else {
+                    —
+                  }
+                </td>
                 <td class="text-muted">{{ c.agentId ?? '-' }}</td>
                 <td class="right">
                   <app-forsa-button variant="ghost" size="sm" [link]="'/dashboard/credit/' + c.id">
@@ -202,8 +226,8 @@
                 </td>
               </tr>
             }
-          </tbody>
-        </table>
+          </ng-template>
+        </app-forsa-data-table>
       }
     </div>
   </app-forsa-card>

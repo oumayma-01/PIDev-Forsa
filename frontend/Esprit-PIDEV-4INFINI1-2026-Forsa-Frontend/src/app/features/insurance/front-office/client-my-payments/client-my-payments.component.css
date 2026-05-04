@@ -1,9 +1,18 @@
+:host {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+}
+
 .portal-container {
-  padding: 2rem;
+  padding: clamp(1rem, 3vw, 2rem);
   max-width: 1000px;
   margin: 0 auto;
   font-family: 'Inter', sans-serif;
   color: var(--color-foreground);
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .header-section {
@@ -39,6 +48,7 @@
 
 .glass-panel {
   background: var(--color-card);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   border: 1px solid var(--color-border);
   border-radius: 1rem;
@@ -56,18 +66,45 @@
   margin-bottom: 1rem;
 }
 
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: clamp(2.5rem, 8vw, 4.5rem) 1.25rem;
+  color: var(--color-muted-foreground);
+  text-align: center;
+}
+
+.loading-state p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary, #3b82f6);
+  border-radius: 50%;
+  animation: payments-spinner 0.85s linear infinite;
+}
+
+@keyframes payments-spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .payments-table-container {
-  overflow-x: auto;
-  padding: 1.5rem;
+  padding: clamp(0.75rem, 2vw, 1.5rem);
+  max-width: 100%;
+  min-width: 0;
 }
 
-.payments-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-}
-
-.payments-table th {
+/* Match previous premium table look on shared forsa-table */
+:host ::ng-deep .payments-table-container .forsa-table th {
   padding: 1rem;
   background: var(--color-secondary);
   color: var(--color-muted-foreground);
@@ -75,7 +112,7 @@
   border-bottom: 2px solid var(--color-border);
 }
 
-.payments-table td {
+:host ::ng-deep .payments-table-container .forsa-table td {
   padding: 1.25rem 1rem;
   border-bottom: 1px solid var(--color-border);
   vertical-align: middle;
@@ -170,22 +207,10 @@
   gap: 0.5rem;
 }
 
-.filter-select {
-  padding: 0.6rem 1rem;
-  border-radius: 0.75rem;
-  border: 1px solid var(--color-border);
-  background: var(--color-background);
-  color: var(--color-foreground);
-  font-weight: 500;
+select.filter-select.forsa-input {
   min-width: 200px;
+  max-width: 100%;
   cursor: pointer;
-  transition: all 0.2s;
-  outline: none;
-}
-
-.filter-select:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .filter-info {
@@ -198,19 +223,86 @@
 }
 
 @media (max-width: 768px) {
+  .header-section {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .back-btn {
+    position: static;
+    order: -1;
+    align-self: flex-start;
+  }
+
+  .header-section h1,
+  .header-section > p {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 100%;
+  }
+
   .filter-controls {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
   }
-  
+
   .filter-group {
     width: 100%;
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
   }
-  
-  .filter-select {
+
+  select.filter-select.forsa-input {
     width: 100%;
+    min-width: 0;
+  }
+
+  .filter-info {
+    width: 100%;
+    text-align: center;
+  }
+
+  .header-section h1 {
+    font-size: clamp(1.5rem, 5vw, 2.5rem);
+  }
+}
+
+@media (max-width: 640px) {
+  .portal-container {
+    padding: 0.75rem 0.85rem 1.25rem;
+  }
+
+  :host ::ng-deep .payments-table-container .fds-scroll .forsa-table {
+    min-width: 32rem;
+  }
+
+  :host ::ng-deep .payments-table-container .forsa-table th {
+    padding: 0.55rem 0.65rem;
+    font-size: 0.7rem;
+  }
+
+  :host ::ng-deep .payments-table-container .forsa-table td {
+    padding: 0.75rem 0.65rem;
+  }
+
+  .amount-cell {
+    font-size: 1rem;
+  }
+
+  .date-cell {
+    flex-wrap: wrap;
+  }
+
+  .filter-section {
+    padding: 1rem;
+  }
+
+  .btn-sm {
+    min-height: 2.75rem;
+    padding: 0.5rem 0.85rem;
   }
 }
