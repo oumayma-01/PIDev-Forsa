@@ -47,12 +47,16 @@ export class DashboardSidebarCmp {
   readonly navItems: Signal<NavItem[]> = computed((): NavItem[] => {
     const paths = this.auth.currentUser()?.allowedNavPaths;
     const roles = this.auth.currentUser()?.roles ?? [];
+    const isAdmin = roles.includes('ROLE_ADMIN');
     const isAgent = roles.includes('ROLE_AGENT');
     const isClient = roles.includes('ROLE_CLIENT') || roles.includes('CLIENT');
     const allow = (href: string) => isNavPathAllowed(href, paths);
-    const core = this.baseNav.filter(
-      (item) => allow(item.href) && (!isClient || item.href !== '/dashboard/profile'),
-    );
+    const core = this.baseNav.filter((item) => {
+      if (!allow(item.href)) return false;
+      if (isClient && item.href === '/dashboard/profile') return false;
+      if (item.href === '/dashboard/ai-score' && isAdmin) return false;
+      return true;
+    });
 
     const extras: NavItem[] = [];
     if (allow('/dashboard/users')) {
@@ -60,6 +64,9 @@ export class DashboardSidebarCmp {
     }
     if (allow('/dashboard/roles')) {
       extras.push({ label: 'Role management', href: '/dashboard/roles', icon: 'shield' });
+    }
+    if (isAdmin && allow('/dashboard/scoring')) {
+      extras.push({ label: 'Client scores', href: '/dashboard/scoring', icon: 'brain' });
     }
     if (isAgent && allow('/dashboard/feedback/responses')) {
       extras.push({ label: 'Response management', href: '/dashboard/feedback/responses', icon: 'send' });

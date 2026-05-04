@@ -15,7 +15,7 @@ public enum DashboardNavFeature {
   WALLET("/dashboard/wallet", "Digital Wallet", "Wallet balance and transactions.", false),
   INSURANCE("/dashboard/insurance", "Insurance", "Products, policies, and claims.", false),
   PARTENARIAT("/dashboard/partenariat", "Partnerships", "Partners and offers.", false),
-  SCORING("/dashboard/scoring", "Credit scoring", "Credit scoring and risk analysis.", false),
+  SCORING("/dashboard/scoring", "My score", "Personal credit score and document checks.", false),
   AI_SCORE("/dashboard/ai-score", "My score", "Personal credit score and document checks.", false),
   FEEDBACK("/dashboard/feedback", "Feedback", "Complaints, feedback, and assistant.", false),
   AI("/dashboard/ai", "AI Risk Analysis", "AI-assisted risk analysis.", false),
