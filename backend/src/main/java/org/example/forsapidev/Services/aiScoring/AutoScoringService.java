@@ -264,6 +264,7 @@ public class AutoScoringService {
         if      (score >= 800) multiplier = 4.5;
         else if (score >= 600) multiplier = 2.5;
         else if (score >= 400) multiplier = 1.5;
+        else if (score >= 200) multiplier = 0.5;
         else                   multiplier = 0.0;
         return monthlySalary * multiplier;
     }
