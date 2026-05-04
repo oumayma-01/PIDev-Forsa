@@ -138,7 +138,7 @@
               </div>
               <div class="client-responses" aria-label="Responses">
                 @if (item.responses?.length) {
-                  @for (resp of item.responses!; track resp.id ?? $index) {
+                  @for (resp of item.responses!; track $index) {
                     <div class="client-response">
                       <p class="client-response__msg">{{ resp.message }}</p>
                       <time class="client-response__time">{{ resp.responseDate | date : 'dd/MM/yyyy HH:mm' }}</time>
