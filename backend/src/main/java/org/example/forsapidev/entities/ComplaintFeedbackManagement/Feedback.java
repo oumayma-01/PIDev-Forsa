@@ -1,6 +1,5 @@
 package org.example.forsapidev.entities.ComplaintFeedbackManagement;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
@@ -53,6 +52,8 @@ public class Feedback {
             "hibernateLazyInitializer",
             "handler"
     })
+    // Avoid deep/lazy serialization failures on list endpoints.
+    // Frontend already handles missing/partial author info gracefully.
     private User user;
 
     @PrePersist
