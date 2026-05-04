@@ -96,30 +96,10 @@
                     variant="ghost"
                     size="sm"
                     [disabled]="rowBusy(u)"
-                    (clicked)="toggleRowMenu(u.id)">
+                    (clicked)="toggleRowMenu(u, $event)">
                     <app-forsa-icon name="more-vertical" [size]="16" />
                     More
                   </app-forsa-button>
-                  @if (openMenuUserId() === u.id) {
-                    <div class="um-row-menu" role="menu" (click)="$event.stopPropagation()">
-                      <button type="button" class="um-row-menu__item" role="menuitem" (click)="openEdit(u)">
-                        <app-forsa-icon name="pencil" [size]="16" />
-                        Edit user
-                      </button>
-                      <button type="button" class="um-row-menu__item" role="menuitem" (click)="toggleActive(u)">
-                        <app-forsa-icon name="power" [size]="16" />
-                        {{ u.isActive ? 'Deactivate' : 'Activate' }}
-                      </button>
-                      <button
-                        type="button"
-                        class="um-row-menu__item um-row-menu__item--danger"
-                        role="menuitem"
-                        (click)="openDeleteConfirm(u)">
-                        <app-forsa-icon name="trash-2" [size]="16" />
-                        Delete
-                      </button>
-                    </div>
-                  }
                 </div>
               </td>
             </tr>
@@ -129,6 +109,32 @@
     }
   </div>
 </app-forsa-card>
+
+@if (rowMenu(); as rm) {
+  <div
+    class="um-row-menu um-row-menu--floating"
+    role="menu"
+    [style.top.px]="rm.top"
+    [style.right.px]="rm.right"
+    (click)="$event.stopPropagation()">
+    <button type="button" class="um-row-menu__item" role="menuitem" (click)="openEdit(rm.user)">
+      <app-forsa-icon name="pencil" [size]="16" />
+      Edit user
+    </button>
+    <button type="button" class="um-row-menu__item" role="menuitem" (click)="toggleActive(rm.user)">
+      <app-forsa-icon name="power" [size]="16" />
+      {{ rm.user.isActive ? 'Deactivate' : 'Activate' }}
+    </button>
+    <button
+      type="button"
+      class="um-row-menu__item um-row-menu__item--danger"
+      role="menuitem"
+      (click)="openDeleteConfirm(rm.user)">
+      <app-forsa-icon name="trash-2" [size]="16" />
+      Delete
+    </button>
+  </div>
+}
 
 @if (deleteConfirmUser()) {
   <div class="um-overlay" role="dialog" aria-modal="true" aria-labelledby="um-delete-title" (click)="closeDeleteConfirm()">

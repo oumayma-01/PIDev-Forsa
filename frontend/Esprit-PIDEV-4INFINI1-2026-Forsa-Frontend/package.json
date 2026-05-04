@@ -5,6 +5,11 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "clean:dist": "rimraf dist/esprit-pidev-4-infini1-2026-forsa-frontend",
+    "clean:dist:mobile": "rimraf dist/forsa-mobile",
+    "build:mobile": "npm run clean:dist:mobile && ng build --configuration=mobile",
+    "serve:dist": "serve -s -l 4173 dist/esprit-pidev-4-infini1-2026-forsa-frontend/browser",
+    "serve:dist:mobile": "serve -s -l 4174 dist/forsa-mobile/browser",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
@@ -43,6 +48,7 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
     "postcss": "^8.4.49",
+    "rimraf": "^5.0.10",
     "tailwindcss": "^3.4.15",
     "typescript": "~5.5.2"
   }
