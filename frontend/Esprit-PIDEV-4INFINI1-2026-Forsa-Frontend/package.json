@@ -20,6 +20,7 @@
     "@angular/platform-browser": "^18.2.0",
     "@angular/platform-browser-dynamic": "^18.2.0",
     "@angular/router": "^18.2.0",
+    "@angular/service-worker": "^18.2.14",
     "chart.js": "^4.5.1",
     "gsap": "^3.12.5",
     "ng": "^0.0.0",

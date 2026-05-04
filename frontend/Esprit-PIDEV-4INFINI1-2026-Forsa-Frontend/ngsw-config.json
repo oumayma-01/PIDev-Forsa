@@ -1,0 +1,67 @@
+{
+  "$schema": "./node_modules/@angular/service-worker/config/schema.json",
+  "index": "/index.html",
+  "navigationRequestStrategy": "freshness",
+  "navigationUrls": [
+    "/**",
+    "!/**/*.*",
+    "!/**/*_ng*",
+    "!/**/*_*",
+    "!/ngsw-worker.js",
+    "!/ngsw.json",
+    "!/safety-worker.js"
+  ],
+  "assetGroups": [
+    {
+      "name": "app-core",
+      "installMode": "prefetch",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": [
+          "/favicon.ico",
+          "/index.html",
+          "/manifest.webmanifest",
+          "/forsa-logo.png",
+          "/forsa-logo-light.png",
+          "/forsa-logo-dark.png",
+          "/pwa-icon-192.png",
+          "/pwa-icon-512.png",
+          "/*.css",
+          "/*.js"
+        ]
+      }
+    },
+    {
+      "name": "static-assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": [
+          "/*.(svg|cur|jpg|jpeg|png|apng|webp|gif|ico|woff|woff2|ttf|otf|eot)"
+        ]
+      }
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "google-fonts-stylesheets",
+      "urls": ["https://fonts.googleapis.com/**"],
+      "cacheConfig": {
+        "strategy": "performance",
+        "maxSize": 40,
+        "maxAge": "30d",
+        "timeout": "10s"
+      }
+    },
+    {
+      "name": "google-fonts-files",
+      "urls": ["https://fonts.gstatic.com/**"],
+      "cacheConfig": {
+        "strategy": "performance",
+        "maxSize": 60,
+        "maxAge": "365d",
+        "timeout": "10s"
+      }
+    }
+  ]
+}
