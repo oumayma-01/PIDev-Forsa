@@ -69,8 +69,28 @@ export class ClientMyPaymentsComponent implements OnInit {
     const urlParams = new URLSearchParams(window.location.search);
     const paymentId = urlParams.get('payment_id');
     const status = urlParams.get('status');
+    const sessionId = urlParams.get('session_id');
 
-    if (paymentId && status === 'success') {
+    if (sessionId && status === 'success') {
+      this.isLoading = true;
+      this.paymentService.confirmPayment(sessionId).subscribe({
+        next: (res) => {
+          if (res.status === 'success') {
+            alert('Payment successful! Your record has been updated.');
+          } else {
+            alert('Payment confirmation pending. It will be updated soon.');
+          }
+          this.loadPayments();
+        },
+        error: (err) => {
+          console.error('Failed to confirm payment', err);
+          this.loadPayments();
+        }
+      });
+      // Clear URL params
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (paymentId && status === 'success') {
+      // Fallback for old flow if session_id is missing but payment_id is there
       this.paymentService.getById(Number(paymentId)).subscribe({
         next: (payment) => {
           if (payment.status !== PaymentStatus.PAID) {
@@ -90,7 +110,6 @@ export class ClientMyPaymentsComponent implements OnInit {
           }
         }
       });
-      // Clear URL params to avoid re-triggering on refresh
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }
@@ -145,7 +164,8 @@ export class ClientMyPaymentsComponent implements OnInit {
       amount: Math.round((payment.amount || 0) * 100), // cents
       currency: 'usd',
       productName: `Premium Installment - Due: ${payment.dueDate}`,
-      successUrl: `${window.location.origin}${window.location.pathname}?status=success&payment_id=${payment.id}`,
+      paymentId: payment.id as number,
+      successUrl: `${window.location.origin}${window.location.pathname}?status=success&payment_id=${payment.id}&session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${window.location.origin}${window.location.pathname}?status=cancel`
     };
 

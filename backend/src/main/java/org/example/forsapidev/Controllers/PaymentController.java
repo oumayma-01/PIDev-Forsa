@@ -34,4 +34,22 @@ public class PaymentController {
             return errorResponse;
         }
     }
+
+    @PostMapping("/confirm-payment")
+    public Map<String, String> confirmPayment(@RequestBody Map<String, String> request) {
+        String sessionId = request.get("sessionId");
+        System.out.println("Confirming Stripe payment for session: " + sessionId);
+        try {
+            stripeService.confirmPayment(sessionId);
+            Map<String, String> response = new HashMap<>();
+            response.put("status", "success");
+            return response;
+        } catch (Exception e) {
+            System.err.println("Error confirming payment: " + e.getMessage());
+            e.printStackTrace();
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
+            return errorResponse;
+        }
+    }
 }
