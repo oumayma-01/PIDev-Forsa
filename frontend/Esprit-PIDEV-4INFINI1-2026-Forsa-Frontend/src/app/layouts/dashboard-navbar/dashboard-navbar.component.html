@@ -150,7 +150,13 @@
                 My profile
               </a>
             }
-            <button type="button" class="profile-dropdown__item profile-dropdown__item--danger" role="menuitem" (click)="logout()">
+            <button
+              type="button"
+              class="profile-dropdown__item profile-dropdown__item--danger"
+              role="menuitem"
+              aria-label="Log out"
+              title="Log out"
+              (click)="logout()">
               <app-forsa-icon name="log-out" [size]="16" />
               Logout
             </button>

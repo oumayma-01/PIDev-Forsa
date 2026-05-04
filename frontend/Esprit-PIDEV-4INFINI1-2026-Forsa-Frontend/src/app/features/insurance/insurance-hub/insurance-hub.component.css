@@ -212,6 +212,8 @@
   align-items: center;
   margin-bottom: 2rem;
   padding: 0.5rem 0;
+  position: relative;
+  z-index: 0;
 }
 
 .back-link {
