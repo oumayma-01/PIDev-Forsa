@@ -10,11 +10,13 @@ import { InsurancePolicy } from '../../../shared/models/insurance.models';
 import { PolicyStatus } from '../../../shared/enums/insurance.enums';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { DigitalSignatureComponent } from '../../../../../shared/ui/forsa-signature/forsa-signature.component';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-policy-detail',
   standalone: true,
-  imports: [RouterLink, DatePipe, DecimalPipe, ForsaBadgeComponent, ForsaButtonComponent, ForsaCardComponent, ForsaIconComponent, DigitalSignatureComponent],
+  imports: [RouterLink, DatePipe, DecimalPipe, ForsaBadgeComponent, ForsaButtonComponent, ForsaCardComponent, ForsaIconComponent, DigitalSignatureComponent, CommonModule, FormsModule],
   templateUrl: './policy-detail.component.html',
   styleUrl: './policy-detail.component.css',
 })
@@ -22,6 +24,7 @@ export class PolicyDetailComponent implements OnInit {
   private readonly svc = inject(InsurancePolicyService);
   private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(AuthService);
+  readonly PolicyStatus = PolicyStatus;
 
   policy = signal<InsurancePolicy | null>(null);
   loading = signal(true);
@@ -30,6 +33,11 @@ export class PolicyDetailComponent implements OnInit {
   downloadingContract = signal(false);
   showSignatureUI = signal(false);
   signing = signal(false);
+  
+  // Review form state
+  reviewing = signal(false);
+  reviewNotes = '';
+  reviewApprovedCoverage: number | null = null;
 
   get isAdmin(): boolean {
     return this.auth.currentUser()?.roles.includes('ROLE_ADMIN') || false;
@@ -155,6 +163,24 @@ export class PolicyDetailComponent implements OnInit {
     ctx.fillText(new Date().toLocaleDateString(), 150, 125);
     
     this.handleSign(canvas.toDataURL('image/png'));
+  }
+  
+  submitReview(status: PolicyStatus): void {
+    const p = this.policy();
+    if (!p?.id) return;
+    
+    this.reviewing.set(true);
+    this.svc.agentReview(p.id, status, this.reviewApprovedCoverage ?? undefined, this.reviewNotes).subscribe({
+      next: (updated) => {
+        this.policy.set(updated);
+        this.reviewing.set(false);
+        alert(`Policy ${status.toLowerCase()} successfully!`);
+      },
+      error: (e) => {
+        alert('Review failed: ' + (e.error?.message ?? e.message));
+        this.reviewing.set(false);
+      }
+    });
   }
 
   statusTone(s?: PolicyStatus): 'success' | 'warning' | 'danger' | 'info' | 'muted' {

@@ -65,6 +65,14 @@ export const insuranceRoutes: Routes = [
         (m) => m.PolicyDetailComponent,
       ),
   },
+  {
+    path: 'policies/:id/edit',
+    canMatch: [backOfficeGuard],
+    loadComponent: () =>
+      import('./insurance-premium/pages/policy-edit/policy-edit.component').then(
+        (m) => m.PolicyEditComponent,
+      ),
+  },
   // ── Claims (back-office: ADMIN / AGENT only) ─────────────────────────────
   {
     path: 'claims',
