@@ -11,6 +11,7 @@ public class StripePaymentDTO {
     private Long amount; // Amount in cents
     private String currency; // e.g., "usd", "eur", "tnd"
     private String productName;
+    private Long paymentId;
     private String successUrl;
     private String cancelUrl;
 }

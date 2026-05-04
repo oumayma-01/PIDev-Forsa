@@ -41,9 +41,14 @@ export class PremiumPaymentService {
     amount: number, 
     currency: string, 
     productName: string, 
+    paymentId: number,
     successUrl: string, 
     cancelUrl: string 
   }): Observable<{ sessionUrl: string }> {
     return this.http.post<{ sessionUrl: string }>(`${environment.apiBaseUrl}/payments/create-checkout-session`, paymentData);
+  }
+
+  confirmPayment(sessionId: string): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(`${environment.apiBaseUrl}/payments/confirm-payment`, { sessionId });
   }
 }
