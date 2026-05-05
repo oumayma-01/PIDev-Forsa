@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ActuarialService } from '../../shared/services/actuarial.service';
 import { IntegratedPolicyService } from '../../shared/services/integrated-policy.service';
 import { InsuranceProductService } from '../../shared/services/insurance-product.service';
-import { InsuranceCompleteQuoteDTO, InsuranceProduct, PremiumCalculationRequestDTO, InsurancePolicyApplicationDTO } from '../../shared/models/insurance.models';
+import { InsuranceCompleteQuoteDTO, InsuranceProduct, PremiumCalculationRequestDTO, InsurancePolicyApplicationDTO, InsurancePolicy } from '../../shared/models/insurance.models';
 import { AuthService } from '../../../../core/services/auth.service';
 import { PremiumPaymentService } from '../../shared/services/premium-payment.service';
 
@@ -36,6 +36,7 @@ export class ClientPolicyApplicationComponent implements OnInit {
   isSubmitting = false;
   isPaying = false;
   applicationSuccess = false;
+  createdPolicy?: InsurancePolicy;
 
   get isAdmin(): boolean {
     return this.authService.currentUser()?.roles.includes('ROLE_ADMIN') || false;
@@ -140,9 +141,10 @@ export class ClientPolicyApplicationComponent implements OnInit {
     };
 
     this.integratedPolicyService.applyForInsurance(appDTO).subscribe({
-      next: () => {
+      next: (policy) => {
         this.isSubmitting = false;
         this.applicationSuccess = true;
+        this.createdPolicy = policy;
       },
       error: (err) => {
         console.error('Failed to submit application', err);
@@ -154,15 +156,25 @@ export class ClientPolicyApplicationComponent implements OnInit {
   }
 
   payNowWithStripe() {
-    if (!this.quote || !this.product) return;
+    if (!this.quote || !this.product || !this.createdPolicy) return;
     this.isPaying = true;
+
+    // Find the first payment of the created policy
+    const firstPayment = this.createdPolicy.premiumPayments?.[0];
+    if (!firstPayment || !firstPayment.id) {
+      console.error('No payment records found for the new policy');
+      this.isPaying = false;
+      alert('Could not find payment records. Please go to "My Payments" to pay your premium.');
+      return;
+    }
 
     const periodicPayment = this.quote.premiumDetails?.periodicPayment || 0;
     const paymentData = {
       amount: Math.round(periodicPayment * 100), // Stripe expects cents
-      currency: 'usd', // Adjust currency if needed
+      currency: 'usd', 
       productName: `Initial Premium: ${this.product.productName}`,
-      successUrl: `${window.location.origin}/dashboard/insurance/client/my-policies?payment=success`,
+      paymentId: firstPayment.id as number,
+      successUrl: `${window.location.origin}/dashboard/insurance/client/my-payments?status=success&payment_id=${firstPayment.id}&session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${window.location.origin}${this.router.url}?payment=cancel`
     };
 

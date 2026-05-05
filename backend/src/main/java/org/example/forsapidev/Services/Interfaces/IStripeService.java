@@ -7,4 +7,5 @@ import java.util.Map;
 
 public interface IStripeService {
     String createCheckoutSession(StripePaymentDTO paymentDTO) throws StripeException;
+    void confirmPayment(String sessionId) throws StripeException;
 }

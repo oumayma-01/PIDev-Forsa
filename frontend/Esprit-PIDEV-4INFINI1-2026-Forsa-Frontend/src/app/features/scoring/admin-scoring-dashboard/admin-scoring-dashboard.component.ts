@@ -1,5 +1,6 @@
 import { DatePipe, DecimalPipe, NgClass } from '@angular/common';
-import { Component, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ForsaCardComponent } from '../../../shared/ui/forsa-card/forsa-card.component';
 import type { AIScoreDto, AIScoreLevel, AIScoreSummaryDto } from '../../../core/models/forsa.models';
 import { ForsaDataTableComponent } from '../../../shared/ui/forsa-data-table/forsa-data-table.component';
@@ -16,14 +17,43 @@ interface ClientRow extends AIScoreSummaryDto {
 @Component({
   selector: 'app-admin-scoring-dashboard',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, NgClass, ForsaCardComponent, ForsaDataTableComponent],
+  imports: [DatePipe, DecimalPipe, NgClass, FormsModule, ForsaCardComponent],
   templateUrl: './admin-scoring-dashboard.component.html',
   styleUrl: './admin-scoring-dashboard.component.css',
 })
 export class AdminScoringDashboardComponent implements OnInit, OnDestroy {
-  clients = signal<ClientRow[]>([]);
-  loading = signal(true);
+  clients    = signal<ClientRow[]>([]);
+  loading    = signal(true);
   lastRefresh = signal<Date | null>(null);
+  search     = signal('');
+  sortField  = signal<'score' | 'threshold' | 'name'>('score');
+  sortDesc   = signal(true);
+
+  readonly filtered = computed(() => {
+    const q   = this.search().trim().toLowerCase();
+    const all = this.clients();
+    const out = q
+      ? all.filter(c =>
+          (c.clientName  ?? '').toLowerCase().includes(q) ||
+          (c.clientEmail ?? '').toLowerCase().includes(q) ||
+          String(c.clientId).includes(q))
+      : all;
+
+    const field = this.sortField();
+    const desc  = this.sortDesc();
+    return [...out].sort((a, b) => {
+      let va: number, vb: number;
+      if (field === 'score')     { va = a.score ?? 0;           vb = b.score ?? 0; }
+      else if (field === 'threshold') { va = a.creditThreshold ?? 0; vb = b.creditThreshold ?? 0; }
+      else                       { va = 0; vb = 0; } // name handled via string below
+      if (field === 'name') {
+        const sa = (a.clientName ?? '').toLowerCase();
+        const sb = (b.clientName ?? '').toLowerCase();
+        return desc ? sb.localeCompare(sa) : sa.localeCompare(sb);
+      }
+      return desc ? vb - va : va - vb;
+    });
+  });
 
   scoringPageIndex = 0;
   scoringPageSize = 10;
@@ -63,15 +93,13 @@ export class AdminScoringDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  get scoringClientsPaged(): ClientRow[] {
-    const list = this.clients();
-    const start = this.scoringPageIndex * this.scoringPageSize;
-    return list.slice(start, start + this.scoringPageSize);
-  }
-
-  onScoringPage(ev: ForsaDataTablePageEvent): void {
-    this.scoringPageIndex = ev.pageIndex;
-    this.scoringPageSize = ev.pageSize;
+  toggleSort(field: 'score' | 'threshold' | 'name'): void {
+    if (this.sortField() === field) {
+      this.sortDesc.update(d => !d);
+    } else {
+      this.sortField.set(field);
+      this.sortDesc.set(true);
+    }
   }
 
   recalculate(row: ClientRow): void {
@@ -85,12 +113,12 @@ export class AdminScoringDashboardComponent implements OnInit, OnDestroy {
             c.clientId === updated.clientId
               ? {
                   ...c,
-                  refreshing: false,
-                  score: updated.score,
-                  scoreLevel: String(updated.scoreLevel),
-                  creditThreshold: updated.creditThreshold,
-                  hasActiveCredit: updated.hasActiveCredit,
-                  lastCalculatedAt: updated.lastCalculatedAt ?? null,
+                  refreshing:        false,
+                  score:             updated.score,
+                  scoreLevel:        String(updated.scoreLevel),
+                  creditThreshold:   updated.creditThreshold,
+                  hasActiveCredit:   updated.hasActiveCredit,
+                  lastCalculatedAt:  updated.lastCalculatedAt ?? null,
                   stegBoosterActive: updated.stegBoosterActive,
                   stegBoosterExpiry: updated.stegBoosterExpiry,
                   sonedeBoosterActive: updated.sonedeBoosterActive,
@@ -109,29 +137,24 @@ export class AdminScoringDashboardComponent implements OnInit, OnDestroy {
   }
 
   levelClass(level: string): string {
-    const l = level as AIScoreLevel;
-    switch (l) {
-      case 'PREMIUM':
-        return 'badge--premium';
-      case 'EXCELLENT':
-        return 'badge--excellent';
-      case 'VERY_GOOD':
-        return 'badge--very-good';
-      case 'GOOD':
-        return 'badge--good';
-      case 'MEDIUM':
-        return 'badge--medium';
-      case 'LOW':
-        return 'badge--low';
-      case 'VERY_LOW':
-        return 'badge--very-low';
-      default:
-        return 'badge--medium';
+    switch (level as AIScoreLevel) {
+      case 'PREMIUM':   return 'badge--premium';
+      case 'EXCELLENT': return 'badge--excellent';
+      case 'VERY_GOOD': return 'badge--very-good';
+      case 'GOOD':      return 'badge--good';
+      case 'MEDIUM':    return 'badge--medium';
+      case 'LOW':       return 'badge--low';
+      case 'VERY_LOW':  return 'badge--very-low';
+      default:          return 'badge--medium';
     }
   }
 
-  formatLevelLabel(level: string): string {
-    return level.replace(/_/g, ' ');
+  levelLabel(level: string): string {
+    const map: Record<string, string> = {
+      PREMIUM: 'Premium', EXCELLENT: 'Excellent', VERY_GOOD: 'Very Good',
+      GOOD: 'Good', MEDIUM: 'Medium', LOW: 'Low', VERY_LOW: 'Very Low',
+    };
+    return map[level] ?? level.replace(/_/g, ' ');
   }
 
   scoreBar(score: number): number {
@@ -141,11 +164,13 @@ export class AdminScoringDashboardComponent implements OnInit, OnDestroy {
   formatDate(iso: string | null | undefined): string {
     if (!iso) return '—';
     return new Date(iso).toLocaleString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
+      day: '2-digit', month: '2-digit', year: '2-digit',
+      hour: '2-digit', minute: '2-digit',
     });
+  }
+
+  initials(row: ClientRow): string {
+    const name = row.clientName ?? `C${row.clientId}`;
+    return name.trim().charAt(0).toUpperCase();
   }
 }

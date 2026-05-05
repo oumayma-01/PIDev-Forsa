@@ -45,7 +45,6 @@ function formatSpringAuthority(authority: string): string {
 export class DashboardNavbarComponent {
   @ViewChild('notificationButton', { read: ElementRef }) private notificationButtonRef?: ElementRef<HTMLButtonElement>;
   readonly showSidebarItems = input<boolean>(false);
-  /** Admin / agent narrow layout: show hamburger to open the off-canvas sidebar. */
   readonly showMobileNavToggle = input(false);
   readonly mobileDrawerOpen = input(false);
   readonly mobileNavToggle = output<void>();
@@ -57,7 +56,6 @@ export class DashboardNavbarComponent {
   private readonly destroyRef = inject(DestroyRef);
   readonly profileMenuOpen = signal(false);
 
-  /** Blob URL for uploaded profile photo; revoked on change or destroy. */
   private customAvatarRevoke: string | null = null;
   private readonly customAvatarUrl = signal<string | null>(null);
 
@@ -85,7 +83,7 @@ export class DashboardNavbarComponent {
     const global = this.globalNotifService.notifications().map(n => ({
       id: n.id,
       message: n.message,
-      type: n.type as any, // mapping types
+      type: n.type as any,
       actionRoute: n.actionRoute
     }));
     return [...this.localNotifications(), ...global];
@@ -113,7 +111,14 @@ export class DashboardNavbarComponent {
     const roles = this.auth.currentUser()?.roles ?? [];
     const isAdmin = roles.includes('ROLE_ADMIN');
     const allow = (href: string) => isNavPathAllowed(href, paths);
-    const core = this.baseNav.filter((item) => allow(item.href) && item.href !== '/dashboard/profile');
+
+    // ── FIX : Admin ne voit pas "My score" (/ai-score), il voit "Client scores" (/scoring)
+    const core = this.baseNav.filter((item) => {
+      if (!allow(item.href)) return false;
+      if (item.href === '/dashboard/profile') return false;
+      if (item.href === '/dashboard/ai-score' && isAdmin) return false;
+      return true;
+    });
 
     const extras: NavItem[] = [];
     if (allow('/dashboard/users')) {
@@ -122,8 +127,6 @@ export class DashboardNavbarComponent {
     if (allow('/dashboard/roles')) {
       extras.push({ label: 'Role management', href: '/dashboard/roles', icon: 'shield' });
     }
-    // Route /dashboard/scoring uses adminGuard (ROLE_ADMIN only). Without this check,
-    // empty allowedNavPaths makes allow() true for everyone → link looks "broken" (redirect to home).
     if (isAdmin && allow('/dashboard/scoring')) {
       extras.push({ label: 'Client scores', href: '/dashboard/scoring', icon: 'brain' });
     }
@@ -292,5 +295,4 @@ export class DashboardNavbarComponent {
       this.closeNotificationMenu();
     }
   }
-
 }

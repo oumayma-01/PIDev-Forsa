@@ -183,3 +183,129 @@
   line-height: 1.45;
   color: var(--color-muted-foreground);
 }
+
+/* ── New-client (STATE 1) styles ─────────────────────────────────────────────── */
+.new-client-intro {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-muted-foreground);
+  line-height: 1.5;
+}
+
+.doc-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 0.65rem;
+  border: 1px solid var(--color-border);
+  background: color-mix(in oklab, var(--color-muted) 20%, transparent);
+  transition: border-color 0.2s;
+}
+.doc-zone--done {
+  border-color: color-mix(in oklab, var(--color-emerald-500) 50%, var(--color-border));
+  background: color-mix(in oklab, var(--color-emerald-500) 6%, transparent);
+}
+.doc-zone--error {
+  border-color: color-mix(in oklab, var(--color-destructive) 40%, var(--color-border));
+}
+
+.doc-zone__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.doc-zone__label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.doc-zone__ok {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-emerald-500);
+}
+
+.doc-zone__err {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--color-destructive);
+}
+
+.req-badge {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: color-mix(in oklab, var(--color-destructive) 12%, transparent);
+  color: var(--color-destructive);
+}
+
+.opt-badge {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: color-mix(in oklab, var(--color-muted-foreground) 15%, transparent);
+  color: var(--color-muted-foreground);
+}
+
+.calculate-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+}
+
+.calc-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--color-muted-foreground);
+  font-style: italic;
+}
+
+/* ── Manual salary fallback ──────────────────────────────────────────────────── */
+.manual-salary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--color-border);
+}
+.manual-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-muted-foreground);
+}
+.manual-input {
+  width: 100%;
+  padding: 0.45rem 0.65rem;
+  border-radius: 0.45rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-size: 0.875rem;
+  outline: none;
+}
+.manual-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-primary) 20%, transparent);
+}
+
+/* ── Last updated label ──────────────────────────────────────────────────────── */
+.last-calc {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-muted-foreground);
+}

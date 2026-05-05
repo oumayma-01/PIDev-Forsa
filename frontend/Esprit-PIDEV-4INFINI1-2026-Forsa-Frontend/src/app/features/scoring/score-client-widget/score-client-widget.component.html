@@ -1,26 +1,165 @@
 <div class="eligibility-widget">
 
-  @if (loading()) {
+  <!-- ── Initial status check ─────────────────────────────────────────── -->
+  @if (checking()) {
     <div class="state-center">
       <app-forsa-icon name="sparkles" [size]="24" />
       <p>Loading…</p>
     </div>
 
+  <!-- ── Error state ───────────────────────────────────────────────────── -->
   } @else if (error()) {
     <app-forsa-card>
       <div class="card-pad-md state-center">
         <app-forsa-icon name="alert-circle" [size]="24" />
         <p>Unable to load your data.</p>
-        <app-forsa-button (click)="loadScore()">Retry</app-forsa-button>
+        <app-forsa-button (click)="checkStatus()">Retry</app-forsa-button>
       </div>
     </app-forsa-card>
 
-  } @else if (score()) {
+  <!-- ── STATE 1: NEW CLIENT ───────────────────────────────────────────── -->
+  } @else if (!hasScore()) {
     <app-forsa-card>
       <div class="card-pad-lg widget-body">
 
         <h3 class="widget-title">Credit eligibility</h3>
+        <p class="new-client-intro">
+          You don't have a credit score yet. Upload your documents to get started.
+        </p>
 
+        <!-- Pay slip (MANDATORY) -->
+        <div class="doc-zone" [class.doc-zone--done]="ocrSalary() != null" [class.doc-zone--error]="!!salaryDoc().error && !salaryDoc().uploading">
+          <div class="doc-zone__header">
+            <span class="doc-zone__label">
+              <app-forsa-icon name="trending-up" [size]="14" />
+              Pay slip
+              <span class="req-badge">Required</span>
+            </span>
+            @if (ocrSalary()) {
+              <span class="doc-zone__ok">{{ ocrSalary() | number:'1.0-0' }} TND / month</span>
+            }
+          </div>
+          <app-forsa-button
+            [disabled]="salaryDoc().uploading || firstScoreLoading()"
+            (click)="triggerSalaryUpload()">
+            @if (salaryDoc().uploading) {
+              <app-forsa-icon name="sparkles" [size]="13" /> Analyzing…
+            } @else if (ocrSalary()) {
+              <app-forsa-icon name="check-circle-2" [size]="13" /> Change document
+            } @else {
+              <app-forsa-icon name="trending-up" [size]="13" /> Upload pay slip
+            }
+          </app-forsa-button>
+          @if (salaryDoc().error && !salaryDoc().uploading) {
+            <p class="doc-zone__err">{{ salaryDoc().error }}</p>
+          }
+          @if (showManualEntry()) {
+            <div class="manual-salary">
+              <label class="manual-label">Enter salary manually (TND / month)</label>
+              <input
+                type="number"
+                class="manual-input"
+                placeholder="e.g. 1500"
+                [ngModel]="manualSalary()"
+                (ngModelChange)="manualSalary.set($event)"
+                min="1"
+              />
+            </div>
+          }
+        </div>
+
+        <!-- Electricity bill (OPTIONAL) -->
+        <div class="doc-zone" [class.doc-zone--done]="!!stegNewDoc().result && !stegNewDoc().error">
+          <div class="doc-zone__header">
+            <span class="doc-zone__label">
+              <app-forsa-icon name="zap" [size]="14" />
+              Electricity bill
+              <span class="opt-badge">Optional</span>
+            </span>
+            @if (stegNewDoc().result?.paid_on_time) {
+              <span class="doc-zone__ok">Paid on time</span>
+            }
+          </div>
+          <app-forsa-button
+            variant="outline"
+            [disabled]="stegNewDoc().uploading || firstScoreLoading()"
+            (click)="triggerStegNewUpload()">
+            @if (stegNewDoc().uploading) {
+              <app-forsa-icon name="sparkles" [size]="13" /> Analyzing…
+            } @else if (stegNewDoc().result) {
+              <app-forsa-icon name="check-circle-2" [size]="13" /> Change document
+            } @else {
+              <app-forsa-icon name="zap" [size]="13" /> Upload electricity bill
+            }
+          </app-forsa-button>
+        </div>
+
+        <!-- Water bill (OPTIONAL) -->
+        <div class="doc-zone" [class.doc-zone--done]="!!sonedeNewDoc().result && !sonedeNewDoc().error">
+          <div class="doc-zone__header">
+            <span class="doc-zone__label">
+              <app-forsa-icon name="home" [size]="14" />
+              Water bill
+              <span class="opt-badge">Optional</span>
+            </span>
+            @if (sonedeNewDoc().result?.paid_on_time) {
+              <span class="doc-zone__ok">Paid on time</span>
+            }
+          </div>
+          <app-forsa-button
+            variant="outline"
+            [disabled]="sonedeNewDoc().uploading || firstScoreLoading()"
+            (click)="triggerSonedeNewUpload()">
+            @if (sonedeNewDoc().uploading) {
+              <app-forsa-icon name="sparkles" [size]="13" /> Analyzing…
+            } @else if (sonedeNewDoc().result) {
+              <app-forsa-icon name="check-circle-2" [size]="13" /> Change document
+            } @else {
+              <app-forsa-icon name="home" [size]="13" /> Upload water bill
+            }
+          </app-forsa-button>
+        </div>
+
+        @if (firstScoreError()) {
+          <div class="bill-msg bill-msg--error">{{ firstScoreError() }}</div>
+        }
+
+        <div class="calculate-row">
+          <app-forsa-button
+            [disabled]="!ocrSalary() || firstScoreLoading()"
+            (click)="calculateFirstScore()">
+            @if (firstScoreLoading()) {
+              <app-forsa-icon name="sparkles" [size]="14" /> Calculating…
+            } @else {
+              <app-forsa-icon name="trending-up" [size]="14" /> Calculate my score
+            }
+          </app-forsa-button>
+          @if (!ocrSalary() && !firstScoreLoading()) {
+            <p class="calc-hint">Upload your pay slip first</p>
+          }
+        </div>
+
+      </div>
+    </app-forsa-card>
+
+    <!-- Hidden inputs for STATE 1 -->
+    <input #salaryInput    type="file" accept="image/*,application/pdf" style="display:none" (change)="onSalarySelected($event)" />
+    <input #stegNewInput   type="file" accept="image/*,application/pdf" style="display:none" (change)="onStegNewSelected($event)" />
+    <input #sonedeNewInput type="file" accept="image/*,application/pdf" style="display:none" (change)="onSonedeNewSelected($event)" />
+
+  <!-- ── STATE 2: EXISTING CLIENT ─────────────────────────────────────── -->
+  } @else if (score()) {
+    <app-forsa-card>
+      <div class="card-pad-lg widget-body">
+
+        <div class="widget-header">
+          <h3 class="widget-title">Credit eligibility</h3>
+          @if (loading()) {
+            <app-forsa-icon name="sparkles" [size]="14" />
+          }
+        </div>
+
+        <!-- Score level strip -->
         <div [ngClass]="clientStandingToneClass()">
           <div class="standing-strip__main">
             <span class="standing-strip__eyebrow">Your standing</span>
@@ -29,10 +168,7 @@
           <span class="standing-strip__points">{{ clientNumericScore() }} / 1000</span>
         </div>
 
-        <p class="widget-hint">
-          For step-by-step tips on raising your score, open <strong>Digital Wallet</strong> → <strong>Account Advice</strong>.
-        </p>
-
+        <!-- Credit limit (main focus) -->
         <p class="borrow-label">You can borrow</p>
 
         @if (score()!.hasActiveCredit) {
@@ -48,51 +184,61 @@
           </div>
         }
 
+        <!-- Last update -->
+        @if (score()!.lastCalculatedAt) {
+          <p class="last-calc">Last updated: {{ formatDate(score()!.lastCalculatedAt) }}</p>
+        }
+
+        <!-- Active boosters -->
         @if (score()!.stegBoosterActive || score()!.sonedeBoosterActive) {
           <div class="boosters-row">
             @if (score()!.stegBoosterActive && score()!.stegBoosterExpiry) {
-              <div class="booster-chip">STEG ✅ active until {{ formatExpiry(score()!.stegBoosterExpiry) }}</div>
+              <div class="booster-chip">⚡ STEG active until {{ formatExpiry(score()!.stegBoosterExpiry) }}</div>
             }
             @if (score()!.sonedeBoosterActive && score()!.sonedeBoosterExpiry) {
-              <div class="booster-chip">SONEDE ✅ active until {{ formatExpiry(score()!.sonedeBoosterExpiry) }}</div>
+              <div class="booster-chip">💧 SONEDE active until {{ formatExpiry(score()!.sonedeBoosterExpiry) }}</div>
             }
           </div>
         }
 
+        <!-- Bill verification feedback -->
         @if (billMessage()) {
           <div class="bill-msg" [ngClass]="'bill-msg--' + billMessage()!.type">
             {{ billMessage()!.text }}
           </div>
         }
 
+        <!-- Actions row -->
         <div class="upload-row">
           @if (!score()!.stegBoosterActive) {
-            <app-forsa-button (click)="triggerBillUpload('STEG')" [disabled]="docLoading() !== null">
+            <app-forsa-button variant="outline" (click)="triggerBillUpload('STEG')" [disabled]="docLoading() !== null || loading()">
               @if (docLoading() === 'STEG') {
                 <app-forsa-icon name="sparkles" [size]="13" /> Verifying…
               } @else {
-                <app-forsa-icon name="plus" [size]="13" /> Upload STEG bill
+                <app-forsa-icon name="zap" [size]="13" /> Upload electricity bill
               }
             </app-forsa-button>
           }
           @if (!score()!.sonedeBoosterActive) {
-            <app-forsa-button (click)="triggerBillUpload('SONEDE')" [disabled]="docLoading() !== null">
+            <app-forsa-button variant="outline" (click)="triggerBillUpload('SONEDE')" [disabled]="docLoading() !== null || loading()">
               @if (docLoading() === 'SONEDE') {
                 <app-forsa-icon name="sparkles" [size]="13" /> Verifying…
               } @else {
-                <app-forsa-icon name="plus" [size]="13" /> Upload SONEDE bill
+                <app-forsa-icon name="home" [size]="13" /> Upload water bill
               }
             </app-forsa-button>
           }
+          <app-forsa-button variant="outline" (click)="recalculateScore()" [disabled]="loading() || docLoading() !== null">
+            <app-forsa-icon name="sparkles" [size]="13" /> Recalculate score
+          </app-forsa-button>
         </div>
 
       </div>
     </app-forsa-card>
 
-    <input #stegInput type="file" accept="image/*,application/pdf"
-           style="display:none" (change)="onFileSelected($event, 'STEG')" />
-    <input #sonedeInput type="file" accept="image/*,application/pdf"
-           style="display:none" (change)="onFileSelected($event, 'SONEDE')" />
+    <!-- Hidden inputs for STATE 2 -->
+    <input #stegInput   type="file" accept="image/*,application/pdf" style="display:none" (change)="onFileSelected($event, 'STEG')" />
+    <input #sonedeInput type="file" accept="image/*,application/pdf" style="display:none" (change)="onFileSelected($event, 'SONEDE')" />
   }
 
 </div>
