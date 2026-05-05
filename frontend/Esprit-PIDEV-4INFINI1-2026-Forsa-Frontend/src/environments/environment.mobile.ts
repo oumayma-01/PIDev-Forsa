@@ -16,10 +16,13 @@
  *    Voir aussi scripts/expose-frontend-ngrok.ps1 (rappel des commandes).
  *
  *    Sur HTTP + IP seule, le service worker peut etre refuse ; HTTPS ngrok convient pour la PWA.
+ *
+ * Passkeys : ouvrir l'app exactement sur le meme host que `app.frontend.base-url` cote Spring
+ * (ex. https://bigotedly-youthful-dino.ngrok-free.dev avec le profil `ngrok` sur le backend).
  */
 export const environment = {
   production: true,
-  apiBaseUrl: 'http://192.168.56.1:8089/forsaPidev/api',
+  apiBaseUrl: 'https://forsa-backend.loca.lt/forsaPidev/api',
   defaultClientRoleId: 2,
   defaultAgentRoleId: 3,
 };

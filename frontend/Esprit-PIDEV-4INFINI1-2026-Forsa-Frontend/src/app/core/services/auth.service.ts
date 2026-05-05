@@ -116,16 +116,31 @@ export class AuthService {
     const begin = await firstValueFrom(
       this.http.post<WebAuthnBeginLoginResponse>(`${environment.apiBaseUrl}/auth/webauthn/login/begin`, { username }),
     );
-    const assertion = await this.webauthn.getCredential({
-      challenge: this.webauthn.toBuffer(begin.challenge),
-      rpId: begin.rpId,
-      allowCredentials: (begin.allowCredentialIds ?? []).map((id) => ({
-        id: this.webauthn.toBuffer(id),
-        type: 'public-key',
-      })),
-      timeout: begin.timeout ?? 60000,
-      userVerification: begin.userVerification ?? 'preferred',
-    });
+    let assertion: PublicKeyCredential;
+    try {
+      assertion = await this.webauthn.getCredential({
+        challenge: this.webauthn.toBuffer(begin.challenge),
+        rpId: begin.rpId,
+        allowCredentials: (begin.allowCredentialIds ?? []).map((id) => ({
+          id: this.webauthn.toBuffer(id),
+          type: 'public-key',
+        })),
+        timeout: begin.timeout ?? 60000,
+        userVerification: begin.userVerification ?? 'preferred',
+      });
+    } catch (e: unknown) {
+      const host = typeof window !== 'undefined' ? window.location.hostname : '';
+      const dom = e instanceof DOMException ? e : null;
+      if (dom?.name === 'SecurityError' || (e instanceof Error && /rpId|Relying Party/i.test(e.message))) {
+        throw new Error(
+          `Passkey login blocked: page host "${host}" vs server rpId "${begin.rpId}".`,
+        );
+      }
+      if (dom?.name === 'NotAllowedError') {
+        throw new Error('Passkey sign-in was cancelled or no credential matched.');
+      }
+      throw e instanceof Error ? e : new Error(String(e));
+    }
 
     const response = assertion.response as AuthenticatorAssertionResponse;
     const credentialId = this.webauthn.fromBuffer(assertion.rawId);
@@ -164,30 +179,45 @@ export class AuthService {
         deviceName: deviceName ?? 'Current device',
       }),
     );
-    const credential = await this.webauthn.createCredential({
-      challenge: this.webauthn.toBuffer(begin.challenge),
-      rp: { id: begin.rpId, name: begin.rpName },
-      user: {
-        id: this.webauthn.toBuffer(begin.userId),
-        name: begin.userName,
-        displayName: begin.userDisplayName,
-      },
-      pubKeyCredParams: [
-        { type: 'public-key', alg: -7 },
-        { type: 'public-key', alg: -257 },
-      ],
-      timeout: begin.timeout ?? 60000,
-      excludeCredentials: (begin.excludeCredentialIds ?? []).map((id) => ({
-        type: 'public-key',
-        id: this.webauthn.toBuffer(id),
-      })),
-      authenticatorSelection: {
-        authenticatorAttachment: begin.authenticatorAttachment ?? 'platform',
-        residentKey: begin.residentKey ?? 'preferred',
-        userVerification: begin.userVerification ?? 'preferred',
-      },
-      attestation: 'none',
-    });
+    let credential: PublicKeyCredential;
+    try {
+      credential = await this.webauthn.createCredential({
+        challenge: this.webauthn.toBuffer(begin.challenge),
+        rp: { id: begin.rpId, name: begin.rpName },
+        user: {
+          id: this.webauthn.toBuffer(begin.userId),
+          name: begin.userName,
+          displayName: begin.userDisplayName,
+        },
+        pubKeyCredParams: [
+          { type: 'public-key', alg: -7 },
+          { type: 'public-key', alg: -257 },
+        ],
+        timeout: begin.timeout ?? 60000,
+        excludeCredentials: (begin.excludeCredentialIds ?? []).map((id) => ({
+          type: 'public-key',
+          id: this.webauthn.toBuffer(id),
+        })),
+        authenticatorSelection: {
+          authenticatorAttachment: begin.authenticatorAttachment ?? 'platform',
+          residentKey: begin.residentKey ?? 'preferred',
+          userVerification: begin.userVerification ?? 'preferred',
+        },
+        attestation: 'none',
+      });
+    } catch (e: unknown) {
+      const host = typeof window !== 'undefined' ? window.location.hostname : '';
+      const dom = e instanceof DOMException ? e : null;
+      if (dom?.name === 'SecurityError' || (e instanceof Error && /rpId|Relying Party/i.test(e.message))) {
+        throw new Error(
+          `Passkey blocked: this page is "${host}" but the server sent rpId "${begin.rpId}". They must match (or use a valid parent domain).`,
+        );
+      }
+      if (dom?.name === 'NotAllowedError') {
+        throw new Error('Passkey registration was cancelled or not allowed on this device.');
+      }
+      throw e instanceof Error ? e : new Error(String(e));
+    }
     const response = credential.response as AuthenticatorAttestationResponse;
     await firstValueFrom(
       this.http.post<MessageResponse>(`${environment.apiBaseUrl}/auth/webauthn/register/finish`, {

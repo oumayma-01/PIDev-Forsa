@@ -34,6 +34,8 @@ class UserService implements IUserService {
 
     @Autowired
     AgentRegistryService agentRegistryService;
+    @Autowired
+    AccountServiceImpl accountService;
 
 
     @Override
@@ -133,6 +135,6 @@ user.setEmail(signUpRequest.getEmail());
     public void delete(Long id) {
         User user = userRepository.findById(id).get();
         agentRegistryService.deleteAgentForUser(id);
-        userRepository.delete(user);
+        accountService.deleteUserWithAccounts(id);
     }
 }
