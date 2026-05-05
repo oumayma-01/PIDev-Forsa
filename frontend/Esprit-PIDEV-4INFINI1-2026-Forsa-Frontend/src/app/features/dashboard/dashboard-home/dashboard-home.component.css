@@ -565,14 +565,14 @@
 
 .ops-section-title h3 {
   margin: 0;
-  font-size: 1rem;
+  font-size: 2.3rem;
   color: var(--forsa-navy-deep);
 }
 
 .ops-section-title p {
   margin: 0.2rem 0 0;
   color: var(--color-muted-foreground);
-  font-size: 0.85rem;
+  font-size: 1rem;
 }
 
 .panel-head {
