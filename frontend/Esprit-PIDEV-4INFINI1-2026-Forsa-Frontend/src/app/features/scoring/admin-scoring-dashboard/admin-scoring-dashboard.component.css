@@ -11,6 +11,12 @@
   .scoring-dash { padding: 2rem 1.5rem; }
 }
 
+@media (min-width: 640px) {
+  .scoring-dash {
+    padding: 2rem 1.5rem;
+  }
+}
+
 /* ── Header ── */
 .dash-head {
   display: flex; align-items: flex-start; justify-content: space-between;
@@ -75,7 +81,11 @@
   border-top-color: var(--color-primary); border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 /* ── Table wrapper ── */
 .table-wrap { padding: 1rem 1.25rem; }

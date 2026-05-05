@@ -3,6 +3,11 @@ import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ForsaCardComponent } from '../../../shared/ui/forsa-card/forsa-card.component';
 import type { AIScoreDto, AIScoreLevel, AIScoreSummaryDto } from '../../../core/models/forsa.models';
+import { ForsaDataTableComponent } from '../../../shared/ui/forsa-data-table/forsa-data-table.component';
+import type {
+  ForsaDataTablePageEvent,
+  ForsaTableColumn,
+} from '../../../shared/ui/forsa-data-table/forsa-data-table.types';
 import { AiScoreService } from '../services/ai-score.service';
 
 interface ClientRow extends AIScoreSummaryDto {
@@ -50,6 +55,19 @@ export class AdminScoringDashboardComponent implements OnInit, OnDestroy {
     });
   });
 
+  scoringPageIndex = 0;
+  scoringPageSize = 10;
+  readonly scoringTableColumns: ForsaTableColumn[] = [
+    { key: 'client', label: 'Client' },
+    { key: 'score', label: 'Score / 1000', width: '10rem' },
+    { key: 'level', label: 'Level', width: '8rem' },
+    { key: 'threshold', label: 'Credit threshold' },
+    { key: 'loan', label: 'Active loan', align: 'center', width: '6rem' },
+    { key: 'boosters', label: 'Boosters' },
+    { key: 'date', label: 'Calculated at', width: '9rem' },
+    { key: 'action', label: '', width: '3.25rem', align: 'right' },
+  ];
+
   private pollTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(private readonly aiScore: AiScoreService) {}
@@ -67,6 +85,7 @@ export class AdminScoringDashboardComponent implements OnInit, OnDestroy {
     this.aiScore.getAllSummaries().subscribe({
       next: (list) => {
         this.clients.set(list.map((c) => ({ ...c, refreshing: false })));
+        this.scoringPageIndex = 0;
         this.loading.set(false);
         this.lastRefresh.set(new Date());
       },

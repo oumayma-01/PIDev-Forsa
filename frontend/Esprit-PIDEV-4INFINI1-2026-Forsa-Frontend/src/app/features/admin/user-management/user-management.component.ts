@@ -1,5 +1,6 @@
 import {
   Component,
+  DestroyRef,
   HostListener,
   OnInit,
   computed,
@@ -31,6 +32,9 @@ type DialogMode = 'closed' | 'edit' | 'add-agent';
 
 type StatusFilter = 'all' | 'active' | 'inactive';
 
+/** Row actions menu rendered fixed (escapes table overflow clipping). */
+type RowMenuState = { user: ManagedUser; top: number; right: number };
+
 @Component({
   selector: 'app-user-management',
   standalone: true,
@@ -49,6 +53,7 @@ type StatusFilter = 'all' | 'active' | 'inactive';
 })
 export class UserManagementComponent implements OnInit {
   private readonly usersApi = inject(UserAdminService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly users = signal<ManagedUser[]>([]);
   readonly loading = signal(false);
@@ -113,7 +118,7 @@ export class UserManagementComponent implements OnInit {
 
   readonly dialogMode = signal<DialogMode>('closed');
   readonly editUserId = signal<number | null>(null);
-  readonly openMenuUserId = signal<number | null>(null);
+  readonly rowMenu = signal<RowMenuState | null>(null);
   formUsername = '';
   formEmail = '';
   formPassword = '';
@@ -166,12 +171,26 @@ export class UserManagementComponent implements OnInit {
 
   ngOnInit(): void {
     this.refresh();
+    const closeMenuOnScrollOrResize = (): void => {
+      if (this.rowMenu()) {
+        this.closeRowMenu();
+      }
+    };
+    document.addEventListener('scroll', closeMenuOnScrollOrResize, true);
+    window.addEventListener('resize', closeMenuOnScrollOrResize);
+    this.destroyRef.onDestroy(() => {
+      document.removeEventListener('scroll', closeMenuOnScrollOrResize, true);
+      window.removeEventListener('resize', closeMenuOnScrollOrResize);
+    });
   }
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(ev: MouseEvent): void {
     const t = ev.target;
     const el = t instanceof Element ? t : (t instanceof Node ? t.parentElement : null);
+    if (el?.closest('.um-row-menu')) {
+      return;
+    }
     if (el?.closest('.um-actions-cell')) {
       return;
     }
@@ -204,12 +223,26 @@ export class UserManagementComponent implements OnInit {
     this.pageSize.set(ev.pageSize);
   }
 
-  toggleRowMenu(userId: number): void {
-    this.openMenuUserId.update((cur) => (cur === userId ? null : userId));
+  toggleRowMenu(u: ManagedUser, ev: MouseEvent): void {
+    const cur = this.rowMenu();
+    if (cur?.user.id === u.id) {
+      this.rowMenu.set(null);
+      return;
+    }
+    const anchor = ev.currentTarget;
+    if (!(anchor instanceof HTMLElement)) {
+      return;
+    }
+    const r = anchor.getBoundingClientRect();
+    this.rowMenu.set({
+      user: u,
+      top: r.bottom-60,
+      right: window.innerWidth - r.right-10,
+    });
   }
 
   closeRowMenu(): void {
-    this.openMenuUserId.set(null);
+    this.rowMenu.set(null);
   }
 
   roleTone(role: ForsaRoleName): 'success' | 'warning' | 'danger' | 'info' {

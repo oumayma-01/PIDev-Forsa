@@ -1,0 +1,22 @@
+# Deux tunnels HTTP en une seule session ngrok (deux URLs differentes -> evite ERR_NGROK_334
+# si vous relanciez le meme domaine reserve deux fois).
+#
+# Prerequis :
+#   1. Backend Spring sur 8089 (profil ngrok recommande).
+#   2. Frontend deja builde : npm run build:mobile
+#   3. npm run serve:dist  -> ecoute sur 4173
+#
+# Lancement (depuis la racine du repo PIDev-Forsa) :
+#   ngrok start --config ngrok-forsa.yml --all
+#
+# La console affiche deux URLs : une pour l'API, une pour le site Angular.
+# Mettez l'URL API dans environment.mobile.ts puis rebuild mobile si besoin.
+
+version: "2"
+tunnels:
+  forsa-api:
+    proto: http
+    addr: 8089
+  forsa-web:
+    proto: http
+    addr: 4173
